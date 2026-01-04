@@ -125,6 +125,19 @@ BANNED_CATEGORIES = [
     "enfant", "enfants", "garçon", "fille", "jeune", "mineur",
     # German
     "kind", "kinder", "junge", "mädchen", "jugend",
+    # Nuclear weapons
+    "nuclear weapon", "nuclear bomb", "atomic bomb", "hydrogen bomb", "thermonuclear",
+    "nuclear warhead", "nuclear missile", "nuclear arsenal", "nuke", "nukes",
+    "nuclear strike", "nuclear attack", "nuclear warfare",
+    # Chemical weapons
+    "chemical weapon", "chemical warfare", "nerve agent", "sarin", "vx gas",
+    "mustard gas", "chlorine gas", "phosgene", "chemical attack", "toxic agent",
+    "biological weapon", "bioweapon", "anthrax weapon",
+    # Psychological warfare and interrogation
+    "psychological warfare", "psyops", "psychological operations", "mind control",
+    "interrogation technique", "torture method", "enhanced interrogation",
+    "waterboarding", "psychological torture", "brainwashing", "coercive interrogation",
+    "torture technique", "interrogation technology",
     # Add more languages as needed
 ]
 
