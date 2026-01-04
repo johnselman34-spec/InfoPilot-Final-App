@@ -274,8 +274,8 @@ export default function SettingsScreen() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>InfoJet v1.0.0</Text>
-          <Text style={styles.footerText}>InfoJet Inc. | Brunswick, Maine</Text>
+          <Text style={styles.footerText}>InfoPilot v1.0.0</Text>
+          <Text style={styles.footerText}>Top Pilot Enterprises | Brunswick, Maine</Text>
           <Text style={styles.footerText}>© 2025 John Selman</Text>
           <Text style={styles.footerText}>john.1976.selman@gmail.com</Text>
         </View>
