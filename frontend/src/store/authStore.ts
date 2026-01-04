@@ -66,9 +66,19 @@ export const useAuthStore = create<AuthState>((set) => ({
         return;
       }
 
-      const response = await authAPI.getMe();
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 10000)
+      );
+
+      const response = await Promise.race([
+        authAPI.getMe(),
+        timeoutPromise
+      ]);
+      
       set({ user: response.data, token, isAuthenticated: true, isLoading: false });
     } catch (error) {
+      console.error('Load user error:', error);
       await AsyncStorage.removeItem('auth_token');
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
