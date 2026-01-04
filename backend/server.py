@@ -16,6 +16,8 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from bs4 import BeautifulSoup
 import asyncio
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -30,8 +32,13 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'infopilot-secret-key-2024')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 1 week
 
-# Google OAuth Settings (Demo mode)
-GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com')
+# Google OAuth Settings - Supports Web, Android, and iOS
+GOOGLE_WEB_CLIENT_ID = os.environ.get('GOOGLE_WEB_CLIENT_ID', '553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com')
+GOOGLE_ANDROID_CLIENT_ID = os.environ.get('GOOGLE_ANDROID_CLIENT_ID', '553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com')
+GOOGLE_IOS_CLIENT_ID = os.environ.get('GOOGLE_IOS_CLIENT_ID', '553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com')
+
+# All valid Google Client IDs (for token verification)
+GOOGLE_CLIENT_IDS = [GOOGLE_WEB_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID]
 
 # Create the main app without a prefix
 app = FastAPI(title="InfoPilot API", version="2.0.0")
