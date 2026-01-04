@@ -1413,7 +1413,7 @@ async def startup():
     # Init settings
     await init_admin_settings()
     
-    logger.info("InfoJet API started successfully")
+    logger.info("InfoPilot API started successfully")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
