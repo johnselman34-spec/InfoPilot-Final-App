@@ -261,11 +261,15 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Frontend Loading"
-  stuck_tasks: []
+    - "Frontend Loading and Splash Screen"
+    - "Upgrade/Subscription Button"
+  stuck_tasks:
+    - "Frontend Loading and Splash Screen"
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "testing"
       message: "CRITICAL ISSUE RESOLVED: MongoDB connection was configured incorrectly (mongo-service:27017 instead of localhost:27017). Fixed MONGO_URL in backend/.env and restarted backend service. All core backend APIs now working correctly. The blank screen issue was caused by backend API failures due to database connectivity. Backend is now fully functional."
+    - agent: "main"
+      message: "SPLASH SCREEN FIX: Improved _layout.tsx with better async handling, cleaner timeout logic (3s), and more informative console logging. Added isMounted flag to prevent race conditions. UPGRADE BUTTON: Now fully functional with modal UI and demo subscription activation. Backend testing needed next."
