@@ -12,7 +12,6 @@ import axios from 'axios';
 export default function SearchScreen() {
   const { categories, fetchCategories } = useCategoryStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [searching, setSearching] = useState(false);
   const [collating, setCollating] = useState(false);
   const [googleResults, setGoogleResults] = useState<any[]>([]);
@@ -48,8 +47,8 @@ export default function SearchScreen() {
   };
 
   const handleCollateAll = async () => {
-    if (selectedCategories.length === 0) {
-      Alert.alert('Error', 'Please select at least one category to collate results into');
+    if (categories.length === 0) {
+      Alert.alert('Error', 'Please create at least one category first');
       return;
     }
 
@@ -61,10 +60,10 @@ export default function SearchScreen() {
     try {
       setCollating(true);
       
-      // Collate results for each selected category
-      const promises = selectedCategories.map(categoryId =>
+      // Collate results for ALL categories automatically
+      const promises = categories.map(category =>
         searchAPI.collate({
-          category_id: categoryId,
+          category_id: category.id,
           search_query: searchQuery,
         })
       );
@@ -73,25 +72,16 @@ export default function SearchScreen() {
       
       Alert.alert(
         'Success!', 
-        `Collated ${googleResults.length} search results into ${selectedCategories.length} ${selectedCategories.length === 1 ? 'category' : 'categories'}`
+        `Collated ${googleResults.length} search results into all ${categories.length} ${categories.length === 1 ? 'category' : 'categories'} automatically!`
       );
       
       // Reset
       setGoogleResults([]);
       setSearchQuery('');
-      setSelectedCategories([]);
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.detail || 'Failed to collate search results');
     } finally {
       setCollating(false);
-    }
-  };
-
-  const toggleCategory = (categoryId: string) => {
-    if (selectedCategories.includes(categoryId)) {
-      setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
-    } else {
-      setSelectedCategories([...selectedCategories, categoryId]);
     }
   };
 
