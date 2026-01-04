@@ -1,0 +1,31 @@
+diff --git a/frontend/app/(tabs)/settings.tsx b/frontend/app/(tabs)/settings.tsx
+index 579c6f0..b45d6a8 100644
+--- a/frontend/app/(tabs)/settings.tsx
++++ b/frontend/app/(tabs)/settings.tsx
+@@ -68,7 +68,7 @@ export default function SettingsScreen() {
+   const handleSubscribe = async () => {
+     Alert.alert(
+       'Subscribe to InfoPilot Premium',
+-      'Get full access to InfoJet for only $0.99!\n\n• Unlimited search result pages\n• Interactive world map\n• All premium features\n• Support development',
++      'Get full access to InfoPilot for only $0.99!\n\n• Unlimited search result pages\n• Interactive world map\n• All premium features\n• Support development',
+       [
+         { text: 'Maybe Later', style: 'cancel' },
+         {
+@@ -89,7 +89,7 @@ export default function SettingsScreen() {
+                         try {
+                           await api.post('/payment/activate', {});
+                           await refreshUser();
+-                          Alert.alert('Success!', 'Welcome to InfoJet Premium!');
++                          Alert.alert('Success!', 'Welcome to InfoPilot Premium!');
+                         } catch (error) {
+                           Alert.alert('Error', 'Could not activate premium');
+                         }
+@@ -182,7 +182,7 @@ export default function SettingsScreen() {
+               <View style={styles.premiumActiveText}>
+                 <Text style={styles.premiumActiveTitle}>Premium Active</Text>
+                 <Text style={styles.premiumActiveDesc}>
+-                  Thank you for supporting InfoJet!
++                  Thank you for supporting InfoPilot!
+                 </Text>
+               </View>
+             </View>
