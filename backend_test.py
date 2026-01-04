@@ -125,9 +125,9 @@ class InfoPilotTester:
         print("🔍 Testing user registration...")
         
         test_user_data = {
-            "username": "testuser_infopilot_2024",
-            "email": "testuser@infopilot.com",
-            "password": "SecurePassword123!"
+            "username": "testuser123",
+            "email": "test@infopilot.com",
+            "password": "TestPass123"
         }
         
         response = await self.make_request("POST", "/auth/register", test_user_data)
