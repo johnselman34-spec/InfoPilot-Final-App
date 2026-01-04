@@ -173,7 +173,7 @@ export default function CategoriesScreen() {
               />
 
               <CustomInput
-                label="InfoJet 2.0 Protocol"
+                label="InfoPilot 2.0 Protocol"
                 value={protocol}
                 onChangeText={setProtocol}
                 placeholder="(word1 or word2) & (word3 or word4)"
@@ -184,9 +184,17 @@ export default function CategoriesScreen() {
               <Text style={styles.exampleLabel}>Example Protocol:</Text>
               <View style={styles.exampleBox}>
                 <Text style={styles.exampleText}>
-                  (American civil war) & (civil war) & (1860 or 1861 or 1862)+
+                  (American civil war) & (heroes or leadership)+ & (wasn't)^
                 </Text>
               </View>
+              
+              <Text style={styles.infoLabel}>InfoPilot 2.0 Format:</Text>
+              <Text style={styles.infoText}>
+                • Use (word1 or word2) for OR within groups{'\n'}
+                • Use & between groups for AND logic{'\n'}
+                • Add + after () to require ALL terms{'\n'}
+                • Add ^ after () to exclude ALL terms
+              </Text>
 
               <TouchableOpacity
                 style={styles.checkboxRow}
