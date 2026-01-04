@@ -936,10 +936,15 @@ async def get_book_info():
 
 @api_router.get("/subscription/info")
 async def get_subscription_info():
-    """Get subscription information"""
+    """Get subscription information including sale status"""
+    price, is_sale, sale_end = get_current_subscription_price()
     return {
-        "price": SUBSCRIPTION_PRICE,
+        "price": price,
+        "regular_price": REGULAR_PRICE,
+        "is_sale_active": is_sale,
+        "sale_end_date": sale_end.isoformat() if sale_end else None,
         "type": "lifetime",
+        "sale_name": "Welcome Sale" if is_sale else None,
         "features": [
             "Unlimited search results pages",
             "Unlimited categories",
