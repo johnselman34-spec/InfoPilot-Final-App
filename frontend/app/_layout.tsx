@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
 import { ActivityIndicator, View } from 'react-native';
@@ -6,12 +6,23 @@ import { colors } from '../src/utils/colors';
 
 export default function RootLayout() {
   const { isLoading, loadUser } = useAuthStore();
+  const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    loadUser();
+    // Set a maximum 3-second initialization time
+    const timeout = setTimeout(() => {
+      setInitializing(false);
+    }, 3000);
+
+    loadUser().finally(() => {
+      clearTimeout(timeout);
+      setInitializing(false);
+    });
+
+    return () => clearTimeout(timeout);
   }, []);
 
-  if (isLoading) {
+  if (initializing) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
