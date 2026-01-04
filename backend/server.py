@@ -153,7 +153,7 @@ class ProtocolParser:
     @staticmethod
     def parse_protocol(protocol: str) -> Dict[str, Any]:
         """
-        Parse InfoJet 2.0 protocol format:
+        Parse InfoPilot 2.0 protocol format:
         (word1 or word2) & (word3 or word4)+ & (word5)^
         
         + = include ALL words in group
