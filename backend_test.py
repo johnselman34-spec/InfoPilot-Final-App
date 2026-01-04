@@ -148,7 +148,7 @@ class InfoPilotTester:
         print("🔍 Testing user login...")
         
         login_data = {
-            "username": "testuser123",
+            "username": "testuser123_new",
             "password": "TestPass123"
         }
         
