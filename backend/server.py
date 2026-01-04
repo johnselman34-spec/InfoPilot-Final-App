@@ -47,6 +47,9 @@ STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
 stripe.api_key = STRIPE_SECRET_KEY
 
+# Emergent LLM Configuration
+EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
+
 # Create the main app without a prefix
 app = FastAPI(title="InfoPilot API", version="2.0.0")
 
