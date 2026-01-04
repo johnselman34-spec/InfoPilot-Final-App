@@ -89,7 +89,7 @@ export default function SettingsScreen() {
                         try {
                           await api.post('/payment/activate', {});
                           await refreshUser();
-                          Alert.alert('Success!', 'Welcome to InfoJet Premium!');
+                          Alert.alert('Success!', 'Welcome to InfoPilot Premium!');
                         } catch (error) {
                           Alert.alert('Error', 'Could not activate premium');
                         }
