@@ -15,10 +15,13 @@ import { useRouter, Link } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
-import * as AuthSession from 'expo-auth-session';
-import * as Google from 'expo-auth-session/providers/google';
 
-WebBrowser.maybeCompleteAuthSession();
+// Only import Google auth on native platforms
+let Google: any = null;
+if (Platform.OS !== 'web') {
+  Google = require('expo-auth-session/providers/google');
+  WebBrowser.maybeCompleteAuthSession();
+}
 
 // Google OAuth Client ID for Android
 const GOOGLE_ANDROID_CLIENT_ID = '553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com';
@@ -33,11 +36,15 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Google Auth Setup - Android Only
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
-    scopes: ['profile', 'email'],
-  });
+  // Google Auth Setup - Android Only (not available on web)
+  const googleAuthHook = Platform.OS === 'android' && Google
+    ? Google.useAuthRequest({
+        androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+        scopes: ['profile', 'email'],
+      })
+    : [null, null, null];
+
+  const [request, response, promptAsync] = googleAuthHook;
 
   useEffect(() => {
     if (response?.type === 'success') {
@@ -103,13 +110,26 @@ export default function LoginScreen() {
   };
 
   const handleGoogleLogin = async () => {
-    // Check if Google OAuth is configured
-    if (!GOOGLE_ANDROID_CLIENT_ID) {
+    if (Platform.OS === 'web') {
       Alert.alert(
-        'Google Sign-In Not Configured',
-        'Please add your Android OAuth Client ID to enable Google Sign-In.',
+        'Android Only',
+        'Google Sign-In is available on the Android app. Please use email/password login on web, or download the app from Google Play Store.',
         [{ text: 'OK' }]
       );
+      return;
+    }
+
+    if (Platform.OS === 'ios') {
+      Alert.alert(
+        'Android Only',
+        'This app is configured for Android only. Please use email/password login.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    if (!promptAsync) {
+      Alert.alert('Error', 'Google Sign-In not available');
       return;
     }
 
@@ -228,6 +248,16 @@ export default function LoginScreen() {
               </>
             )}
           </TouchableOpacity>
+
+          {/* Platform Notice for Web */}
+          {Platform.OS === 'web' && (
+            <View style={styles.platformNotice}>
+              <Ionicons name="phone-portrait-outline" size={16} color="#2196F3" />
+              <Text style={styles.platformNoticeText}>
+                Google Sign-In available on Android app
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Register Link */}
@@ -400,19 +430,19 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
   },
-  setupNotice: {
+  platformNotice: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF3E0',
-    padding: 12,
+    justifyContent: 'center',
+    backgroundColor: '#E3F2FD',
+    padding: 10,
     borderRadius: 8,
     marginTop: 12,
   },
-  setupNoticeText: {
-    flex: 1,
+  platformNoticeText: {
     marginLeft: 8,
     fontSize: 12,
-    color: '#E65100',
+    color: '#1976D2',
   },
   registerContainer: {
     flexDirection: 'row',
