@@ -233,6 +233,9 @@ backend:
         - working: false
           agent: "testing"
           comment: "Minor: Admin settings endpoint has ObjectId serialization issue. Core functionality not affected"
+        - working: false
+          agent: "testing"
+          comment: "Confirmed ObjectId serialization error in admin settings endpoint. Backend logs show 500 Internal Server Error due to MongoDB ObjectId not being JSON serializable. This is a minor issue that doesn't affect core app functionality."
 
 frontend:
   - task: "Frontend Loading and Splash Screen"
