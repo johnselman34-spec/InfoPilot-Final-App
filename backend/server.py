@@ -1037,7 +1037,7 @@ async def make_admin(user_id: str, user: dict = Depends(require_admin)):
 
 @api_router.get("/admin/users")
 async def get_all_users(user: dict = Depends(require_admin)):
-    users = await db.users.find({}, {"password_hash": 0}).to_list(1000)
+    users = await db.users.find({}, {"password_hash": 0, "_id": 0}).to_list(1000)
     return users
 
 @api_router.post("/admin/set-paid/{user_id}")
