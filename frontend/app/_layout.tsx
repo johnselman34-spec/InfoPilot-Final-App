@@ -1,31 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { useAuthStore } from '../src/store/authStore';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Text } from 'react-native';
 import { colors } from '../src/utils/colors';
 
 export default function RootLayout() {
-  const { isLoading, loadUser } = useAuthStore();
-  const [initializing, setInitializing] = useState(true);
+  const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
-    // Set a maximum 3-second initialization time
-    const timeout = setTimeout(() => {
-      setInitializing(false);
-    }, 3000);
+    // FORCE the app to show content after 2 seconds no matter what
+    const forceTimeout = setTimeout(() => {
+      console.log('FORCE TIMEOUT: Showing content now');
+      setShowContent(true);
+    }, 2000);
 
-    loadUser().finally(() => {
-      clearTimeout(timeout);
-      setInitializing(false);
+    // Try to load user but don't wait for it
+    useAuthStore.getState().loadUser().catch(err => {
+      console.error('Load user error:', err);
+    }).finally(() => {
+      setShowContent(true);
+      clearTimeout(forceTimeout);
     });
 
-    return () => clearTimeout(timeout);
+    // Cleanup
+    return () => {
+      clearTimeout(forceTimeout);
+      setShowContent(true); // Ensure we show content on unmount
+    };
   }, []);
 
-  if (initializing) {
+  // Always show content after component mounts or 2 seconds
+  if (!showContent) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, color: colors.text }}>Loading...</Text>
       </View>
     );
   }
