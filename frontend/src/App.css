@@ -1,34 +1,239 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #FFFEF5;
+  --ivory: #FFFFF0;
+  --infojet-blue: #0066CC;
+  --infojet-green: #00AA66;
+  --infojet-light-blue: #E6F2FF;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--cream);
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+.App {
+  min-height: 100vh;
 }
 
-.App-link {
-    color: #61dafb;
+/* Custom colors for Tailwind */
+.bg-cream {
+  background-color: var(--cream);
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+.bg-ivory {
+  background-color: var(--ivory);
+}
+
+.bg-infojet-blue {
+  background-color: var(--infojet-blue);
+}
+
+.bg-infojet-green {
+  background-color: var(--infojet-green);
+}
+
+.bg-infojet-light-blue {
+  background-color: var(--infojet-light-blue);
+}
+
+.text-infojet-blue {
+  color: var(--infojet-blue);
+}
+
+.text-infojet-green {
+  color: var(--infojet-green);
+}
+
+.border-infojet-blue {
+  border-color: var(--infojet-blue);
+}
+
+.border-infojet-green {
+  border-color: var(--infojet-green);
+}
+
+/* Focus rings */
+.focus\:ring-infojet-blue:focus {
+  --tw-ring-color: var(--infojet-blue);
+}
+
+/* Hover states */
+.hover\:bg-infojet-blue\/90:hover {
+  background-color: rgba(0, 102, 204, 0.9);
+}
+
+/* Gradients */
+.from-infojet-blue {
+  --tw-gradient-from: var(--infojet-blue);
+}
+
+.to-infojet-green {
+  --tw-gradient-to: var(--infojet-green);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Line clamp */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Prose for content */
+.prose code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+/* Animation for loading */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Card hover effects */
+.hover\:shadow-xl:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--infojet-blue), var(--infojet-green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* InfoJet specific styles */
+.infojet-card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.infojet-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.infojet-btn-primary {
+  background: linear-gradient(135deg, var(--infojet-blue), var(--infojet-green));
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.infojet-btn-primary:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 102, 204, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Protocol syntax highlighting */
+.protocol-syntax {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  background: #f8f9fa;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e9ecef;
+}
+
+.protocol-and {
+  color: var(--infojet-blue);
+  font-weight: bold;
+}
+
+.protocol-or {
+  color: var(--infojet-green);
+}
+
+.protocol-include {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.protocol-exclude {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar-open {
+    overflow: hidden;
+  }
+}
+
+/* Toast customizations */
+[data-sonner-toast] {
+  font-family: inherit;
+}
+
+/* Radio button custom styling */
+input[type="radio"] {
+  accent-color: var(--infojet-blue);
+}
+
+/* Checkbox custom styling */
+input[type="checkbox"] {
+  accent-color: var(--infojet-blue);
+}
+
+/* Select dropdown styling */
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
