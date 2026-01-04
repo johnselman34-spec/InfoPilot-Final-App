@@ -8,7 +8,7 @@ import {
   Eye, EyeOff, ChevronDown, ChevronRight, Filter, Heart, ThumbsUp, Smile,
   Frown, AlertTriangle, Flag, Award, Home, Users, BookOpen, Menu, X, Loader2,
   ShoppingCart, CreditCard, Star, ExternalLink, Plane, Shield, Radar, Target,
-  Crosshair, Navigation, Zap, Radio, Cpu, Book
+  Crosshair, Navigation, Zap, Radio, Cpu, Book, Edit3, Copy
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
