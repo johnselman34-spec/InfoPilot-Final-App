@@ -224,7 +224,10 @@ async def get_categories(authorization: Optional[str] = Header(None)):
     try:
         user = await get_user_from_token(authorization)
         
-        categories = await db.categories.find({"user_id": user["id"]}).to_list(1000)
+        categories = await db.categories.find(
+            {"user_id": user["id"]},
+            {"_id": 0, "id": 1, "name": 1, "protocol": 1, "parent_id": 1, "level": 1, "is_public": 1, "created_at": 1}
+        ).limit(100).to_list(100)
         
         return {"success": True, "categories": categories}
     except HTTPException as he:
