@@ -189,7 +189,7 @@ export default function CategoriesScreen() {
               </View>
               
               <Text style={styles.infoLabel}>InfoPilot 2.0 Format:</Text>
-              <Text style={styles.infoText}>
+              <Text style={styles.infoTextDetail}>
                 • Use (word1 or word2) for OR within groups{'\n'}
                 • Use & between groups for AND logic{'\n'}
                 • Add + after () to require ALL terms{'\n'}
