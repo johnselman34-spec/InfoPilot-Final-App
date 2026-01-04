@@ -133,9 +133,7 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "Stripe Payment Integration - Create Payment Intent"
-    - "Stripe Checkout Integration"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
