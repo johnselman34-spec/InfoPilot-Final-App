@@ -148,7 +148,7 @@ class PaymentVerification(BaseModel):
 # ============== PROTOCOL PARSER (InfoPilot 2.0) ==============
 
 class ProtocolParser:
-    """Parse and evaluate InfoJet 2.0 Boolean protocols"""
+    """Parse and evaluate InfoPilot 2.0 Boolean protocols"""
     
     @staticmethod
     def parse_protocol(protocol: str) -> Dict[str, Any]:
