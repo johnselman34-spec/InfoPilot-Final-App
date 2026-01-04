@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -23,15 +23,18 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'infojet_db')]
+db = client[os.environ.get('DB_NAME', 'infopilot_db')]
 
 # JWT Settings
-JWT_SECRET = os.environ.get('JWT_SECRET', 'infojet-secret-key-2024')
+JWT_SECRET = os.environ.get('JWT_SECRET', 'infopilot-secret-key-2024')
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 1 week
 
+# Google OAuth Settings (Demo mode)
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com')
+
 # Create the main app without a prefix
-app = FastAPI(title="InfoJet API", version="1.0.0")
+app = FastAPI(title="InfoPilot API", version="2.0.0")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -55,6 +58,25 @@ DEFAULT_BLOCKED_WORDS = [
 ]
 
 # ============================================
+# SUBSCRIPTION & BOOK INFO
+# ============================================
+SUBSCRIPTION_PRICE = 0.95  # Lifetime access
+BOOK_INFO = {
+    "title": "Letters to Evelyn",
+    "author": "John Selman",
+    "price": 2.99,
+    "rating": 5.0,
+    "reviews_count": 15,
+    "amazon_url": "https://a.co/d/atfpIds",
+    "sintra_url": "https://www.Letters-to-Evelyn.sintra.site",
+    "official_url": "https://letterstoevelynbyjohnselmanii.com",
+    "readers_favorite_url": "https://readersfavorite.com/book-review/letters-to-evelyn",
+    "google_drive_url": "https://drive.google.com/file/d/1YFhr75fWLzF2nu6nYDgVKB0fjEzZ36Pt/view?usp=drivesdk",
+    "description": "A prolific odyssey of love and redemption - Navy pilot memoir meets sci-fi adventure",
+    "tagline": "From the author who holds a World Record in Aviation"
+}
+
+# ============================================
 # PYDANTIC MODELS
 # ============================================
 
@@ -67,6 +89,9 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class GoogleAuthRequest(BaseModel):
+    credential: str  # Google ID token
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
@@ -75,6 +100,7 @@ class UserResponse(BaseModel):
     is_admin: bool = False
     is_paid: bool = False
     profile_photo: Optional[str] = None
+    auth_provider: str = "email"
     created_at: datetime
 
 class TokenResponse(BaseModel):
@@ -83,7 +109,7 @@ class TokenResponse(BaseModel):
     user: UserResponse
 
 class ProtocolCreate(BaseModel):
-    """InfoJet 2.0 Protocol - Boolean search syntax"""
+    """InfoPilot 2.0 Protocol - Boolean search syntax"""
     protocol_string: str  # e.g., "(word1 or word2) & (word3)+ & (word4)^"
 
 class CategoryCreate(BaseModel):
@@ -100,11 +126,11 @@ class CategoryResponse(BaseModel):
     protocol_string: str
     parent_id: Optional[str] = None
     is_public: bool = True
-    level: int = 0  # 0 = main category, 1 = subcategory, etc.
+    level: int = 0
     created_at: datetime
 
 class ArticleReaction(BaseModel):
-    reaction_type: str  # like, love, funny, sad, caution, spam, best
+    reaction_type: str
 
 class SearchResultResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -113,8 +139,8 @@ class SearchResultResponse(BaseModel):
     url: str
     title: str
     snippet: str
-    article_type: str  # Informative, Blog, Forum, News Article, etc.
-    categories: List[str]  # Category IDs this article matches
+    article_type: str
+    categories: List[str]
     domain: str
     detected_year: Optional[int] = None
     word_count: int = 0
@@ -127,7 +153,7 @@ class CollateRequest(BaseModel):
 
 class UltimateSearchRequest(BaseModel):
     category_ids: List[str] = []
-    aggregation_type: str = "and_or"  # and_or, and, or
+    aggregation_type: str = "and_or"
     article_types: List[str] = []
     domains: List[str] = []
     year_from: Optional[int] = None
@@ -152,32 +178,41 @@ class AdminSettings(BaseModel):
     free_user_pages: int = 1
     max_category_levels: int = 100
     blocked_words: List[str] = DEFAULT_BLOCKED_WORDS
-    subscription_price: float = 0.99
+    subscription_price: float = 0.95
     informative_min_words: int = 1500
     phd_keyword_count: int = 3
     blog_keyword_count: int = 3
 
+# Payment Models (Sandbox)
+class PaymentRequest(BaseModel):
+    payment_method: str  # paypal, google_pay, shopify
+    item_type: str  # subscription, book
+    amount: float
+
+class PaymentResponse(BaseModel):
+    success: bool
+    transaction_id: str
+    message: str
+    sandbox: bool = True
+
 # ============================================
-# INFOJET 2.0 PROTOCOL PARSER
+# INFOPILOT 2.0 PROTOCOL PARSER
 # ============================================
 
-class InfoJet2Parser:
+class InfoPilot2Parser:
     """
-    InfoJet 2.0 Boolean Protocol Parser
+    InfoPilot 2.0 Boolean Protocol Parser
     
     Syntax:
     - (word1 or word2 or word3) - Match ANY word in the group
     - & - AND operator between groups
     - + suffix - INCLUDE ALL words in the group (all must be present)
     - ^ suffix - EXCLUDE ALL words in the group (none should be present)
-    
-    Example:
-    (American civil war or civil war) & (hero or heroes)+ & (villain)^
     """
     
     @staticmethod
     def parse_protocol(protocol_string: str) -> Dict[str, Any]:
-        """Parse InfoJet 2.0 protocol string into structured format"""
+        """Parse InfoPilot 2.0 protocol string into structured format"""
         result = {
             "groups": [],
             "valid": True,
@@ -185,7 +220,6 @@ class InfoJet2Parser:
         }
         
         try:
-            # Split by & to get groups
             groups = re.split(r'\s*&\s*', protocol_string.strip())
             
             for group in groups:
@@ -193,11 +227,9 @@ class InfoJet2Parser:
                 if not group:
                     continue
                 
-                # Check for modifiers
                 include_all = False
                 exclude_all = False
                 
-                # Check for + or ^ at start or end
                 if group.startswith('+') or group.endswith('+'):
                     include_all = True
                     group = group.strip('+').strip()
@@ -205,21 +237,18 @@ class InfoJet2Parser:
                     exclude_all = True
                     group = group.strip('^').strip()
                 
-                # Extract words from parentheses
                 match = re.match(r'\(([^)]+)\)', group)
                 if match:
                     words_str = match.group(1)
-                    # Split by 'or' (case insensitive)
                     words = [w.strip() for w in re.split(r'\s+or\s+', words_str, flags=re.IGNORECASE)]
                     
                     result["groups"].append({
                         "words": words,
                         "include_all": include_all,
                         "exclude_all": exclude_all,
-                        "operator": "OR"  # Within group, words are OR'd
+                        "operator": "OR"
                     })
                 else:
-                    # Single word without parentheses
                     result["groups"].append({
                         "words": [group],
                         "include_all": include_all,
@@ -251,17 +280,14 @@ class InfoJet2Parser:
             exclude_all = group["exclude_all"]
             
             if exclude_all:
-                # None of these words should be present
                 for word in words:
                     if word.lower() in content_lower:
                         return False
             elif include_all:
-                # ALL words must be present
                 for word in words:
                     if word.lower() not in content_lower:
                         return False
             else:
-                # At least ONE word must be present (OR logic)
                 found = False
                 for word in words:
                     if word.lower() in content_lower:
@@ -275,7 +301,7 @@ class InfoJet2Parser:
     @staticmethod
     def validate_protocol(protocol_string: str) -> tuple[bool, str]:
         """Validate protocol syntax"""
-        parsed = InfoJet2Parser.parse_protocol(protocol_string)
+        parsed = InfoPilot2Parser.parse_protocol(protocol_string)
         if not parsed["valid"]:
             return False, parsed["error"]
         if len(parsed["groups"]) == 0:
@@ -287,7 +313,7 @@ class InfoJet2Parser:
 # ============================================
 
 class ArticleClassifier:
-    """Classifies articles based on InfoJet rules"""
+    """Classifies articles based on InfoPilot rules"""
     
     INFORMATIVE_PROTOCOL = "(there are or there is) & (may have or might have or that are) & (this kind or these kinds or this type or these types or it is) & (is easily or of each or less than the or more than or greater than or is more or is less) & (it is)"
     NEWS_PROTOCOL = "(news) & (news or story or news story) & (news or story or news story)"
@@ -298,50 +324,40 @@ class ArticleClassifier:
         content_lower = content.lower()
         title_lower = title.lower()
         
-        # Check for Forum
         if 'forum' in title_lower:
             return "Forum"
         
-        # Check for Blog
         blog_count = content_lower.count('blog')
         if blog_count >= settings.blog_keyword_count and 'blog' in title_lower:
             return "Blog"
         
-        # Check for Informative Ph.D
         phd_keywords = ['ph.d', 'phd', 'd.phil', 'dr.']
         phd_count = sum(content_lower.count(kw) for kw in phd_keywords)
         if phd_count >= settings.phd_keyword_count and word_count >= settings.informative_min_words:
-            # Check if meets informative protocol
-            parsed = InfoJet2Parser.parse_protocol(ArticleClassifier.INFORMATIVE_PROTOCOL)
-            if InfoJet2Parser.match_content(content, parsed):
+            parsed = InfoPilot2Parser.parse_protocol(ArticleClassifier.INFORMATIVE_PROTOCOL)
+            if InfoPilot2Parser.match_content(content, parsed):
                 return "Informative Ph.D"
         
-        # Check for Informative
-        parsed = InfoJet2Parser.parse_protocol(ArticleClassifier.INFORMATIVE_PROTOCOL)
-        if InfoJet2Parser.match_content(content, parsed):
+        parsed = InfoPilot2Parser.parse_protocol(ArticleClassifier.INFORMATIVE_PROTOCOL)
+        if InfoPilot2Parser.match_content(content, parsed):
             return "Informative"
         
-        # Check for Personal Report (collected)
-        # Count 'I' outside quotations in paragraphs
         paragraphs = content.split('\n\n')
         for para in paragraphs:
             words = para.split()
             if len(words) >= 75:
-                # Count 'I' (as standalone word)
                 i_count = len([w for w in words if w.strip('.,!?;:') == 'I'])
                 if i_count >= 3:
                     return "Personal Report (collected)"
         
-        # Check for News Article
         news_count = content_lower.count('news')
         if news_count >= 3:
             return "News Article"
         
-        parsed = InfoJet2Parser.parse_protocol(ArticleClassifier.NEWS_PROTOCOL)
-        if InfoJet2Parser.match_content(content, parsed):
+        parsed = InfoPilot2Parser.parse_protocol(ArticleClassifier.NEWS_PROTOCOL)
+        if InfoPilot2Parser.match_content(content, parsed):
             return "News Article"
         
-        # Default
         return "News Article"
 
 # ============================================
@@ -424,28 +440,24 @@ async def fetch_page_content(url: str) -> Dict[str, Any]:
             
             soup = BeautifulSoup(response.text, 'lxml')
             
-            # Extract title
             title = soup.title.string if soup.title else ""
             
-            # Extract main content
             for tag in soup(['script', 'style', 'nav', 'footer', 'header']):
                 tag.decompose()
             
             text = soup.get_text(separator=' ', strip=True)
             word_count = len(text.split())
             
-            # Extract year from content
             year_match = re.search(r'\b(19|20)\d{2}\b', text)
             detected_year = int(year_match.group()) if year_match else None
             
-            # Extract domain
             from urllib.parse import urlparse
             domain = urlparse(url).netloc
             
             return {
                 "success": True,
                 "title": title[:500] if title else "Untitled",
-                "content": text[:50000],  # Limit content
+                "content": text[:50000],
                 "word_count": word_count,
                 "detected_year": detected_year,
                 "domain": domain
@@ -454,9 +466,7 @@ async def fetch_page_content(url: str) -> Dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 async def web_search(query: str, num_results: int = 20) -> List[Dict[str, Any]]:
-    """
-    Perform web search using DuckDuckGo HTML (free, no API key needed)
-    """
+    """Perform web search using DuckDuckGo HTML"""
     results = []
     try:
         search_url = f"https://html.duckduckgo.com/html/?q={query}"
@@ -470,15 +480,12 @@ async def web_search(query: str, num_results: int = 20) -> List[Dict[str, Any]]:
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'lxml')
                 
-                # Find search results
                 for result in soup.select('.result')[:num_results]:
                     title_elem = result.select_one('.result__title a')
                     snippet_elem = result.select_one('.result__snippet')
                     
                     if title_elem:
-                        # DuckDuckGo uses redirect URLs, extract actual URL
                         href = title_elem.get('href', '')
-                        # Extract uddg parameter which contains the actual URL
                         url_match = re.search(r'uddg=([^&]+)', href)
                         if url_match:
                             from urllib.parse import unquote
@@ -502,11 +509,11 @@ async def web_search(query: str, num_results: int = 20) -> List[Dict[str, Any]]:
 
 @api_router.get("/")
 async def root():
-    return {"message": "InfoJet API v1.0 - World Wide Web Information Exchange"}
+    return {"message": "InfoPilot API v2.0 - Advanced Tactical Information Exchange System"}
 
 @api_router.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "InfoJet"}
+    return {"status": "operational", "service": "InfoPilot", "mode": "tactical"}
 
 # ============================================
 # API ROUTES - AUTHENTICATION
@@ -514,17 +521,14 @@ async def health_check():
 
 @api_router.post("/auth/register", response_model=TokenResponse)
 async def register(data: UserCreate):
-    # Check blocked words in username
     blocked_words = await get_blocked_words()
     has_blocked, found = contains_blocked_words(data.username, blocked_words)
     if has_blocked:
         raise HTTPException(status_code=400, detail=f"Username contains blocked words: {found}")
     
-    # Check if email exists
     if await db.users.find_one({"email": data.email}):
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Check if username exists
     if await db.users.find_one({"username": data.username}):
         raise HTTPException(status_code=400, detail="Username already taken")
     
@@ -537,6 +541,7 @@ async def register(data: UserCreate):
         "is_admin": False,
         "is_paid": False,
         "profile_photo": None,
+        "auth_provider": "email",
         "friends": [],
         "created_at": datetime.now(timezone.utc).isoformat()
     }
@@ -552,6 +557,7 @@ async def register(data: UserCreate):
             email=data.email,
             is_admin=False,
             is_paid=False,
+            auth_provider="email",
             created_at=datetime.fromisoformat(user["created_at"])
         )
     )
@@ -572,9 +578,78 @@ async def login(data: UserLogin):
             is_admin=user.get("is_admin", False),
             is_paid=user.get("is_paid", False),
             profile_photo=user.get("profile_photo"),
+            auth_provider=user.get("auth_provider", "email"),
             created_at=datetime.fromisoformat(user["created_at"]) if isinstance(user["created_at"], str) else user["created_at"]
         )
     )
+
+@api_router.post("/auth/google", response_model=TokenResponse)
+async def google_auth(data: GoogleAuthRequest):
+    """
+    Google OAuth Authentication (Demo/Sandbox Mode)
+    In production, this would verify the Google ID token
+    """
+    # Demo mode - create/login user with demo Google data
+    # In production, you would verify the token with Google
+    try:
+        # For demo, we'll decode the basic info (not verify signature)
+        # In production, use google-auth library to verify
+        demo_email = f"demo_{uuid.uuid4().hex[:8]}@gmail.com"
+        demo_username = f"pilot_{uuid.uuid4().hex[:6]}"
+        
+        # Check if this is a real Google credential format
+        if len(data.credential) > 100:
+            # Try to extract email from JWT payload (unverified - demo only!)
+            try:
+                import base64
+                parts = data.credential.split('.')
+                if len(parts) >= 2:
+                    payload = parts[1]
+                    # Add padding
+                    payload += '=' * (4 - len(payload) % 4)
+                    decoded = base64.urlsafe_b64decode(payload)
+                    import json
+                    claims = json.loads(decoded)
+                    demo_email = claims.get('email', demo_email)
+                    demo_username = claims.get('name', demo_username).replace(' ', '_')[:20]
+            except:
+                pass
+        
+        # Check if user exists
+        user = await db.users.find_one({"email": demo_email})
+        
+        if not user:
+            user_id = str(uuid.uuid4())
+            user = {
+                "id": user_id,
+                "username": demo_username,
+                "email": demo_email,
+                "password_hash": "",  # No password for OAuth users
+                "is_admin": False,
+                "is_paid": False,
+                "profile_photo": None,
+                "auth_provider": "google",
+                "friends": [],
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.users.insert_one(user)
+        
+        token = create_token(user["id"])
+        return TokenResponse(
+            access_token=token,
+            user=UserResponse(
+                id=user["id"],
+                username=user["username"],
+                email=user["email"],
+                is_admin=user.get("is_admin", False),
+                is_paid=user.get("is_paid", False),
+                profile_photo=user.get("profile_photo"),
+                auth_provider="google",
+                created_at=datetime.fromisoformat(user["created_at"]) if isinstance(user["created_at"], str) else user["created_at"]
+            )
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Google authentication failed: {str(e)}")
 
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_me(user: dict = Depends(require_user)):
@@ -585,8 +660,79 @@ async def get_me(user: dict = Depends(require_user)):
         is_admin=user.get("is_admin", False),
         is_paid=user.get("is_paid", False),
         profile_photo=user.get("profile_photo"),
+        auth_provider=user.get("auth_provider", "email"),
         created_at=datetime.fromisoformat(user["created_at"]) if isinstance(user["created_at"], str) else user["created_at"]
     )
+
+# ============================================
+# API ROUTES - PAYMENTS (SANDBOX)
+# ============================================
+
+@api_router.post("/payments/process", response_model=PaymentResponse)
+async def process_payment(data: PaymentRequest, user: dict = Depends(require_user)):
+    """
+    Process payment (SANDBOX MODE)
+    Supports: PayPal, Google Pay, Shopify
+    """
+    transaction_id = f"SANDBOX_{data.payment_method.upper()}_{uuid.uuid4().hex[:12].upper()}"
+    
+    # Log the payment attempt
+    payment_record = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "transaction_id": transaction_id,
+        "payment_method": data.payment_method,
+        "item_type": data.item_type,
+        "amount": data.amount,
+        "status": "completed",
+        "sandbox": True,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.payments.insert_one(payment_record)
+    
+    # Update user's paid status if subscription
+    if data.item_type == "subscription":
+        await db.users.update_one(
+            {"id": user["id"]},
+            {"$set": {"is_paid": True, "subscription_date": datetime.now(timezone.utc).isoformat()}}
+        )
+    
+    return PaymentResponse(
+        success=True,
+        transaction_id=transaction_id,
+        message=f"Payment processed successfully via {data.payment_method} (SANDBOX MODE)",
+        sandbox=True
+    )
+
+@api_router.get("/payments/history")
+async def get_payment_history(user: dict = Depends(require_user)):
+    """Get user's payment history"""
+    payments = await db.payments.find({"user_id": user["id"]}, {"_id": 0}).to_list(100)
+    return payments
+
+# ============================================
+# API ROUTES - BOOK INFO
+# ============================================
+
+@api_router.get("/book/info")
+async def get_book_info():
+    """Get Letters to Evelyn book information"""
+    return BOOK_INFO
+
+@api_router.get("/subscription/info")
+async def get_subscription_info():
+    """Get subscription information"""
+    return {
+        "price": SUBSCRIPTION_PRICE,
+        "type": "lifetime",
+        "features": [
+            "Unlimited search results pages",
+            "Unlimited categories",
+            "Advanced statistics",
+            "Global Research Database access",
+            "Priority support"
+        ]
+    }
 
 # ============================================
 # API ROUTES - CATEGORIES & PROTOCOLS
@@ -594,12 +740,10 @@ async def get_me(user: dict = Depends(require_user)):
 
 @api_router.post("/categories", response_model=CategoryResponse)
 async def create_category(data: CategoryCreate, user: dict = Depends(require_user)):
-    # Validate protocol
-    is_valid, error = InfoJet2Parser.validate_protocol(data.protocol.protocol_string)
+    is_valid, error = InfoPilot2Parser.validate_protocol(data.protocol.protocol_string)
     if not is_valid:
         raise HTTPException(status_code=400, detail=f"Invalid protocol: {error}")
     
-    # Check blocked words in category name and protocol
     blocked_words = await get_blocked_words()
     has_blocked, found = contains_blocked_words(data.name, blocked_words)
     if has_blocked:
@@ -609,7 +753,6 @@ async def create_category(data: CategoryCreate, user: dict = Depends(require_use
     if has_blocked:
         raise HTTPException(status_code=400, detail=f"Protocol contains blocked words: {found}")
     
-    # Determine level
     level = 0
     if data.parent_id:
         parent = await db.categories.find_one({"id": data.parent_id, "user_id": user["id"]})
@@ -617,7 +760,6 @@ async def create_category(data: CategoryCreate, user: dict = Depends(require_use
             raise HTTPException(status_code=404, detail="Parent category not found")
         level = parent.get("level", 0) + 1
         
-        # Check max levels
         settings = await db.admin_settings.find_one({"id": "admin_settings"})
         max_levels = settings.get("max_category_levels", 100) if settings else 100
         if level > max_levels:
@@ -645,7 +787,6 @@ async def get_categories(
     include_public: bool = True,
     user: dict = Depends(require_user)
 ):
-    """Get categories - own categories and optionally public ones"""
     query = {"$or": [{"user_id": user["id"]}]}
     
     if include_public:
@@ -671,7 +812,6 @@ async def get_category(category_id: str, user: dict = Depends(require_user)):
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     
-    # Check access
     if category["user_id"] != user["id"] and not category.get("is_public", True):
         raise HTTPException(status_code=403, detail="Access denied")
     
@@ -687,7 +827,6 @@ async def delete_category(category_id: str, user: dict = Depends(require_user)):
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     
-    # Delete category and all subcategories
     await db.categories.delete_many({
         "$or": [
             {"id": category_id},
@@ -714,9 +853,9 @@ async def update_category_visibility(category_id: str, is_public: bool, user: di
 
 @api_router.post("/protocol/validate")
 async def validate_protocol(data: ProtocolCreate):
-    """Validate InfoJet 2.0 protocol syntax"""
-    is_valid, message = InfoJet2Parser.validate_protocol(data.protocol_string)
-    parsed = InfoJet2Parser.parse_protocol(data.protocol_string)
+    """Validate InfoPilot 2.0 protocol syntax"""
+    is_valid, message = InfoPilot2Parser.validate_protocol(data.protocol_string)
+    parsed = InfoPilot2Parser.parse_protocol(data.protocol_string)
     
     return {
         "valid": is_valid,
@@ -727,8 +866,8 @@ async def validate_protocol(data: ProtocolCreate):
 @api_router.post("/protocol/test")
 async def test_protocol(protocol_string: str, test_content: str):
     """Test if content matches a protocol"""
-    parsed = InfoJet2Parser.parse_protocol(protocol_string)
-    matches = InfoJet2Parser.match_content(test_content, parsed)
+    parsed = InfoPilot2Parser.parse_protocol(protocol_string)
+    matches = InfoPilot2Parser.match_content(test_content, parsed)
     
     return {
         "matches": matches,
@@ -736,49 +875,38 @@ async def test_protocol(protocol_string: str, test_content: str):
     }
 
 # ============================================
-# API ROUTES - SEARCH & COLLATE (THE INFOJET PAGE)
+# API ROUTES - SEARCH & COLLATE (THE INFOPILOT PAGE)
 # ============================================
 
 @api_router.post("/search/collate")
 async def collate_search(data: CollateRequest, user: dict = Depends(require_user)):
-    """
-    Main InfoJet search - searches the web and automatically categorizes results
-    based on user's protocols
-    """
-    # Check blocked words in query
+    """Main InfoPilot search - searches the web and automatically categorizes results"""
     blocked_words = await get_blocked_words()
     has_blocked, found = contains_blocked_words(data.search_query, blocked_words)
     if has_blocked:
         raise HTTPException(status_code=400, detail=f"Search query contains blocked words: {found}")
     
-    # Get admin settings
     settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
     settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
     
-    # Check if user can search (paid or admin gets unlimited)
     if not user.get("is_paid") and not user.get("is_admin"):
-        # Free users limited
         max_results = settings.results_per_page
     else:
         max_results = min(data.max_results, 100)
     
-    # Get user's categories with protocols
     user_categories = await db.categories.find({"user_id": user["id"]}).to_list(1000)
     
     if not user_categories:
         raise HTTPException(status_code=400, detail="Create at least one category with a protocol before searching")
     
-    # Perform web search
     search_results = await web_search(data.search_query, max_results)
     
     if not search_results:
         return {"message": "No search results found", "results": [], "categorized_count": 0}
     
-    # Process and categorize each result
     collated_results = []
     
     for result in search_results:
-        # Fetch full page content
         page_data = await fetch_page_content(result["url"])
         
         if not page_data["success"]:
@@ -786,20 +914,17 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
         
         content = f"{result['title']} {result['snippet']} {page_data.get('content', '')}"
         
-        # Check blocked words in content
         has_blocked, _ = contains_blocked_words(content, blocked_words)
         if has_blocked:
-            continue  # Skip blocked content
+            continue
         
-        # Match against all user protocols
         matching_categories = []
         for category in user_categories:
-            parsed = InfoJet2Parser.parse_protocol(category["protocol_string"])
-            if InfoJet2Parser.match_content(content, parsed):
+            parsed = InfoPilot2Parser.parse_protocol(category["protocol_string"])
+            if InfoPilot2Parser.match_content(content, parsed):
                 matching_categories.append(category["id"])
         
-        if matching_categories:  # Only save if matches at least one category
-            # Classify article type
+        if matching_categories:
             article_type = ArticleClassifier.classify(
                 content,
                 result["title"],
@@ -807,7 +932,6 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
                 settings
             )
             
-            # Create search result document
             result_id = str(uuid.uuid4())
             search_result = {
                 "id": result_id,
@@ -840,45 +964,33 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
 
 @api_router.post("/ultimate-search")
 async def ultimate_search(data: UltimateSearchRequest, user: dict = Depends(require_user)):
-    """
-    Search through collated results with advanced filtering
-    """
-    # Get admin settings
+    """Search through collated results with advanced filtering"""
     settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
     settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
     
-    # Check pagination limits for free users
     if not user.get("is_paid") and not user.get("is_admin"):
         if data.page > settings.free_user_pages:
             raise HTTPException(
                 status_code=403,
-                detail=f"Free users can only access {settings.free_user_pages} page(s) of results. Upgrade to continue."
+                detail=f"Free users can only access {settings.free_user_pages} page(s) of results. Upgrade for just $0.95 lifetime!"
             )
     
-    # Build query
     query = {"user_id": user["id"]}
     
-    # Category filtering based on aggregation type
     if data.category_ids:
         if data.aggregation_type == "and":
-            # Must have ONLY these categories (exact match)
             query["categories"] = {"$all": data.category_ids, "$size": len(data.category_ids)}
         elif data.aggregation_type == "and_or":
-            # Must have ALL these categories (plus possibly others)
             query["categories"] = {"$all": data.category_ids}
-        else:  # "or"
-            # Must have ANY of these categories
+        else:
             query["categories"] = {"$in": data.category_ids}
     
-    # Article type filter
     if data.article_types:
         query["article_type"] = {"$in": data.article_types}
     
-    # Domain filter
     if data.domains:
         query["domain"] = {"$in": data.domains}
     
-    # Year filter
     if data.year_from or data.year_to:
         year_query = {}
         if data.year_from:
@@ -887,22 +999,18 @@ async def ultimate_search(data: UltimateSearchRequest, user: dict = Depends(requ
             year_query["$lte"] = data.year_to
         query["detected_year"] = year_query
     
-    # Keyword search
     if data.keyword:
         query["$or"] = [
             {"title": {"$regex": data.keyword, "$options": "i"}},
             {"snippet": {"$regex": data.keyword, "$options": "i"}}
         ]
     
-    # Pagination
     skip = (data.page - 1) * settings.results_per_page
     limit = settings.results_per_page
     
-    # Execute query
     total = await db.search_results.count_documents(query)
     results = await db.search_results.find(query).skip(skip).limit(limit).to_list(limit)
     
-    # Get category names for display
     category_ids = set()
     for r in results:
         category_ids.update(r.get("categories", []))
@@ -910,7 +1018,6 @@ async def ultimate_search(data: UltimateSearchRequest, user: dict = Depends(requ
     categories = await db.categories.find({"id": {"$in": list(category_ids)}}).to_list(1000)
     category_map = {c["id"]: c["name"] for c in categories}
     
-    # Add category names to results
     for r in results:
         r["category_names"] = [category_map.get(cid, "Unknown") for cid in r.get("categories", [])]
     
@@ -925,13 +1032,9 @@ async def ultimate_search(data: UltimateSearchRequest, user: dict = Depends(requ
 @api_router.get("/ultimate-search/filters")
 async def get_search_filters(user: dict = Depends(require_user)):
     """Get available filter options for Ultimate Search"""
-    # Get unique domains
     domains = await db.search_results.distinct("domain", {"user_id": user["id"]})
-    
-    # Get unique article types
     article_types = await db.search_results.distinct("article_type", {"user_id": user["id"]})
     
-    # Get year range
     pipeline = [
         {"$match": {"user_id": user["id"], "detected_year": {"$ne": None}}},
         {"$group": {
@@ -963,14 +1066,12 @@ async def add_reaction(result_id: str, data: ArticleReaction, user: dict = Depen
     if not result:
         raise HTTPException(status_code=404, detail="Search result not found")
     
-    # Update reaction count
     reaction_key = f"reactions.{data.reaction_type}"
     await db.search_results.update_one(
         {"id": result_id},
         {"$inc": {reaction_key: 1}}
     )
     
-    # Track user's reaction
     await db.user_reactions.update_one(
         {"user_id": user["id"], "result_id": result_id},
         {"$set": {"reaction_type": data.reaction_type, "created_at": datetime.now(timezone.utc).isoformat()}},
@@ -987,7 +1088,6 @@ async def add_reaction(result_id: str, data: ArticleReaction, user: dict = Depen
 async def get_admin_settings(user: dict = Depends(require_admin)):
     settings = await db.admin_settings.find_one({"id": "admin_settings"})
     if not settings:
-        # Create default settings
         default = AdminSettings().model_dump()
         await db.admin_settings.insert_one(default)
         return AdminSettings()
@@ -1056,11 +1156,9 @@ async def get_global_database(
     user: dict = Depends(require_user)
 ):
     """Access all public categories and their results"""
-    # Get admin settings
     settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
     settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
     
-    # Check pagination limits for free users
     if not user.get("is_paid") and not user.get("is_admin"):
         if page > settings.free_user_pages:
             raise HTTPException(
@@ -1068,11 +1166,9 @@ async def get_global_database(
                 detail="Upgrade to access more pages"
             )
     
-    # Get all public categories
     public_categories = await db.categories.find({"is_public": True}).to_list(1000)
     public_category_ids = [c["id"] for c in public_categories]
     
-    # Build query for results
     query = {"categories": {"$in": public_category_ids}}
     if category_id:
         query["categories"] = category_id
@@ -1099,14 +1195,12 @@ async def get_statistics(user: dict = Depends(require_user)):
     """Get statistics for the user's data"""
     user_id = user["id"]
     
-    # Count by article type
     type_pipeline = [
         {"$match": {"user_id": user_id}},
         {"$group": {"_id": "$article_type", "count": {"$sum": 1}}}
     ]
     article_types = await db.search_results.aggregate(type_pipeline).to_list(100)
     
-    # Count by domain
     domain_pipeline = [
         {"$match": {"user_id": user_id}},
         {"$group": {"_id": "$domain", "count": {"$sum": 1}}},
@@ -1115,7 +1209,6 @@ async def get_statistics(user: dict = Depends(require_user)):
     ]
     top_domains = await db.search_results.aggregate(domain_pipeline).to_list(10)
     
-    # Count by year
     year_pipeline = [
         {"$match": {"user_id": user_id, "detected_year": {"$ne": None}}},
         {"$group": {"_id": "$detected_year", "count": {"$sum": 1}}},
@@ -1123,7 +1216,6 @@ async def get_statistics(user: dict = Depends(require_user)):
     ]
     by_year = await db.search_results.aggregate(year_pipeline).to_list(100)
     
-    # Category counts
     category_pipeline = [
         {"$match": {"user_id": user_id}},
         {"$unwind": "$categories"},
@@ -1131,7 +1223,6 @@ async def get_statistics(user: dict = Depends(require_user)):
     ]
     category_counts = await db.search_results.aggregate(category_pipeline).to_list(100)
     
-    # Get category names
     cat_ids = [c["_id"] for c in category_counts]
     categories = await db.categories.find({"id": {"$in": cat_ids}}).to_list(100)
     cat_map = {c["id"]: c["name"] for c in categories}
@@ -1172,7 +1263,6 @@ async def delete_results_batch(result_ids: List[str], user: dict = Depends(requi
 # SETUP & MIDDLEWARE
 # ============================================
 
-# Include the router in the main app
 app.include_router(api_router)
 
 app.add_middleware(
@@ -1185,18 +1275,16 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup():
-    # Create indexes
     await db.users.create_index("email", unique=True)
     await db.users.create_index("username", unique=True)
     await db.categories.create_index([("user_id", 1), ("parent_id", 1)])
     await db.search_results.create_index([("user_id", 1), ("categories", 1)])
     await db.search_results.create_index([("user_id", 1), ("article_type", 1)])
     
-    # Initialize admin settings if not exists
     if not await db.admin_settings.find_one({"id": "admin_settings"}):
         await db.admin_settings.insert_one(AdminSettings().model_dump())
     
-    logger.info("InfoJet API started successfully")
+    logger.info("InfoPilot API v2.0 - Tactical Systems Online")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
