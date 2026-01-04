@@ -31,7 +31,7 @@ export default function SplashScreen() {
         <Text style={styles.tagline}>Your 3D View of the Internet</Text>
       </View>
       <ActivityIndicator size="large" color="#2196F3" style={styles.loader} />
-      <Text style={styles.footer}>InfoJet Inc. | Brunswick, Maine</Text>
+      <Text style={styles.footer}>Top Pilot Enterprises | Brunswick, Maine</Text>
     </View>
   );
 }
