@@ -10,6 +10,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
 import { useRouter } from 'expo-router';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
