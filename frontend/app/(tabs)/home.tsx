@@ -399,4 +399,83 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  modalContent: {
+    flex: 1,
+    padding: 20,
+  },
+  pricingCard: {
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    padding: 40,
+    borderRadius: 16,
+    marginBottom: 32,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  pricingTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginTop: 16,
+  },
+  pricingPrice: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginTop: 8,
+  },
+  pricingPeriod: {
+    fontSize: 16,
+    color: colors.textLight,
+  },
+  featuresList: {
+    marginBottom: 32,
+  },
+  featuresTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 20,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  featureText: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
+    marginLeft: 12,
+  },
+  subscribeButton: {
+    marginBottom: 20,
+  },
+  disclaimer: {
+    fontSize: 12,
+    color: colors.textLight,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 20,
+  },
 });
