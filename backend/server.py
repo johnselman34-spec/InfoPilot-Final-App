@@ -593,53 +593,91 @@ async def login(data: UserLogin):
 @api_router.post("/auth/google", response_model=TokenResponse)
 async def google_auth(data: GoogleAuthRequest):
     """
-    Google OAuth Authentication (Demo/Sandbox Mode)
-    In production, this would verify the Google ID token
+    Google OAuth Authentication - Verifies Google ID tokens
+    Supports: Web, Android (com.toppilotenterprises.infopilot), iOS
     """
-    # Demo mode - create/login user with demo Google data
-    # In production, you would verify the token with Google
     try:
-        # For demo, we'll decode the basic info (not verify signature)
-        # In production, use google-auth library to verify
-        demo_email = f"demo_{uuid.uuid4().hex[:8]}@gmail.com"
-        demo_username = f"pilot_{uuid.uuid4().hex[:6]}"
+        # Verify the Google ID token
+        idinfo = None
+        verification_error = None
         
-        # Check if this is a real Google credential format
-        if len(data.credential) > 100:
-            # Try to extract email from JWT payload (unverified - demo only!)
+        # Try to verify against all configured client IDs
+        for client_id in GOOGLE_CLIENT_IDS:
             try:
-                import base64
-                parts = data.credential.split('.')
-                if len(parts) >= 2:
-                    payload = parts[1]
-                    # Add padding
-                    payload += '=' * (4 - len(payload) % 4)
-                    decoded = base64.urlsafe_b64decode(payload)
-                    import json
-                    claims = json.loads(decoded)
-                    demo_email = claims.get('email', demo_email)
-                    demo_username = claims.get('name', demo_username).replace(' ', '_')[:20]
-            except:
-                pass
+                idinfo = id_token.verify_oauth2_token(
+                    data.credential,
+                    google_requests.Request(),
+                    client_id
+                )
+                break  # Successfully verified
+            except ValueError as e:
+                verification_error = str(e)
+                continue
         
-        # Check if user exists
-        user = await db.users.find_one({"email": demo_email})
+        if idinfo is None:
+            # If verification failed, log the error but try to extract info for debugging
+            logger.warning(f"Google token verification failed: {verification_error}")
+            raise HTTPException(status_code=401, detail=f"Invalid Google token: {verification_error}")
+        
+        # Token is valid - extract user info
+        google_email = idinfo.get('email')
+        google_name = idinfo.get('name', 'Pilot')
+        google_picture = idinfo.get('picture')
+        google_sub = idinfo.get('sub')  # Google's unique user ID
+        
+        if not google_email:
+            raise HTTPException(status_code=400, detail="Email not provided by Google")
+        
+        # Check if email is verified
+        if not idinfo.get('email_verified', False):
+            raise HTTPException(status_code=400, detail="Google email not verified")
+        
+        # Check if user exists by email or Google ID
+        user = await db.users.find_one({
+            "$or": [
+                {"email": google_email},
+                {"google_id": google_sub}
+            ]
+        })
         
         if not user:
+            # Create new user
             user_id = str(uuid.uuid4())
+            username = google_name.replace(' ', '_')[:20] if google_name else f"pilot_{uuid.uuid4().hex[:6]}"
+            
+            # Ensure unique username
+            existing_username = await db.users.find_one({"username": username})
+            if existing_username:
+                username = f"{username}_{uuid.uuid4().hex[:4]}"
+            
             user = {
                 "id": user_id,
-                "username": demo_username,
-                "email": demo_email,
+                "username": username,
+                "email": google_email,
+                "google_id": google_sub,
                 "password_hash": "",  # No password for OAuth users
                 "is_admin": False,
                 "is_paid": False,
-                "profile_photo": None,
+                "profile_photo": google_picture,
                 "auth_provider": "google",
                 "friends": [],
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             await db.users.insert_one(user)
+            logger.info(f"New Google user registered: {google_email}")
+        else:
+            # Update existing user's Google info if needed
+            update_data = {}
+            if not user.get("google_id"):
+                update_data["google_id"] = google_sub
+            if google_picture and not user.get("profile_photo"):
+                update_data["profile_photo"] = google_picture
+            if user.get("auth_provider") != "google":
+                update_data["auth_provider"] = "google"
+            
+            if update_data:
+                await db.users.update_one({"id": user["id"]}, {"$set": update_data})
+                user.update(update_data)
         
         token = create_token(user["id"])
         return TokenResponse(
@@ -655,7 +693,10 @@ async def google_auth(data: GoogleAuthRequest):
                 created_at=datetime.fromisoformat(user["created_at"]) if isinstance(user["created_at"], str) else user["created_at"]
             )
         )
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Google auth error: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Google authentication failed: {str(e)}")
 
 @api_router.get("/auth/me", response_model=UserResponse)
