@@ -3,13 +3,15 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 import axios from "axios";
 import { Toaster, toast } from "sonner";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import {
   Search, Globe, FolderTree, BarChart3, Settings, LogOut, User, Plus, Trash2,
   Eye, EyeOff, ChevronDown, ChevronRight, Filter, Heart, ThumbsUp, Smile,
   Frown, AlertTriangle, Flag, Award, Home, Users, BookOpen, Menu, X, Loader2,
   ShoppingCart, CreditCard, Star, ExternalLink, Plane, Shield, Radar, Target,
   Crosshair, Navigation, Zap, Radio, Cpu, Book, Edit3, Copy, Check, Gift,
-  Sparkles, Crown, Lock, Unlock, ArrowRight, DollarSign
+  Sparkles, Crown, Lock, Unlock, ArrowRight, DollarSign, Clock, Calendar
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -23,12 +25,17 @@ const API = `${BACKEND_URL}/api`;
 // Google OAuth Client ID
 const GOOGLE_CLIENT_ID = "553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com";
 
-// All Images
+// Stripe Publishable Key (will be fetched from backend)
+const stripePromise = loadStripe("pk_test_51SlzcOCoPA8fzpEMO2Kl2OnRVlTHYB3AMQIjBesYrVtcnXuMtHae6Pj9KYl55LRqWJZq5hSyxzK1PyunsN99oix500wA2Zot90");
+
+// All Images - Including new book images
 const IMAGES = {
   globe: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/utj2uh0i_global-network-world-globe-focusing-usa-symbolizing-data-transfer-worldwide-concept-data-transfer-global-connectivity-information-exchange-world-globe-usa-symbolism_918839-41653.jpg",
   author: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/5150hnhi_FB_IMG_1767397923842.jpg",
-  bookCover1: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/ls79opar_IMG_20251230_025749_432.jpg",
-  bookCover2: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/yrjcamzy_IMG_20251230_025749_282.jpg"
+  bookCover1: "https://customer-assets.emergentagent.com/job_5fdf2820-b9a7-4458-b1a2-1b10e8aac7a0/artifacts/r64isdc9_IMG_20251230_025749_538.jpg",
+  bookCover2: "https://customer-assets.emergentagent.com/job_5fdf2820-b9a7-4458-b1a2-1b10e8aac7a0/artifacts/l30hn5yf_IMG_20251230_025749_332.jpg",
+  bookCover3: "https://customer-assets.emergentagent.com/job_5fdf2820-b9a7-4458-b1a2-1b10e8aac7a0/artifacts/3lxcoocv_IMG_20251230_025749_258.jpg",
+  bookCover4: "https://customer-assets.emergentagent.com/job_5fdf2820-b9a7-4458-b1a2-1b10e8aac7a0/artifacts/0h2312cs_IMG_20251230_025749_432.jpg"
 };
 
 // Book Info with 19 Five-Star Reviews
@@ -55,8 +62,9 @@ const BOOK_INFO = {
   ]
 };
 
-// Subscription Price - NOW 90 CENTS!
-const SUBSCRIPTION_PRICE = 0.90;
+// Pricing Info
+const SALE_PRICE = 0.75;
+const REGULAR_PRICE = 4.70;
 
 // Auth Context
 const AuthContext = createContext(null);
@@ -141,34 +149,39 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Loading Screen
+// Loading Screen - Futuristic Theme
 const LoadingScreen = () => (
-  <div className="min-h-screen bg-cockpit flex items-center justify-center">
+  <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 flex items-center justify-center">
     <div className="text-center">
       <div className="relative w-24 h-24 mx-auto mb-6">
-        <div className="absolute inset-0 border-4 border-hud-cyan/30 rounded-full animate-ping"></div>
-        <div className="absolute inset-2 border-2 border-hud-green rounded-full animate-spin"></div>
-        <Radar className="absolute inset-0 m-auto w-12 h-12 text-hud-cyan animate-pulse" />
+        <div className="absolute inset-0 border-4 border-pink-500/30 rounded-full animate-ping"></div>
+        <div className="absolute inset-2 border-2 border-purple-400 rounded-full animate-spin"></div>
+        <Radar className="absolute inset-0 m-auto w-12 h-12 text-pink-400 animate-pulse" />
       </div>
-      <p className="text-hud-green font-mono text-lg tracking-wider">INITIALIZING INFOPILOT...</p>
+      <p className="text-purple-300 font-mono text-lg tracking-wider">INITIALIZING INFOPILOT...</p>
     </div>
   </div>
 );
 
-// HUD Frame Component
-const HUDFrame = ({ children, title, className = "", color = "cyan" }) => {
-  const borderColor = color === "orange" ? "border-hud-orange" : color === "green" ? "border-hud-green" : "border-hud-cyan";
-  const textColor = color === "orange" ? "text-hud-orange" : color === "green" ? "text-hud-green" : "text-hud-cyan";
+// Futuristic Frame Component
+const FuturisticFrame = ({ children, title, className = "", color = "purple" }) => {
+  const colors = {
+    purple: { border: "border-purple-500/50", text: "text-purple-400", glow: "shadow-purple-500/20" },
+    pink: { border: "border-pink-500/50", text: "text-pink-400", glow: "shadow-pink-500/20" },
+    blue: { border: "border-blue-500/50", text: "text-blue-400", glow: "shadow-blue-500/20" },
+    red: { border: "border-red-500/50", text: "text-red-400", glow: "shadow-red-500/20" }
+  };
+  const c = colors[color] || colors.purple;
   
   return (
     <div className={`relative ${className}`}>
-      <div className={`absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 ${borderColor}`}></div>
-      <div className={`absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 ${borderColor}`}></div>
-      <div className={`absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 ${borderColor}`}></div>
-      <div className={`absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 ${borderColor}`}></div>
+      <div className={`absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 ${c.border}`}></div>
+      <div className={`absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 ${c.border}`}></div>
+      <div className={`absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 ${c.border}`}></div>
+      <div className={`absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 ${c.border}`}></div>
       {title && (
-        <div className="absolute -top-3 left-6 bg-cockpit px-2">
-          <span className={`${textColor} text-xs font-mono tracking-wider`}>{title}</span>
+        <div className="absolute -top-3 left-6 bg-slate-950 px-2">
+          <span className={`${c.text} text-xs font-mono tracking-wider`}>{title}</span>
         </div>
       )}
       <div className="p-4">{children}</div>
@@ -176,65 +189,121 @@ const HUDFrame = ({ children, title, className = "", color = "cyan" }) => {
   );
 };
 
-// MEGA Sales Banner - Subscription
-const SubscriptionSalesBanner = ({ onUpgrade, compact = false }) => {
+// Sale Countdown Timer
+const SaleCountdown = ({ endDate }) => {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const end = new Date(endDate);
+      const now = new Date();
+      const diff = end - now;
+      
+      if (diff > 0) {
+        setTimeLeft({
+          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((diff % (1000 * 60)) / 1000)
+        });
+      }
+    };
+    
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, [endDate]);
+  
+  return (
+    <div className="flex items-center justify-center gap-2 text-sm font-mono">
+      <Clock className="w-4 h-4 text-pink-400" />
+      <span className="text-purple-300">Sale ends in:</span>
+      <span className="text-pink-400 font-bold">{timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s</span>
+    </div>
+  );
+};
+
+// MEGA Sales Banner - Welcome Sale
+const WelcomeSaleBanner = ({ onUpgrade, compact = false }) => {
   const { user } = useAuth();
+  const [saleInfo, setSaleInfo] = useState(null);
+  
+  useEffect(() => {
+    axios.get(`${API}/subscription/info`).then(res => setSaleInfo(res.data)).catch(() => {});
+  }, []);
   
   if (user?.is_paid) return null;
   
   return (
-    <div className={`bg-gradient-to-r from-hud-orange/20 via-hud-cyan/20 to-hud-green/20 border-2 border-hud-orange rounded-xl overflow-hidden ${compact ? 'p-4' : 'p-6'} animate-pulse-slow`}>
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Crown className="w-12 h-12 text-hud-orange animate-bounce" />
-            <Sparkles className="w-6 h-6 text-hud-cyan absolute -top-1 -right-1" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-4xl font-bold text-hud-orange font-mono">$0.90</span>
-              <span className="text-hud-green font-mono text-sm line-through opacity-50">$9.99</span>
-              <span className="bg-hud-red text-white px-2 py-1 rounded text-xs font-bold animate-pulse">91% OFF!</span>
+    <div className={`bg-gradient-to-r from-red-900/30 via-pink-900/30 to-purple-900/30 border-2 border-pink-500 rounded-xl overflow-hidden ${compact ? 'p-4' : 'p-6'} relative`}>
+      {/* Animated glow effect */}
+      <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 animate-pulse"></div>
+      
+      <div className="relative z-10">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Gift className="w-12 h-12 text-pink-400 animate-bounce" />
+              <Sparkles className="w-6 h-6 text-yellow-400 absolute -top-1 -right-1 animate-pulse" />
             </div>
-            <p className="text-hud-cyan font-mono text-sm">LIFETIME PREMIUM ACCESS - ONE TIME PAYMENT!</p>
-            {!compact && (
-              <p className="text-hud-green/70 text-xs font-mono mt-1">Unlimited searches • Unlimited categories • Full access forever</p>
-            )}
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="bg-gradient-to-r from-pink-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">🎉 WELCOME SALE!</span>
+                <span className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono">$0.75</span>
+                <span className="text-purple-400/50 font-mono text-lg line-through">$4.70/yr</span>
+              </div>
+              <p className="text-pink-300 font-mono text-sm mt-1">LIFETIME PREMIUM ACCESS - ONE TIME PAYMENT!</p>
+              {!compact && saleInfo?.sale_end_date && (
+                <div className="mt-2">
+                  <SaleCountdown endDate={saleInfo.sale_end_date} />
+                </div>
+              )}
+            </div>
           </div>
+          <button
+            onClick={onUpgrade}
+            className="px-8 py-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform shadow-lg shadow-pink-500/30 flex items-center gap-2"
+          >
+            <Zap className="w-5 h-5" />
+            UPGRADE NOW
+            <ArrowRight className="w-5 h-5" />
+          </button>
         </div>
-        <button
-          onClick={onUpgrade}
-          className="px-8 py-4 bg-gradient-to-r from-hud-orange to-hud-red text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform shadow-lg shadow-hud-orange/30 flex items-center gap-2"
-        >
-          <Zap className="w-5 h-5" />
-          UPGRADE NOW
-          <ArrowRight className="w-5 h-5" />
-        </button>
       </div>
     </div>
   );
 };
 
-// MEGA Book Sales Banner
+// MEGA Book Sales Banner - New Design
 const BookSalesBanner = ({ variant = "full" }) => {
+  const [currentImage, setCurrentImage] = useState(0);
+  const bookImages = [IMAGES.bookCover1, IMAGES.bookCover2, IMAGES.bookCover3, IMAGES.bookCover4];
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % bookImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+  
   const openAmazon = () => window.open(BOOK_INFO.amazonUrl, '_blank');
   
   if (variant === "compact") {
     return (
-      <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/50 rounded-lg p-4 cursor-pointer hover:scale-[1.02] transition-transform" onClick={openAmazon}>
+      <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/50 rounded-lg p-4 cursor-pointer hover:scale-[1.02] transition-transform" onClick={openAmazon}>
         <div className="flex items-center gap-4">
-          <img src={IMAGES.bookCover1} alt="Letters to Evelyn" className="w-20 h-20 object-cover rounded-lg shadow-lg" />
+          <img src={bookImages[currentImage]} alt="Letters to Evelyn" className="w-20 h-28 object-cover rounded-lg shadow-lg shadow-purple-500/30" />
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="text-hud-orange font-mono font-bold">LETTERS TO EVELYN</h3>
+              <h3 className="text-pink-400 font-mono font-bold">LETTERS TO EVELYN</h3>
               <div className="flex">
                 {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
               </div>
             </div>
-            <p className="text-hud-cyan text-xs font-mono">19 Five-Star Reviews • Supernatural Thriller Comedy</p>
-            <p className="text-hud-green/70 text-xs font-mono italic mt-1">"A profound and unforgettable literary piece"</p>
+            <p className="text-purple-300 text-xs font-mono">19 Five-Star Reviews • Supernatural Thriller</p>
+            <p className="text-blue-300/70 text-xs font-mono italic mt-1">"A profound and unforgettable literary piece"</p>
           </div>
-          <button className="px-4 py-2 bg-purple-600 text-white font-mono text-sm rounded hover:bg-purple-500 flex items-center gap-1">
+          <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-mono text-sm rounded hover:scale-105 transition-transform flex items-center gap-1">
             <ShoppingCart className="w-4 h-4" />
             GET BOOK
           </button>
@@ -244,55 +313,67 @@ const BookSalesBanner = ({ variant = "full" }) => {
   }
   
   return (
-    <div className="bg-gradient-to-br from-purple-900/40 via-blue-900/30 to-pink-900/40 border-2 border-purple-500 rounded-xl overflow-hidden">
+    <div className="bg-gradient-to-br from-purple-900/50 via-blue-900/40 to-pink-900/50 border-2 border-purple-500 rounded-xl overflow-hidden">
       <div className="p-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Book Image */}
-          <div className="lg:w-1/3 flex justify-center">
+          {/* Book Images Gallery */}
+          <div className="lg:w-1/3 flex flex-col items-center gap-4">
             <div className="relative group cursor-pointer" onClick={openAmazon}>
               <img 
-                src={IMAGES.bookCover2} 
-                alt="Letters to Evelyn - 13 Years of Cosmic Chaos" 
-                className="w-full max-w-xs rounded-lg shadow-2xl shadow-purple-500/30 group-hover:scale-105 transition-transform"
+                src={bookImages[currentImage]} 
+                alt="Letters to Evelyn" 
+                className="w-full max-w-xs rounded-lg shadow-2xl shadow-purple-500/40 group-hover:scale-105 transition-transform"
               />
-              <div className="absolute top-2 right-2 bg-yellow-500 text-black px-2 py-1 rounded font-bold text-xs">
+              <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-2 py-1 rounded font-bold text-xs">
                 ⭐ 19 FIVE-STAR REVIEWS
               </div>
+            </div>
+            {/* Thumbnail Gallery */}
+            <div className="flex gap-2">
+              {bookImages.map((img, idx) => (
+                <button 
+                  key={idx} 
+                  onClick={() => setCurrentImage(idx)}
+                  className={`w-12 h-16 rounded overflow-hidden border-2 transition-all ${currentImage === idx ? 'border-pink-500 scale-110' : 'border-purple-500/30 opacity-60 hover:opacity-100'}`}
+                >
+                  <img src={img} alt={`Book cover ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
             </div>
           </div>
           
           {/* Book Info */}
           <div className="lg:w-2/3">
             <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-mono">
+              <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono">
                 LETTERS TO EVELYN
               </h2>
             </div>
             
-            <p className="text-hud-cyan font-mono mb-2">By World Record Aviation Holder <span className="text-hud-orange font-bold">John Selman</span></p>
+            <p className="text-purple-300 font-mono mb-2">By World Record Aviation Holder <span className="text-pink-400 font-bold">John Selman</span></p>
             
             <div className="flex items-center gap-4 mb-4">
               <div className="flex">
                 {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />)}
               </div>
               <span className="text-yellow-400 font-mono font-bold">5.0 / 5.0</span>
-              <span className="text-hud-green font-mono text-sm">(19 Professional Reviews)</span>
+              <span className="text-purple-300 font-mono text-sm">(19 Professional Reviews)</span>
             </div>
             
-            <p className="text-xl text-hud-orange font-mono italic mb-4">
+            <p className="text-xl text-pink-300 font-mono italic mb-4">
               "{BOOK_INFO.tagline}"
             </p>
             
-            <p className="text-hud-green/80 font-mono text-sm mb-4">
+            <p className="text-purple-300/80 font-mono text-sm mb-4">
               {BOOK_INFO.genre} • {BOOK_INFO.years}
             </p>
             
             {/* Review Quote */}
-            <div className="bg-cockpit/50 rounded-lg p-4 mb-4 border-l-4 border-purple-500">
-              <p className="text-hud-green/90 font-mono text-sm italic">
+            <div className="bg-slate-900/50 rounded-lg p-4 mb-4 border-l-4 border-pink-500">
+              <p className="text-purple-200/90 font-mono text-sm italic">
                 "{BOOK_INFO.quotes[0].text}"
               </p>
-              <p className="text-purple-400 font-mono text-xs mt-2">— {BOOK_INFO.quotes[0].author}</p>
+              <p className="text-pink-400 font-mono text-xs mt-2">— {BOOK_INFO.quotes[0].author}</p>
             </div>
             
             {/* CTA Buttons */}
@@ -310,7 +391,7 @@ const BookSalesBanner = ({ variant = "full" }) => {
                 href={BOOK_INFO.officialUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-6 py-3 bg-purple-600 text-white font-mono rounded-lg hover:bg-purple-500 transition-colors flex items-center gap-2"
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-mono rounded-lg hover:scale-105 transition-transform flex items-center gap-2"
               >
                 <ExternalLink className="w-5 h-5" />
                 OFFICIAL SITE
@@ -332,7 +413,7 @@ const BookSalesBanner = ({ variant = "full" }) => {
   );
 };
 
-// Sidebar Navigation
+// Sidebar Navigation - Futuristic Theme
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -346,7 +427,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { path: "/statistics", icon: BarChart3, label: "INTEL STATS" },
     { path: "/global-database", icon: Globe, label: "GLOBAL DATABASE" },
     { path: "/book", icon: Book, label: "📚 LETTERS TO EVELYN", highlight: true },
-    { path: "/subscribe", icon: Crown, label: user?.is_paid ? "✅ PREMIUM" : "⚡ UPGRADE $0.90", highlight: !user?.is_paid },
+    { path: "/subscribe", icon: Crown, label: user?.is_paid ? "✅ PREMIUM" : "🎉 SALE: $0.75", highlight: !user?.is_paid },
   ];
 
   if (user?.is_admin) {
@@ -357,20 +438,20 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     <>
       {isOpen && <div className="fixed inset-0 bg-black/70 z-40 lg:hidden" onClick={() => setIsOpen(false)} />}
       
-      <aside className={`fixed top-0 left-0 h-full bg-cockpit-dark border-r border-hud-cyan/30 z-50 transition-transform duration-300 w-72 ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
-        <div className="p-6 border-b border-hud-cyan/30">
+      <aside className={`fixed top-0 left-0 h-full bg-gradient-to-b from-slate-950 via-purple-950/50 to-slate-950 border-r border-purple-500/30 z-50 transition-transform duration-300 w-72 ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
+        <div className="p-6 border-b border-purple-500/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-cockpit border-2 border-hud-cyan rounded-lg flex items-center justify-center relative">
-                <Plane className="w-7 h-7 text-hud-cyan" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-hud-green rounded-full animate-pulse"></div>
+              <div className="w-12 h-12 bg-gradient-to-br from-pink-500/20 to-purple-500/20 border-2 border-pink-500 rounded-lg flex items-center justify-center relative">
+                <Plane className="w-7 h-7 text-pink-400" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-hud-green font-mono tracking-wider">INFOPILOT</h1>
-                <p className="text-xs text-hud-cyan/60 font-mono">TACTICAL SEARCH v2.0</p>
+                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">INFOPILOT</h1>
+                <p className="text-xs text-purple-400/60 font-mono">TACTICAL SEARCH v2.0</p>
               </div>
             </div>
-            <button className="lg:hidden text-hud-cyan" onClick={() => setIsOpen(false)}>
+            <button className="lg:hidden text-purple-400" onClick={() => setIsOpen(false)}>
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -383,10 +464,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               onClick={() => { navigate(item.path); setIsOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-all font-mono text-sm
                 ${location.pathname === item.path
-                  ? "bg-hud-cyan/20 text-hud-cyan border border-hud-cyan/50"
+                  ? "bg-purple-500/20 text-pink-400 border border-pink-500/50"
                   : item.highlight
-                    ? "text-hud-orange hover:bg-hud-orange/10 border border-hud-orange/30 animate-pulse"
-                    : "text-hud-green/70 hover:bg-hud-green/10 hover:text-hud-green border border-transparent"
+                    ? "text-pink-400 hover:bg-pink-500/10 border border-pink-500/30 animate-pulse"
+                    : "text-purple-300/70 hover:bg-purple-500/10 hover:text-purple-300 border border-transparent"
                 }`}
             >
               <item.icon className="w-5 h-5" />
@@ -397,26 +478,27 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
         {/* Sidebar Promo */}
         {!user?.is_paid && (
-          <div className="mx-4 p-3 bg-gradient-to-r from-hud-orange/20 to-hud-red/20 rounded-lg border border-hud-orange/50">
-            <p className="text-hud-orange font-mono text-xs text-center">
-              🔥 LIMITED TIME: <span className="font-bold">$0.90</span> LIFETIME ACCESS!
+          <div className="mx-4 p-3 bg-gradient-to-r from-pink-500/20 to-red-500/20 rounded-lg border border-pink-500/50">
+            <p className="text-pink-400 font-mono text-xs text-center">
+              🎉 WELCOME SALE: <span className="font-bold">$0.75</span> LIFETIME!
             </p>
+            <p className="text-purple-400/60 font-mono text-xs text-center mt-1">2 Months Only!</p>
           </div>
         )}
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-hud-cyan/30 bg-cockpit-dark">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-purple-500/30 bg-slate-950/90">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-cockpit border border-hud-green rounded-full flex items-center justify-center text-hud-green font-bold font-mono">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500 rounded-full flex items-center justify-center text-pink-400 font-bold font-mono">
               {user?.username?.[0]?.toUpperCase() || "P"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-mono text-hud-green text-sm truncate">{user?.username}</p>
+              <p className="font-mono text-purple-300 text-sm truncate">{user?.username}</p>
               {user?.is_paid ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-hud-green/20 text-hud-green text-xs rounded font-mono">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-pink-500/20 text-pink-400 text-xs rounded font-mono">
                   <Crown className="w-3 h-3" /> PREMIUM
                 </span>
               ) : (
-                <span className="inline-block px-2 py-0.5 bg-hud-orange/20 text-hud-orange text-xs rounded font-mono">
+                <span className="inline-block px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs rounded font-mono">
                   FREE TIER
                 </span>
               )}
@@ -424,7 +506,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           </div>
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-hud-red hover:bg-hud-red/10 rounded transition-colors font-mono text-sm border border-hud-red/30"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-red-400 hover:bg-red-500/10 rounded transition-colors font-mono text-sm border border-red-500/30"
           >
             <LogOut className="w-4 h-4" />
             <span>DISCONNECT</span>
@@ -440,15 +522,15 @@ const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-cockpit">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/30 to-slate-950">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-cockpit-dark border-b border-hud-cyan/30 z-30 flex items-center px-4">
-        <button onClick={() => setSidebarOpen(true)} className="p-2 text-hud-cyan">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-950/90 border-b border-purple-500/30 z-30 flex items-center px-4 backdrop-blur">
+        <button onClick={() => setSidebarOpen(true)} className="p-2 text-purple-400">
           <Menu className="w-6 h-6" />
         </button>
         <div className="flex items-center gap-2 ml-4">
-          <Plane className="w-6 h-6 text-hud-cyan" />
-          <span className="font-bold text-lg text-hud-green font-mono">INFOPILOT</span>
+          <Plane className="w-6 h-6 text-pink-400" />
+          <span className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono">INFOPILOT</span>
         </div>
       </header>
       <main className="lg:ml-72 pt-16 lg:pt-0 min-h-screen">
@@ -458,7 +540,7 @@ const Layout = ({ children }) => {
   );
 };
 
-// Login Page
+// Login Page - Futuristic Theme
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -495,61 +577,64 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cockpit flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background effects */}
       <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-20 left-20 w-64 h-64 border border-hud-cyan/30 rounded-full"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 border border-hud-green/20 rounded-full"></div>
+        <div className="absolute top-20 left-20 w-64 h-64 border border-pink-500/30 rounded-full animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 border border-purple-500/20 rounded-full animate-pulse"></div>
+        <div className="absolute top-1/2 left-1/2 w-48 h-48 border border-blue-500/20 rounded-full animate-spin" style={{animationDuration: '20s'}}></div>
       </div>
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-cockpit-dark border-2 border-hud-cyan rounded-xl mb-4 relative">
-            <Plane className="w-12 h-12 text-hud-cyan" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-pink-500/20 to-purple-500/20 border-2 border-pink-500 rounded-xl mb-4 relative">
+            <Plane className="w-12 h-12 text-pink-400" />
           </div>
-          <h1 className="text-4xl font-bold text-hud-green font-mono tracking-wider">INFOPILOT</h1>
-          <p className="text-hud-cyan/80 mt-2 font-mono text-sm">TACTICAL INFORMATION EXCHANGE SYSTEM</p>
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono tracking-wider">INFOPILOT</h1>
+          <p className="text-purple-400/80 mt-2 font-mono text-sm">TACTICAL INFORMATION EXCHANGE SYSTEM</p>
         </div>
 
         {/* Special Offer Banner */}
-        <div className="mb-6 p-4 bg-gradient-to-r from-hud-orange/30 to-hud-red/30 rounded-lg border border-hud-orange animate-pulse">
-          <p className="text-center text-hud-orange font-mono font-bold">
-            🎉 NEW USERS: Get LIFETIME ACCESS for just $0.90!
+        <div className="mb-6 p-4 bg-gradient-to-r from-pink-500/30 via-purple-500/30 to-red-500/30 rounded-lg border border-pink-500 animate-pulse">
+          <p className="text-center text-pink-300 font-mono font-bold">
+            🎉 WELCOME SALE: Get LIFETIME ACCESS for just $0.75!
           </p>
+          <p className="text-center text-purple-400/70 font-mono text-xs mt-1">Limited time - 2 Months Only!</p>
         </div>
 
-        <HUDFrame title="AUTHENTICATION" className="bg-cockpit-dark/90 backdrop-blur border border-hud-cyan/30 rounded-lg">
+        <FuturisticFrame title="AUTHENTICATION" color="pink" className="bg-slate-900/90 backdrop-blur border border-purple-500/30 rounded-lg">
           <div className="flex mb-6">
-            <button onClick={() => setIsLogin(true)} className={`flex-1 py-3 text-center font-mono text-sm tracking-wider transition-colors rounded-l ${isLogin ? "bg-hud-cyan/20 text-hud-cyan border border-hud-cyan" : "bg-cockpit text-hud-green/50 border border-hud-green/20"}`}>LOGIN</button>
-            <button onClick={() => setIsLogin(false)} className={`flex-1 py-3 text-center font-mono text-sm tracking-wider transition-colors rounded-r ${!isLogin ? "bg-hud-cyan/20 text-hud-cyan border border-hud-cyan" : "bg-cockpit text-hud-green/50 border border-hud-green/20"}`}>REGISTER</button>
+            <button onClick={() => setIsLogin(true)} className={`flex-1 py-3 text-center font-mono text-sm tracking-wider transition-colors rounded-l ${isLogin ? "bg-pink-500/20 text-pink-400 border border-pink-500" : "bg-slate-900 text-purple-400/50 border border-purple-500/20"}`}>LOGIN</button>
+            <button onClick={() => setIsLogin(false)} className={`flex-1 py-3 text-center font-mono text-sm tracking-wider transition-colors rounded-r ${!isLogin ? "bg-pink-500/20 text-pink-400 border border-pink-500" : "bg-slate-900 text-purple-400/50 border border-purple-500/20"}`}>REGISTER</button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <label className="block text-xs font-mono text-hud-cyan mb-1 tracking-wider">CALLSIGN</label>
-                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none" required={!isLogin} data-testid="username-input" />
+                <label className="block text-xs font-mono text-purple-400 mb-1 tracking-wider">CALLSIGN</label>
+                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-4 py-3 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500 focus:outline-none" required={!isLogin} data-testid="username-input" />
               </div>
             )}
             <div>
-              <label className="block text-xs font-mono text-hud-cyan mb-1 tracking-wider">EMAIL</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none" required data-testid="email-input" />
+              <label className="block text-xs font-mono text-purple-400 mb-1 tracking-wider">EMAIL</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500 focus:outline-none" required data-testid="email-input" />
             </div>
             <div>
-              <label className="block text-xs font-mono text-hud-cyan mb-1 tracking-wider">PASSWORD</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none" required data-testid="password-input" />
+              <label className="block text-xs font-mono text-purple-400 mb-1 tracking-wider">PASSWORD</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500 focus:outline-none" required data-testid="password-input" />
             </div>
-            <button type="submit" disabled={loading} className="w-full py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all disabled:opacity-50" data-testid="submit-btn">
+            <button type="submit" disabled={loading} className="w-full py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono tracking-wider rounded hover:scale-[1.02] transition-all disabled:opacity-50" data-testid="submit-btn">
               {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : isLogin ? "AUTHENTICATE" : "CREATE ACCOUNT"}
             </button>
           </form>
 
           <div className="mt-6">
-            <div className="relative"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-hud-cyan/20"></div></div><div className="relative flex justify-center text-xs"><span className="px-2 bg-cockpit-dark text-hud-cyan/60 font-mono">OR</span></div></div>
+            <div className="relative"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-purple-500/20"></div></div><div className="relative flex justify-center text-xs"><span className="px-2 bg-slate-900 text-purple-400/60 font-mono">OR</span></div></div>
             <div className="mt-4 flex justify-center">
               <GoogleLogin onSuccess={handleGoogleLogin} onError={() => toast.error("Google Sign-In failed")} theme="filled_black" size="large" text="continue_with" shape="rectangular" />
             </div>
           </div>
-        </HUDFrame>
+        </FuturisticFrame>
 
         {/* Book Promo */}
         <div className="mt-6">
@@ -560,7 +645,7 @@ const LoginPage = () => {
   );
 };
 
-// Home Page - SALES FOCUSED
+// Home Page - SALES FOCUSED with New Theme
 const HomePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -568,47 +653,47 @@ const HomePage = () => {
   return (
     <Layout>
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Subscription Promo - TOP PRIORITY */}
-        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} />
+        {/* Welcome Sale Promo - TOP PRIORITY */}
+        <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} />
 
         {/* Welcome */}
-        <HUDFrame title="COMMAND CENTER" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
+        <FuturisticFrame title="COMMAND CENTER" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <img src={IMAGES.globe} alt="InfoPilot Global Network" className="w-32 h-32 rounded-lg border border-hud-cyan/50 object-cover" />
+            <img src={IMAGES.globe} alt="InfoPilot Global Network" className="w-32 h-32 rounded-lg border border-purple-500/50 object-cover shadow-lg shadow-purple-500/30" />
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">WELCOME, {user?.username?.toUpperCase()}</h1>
-              <p className="text-hud-cyan/80 mb-4 font-mono text-sm">Your tactical gateway to the World Wide Web Information Exchange.</p>
+              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider mb-2">WELCOME, {user?.username?.toUpperCase()}</h1>
+              <p className="text-purple-300/80 mb-4 font-mono text-sm">Your tactical gateway to the World Wide Web Information Exchange.</p>
               <div className="flex flex-wrap gap-3">
-                <button onClick={() => navigate("/infopilot")} className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all flex items-center gap-2" data-testid="start-searching-btn">
+                <button onClick={() => navigate("/infopilot")} className="px-6 py-3 bg-purple-500/20 border border-purple-500 text-purple-300 font-mono tracking-wider rounded hover:bg-purple-500/30 transition-all flex items-center gap-2" data-testid="start-searching-btn">
                   <Radar className="w-5 h-5" /> BEGIN SEARCH
                 </button>
                 {!user?.is_paid && (
-                  <button onClick={() => navigate("/subscribe")} className="px-6 py-3 bg-gradient-to-r from-hud-orange to-hud-red text-white font-mono tracking-wider rounded hover:scale-105 transition-transform flex items-center gap-2 animate-pulse">
-                    <Crown className="w-5 h-5" /> UPGRADE $0.90
+                  <button onClick={() => navigate("/subscribe")} className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono tracking-wider rounded hover:scale-105 transition-transform flex items-center gap-2 animate-pulse">
+                    <Crown className="w-5 h-5" /> SALE: $0.75
                   </button>
                 )}
               </div>
             </div>
           </div>
-        </HUDFrame>
+        </FuturisticFrame>
 
         {/* Book Promo - FULL */}
         <BookSalesBanner variant="full" />
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-3 gap-4">
-          <QuickActionCard title="CREATE CATEGORIES" icon={FolderTree} onClick={() => navigate("/categories")} color="cyan" />
-          <QuickActionCard title="SEARCH & COLLATE" icon={Radar} onClick={() => navigate("/infopilot")} color="green" />
-          <QuickActionCard title="VIEW INTEL" icon={BarChart3} onClick={() => navigate("/statistics")} color="orange" />
+          <QuickActionCard title="CREATE CATEGORIES" icon={FolderTree} onClick={() => navigate("/categories")} color="purple" />
+          <QuickActionCard title="SEARCH & COLLATE" icon={Radar} onClick={() => navigate("/infopilot")} color="pink" />
+          <QuickActionCard title="VIEW INTEL" icon={BarChart3} onClick={() => navigate("/statistics")} color="blue" />
         </div>
 
         {/* Another Subscription CTA */}
         {!user?.is_paid && (
-          <div className="text-center p-6 bg-cockpit-dark rounded-lg border border-hud-orange/30">
-            <h3 className="text-2xl font-bold text-hud-orange font-mono mb-2">Don't Miss Out!</h3>
-            <p className="text-hud-cyan font-mono mb-4">Unlock unlimited searches, categories, and premium features for life.</p>
-            <button onClick={() => navigate("/subscribe")} className="px-8 py-4 bg-gradient-to-r from-hud-orange to-hud-red text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform">
-              GET LIFETIME ACCESS - ONLY $0.90
+          <div className="text-center p-6 bg-gradient-to-r from-pink-900/30 to-purple-900/30 rounded-lg border border-pink-500/30">
+            <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-2">Don't Miss Out!</h3>
+            <p className="text-purple-300 font-mono mb-4">Unlock unlimited searches, categories, and premium features for life.</p>
+            <button onClick={() => navigate("/subscribe")} className="px-8 py-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform">
+              GET LIFETIME ACCESS - ONLY $0.75
             </button>
           </div>
         )}
@@ -617,10 +702,15 @@ const HomePage = () => {
   );
 };
 
-const QuickActionCard = ({ title, icon: Icon, onClick, color = "cyan" }) => {
-  const colorClasses = { cyan: "border-hud-cyan/30 hover:border-hud-cyan text-hud-cyan", green: "border-hud-green/30 hover:border-hud-green text-hud-green", orange: "border-hud-orange/30 hover:border-hud-orange text-hud-orange" };
+const QuickActionCard = ({ title, icon: Icon, onClick, color = "purple" }) => {
+  const colorClasses = { 
+    purple: "border-purple-500/30 hover:border-purple-500 text-purple-400", 
+    pink: "border-pink-500/30 hover:border-pink-500 text-pink-400", 
+    blue: "border-blue-500/30 hover:border-blue-500 text-blue-400",
+    red: "border-red-500/30 hover:border-red-500 text-red-400"
+  };
   return (
-    <button onClick={onClick} className={`bg-cockpit-dark p-6 rounded-lg border ${colorClasses[color]} transition-all hover:bg-opacity-80 text-left group`}>
+    <button onClick={onClick} className={`bg-slate-900/80 p-6 rounded-lg border ${colorClasses[color]} transition-all hover:scale-[1.02] text-left group`}>
       <div className={`w-12 h-12 rounded-lg border ${colorClasses[color]} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}><Icon className="w-6 h-6" /></div>
       <h3 className="font-mono text-sm tracking-wider">{title}</h3>
     </button>
@@ -661,42 +751,42 @@ const InfoPilotPage = () => {
     <Layout>
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">INFOPILOT SEARCH</h1>
-          <p className="text-hud-cyan/80 font-mono text-sm">Search the web and automatically categorize results.</p>
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider mb-2">INFOPILOT SEARCH</h1>
+          <p className="text-purple-300/80 font-mono text-sm">Search the web and automatically categorize results.</p>
         </div>
 
         {/* Subscription Promo */}
-        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} compact />
+        <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} compact />
 
         {/* Search Box */}
-        <HUDFrame title="SEARCH PARAMETERS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
+        <FuturisticFrame title="SEARCH PARAMETERS" color="pink" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
           <div className="flex gap-4">
-            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Enter search query..." className="flex-1 px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none" onKeyPress={(e) => e.key === "Enter" && handleCollate()} data-testid="search-input" />
-            <button onClick={handleCollate} disabled={loading} className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all disabled:opacity-50 flex items-center gap-2" data-testid="collate-btn">
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Enter search query..." className="flex-1 px-4 py-3 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500 focus:outline-none" onKeyPress={(e) => e.key === "Enter" && handleCollate()} data-testid="search-input" />
+            <button onClick={handleCollate} disabled={loading} className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono tracking-wider rounded hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center gap-2" data-testid="collate-btn">
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Radar className="w-5 h-5" />} COLLATE
             </button>
           </div>
           {categories.length > 0 && (
             <div className="mt-4">
-              <p className="text-xs text-hud-cyan/60 mb-2 font-mono">ACTIVE PROTOCOLS ({categories.length}):</p>
+              <p className="text-xs text-purple-400/60 mb-2 font-mono">ACTIVE PROTOCOLS ({categories.length}):</p>
               <div className="flex flex-wrap gap-2">
-                {categories.slice(0, 5).map((cat) => (<span key={cat.id} className="px-3 py-1 bg-hud-green/10 border border-hud-green/30 text-hud-green rounded text-xs font-mono">{cat.name}</span>))}
+                {categories.slice(0, 5).map((cat) => (<span key={cat.id} className="px-3 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 rounded text-xs font-mono">{cat.name}</span>))}
               </div>
             </div>
           )}
-        </HUDFrame>
+        </FuturisticFrame>
 
         {/* Book Promo */}
         <BookSalesBanner variant="compact" />
 
         {/* Results */}
         {results && (
-          <HUDFrame title="COLLATED RESULTS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
-            <p className="text-hud-cyan font-mono text-sm mb-4">{results.categorized_count} of {results.total_searched} targets categorized</p>
+          <FuturisticFrame title="COLLATED RESULTS" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+            <p className="text-purple-300 font-mono text-sm mb-4">{results.categorized_count} of {results.total_searched} targets categorized</p>
             {results.results.length > 0 ? (
               <div className="space-y-4">{results.results.map((result) => (<SearchResultCard key={result.id} result={result} />))}</div>
-            ) : (<p className="text-hud-orange text-center py-8 font-mono">NO MATCHES FOUND</p>)}
-          </HUDFrame>
+            ) : (<p className="text-pink-400 text-center py-8 font-mono">NO MATCHES FOUND</p>)}
+          </FuturisticFrame>
         )}
       </div>
     </Layout>
@@ -714,17 +804,17 @@ const SearchResultCard = ({ result, showReactions = true }) => {
   };
 
   return (
-    <div className="bg-cockpit p-4 rounded border border-hud-green/20 hover:border-hud-cyan/50 transition-colors">
-      <a href={result.url} target="_blank" rel="noopener noreferrer" className="text-hud-cyan hover:underline font-mono text-sm block truncate">{result.title}</a>
-      <p className="text-hud-green/60 text-xs mt-1 line-clamp-2 font-mono">{result.snippet}</p>
+    <div className="bg-slate-950 p-4 rounded border border-purple-500/20 hover:border-pink-500/50 transition-colors">
+      <a href={result.url} target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline font-mono text-sm block truncate">{result.title}</a>
+      <p className="text-purple-300/60 text-xs mt-1 line-clamp-2 font-mono">{result.snippet}</p>
       <div className="flex flex-wrap gap-2 mt-2">
-        <span className="px-2 py-0.5 bg-hud-orange/20 text-hud-orange text-xs rounded font-mono">{result.article_type}</span>
-        <span className="px-2 py-0.5 bg-cockpit-dark text-hud-cyan/60 text-xs rounded font-mono">{result.domain}</span>
+        <span className="px-2 py-0.5 bg-pink-500/20 text-pink-400 text-xs rounded font-mono">{result.article_type}</span>
+        <span className="px-2 py-0.5 bg-slate-900 text-purple-400/60 text-xs rounded font-mono">{result.domain}</span>
       </div>
       {showReactions && (
-        <div className="flex gap-2 mt-3 pt-3 border-t border-hud-green/10">
+        <div className="flex gap-2 mt-3 pt-3 border-t border-purple-500/10">
           {[{ type: "like", icon: ThumbsUp }, { type: "love", icon: Heart }, { type: "best", icon: Award }].map(({ type, icon: Icon }) => (
-            <button key={type} onClick={() => handleReaction(type)} disabled={reacting} className="flex items-center gap-1 px-2 py-1 text-xs text-hud-green/60 hover:text-hud-cyan rounded transition-colors font-mono">
+            <button key={type} onClick={() => handleReaction(type)} disabled={reacting} className="flex items-center gap-1 px-2 py-1 text-xs text-purple-400/60 hover:text-pink-400 rounded transition-colors font-mono">
               <Icon className="w-3 h-3" />{result.reactions?.[type] > 0 && <span>{result.reactions[type]}</span>}
             </button>
           ))}
@@ -797,71 +887,71 @@ const CategoriesPage = () => {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">CATEGORIES</h1>
-            <p className="text-hud-cyan/80 font-mono text-sm">Manage your InfoPilot 2.0 protocols.</p>
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider mb-2">CATEGORIES</h1>
+            <p className="text-purple-300/80 font-mono text-sm">Manage your InfoPilot 2.0 protocols.</p>
           </div>
-          <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-colors flex items-center gap-2" data-testid="create-category-btn">
+          <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono tracking-wider rounded hover:scale-[1.02] transition-colors flex items-center gap-2" data-testid="create-category-btn">
             <Plus className="w-5 h-5" /> NEW CATEGORY
           </button>
         </div>
 
-        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} compact />
+        <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} compact />
 
         {/* Create Modal */}
         {showCreate && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <HUDFrame title="CREATE CATEGORY" className="bg-cockpit-dark border border-hud-cyan/30 rounded-lg max-w-lg w-full">
+            <FuturisticFrame title="CREATE CATEGORY" color="pink" className="bg-slate-900 border border-pink-500/30 rounded-lg max-w-lg w-full">
               <form onSubmit={handleCreate} className="space-y-4">
-                <div><label className="block text-xs font-mono text-hud-cyan mb-1">CATEGORY NAME</label><input type="text" value={newCategory.name} onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })} className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan" required /></div>
-                <div><label className="block text-xs font-mono text-hud-cyan mb-1">INFOPILOT 2.0 PROTOCOL</label><textarea value={newCategory.protocol} onChange={(e) => setNewCategory({ ...newCategory, protocol: e.target.value })} placeholder="(word1 or word2) & (word3)+ & (excluded)^" className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono h-24 focus:border-hud-cyan" required /></div>
-                <div className="flex items-center gap-2"><input type="checkbox" id="isPublic" checked={newCategory.isPublic} onChange={(e) => setNewCategory({ ...newCategory, isPublic: e.target.checked })} className="rounded bg-cockpit border-hud-green/30" /><label htmlFor="isPublic" className="text-sm text-hud-green font-mono">Make public</label></div>
+                <div><label className="block text-xs font-mono text-purple-400 mb-1">CATEGORY NAME</label><input type="text" value={newCategory.name} onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500" required /></div>
+                <div><label className="block text-xs font-mono text-purple-400 mb-1">INFOPILOT 2.0 PROTOCOL</label><textarea value={newCategory.protocol} onChange={(e) => setNewCategory({ ...newCategory, protocol: e.target.value })} placeholder="(word1 or word2) & (word3)+ & (excluded)^" className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono h-24 focus:border-pink-500" required /></div>
+                <div className="flex items-center gap-2"><input type="checkbox" id="isPublic" checked={newCategory.isPublic} onChange={(e) => setNewCategory({ ...newCategory, isPublic: e.target.checked })} className="rounded bg-slate-950 border-purple-500/30" /><label htmlFor="isPublic" className="text-sm text-purple-300 font-mono">Make public</label></div>
                 <div className="flex gap-4">
-                  <button type="button" onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded hover:bg-hud-green/10">CANCEL</button>
-                  <button type="submit" disabled={creating} className="flex-1 px-4 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded hover:bg-hud-cyan/30 disabled:opacity-50">{creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "CREATE"}</button>
+                  <button type="button" onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2 border border-purple-500/30 text-purple-300 font-mono rounded hover:bg-purple-500/10">CANCEL</button>
+                  <button type="submit" disabled={creating} className="flex-1 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50">{creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "CREATE"}</button>
                 </div>
               </form>
-            </HUDFrame>
+            </FuturisticFrame>
           </div>
         )}
 
         {/* Edit Modal */}
         {showEdit && editingCategory && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <HUDFrame title="EDIT CATEGORY" color="orange" className="bg-cockpit-dark border border-hud-orange/30 rounded-lg max-w-lg w-full">
+            <FuturisticFrame title="EDIT CATEGORY" color="blue" className="bg-slate-900 border border-blue-500/30 rounded-lg max-w-lg w-full">
               <form onSubmit={handleUpdate} className="space-y-4">
-                <div><label className="block text-xs font-mono text-hud-orange mb-1">CATEGORY NAME</label><input type="text" value={editingCategory.name} onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })} className="w-full px-4 py-2 bg-cockpit border border-hud-orange/30 rounded text-hud-green font-mono focus:border-hud-orange" required /></div>
-                <div><label className="block text-xs font-mono text-hud-orange mb-1">INFOPILOT 2.0 PROTOCOL</label><textarea value={editingCategory.protocol_string} onChange={(e) => setEditingCategory({ ...editingCategory, protocol_string: e.target.value })} className="w-full px-4 py-2 bg-cockpit border border-hud-orange/30 rounded text-hud-green font-mono h-32 focus:border-hud-orange" required /><p className="text-xs text-hud-cyan/60 mt-1 font-mono">Syntax: (word1 or word2) & (required)+ & (excluded)^</p></div>
-                <div className="flex items-center gap-2"><input type="checkbox" id="editIsPublic" checked={editingCategory.is_public} onChange={(e) => setEditingCategory({ ...editingCategory, is_public: e.target.checked })} className="rounded bg-cockpit border-hud-orange/30" /><label htmlFor="editIsPublic" className="text-sm text-hud-green font-mono">Make public</label></div>
+                <div><label className="block text-xs font-mono text-blue-400 mb-1">CATEGORY NAME</label><input type="text" value={editingCategory.name} onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono focus:border-blue-500" required /></div>
+                <div><label className="block text-xs font-mono text-blue-400 mb-1">INFOPILOT 2.0 PROTOCOL</label><textarea value={editingCategory.protocol_string} onChange={(e) => setEditingCategory({ ...editingCategory, protocol_string: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono h-32 focus:border-blue-500" required /><p className="text-xs text-purple-400/60 mt-1 font-mono">Syntax: (word1 or word2) & (required)+ & (excluded)^</p></div>
+                <div className="flex items-center gap-2"><input type="checkbox" id="editIsPublic" checked={editingCategory.is_public} onChange={(e) => setEditingCategory({ ...editingCategory, is_public: e.target.checked })} className="rounded bg-slate-950 border-blue-500/30" /><label htmlFor="editIsPublic" className="text-sm text-purple-300 font-mono">Make public</label></div>
                 <div className="flex gap-4">
-                  <button type="button" onClick={() => { setShowEdit(false); setEditingCategory(null); }} className="flex-1 px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded hover:bg-hud-green/10">CANCEL</button>
-                  <button type="submit" disabled={updating} className="flex-1 px-4 py-2 bg-hud-orange/20 border border-hud-orange text-hud-orange font-mono rounded hover:bg-hud-orange/30 disabled:opacity-50">{updating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "UPDATE"}</button>
+                  <button type="button" onClick={() => { setShowEdit(false); setEditingCategory(null); }} className="flex-1 px-4 py-2 border border-purple-500/30 text-purple-300 font-mono rounded hover:bg-purple-500/10">CANCEL</button>
+                  <button type="submit" disabled={updating} className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50">{updating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "UPDATE"}</button>
                 </div>
               </form>
-            </HUDFrame>
+            </FuturisticFrame>
           </div>
         )}
 
         {/* Categories List */}
-        {loading ? (<div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-hud-cyan" /></div>
+        {loading ? (<div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-pink-400" /></div>
         ) : categories.length === 0 ? (
-          <HUDFrame title="NO CATEGORIES" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
-            <FolderTree className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
-            <p className="text-hud-green font-mono mb-4">CREATE YOUR FIRST CATEGORY TO BEGIN</p>
-            <button onClick={() => setShowCreate(true)} className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded hover:bg-hud-cyan/30">CREATE CATEGORY</button>
-          </HUDFrame>
+          <FuturisticFrame title="NO CATEGORIES" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg text-center py-12">
+            <FolderTree className="w-16 h-16 text-purple-500/30 mx-auto mb-4" />
+            <p className="text-purple-300 font-mono mb-4">CREATE YOUR FIRST CATEGORY TO BEGIN</p>
+            <button onClick={() => setShowCreate(true)} className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02]">CREATE CATEGORY</button>
+          </FuturisticFrame>
         ) : (
           <div className="space-y-3">
             {categories.map((cat) => (
-              <div key={cat.id} className="bg-cockpit-dark p-4 rounded border border-hud-green/20 hover:border-hud-cyan/50 transition-colors">
+              <div key={cat.id} className="bg-slate-900/80 p-4 rounded border border-purple-500/20 hover:border-pink-500/50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-hud-cyan font-mono font-bold">{cat.name}</h3>
-                    <p className="text-hud-green/60 text-xs font-mono mt-1 break-all">{cat.protocol_string}</p>
-                    <span className={`inline-block mt-2 px-2 py-0.5 text-xs rounded font-mono ${cat.is_public ? "bg-hud-green/20 text-hud-green" : "bg-hud-orange/20 text-hud-orange"}`}>{cat.is_public ? "PUBLIC" : "PRIVATE"}</span>
+                    <h3 className="text-pink-400 font-mono font-bold">{cat.name}</h3>
+                    <p className="text-purple-300/60 text-xs font-mono mt-1 break-all">{cat.protocol_string}</p>
+                    <span className={`inline-block mt-2 px-2 py-0.5 text-xs rounded font-mono ${cat.is_public ? "bg-purple-500/20 text-purple-400" : "bg-pink-500/20 text-pink-400"}`}>{cat.is_public ? "PUBLIC" : "PRIVATE"}</span>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
-                    <button onClick={() => handleEdit(cat)} className="p-2 text-hud-cyan/60 hover:text-hud-cyan rounded hover:bg-hud-cyan/10" title="Edit"><Edit3 className="w-4 h-4" /></button>
-                    <button onClick={() => handleDelete(cat.id)} className="p-2 text-hud-red/60 hover:text-hud-red rounded hover:bg-hud-red/10" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => handleEdit(cat)} className="p-2 text-purple-400/60 hover:text-pink-400 rounded hover:bg-pink-500/10" title="Edit"><Edit3 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDelete(cat.id)} className="p-2 text-red-400/60 hover:text-red-400 rounded hover:bg-red-500/10" title="Delete"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
               </div>
@@ -875,18 +965,18 @@ const CategoriesPage = () => {
   );
 };
 
-// Ultimate Search, Statistics, Global Database - Simplified versions with promos
+// Ultimate Search, Statistics, Global Database - with new theme
 const UltimateSearchPage = () => {
   const navigate = useNavigate();
   return (
     <Layout>
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider">ULTIMATE SEARCH</h1>
-        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} />
-        <HUDFrame title="ADVANCED FILTERS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
-          <p className="text-hud-cyan font-mono">Search through your collated results with advanced filtering options.</p>
-          <button onClick={() => navigate("/infopilot")} className="mt-4 px-6 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded">START SEARCHING</button>
-        </HUDFrame>
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">ULTIMATE SEARCH</h1>
+        <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} />
+        <FuturisticFrame title="ADVANCED FILTERS" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+          <p className="text-purple-300 font-mono">Search through your collated results with advanced filtering options.</p>
+          <button onClick={() => navigate("/infopilot")} className="mt-4 px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02]">START SEARCHING</button>
+        </FuturisticFrame>
         <BookSalesBanner variant="compact" />
       </div>
     </Layout>
@@ -898,12 +988,12 @@ const StatisticsPage = () => {
   return (
     <Layout>
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider">INTEL STATISTICS</h1>
-        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} />
-        <HUDFrame title="ANALYTICS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
-          <BarChart3 className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
-          <p className="text-hud-green font-mono">Collate data to view detailed statistics and insights.</p>
-        </HUDFrame>
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">INTEL STATISTICS</h1>
+        <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} />
+        <FuturisticFrame title="ANALYTICS" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg text-center py-12">
+          <BarChart3 className="w-16 h-16 text-blue-500/30 mx-auto mb-4" />
+          <p className="text-purple-300 font-mono">Collate data to view detailed statistics and insights.</p>
+        </FuturisticFrame>
         <BookSalesBanner variant="full" />
       </div>
     </Layout>
@@ -915,70 +1005,86 @@ const GlobalDatabasePage = () => {
   return (
     <Layout>
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider">GLOBAL DATABASE</h1>
-        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} />
-        <HUDFrame title="PUBLIC CATEGORIES" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
-          <Globe className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
-          <p className="text-hud-green font-mono">Access public categories from pilots worldwide.</p>
-        </HUDFrame>
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">GLOBAL DATABASE</h1>
+        <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} />
+        <FuturisticFrame title="PUBLIC CATEGORIES" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg text-center py-12">
+          <Globe className="w-16 h-16 text-purple-500/30 mx-auto mb-4" />
+          <p className="text-purple-300 font-mono">Access public categories from pilots worldwide.</p>
+        </FuturisticFrame>
         <BookSalesBanner variant="compact" />
       </div>
     </Layout>
   );
 };
 
-// Book Page - FULL SALES PAGE
+// Book Page - FULL SALES PAGE with new images
 const BookPage = () => {
+  const [currentImage, setCurrentImage] = useState(0);
+  const bookImages = [IMAGES.bookCover1, IMAGES.bookCover2, IMAGES.bookCover3, IMAGES.bookCover4];
+  
   return (
     <Layout>
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Hero Section */}
         <div className="relative rounded-xl overflow-hidden">
-          <img src={IMAGES.bookCover1} alt="Letters to Evelyn" className="w-full h-64 md:h-96 object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-cockpit via-cockpit/50 to-transparent"></div>
+          <img src={bookImages[currentImage]} alt="Letters to Evelyn" className="w-full h-64 md:h-96 object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent"></div>
           <div className="absolute bottom-0 left-0 right-0 p-6">
-            <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-mono mb-2">LETTERS TO EVELYN</h1>
-            <p className="text-xl text-hud-cyan font-mono">{BOOK_INFO.genre}</p>
+            <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono mb-2">LETTERS TO EVELYN</h1>
+            <p className="text-xl text-purple-300 font-mono">{BOOK_INFO.genre}</p>
           </div>
+        </div>
+        
+        {/* Image Gallery */}
+        <div className="flex justify-center gap-4">
+          {bookImages.map((img, idx) => (
+            <button 
+              key={idx} 
+              onClick={() => setCurrentImage(idx)}
+              className={`w-16 h-20 rounded overflow-hidden border-2 transition-all ${currentImage === idx ? 'border-pink-500 scale-110' : 'border-purple-500/30 opacity-60 hover:opacity-100'}`}
+            >
+              <img src={img} alt={`Book cover ${idx + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
         </div>
 
         {/* Rating Banner */}
-        <div className="flex items-center justify-center gap-4 p-4 bg-yellow-500/20 rounded-lg border border-yellow-500">
+        <div className="flex items-center justify-center gap-4 p-4 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500">
           <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className="w-8 h-8 fill-yellow-400 text-yellow-400" />)}</div>
           <span className="text-2xl font-bold text-yellow-400 font-mono">19 FIVE-STAR REVIEWS</span>
         </div>
 
         {/* Author Section */}
-        <HUDFrame title="ABOUT THE AUTHOR" className="bg-cockpit-dark/80 border border-purple-500/30 rounded-lg">
+        <FuturisticFrame title="ABOUT THE AUTHOR" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
           <div className="flex flex-col md:flex-row gap-6 items-center">
-            <img src={IMAGES.author} alt="John Selman" className="w-32 h-32 rounded-full border-4 border-purple-500 object-cover" />
+            <img src={IMAGES.author} alt="John Selman" className="w-32 h-32 rounded-full border-4 border-pink-500 object-cover shadow-lg shadow-pink-500/30" />
             <div>
-              <h2 className="text-2xl font-bold text-hud-orange font-mono">John Selman</h2>
-              <p className="text-hud-cyan font-mono mb-2">World Record Aviation Holder • U.S. Navy Pilot • Author</p>
-              <p className="text-hud-green/80 font-mono text-sm italic">"{BOOK_INFO.tagline}"</p>
+              <h2 className="text-2xl font-bold text-pink-400 font-mono">John Selman</h2>
+              <p className="text-purple-300 font-mono mb-2">World Record Aviation Holder • U.S. Navy Pilot • Author</p>
+              <p className="text-purple-400/80 font-mono text-sm italic">"{BOOK_INFO.tagline}"</p>
             </div>
           </div>
-        </HUDFrame>
+        </FuturisticFrame>
 
         {/* Reviews */}
-        <HUDFrame title="CRITICAL ACCLAIM" color="orange" className="bg-cockpit-dark/80 border border-hud-orange/30 rounded-lg">
+        <FuturisticFrame title="CRITICAL ACCLAIM" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
           <div className="space-y-4">
             {BOOK_INFO.quotes.map((quote, idx) => (
-              <div key={idx} className="bg-cockpit p-4 rounded border-l-4 border-purple-500">
-                <p className="text-hud-green/90 font-mono text-sm italic">"{quote.text}"</p>
-                <p className="text-purple-400 font-mono text-xs mt-2">— {quote.author}</p>
+              <div key={idx} className="bg-slate-950 p-4 rounded border-l-4 border-pink-500">
+                <p className="text-purple-300/90 font-mono text-sm italic">"{quote.text}"</p>
+                <p className="text-pink-400 font-mono text-xs mt-2">— {quote.author}</p>
               </div>
             ))}
           </div>
-        </HUDFrame>
+        </FuturisticFrame>
 
         {/* Purchase Links */}
-        <HUDFrame title="GET YOUR COPY" color="green" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg">
+        <FuturisticFrame title="GET YOUR COPY" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
           <div className="grid md:grid-cols-2 gap-4">
             <a href={BOOK_INFO.amazonUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold font-mono rounded-lg hover:scale-105 transition-transform">
               <ShoppingCart className="w-6 h-6" /> BUY ON AMAZON
             </a>
-            <a href={BOOK_INFO.officialUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 bg-purple-600 text-white font-mono rounded-lg hover:bg-purple-500 transition-colors">
+            <a href={BOOK_INFO.officialUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-mono rounded-lg hover:scale-105 transition-transform">
               <ExternalLink className="w-6 h-6" /> OFFICIAL WEBSITE
             </a>
             <a href={BOOK_INFO.sintraUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 border border-purple-500 text-purple-400 font-mono rounded-lg hover:bg-purple-500/20 transition-colors">
@@ -987,56 +1093,113 @@ const BookPage = () => {
             <a href={BOOK_INFO.readersFavoriteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 border border-yellow-500 text-yellow-400 font-mono rounded-lg hover:bg-yellow-500/20 transition-colors">
               <Star className="w-6 h-6" /> READ ALL REVIEWS
             </a>
-            <a href={BOOK_INFO.googleDriveUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 border border-hud-cyan text-hud-cyan font-mono rounded-lg hover:bg-hud-cyan/20 transition-colors md:col-span-2">
+            <a href={BOOK_INFO.googleDriveUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 border border-blue-500 text-blue-400 font-mono rounded-lg hover:bg-blue-500/20 transition-colors md:col-span-2">
               <BookOpen className="w-6 h-6" /> PREVIEW ON GOOGLE DRIVE
             </a>
           </div>
-        </HUDFrame>
+        </FuturisticFrame>
       </div>
     </Layout>
   );
 };
 
-// Subscribe Page - FIXED & SALES FOCUSED
-const SubscribePage = () => {
-  const { user, refreshUser } = useAuth();
+// Stripe Checkout Form Component
+const StripeCheckoutForm = ({ onSuccess }) => {
+  const stripe = useStripe();
+  const elements = useElements();
   const [processing, setProcessing] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState("paypal");
-  const navigate = useNavigate();
-
-  const handlePayment = async () => {
+  const [error, setError] = useState(null);
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    
     setProcessing(true);
+    setError(null);
+    
     try {
-      const response = await axios.post(`${API}/payments/process`, {
-        payment_method: selectedMethod,
-        item_type: "subscription",
-        amount: SUBSCRIPTION_PRICE
+      const { error: submitError, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: window.location.origin + "/subscribe?success=true",
+        },
+        redirect: "if_required"
       });
       
-      if (response.data.success) {
-        toast.success("🎉 PAYMENT SUCCESSFUL! Welcome to Premium!");
-        await refreshUser();
-        setTimeout(() => navigate("/"), 2000);
-      } else {
-        toast.error("Payment failed. Please try again.");
+      if (submitError) {
+        setError(submitError.message);
+      } else if (paymentIntent && paymentIntent.status === "succeeded") {
+        // Confirm with backend
+        await axios.post(`${API}/payments/confirm?payment_intent_id=${paymentIntent.id}`);
+        toast.success("🎉 PAYMENT SUCCESSFUL!");
+        onSuccess();
       }
-    } catch (error) {
-      toast.error(error.response?.data?.detail || "PAYMENT FAILED");
+    } catch (err) {
+      setError(err.response?.data?.detail || "Payment failed");
     } finally {
       setProcessing(false);
     }
+  };
+  
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <PaymentElement />
+      {error && (
+        <div className="p-3 bg-red-500/20 border border-red-500 rounded text-red-400 text-sm font-mono">
+          {error}
+        </div>
+      )}
+      <button
+        type="submit"
+        disabled={!stripe || processing}
+        className="w-full py-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-[1.02] transition-transform disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
+      >
+        {processing ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CreditCard className="w-6 h-6" /> PAY $0.75 - GET LIFETIME ACCESS</>}
+      </button>
+    </form>
+  );
+};
+
+// Subscribe Page - STRIPE INTEGRATION
+const SubscribePage = () => {
+  const { user, refreshUser } = useAuth();
+  const [clientSecret, setClientSecret] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [saleInfo, setSaleInfo] = useState(null);
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Fetch sale info
+    axios.get(`${API}/subscription/info`).then(res => setSaleInfo(res.data)).catch(() => {});
+  }, []);
+  
+  const initializePayment = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API}/payments/create-intent`, { item_type: "subscription" });
+      setClientSecret(res.data.client_secret);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to initialize payment");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handlePaymentSuccess = async () => {
+    await refreshUser();
+    setTimeout(() => navigate("/"), 2000);
   };
 
   if (user?.is_paid) {
     return (
       <Layout>
         <div className="max-w-lg mx-auto space-y-6">
-          <HUDFrame title="LIFETIME ACCESS ACTIVE" color="green" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg text-center py-12">
-            <Crown className="w-20 h-20 text-hud-green mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-hud-green font-mono mb-2">🎉 YOU'RE A PREMIUM MEMBER!</h2>
-            <p className="text-hud-cyan/80 font-mono text-sm">Enjoy unlimited access to all InfoPilot features forever.</p>
-            <button onClick={() => navigate("/")} className="mt-6 px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded">GO TO COMMAND CENTER</button>
-          </HUDFrame>
+          <FuturisticFrame title="LIFETIME ACCESS ACTIVE" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg text-center py-12">
+            <Crown className="w-20 h-20 text-pink-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-2">🎉 YOU'RE A PREMIUM MEMBER!</h2>
+            <p className="text-purple-300/80 font-mono text-sm">Enjoy unlimited access to all InfoPilot features forever.</p>
+            <button onClick={() => navigate("/")} className="mt-6 px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02]">GO TO COMMAND CENTER</button>
+          </FuturisticFrame>
           <BookSalesBanner variant="full" />
         </div>
       </Layout>
@@ -1047,22 +1210,28 @@ const SubscribePage = () => {
     <Layout>
       <div className="max-w-lg mx-auto space-y-6">
         {/* MEGA Price Banner */}
-        <div className="text-center p-8 bg-gradient-to-r from-hud-orange/30 via-hud-red/30 to-hud-orange/30 rounded-xl border-2 border-hud-orange animate-pulse">
+        <div className="text-center p-8 bg-gradient-to-r from-pink-900/40 via-purple-900/40 to-blue-900/40 rounded-xl border-2 border-pink-500">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Crown className="w-10 h-10 text-hud-orange" />
-            <Sparkles className="w-6 h-6 text-yellow-400 animate-bounce" />
+            <Gift className="w-10 h-10 text-pink-400 animate-bounce" />
+            <Sparkles className="w-6 h-6 text-yellow-400 animate-pulse" />
           </div>
-          <div className="text-6xl font-bold text-hud-orange font-mono mb-2">$0.90</div>
+          <div className="bg-gradient-to-r from-pink-500 to-red-500 text-white px-4 py-1 rounded-full text-sm font-bold inline-block mb-4 animate-pulse">🎉 WELCOME SALE - 2 MONTHS ONLY!</div>
+          <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono mb-2">$0.75</div>
           <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="text-hud-green/50 font-mono line-through">$9.99</span>
-            <span className="bg-hud-red text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse">SAVE 91%!</span>
+            <span className="text-purple-400/50 font-mono line-through">$4.70/year</span>
+            <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">SAVE 84%!</span>
           </div>
-          <p className="text-hud-cyan font-mono text-lg">LIFETIME PREMIUM ACCESS</p>
-          <p className="text-hud-green/60 font-mono text-sm">One payment. Forever access. No subscriptions.</p>
+          <p className="text-pink-300 font-mono text-lg">LIFETIME PREMIUM ACCESS</p>
+          <p className="text-purple-400/60 font-mono text-sm">One payment. Forever access. No subscriptions.</p>
+          {saleInfo?.sale_end_date && (
+            <div className="mt-4">
+              <SaleCountdown endDate={saleInfo.sale_end_date} />
+            </div>
+          )}
         </div>
 
         {/* Features */}
-        <HUDFrame title="PREMIUM FEATURES" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
+        <FuturisticFrame title="PREMIUM FEATURES" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
           <div className="space-y-3">
             {[
               { icon: Unlock, text: "Unlimited search results pages" },
@@ -1072,43 +1241,35 @@ const SubscribePage = () => {
               { icon: Zap, text: "Priority search performance" },
               { icon: Crown, text: "Lifetime access - no recurring fees" }
             ].map((feature, idx) => (
-              <div key={idx} className="flex items-center gap-3 text-hud-green font-mono text-sm">
-                <feature.icon className="w-5 h-5 text-hud-cyan" />
+              <div key={idx} className="flex items-center gap-3 text-purple-300 font-mono text-sm">
+                <feature.icon className="w-5 h-5 text-pink-400" />
                 <span>{feature.text}</span>
-                <Check className="w-4 h-4 text-hud-green ml-auto" />
+                <Check className="w-4 h-4 text-pink-400 ml-auto" />
               </div>
             ))}
           </div>
-        </HUDFrame>
+        </FuturisticFrame>
 
-        {/* Payment Methods */}
-        <HUDFrame title="SELECT PAYMENT METHOD" color="orange" className="bg-cockpit-dark/80 border border-hud-orange/30 rounded-lg">
-          <div className="space-y-3 mb-6">
-            {[
-              { id: "paypal", label: "PayPal", icon: "💳" },
-              { id: "google_pay", label: "Google Pay", icon: "🔵" },
-              { id: "shopify", label: "Credit Card (Shopify)", icon: "💳" }
-            ].map((method) => (
-              <label key={method.id} className={`flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-colors ${selectedMethod === method.id ? "bg-hud-orange/20 border-2 border-hud-orange" : "bg-cockpit border border-hud-green/20 hover:border-hud-cyan/50"}`}>
-                <input type="radio" name="payment" value={method.id} checked={selectedMethod === method.id} onChange={(e) => setSelectedMethod(e.target.value)} className="hidden" />
-                <span className="text-2xl">{method.icon}</span>
-                <span className="text-hud-green font-mono">{method.label}</span>
-                {selectedMethod === method.id && <Check className="w-5 h-5 text-hud-orange ml-auto" />}
-              </label>
-            ))}
-          </div>
-
-          <button
-            onClick={handlePayment}
-            disabled={processing}
-            className="w-full py-4 bg-gradient-to-r from-hud-orange to-hud-red text-white font-bold font-mono tracking-wider rounded-lg hover:scale-[1.02] transition-transform disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
-            data-testid="process-payment-btn"
-          >
-            {processing ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CreditCard className="w-6 h-6" /> PAY $0.90 - GET LIFETIME ACCESS</>}
-          </button>
-
-          <p className="text-center text-hud-cyan/60 text-xs font-mono mt-4">🔒 Secure payment • Sandbox mode for testing</p>
-        </HUDFrame>
+        {/* Payment Section */}
+        <FuturisticFrame title="SECURE PAYMENT" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+          {!clientSecret ? (
+            <div className="text-center">
+              <p className="text-purple-300 font-mono mb-4">Click below to start your secure payment with Stripe</p>
+              <button
+                onClick={initializePayment}
+                disabled={loading}
+                className="w-full py-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-[1.02] transition-transform disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
+              >
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CreditCard className="w-6 h-6" /> PAY $0.75 NOW</>}
+              </button>
+              <p className="text-center text-purple-400/60 text-xs font-mono mt-4">🔒 Secure payment powered by Stripe</p>
+            </div>
+          ) : (
+            <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night', variables: { colorPrimary: '#ec4899' } } }}>
+              <StripeCheckoutForm onSuccess={handlePaymentSuccess} />
+            </Elements>
+          )}
+        </FuturisticFrame>
 
         {/* Book Promo */}
         <BookSalesBanner variant="full" />
@@ -1121,15 +1282,15 @@ const SubscribePage = () => {
 const AdminPage = () => {
   const { user } = useAuth();
   if (!user?.is_admin) {
-    return (<Layout><div className="text-center py-12"><Shield className="w-16 h-16 text-hud-red/50 mx-auto mb-4" /><h1 className="text-2xl font-bold text-hud-red font-mono">ACCESS DENIED</h1></div></Layout>);
+    return (<Layout><div className="text-center py-12"><Shield className="w-16 h-16 text-red-400/50 mx-auto mb-4" /><h1 className="text-2xl font-bold text-red-400 font-mono">ACCESS DENIED</h1></div></Layout>);
   }
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-6">ADMIN CONTROL</h1>
-        <HUDFrame title="SYSTEM STATUS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
-          <p className="text-hud-green font-mono">Admin dashboard for system management.</p>
-        </HUDFrame>
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider mb-6">ADMIN CONTROL</h1>
+        <FuturisticFrame title="SYSTEM STATUS" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+          <p className="text-purple-300 font-mono">Admin dashboard for system management.</p>
+        </FuturisticFrame>
       </div>
     </Layout>
   );
@@ -1140,7 +1301,7 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <AuthProvider>
-        <Toaster position="top-right" toastOptions={{ style: { background: '#0a0a0a', border: '1px solid #00ffff', color: '#00ff88', fontFamily: 'monospace' } }} />
+        <Toaster position="top-right" toastOptions={{ style: { background: '#0f172a', border: '1px solid #ec4899', color: '#c084fc', fontFamily: 'monospace' } }} />
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
