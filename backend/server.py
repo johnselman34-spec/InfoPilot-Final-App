@@ -315,6 +315,29 @@ async def delete_category(category_id: str, authorization: Optional[str] = Heade
 
 # ==================== SEARCH & COLLATE ROUTES ====================
 
+@api_router.get("/search/google")
+async def google_search(q: str = Query(...)):
+    """Perform a Google search using SerpAPI"""
+    try:
+        serpapi_key = os.getenv("SERPAPI_KEY")
+        client = SerpApiClient(api_key=serpapi_key)
+        
+        results = client.search({
+            "q": q,
+            "engine": "google",
+            "num": 20
+        })
+        
+        organic_results = results.get("organic_results", [])
+        
+        return {
+            "success": True,
+            "results": organic_results
+        }
+    except Exception as e:
+        logger.error(f"Google search error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.post("/search/collate")
 async def collate_search(request: CollateRequest, authorization: Optional[str] = Header(None)):
     """Collate search results using SerpAPI and classify with AI"""
