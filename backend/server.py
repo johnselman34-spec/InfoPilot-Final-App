@@ -1268,9 +1268,42 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
 # API ROUTES - ULTIMATE SEARCH PAGE
 # ============================================
 
+async def ai_semantic_search(query: str, user_id: str) -> List[str]:
+    """Use AI to enhance search and find semantically relevant results"""
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"search_{user_id}_{uuid.uuid4().hex[:8]}",
+            system_message="""You are a semantic search assistant. Given a user query, extract:
+1. Main keywords and concepts
+2. Related terms and synonyms
+3. Potential category matches
+Return a JSON object with keys: 'keywords', 'synonyms', 'expanded_terms'"""
+        ).with_model("openai", "gpt-4o-mini")
+        
+        user_message = UserMessage(text=f"Extract search terms from: {query}")
+        response = await chat.send_message(user_message)
+        
+        # Parse the response to get expanded search terms
+        import json
+        try:
+            result = json.loads(response)
+            all_terms = (
+                result.get('keywords', []) + 
+                result.get('synonyms', []) + 
+                result.get('expanded_terms', [])
+            )
+            return all_terms[:20]  # Limit to 20 terms
+        except:
+            # If parsing fails, just return the original query words
+            return query.split()
+    except Exception as e:
+        logger.error(f"AI search error: {e}")
+        return query.split()
+
 @api_router.post("/ultimate-search")
 async def ultimate_search(data: UltimateSearchRequest, user: dict = Depends(require_user)):
-    """Search through collated results with advanced filtering"""
+    """Search through collated results with advanced filtering - supports AND/OR/AND_OR logic"""
     settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
     settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
     
@@ -1278,25 +1311,39 @@ async def ultimate_search(data: UltimateSearchRequest, user: dict = Depends(requ
         if data.page > settings.free_user_pages:
             raise HTTPException(
                 status_code=403,
-                detail=f"Free users can only access {settings.free_user_pages} page(s) of results. Upgrade for just $0.95 lifetime!"
+                detail=f"Free users can only access {settings.free_user_pages} page(s). Upgrade for just $0.75 lifetime!"
             )
     
     query = {"user_id": user["id"]}
     
+    # Category filtering with AND/OR/AND_OR logic
     if data.category_ids:
         if data.aggregation_type == "and":
-            query["categories"] = {"$all": data.category_ids, "$size": len(data.category_ids)}
-        elif data.aggregation_type == "and_or":
+            # Results must match ALL selected categories
             query["categories"] = {"$all": data.category_ids}
-        else:
+        elif data.aggregation_type == "or":
+            # Results can match ANY selected category
             query["categories"] = {"$in": data.category_ids}
+        else:  # "and_or" (default)
+            # Results must match ALL OR ANY of the selected categories
+            query["$or"] = [
+                {"categories": {"$all": data.category_ids}},
+                {"categories": {"$in": data.category_ids}}
+            ]
     
+    # Document type filtering
+    if data.document_types:
+        query["document_type"] = {"$in": data.document_types}
+    
+    # Article type filtering
     if data.article_types:
         query["article_type"] = {"$in": data.article_types}
     
+    # Domain filtering
     if data.domains:
         query["domain"] = {"$in": data.domains}
     
+    # Year range filtering
     if data.year_from or data.year_to:
         year_query = {}
         if data.year_from:
@@ -1305,23 +1352,55 @@ async def ultimate_search(data: UltimateSearchRequest, user: dict = Depends(requ
             year_query["$lte"] = data.year_to
         query["detected_year"] = year_query
     
+    # Traditional keyword search
     if data.keyword:
-        query["$or"] = [
+        keyword_conditions = [
             {"title": {"$regex": data.keyword, "$options": "i"}},
             {"snippet": {"$regex": data.keyword, "$options": "i"}}
         ]
+        if "$or" in query:
+            # Combine with existing $or conditions
+            existing_or = query.pop("$or")
+            query["$and"] = [
+                {"$or": existing_or},
+                {"$or": keyword_conditions}
+            ]
+        else:
+            query["$or"] = keyword_conditions
+    
+    # AI-powered semantic search
+    if data.ai_query:
+        ai_terms = await ai_semantic_search(data.ai_query, user["id"])
+        ai_conditions = []
+        for term in ai_terms:
+            ai_conditions.extend([
+                {"title": {"$regex": term, "$options": "i"}},
+                {"snippet": {"$regex": term, "$options": "i"}}
+            ])
+        if ai_conditions:
+            if "$or" in query:
+                existing_or = query.pop("$or")
+                query["$and"] = [
+                    {"$or": existing_or},
+                    {"$or": ai_conditions}
+                ]
+            elif "$and" in query:
+                query["$and"].append({"$or": ai_conditions})
+            else:
+                query["$or"] = ai_conditions
     
     skip = (data.page - 1) * settings.results_per_page
     limit = settings.results_per_page
     
     total = await db.search_results.count_documents(query)
-    results = await db.search_results.find(query).skip(skip).limit(limit).to_list(limit)
+    results = await db.search_results.find(query, {"_id": 0}).sort("collated_at", -1).skip(skip).limit(limit).to_list(limit)
     
+    # Get category names
     category_ids = set()
     for r in results:
         category_ids.update(r.get("categories", []))
     
-    categories = await db.categories.find({"id": {"$in": list(category_ids)}}).to_list(1000)
+    categories = await db.categories.find({"id": {"$in": list(category_ids)}}, {"_id": 0}).to_list(1000)
     category_map = {c["id"]: c["name"] for c in categories}
     
     for r in results:
@@ -1335,11 +1414,60 @@ async def ultimate_search(data: UltimateSearchRequest, user: dict = Depends(requ
         "total_pages": (total + settings.results_per_page - 1) // settings.results_per_page
     }
 
+@api_router.post("/ultimate-search/ai")
+async def ai_enhanced_search(data: AISearchRequest, user: dict = Depends(require_user)):
+    """AI-powered intelligent search using natural language"""
+    if not EMERGENT_LLM_KEY:
+        raise HTTPException(status_code=500, detail="AI search not configured")
+    
+    try:
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"ai_search_{user['id']}_{uuid.uuid4().hex[:8]}",
+            system_message="""You are an intelligent search assistant. Analyze the user's query and:
+1. Identify what they're looking for
+2. Suggest relevant categories to search
+3. Extract key search terms
+4. Provide search strategy recommendations
+Return a JSON object with: 'intent', 'suggested_terms', 'relevance_score_hint', 'search_strategy'"""
+        ).with_model("openai", "gpt-4o-mini")
+        
+        user_message = UserMessage(text=f"Help me search for: {data.query}")
+        response = await chat.send_message(user_message)
+        
+        # Now search with the AI insights
+        search_terms = data.query.split()
+        query = {
+            "user_id": user["id"],
+            "$or": []
+        }
+        
+        for term in search_terms[:10]:
+            query["$or"].extend([
+                {"title": {"$regex": term, "$options": "i"}},
+                {"snippet": {"$regex": term, "$options": "i"}}
+            ])
+        
+        if data.category_ids:
+            query["categories"] = {"$in": data.category_ids}
+        
+        results = await db.search_results.find(query, {"_id": 0}).limit(50).to_list(50)
+        
+        return {
+            "ai_analysis": response,
+            "results": results,
+            "total": len(results)
+        }
+    except Exception as e:
+        logger.error(f"AI search error: {e}")
+        raise HTTPException(status_code=500, detail=f"AI search failed: {str(e)}")
+
 @api_router.get("/ultimate-search/filters")
 async def get_search_filters(user: dict = Depends(require_user)):
     """Get available filter options for Ultimate Search"""
     domains = await db.search_results.distinct("domain", {"user_id": user["id"]})
     article_types = await db.search_results.distinct("article_type", {"user_id": user["id"]})
+    document_types_used = await db.search_results.distinct("document_type", {"user_id": user["id"]})
     
     pipeline = [
         {"$match": {"user_id": user["id"], "detected_year": {"$ne": None}}},
@@ -1354,8 +1482,131 @@ async def get_search_filters(user: dict = Depends(require_user)):
     return {
         "domains": domains,
         "article_types": article_types or ["Informative", "Informative Ph.D", "News Article", "Blog", "Forum", "Personal Report (collected)"],
-        "year_range": year_range[0] if year_range else {"min_year": 2000, "max_year": 2025}
+        "document_types": DOCUMENT_TYPES,
+        "document_types_used": document_types_used,
+        "year_range": year_range[0] if year_range else {"min_year": 2000, "max_year": 2026},
+        "aggregation_types": [
+            {"value": "and_or", "label": "AND/OR - Results matching all OR any categories"},
+            {"value": "or", "label": "OR - Results matching any category"},
+            {"value": "and", "label": "AND - Results matching ALL categories"}
+        ]
     }
+
+@api_router.get("/ultimate-search/sessions")
+async def get_collate_sessions(user: dict = Depends(require_user)):
+    """Get collate sessions grouped by timestamp for the owner"""
+    pipeline = [
+        {"$match": {"user_id": user["id"]}},
+        {"$group": {
+            "_id": {"$dateToString": {"format": "%Y-%m-%d %H:%M", "date": {"$toDate": "$collated_at"}}},
+            "count": {"$sum": 1},
+            "result_ids": {"$push": "$id"}
+        }},
+        {"$sort": {"_id": -1}},
+        {"$limit": 50}
+    ]
+    
+    sessions = await db.search_results.aggregate(pipeline).to_list(50)
+    
+    return {
+        "sessions": [
+            {
+                "timestamp": s["_id"],
+                "result_count": s["count"],
+                "result_ids": s["result_ids"]
+            }
+            for s in sessions
+        ]
+    }
+
+@api_router.delete("/ultimate-search/results")
+async def delete_search_results(data: SearchResultDeleteRequest, user: dict = Depends(require_user)):
+    """Delete search results - only owner can delete their own results"""
+    # Verify ownership
+    for result_id in data.result_ids:
+        result = await db.search_results.find_one({"id": result_id})
+        if not result:
+            continue
+        if result["user_id"] != user["id"]:
+            raise HTTPException(status_code=403, detail="You can only delete your own results")
+    
+    result = await db.search_results.delete_many({
+        "id": {"$in": data.result_ids},
+        "user_id": user["id"]
+    })
+    
+    return {
+        "message": f"Deleted {result.deleted_count} results",
+        "deleted_count": result.deleted_count
+    }
+
+@api_router.delete("/ultimate-search/session/{session_timestamp}")
+async def delete_session_results(session_timestamp: str, user: dict = Depends(require_user)):
+    """Delete all results from a specific collate session"""
+    # Find results from this session
+    results = await db.search_results.find({
+        "user_id": user["id"],
+        "collated_at": {"$regex": f"^{session_timestamp}"}
+    }).to_list(1000)
+    
+    if not results:
+        raise HTTPException(status_code=404, detail="No results found for this session")
+    
+    result_ids = [r["id"] for r in results]
+    delete_result = await db.search_results.delete_many({
+        "id": {"$in": result_ids},
+        "user_id": user["id"]
+    })
+    
+    return {
+        "message": f"Deleted {delete_result.deleted_count} results from session",
+        "deleted_count": delete_result.deleted_count
+    }
+
+@api_router.get("/ultimate-search/category/{category_id}/results")
+async def get_category_results(
+    category_id: str, 
+    page: int = 1,
+    user: dict = Depends(require_user)
+):
+    """Get all results for a specific category with count"""
+    settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
+    settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
+    
+    skip = (page - 1) * settings.results_per_page
+    limit = settings.results_per_page
+    
+    query = {"user_id": user["id"], "categories": category_id}
+    
+    total = await db.search_results.count_documents(query)
+    results = await db.search_results.find(query, {"_id": 0}).sort("collated_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    # Get category info
+    category = await db.categories.find_one({"id": category_id}, {"_id": 0})
+    
+    return {
+        "category": category,
+        "results": results,
+        "total": total,
+        "page": page,
+        "per_page": settings.results_per_page,
+        "total_pages": (total + settings.results_per_page - 1) // settings.results_per_page
+    }
+
+@api_router.get("/categories/with-counts")
+async def get_categories_with_counts(user: dict = Depends(require_user)):
+    """Get user's categories with result counts"""
+    categories = await db.categories.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
+    
+    # Get counts for each category
+    for cat in categories:
+        count = await db.search_results.count_documents({
+            "user_id": user["id"],
+            "categories": cat["id"]
+        })
+        cat["result_count"] = count
+    
+    return {"categories": categories}
 
 # ============================================
 # API ROUTES - REACTIONS
