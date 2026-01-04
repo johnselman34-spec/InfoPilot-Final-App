@@ -5,7 +5,9 @@ import { Toaster, toast } from "sonner";
 import {
   Search, Globe, FolderTree, BarChart3, Settings, LogOut, User, Plus, Trash2,
   Eye, EyeOff, ChevronDown, ChevronRight, Filter, Heart, ThumbsUp, Smile,
-  Frown, AlertTriangle, Flag, Award, Home, Users, BookOpen, Menu, X, Loader2
+  Frown, AlertTriangle, Flag, Award, Home, Users, BookOpen, Menu, X, Loader2,
+  ShoppingCart, CreditCard, Star, ExternalLink, Plane, Shield, Radar, Target,
+  Crosshair, Navigation, Zap, Radio, Cpu, Book
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -15,6 +17,36 @@ import "@/App.css";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// Google OAuth Client ID
+const GOOGLE_CLIENT_ID = "553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com";
+
+// Book Images
+const BOOK_IMAGES = {
+  globe: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/xxl3i9cv_global-network-world-globe-focusing-usa-symbolizing-data-transfer-worldwide-concept-data-transfer-global-connectivity-information-exchange-world-globe-usa-symbolism_918839-41653.jpg",
+  author: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/rubak3hv_FB_IMG_1767397923842.jpg",
+  infopilot: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/zxojhw91_image_1767356779418.png"
+};
+
+// Book Info
+const BOOK_INFO = {
+  title: "Letters to Evelyn",
+  author: "John Selman",
+  tagline: "A Prolific Odyssey of Love and Redemption",
+  rating: 5.0,
+  reviewsCount: 15,
+  price: "$2.99",
+  amazonUrl: "https://a.co/d/atfpIds",
+  sintraUrl: "https://www.Letters-to-Evelyn.sintra.site",
+  officialUrl: "https://letterstoevelynbyjohnselmanii.com",
+  readersFavoriteUrl: "https://readersfavorite.com/book-review/letters-to-evelyn",
+  googleDriveUrl: "https://drive.google.com/file/d/1YFhr75fWLzF2nu6nYDgVKB0fjEzZ36Pt/view?usp=drivesdk",
+  quotes: [
+    { text: "A profound and unforgettable literary piece... poetic prose and introspective storytelling create an immersive reading experience.", author: "Divine Zape, Readers' Favorite" },
+    { text: "The author's imagination is off the charts. I did not think a novel combining science fiction, romance, and biblical characters could be achieved.", author: "Lesley Jones, Readers' Favorite" },
+    { text: "Such a unique and wonderfully woven story that had me riveted from the moment I started reading it.", author: "Rabia Tanveer, Readers' Favorite" }
+  ]
+};
 
 // Auth Context
 const AuthContext = createContext(null);
@@ -65,6 +97,15 @@ const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  const googleLogin = async (credential) => {
+    const res = await axios.post(`${API}/auth/google`, { credential });
+    localStorage.setItem("token", res.data.access_token);
+    setToken(res.data.access_token);
+    setUser(res.data.user);
+    axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.access_token}`;
+    return res.data;
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     setToken(null);
@@ -72,8 +113,12 @@ const AuthProvider = ({ children }) => {
     delete axios.defaults.headers.common["Authorization"];
   };
 
+  const refreshUser = async () => {
+    await fetchUser();
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, login, register, googleLogin, logout, loading, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
@@ -87,68 +132,90 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Loading Screen
+// Loading Screen - F-35B Style
 const LoadingScreen = () => (
-  <div className="min-h-screen bg-cream flex items-center justify-center">
+  <div className="min-h-screen bg-cockpit flex items-center justify-center">
     <div className="text-center">
-      <Loader2 className="w-12 h-12 animate-spin text-infojet-blue mx-auto" />
-      <p className="mt-4 text-gray-600">Loading InfoJet...</p>
+      <div className="relative w-24 h-24 mx-auto mb-6">
+        <div className="absolute inset-0 border-4 border-hud-cyan/30 rounded-full animate-ping"></div>
+        <div className="absolute inset-2 border-2 border-hud-green rounded-full animate-spin"></div>
+        <Radar className="absolute inset-0 m-auto w-12 h-12 text-hud-cyan animate-pulse" />
+      </div>
+      <p className="text-hud-green font-mono text-lg tracking-wider">INITIALIZING SYSTEMS...</p>
+      <p className="text-hud-cyan/60 font-mono text-sm mt-2">InfoPilot v2.0 Tactical Interface</p>
     </div>
   </div>
 );
 
-// Sidebar Navigation
+// HUD Frame Component
+const HUDFrame = ({ children, title, className = "" }) => (
+  <div className={`relative ${className}`}>
+    <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-hud-cyan"></div>
+    <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-hud-cyan"></div>
+    <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-hud-cyan"></div>
+    <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-hud-cyan"></div>
+    {title && (
+      <div className="absolute -top-3 left-6 bg-cockpit px-2">
+        <span className="text-hud-cyan text-xs font-mono tracking-wider">{title}</span>
+      </div>
+    )}
+    <div className="p-4">{children}</div>
+  </div>
+);
+
+// Sidebar Navigation - F-35B Cockpit Style
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const menuItems = [
-    { path: "/", icon: Home, label: "Home" },
-    { path: "/infojet", icon: Search, label: "InfoJet Search" },
-    { path: "/ultimate-search", icon: Globe, label: "Ultimate Search" },
-    { path: "/categories", icon: FolderTree, label: "My Categories" },
-    { path: "/statistics", icon: BarChart3, label: "Statistics" },
-    { path: "/global-database", icon: Users, label: "Global Database" },
+    { path: "/", icon: Home, label: "COMMAND CENTER" },
+    { path: "/infopilot", icon: Radar, label: "INFOPILOT SEARCH" },
+    { path: "/ultimate-search", icon: Target, label: "ULTIMATE SEARCH" },
+    { path: "/categories", icon: FolderTree, label: "CATEGORIES" },
+    { path: "/statistics", icon: BarChart3, label: "INTEL STATS" },
+    { path: "/global-database", icon: Globe, label: "GLOBAL DATABASE" },
+    { path: "/book", icon: Book, label: "LETTERS TO EVELYN" },
+    { path: "/subscribe", icon: ShoppingCart, label: "UPGRADE" },
   ];
 
   if (user?.is_admin) {
-    menuItems.push({ path: "/admin", icon: Settings, label: "Admin Panel" });
+    menuItems.push({ path: "/admin", icon: Shield, label: "ADMIN CONTROL" });
   }
 
   return (
     <>
-      {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/70 z-40 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white shadow-xl z-50 transition-transform duration-300 w-64
+        className={`fixed top-0 left-0 h-full bg-cockpit-dark border-r border-hud-cyan/30 z-50 transition-transform duration-300 w-72
           ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-hud-cyan/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-infojet-blue to-infojet-green rounded-lg flex items-center justify-center">
-                <Globe className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-cockpit border-2 border-hud-cyan rounded-lg flex items-center justify-center relative">
+                <Plane className="w-7 h-7 text-hud-cyan" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-hud-green rounded-full animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-800">InfoJet</h1>
-                <p className="text-xs text-gray-500">Information Exchange</p>
+                <h1 className="text-xl font-bold text-hud-green font-mono tracking-wider">INFOPILOT</h1>
+                <p className="text-xs text-hud-cyan/60 font-mono">TACTICAL SEARCH v2.0</p>
               </div>
             </div>
-            <button className="lg:hidden" onClick={() => setIsOpen(false)}>
+            <button className="lg:hidden text-hud-cyan" onClick={() => setIsOpen(false)}>
               <X className="w-6 h-6" />
             </button>
           </div>
         </div>
 
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-1">
           {menuItems.map((item) => (
             <button
               key={item.path}
@@ -156,39 +223,43 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 navigate(item.path);
                 setIsOpen(false);
               }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-all font-mono text-sm
                 ${location.pathname === item.path
-                  ? "bg-infojet-blue text-white shadow-md"
-                  : "text-gray-600 hover:bg-gray-100"
+                  ? "bg-hud-cyan/20 text-hud-cyan border border-hud-cyan/50"
+                  : "text-hud-green/70 hover:bg-hud-green/10 hover:text-hud-green border border-transparent"
                 }`}
             >
               <item.icon className="w-5 h-5" />
-              <span className="font-medium">{item.label}</span>
+              <span className="tracking-wider">{item.label}</span>
             </button>
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-hud-cyan/30 bg-cockpit-dark">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-infojet-green rounded-full flex items-center justify-center text-white font-bold">
-              {user?.username?.[0]?.toUpperCase() || "U"}
+            <div className="w-10 h-10 bg-cockpit border border-hud-green rounded-full flex items-center justify-center text-hud-green font-bold font-mono">
+              {user?.username?.[0]?.toUpperCase() || "P"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-gray-800 truncate">{user?.username}</p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-              {user?.is_paid && (
-                <span className="inline-block px-2 py-0.5 bg-infojet-green/10 text-infojet-green text-xs rounded-full">
-                  Premium
+              <p className="font-mono text-hud-green text-sm truncate">{user?.username}</p>
+              <p className="text-xs text-hud-cyan/60 truncate font-mono">{user?.email}</p>
+              {user?.is_paid ? (
+                <span className="inline-block px-2 py-0.5 bg-hud-green/20 text-hud-green text-xs rounded font-mono mt-1">
+                  LIFETIME ACCESS
+                </span>
+              ) : (
+                <span className="inline-block px-2 py-0.5 bg-hud-orange/20 text-hud-orange text-xs rounded font-mono mt-1">
+                  FREE TIER
                 </span>
               )}
             </div>
           </div>
           <button
             onClick={logout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-hud-red hover:bg-hud-red/10 rounded transition-colors font-mono text-sm border border-hud-red/30"
           >
             <LogOut className="w-4 h-4" />
-            <span>Logout</span>
+            <span>DISCONNECT</span>
           </button>
         </div>
       </aside>
@@ -201,36 +272,34 @@ const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-cockpit">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
-      {/* Mobile header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white shadow-sm z-30 flex items-center px-4">
-        <button onClick={() => setSidebarOpen(true)} className="p-2">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-cockpit-dark border-b border-hud-cyan/30 z-30 flex items-center px-4">
+        <button onClick={() => setSidebarOpen(true)} className="p-2 text-hud-cyan">
           <Menu className="w-6 h-6" />
         </button>
         <div className="flex items-center gap-2 ml-4">
-          <Globe className="w-6 h-6 text-infojet-blue" />
-          <span className="font-bold text-lg">InfoJet</span>
+          <Plane className="w-6 h-6 text-hud-cyan" />
+          <span className="font-bold text-lg text-hud-green font-mono">INFOPILOT</span>
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+      <main className="lg:ml-72 pt-16 lg:pt-0 min-h-screen">
         <div className="p-4 lg:p-8">{children}</div>
       </main>
     </div>
   );
 };
 
-// Login Page
+// Login Page - F-35B Style
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login, register, user } = useAuth();
+  const { login, register, googleLogin, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -246,76 +315,98 @@ const LoginPage = () => {
       } else {
         await register(username, email, password);
       }
-      toast.success(isLogin ? "Welcome back!" : "Account created successfully!");
+      toast.success(isLogin ? "PILOT AUTHENTICATED" : "PILOT REGISTERED");
       navigate("/");
     } catch (error) {
-      toast.error(error.response?.data?.detail || "An error occurred");
+      toast.error(error.response?.data?.detail || "AUTHENTICATION FAILED");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    // Demo Google login
+    setLoading(true);
+    try {
+      await googleLogin("demo_credential_" + Date.now());
+      toast.success("GOOGLE AUTH SUCCESSFUL (DEMO)");
+      navigate("/");
+    } catch (error) {
+      toast.error("Google authentication failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream via-white to-infojet-blue/10 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-cockpit flex items-center justify-center p-4 relative overflow-hidden">
+      {/* HUD Background Elements */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-20 left-20 w-64 h-64 border border-hud-cyan/30 rounded-full"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 border border-hud-green/20 rounded-full"></div>
+        <div className="absolute top-1/2 left-1/4 w-32 h-32 border border-hud-cyan/20 rotate-45"></div>
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-infojet-blue to-infojet-green rounded-2xl shadow-lg mb-4">
-            <Globe className="w-10 h-10 text-white" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-cockpit-dark border-2 border-hud-cyan rounded-xl mb-4 relative">
+            <Plane className="w-12 h-12 text-hud-cyan" />
+            <div className="absolute -top-2 -right-2 w-4 h-4 bg-hud-green rounded-full animate-pulse"></div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800">InfoJet</h1>
-          <p className="text-gray-600 mt-2">World Wide Web Information Exchange</p>
+          <h1 className="text-4xl font-bold text-hud-green font-mono tracking-wider">INFOPILOT</h1>
+          <p className="text-hud-cyan/80 mt-2 font-mono text-sm">TACTICAL INFORMATION EXCHANGE SYSTEM</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <HUDFrame title="AUTHENTICATION" className="bg-cockpit-dark/90 backdrop-blur border border-hud-cyan/30 rounded-lg">
           <div className="flex mb-6">
             <button
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-3 text-center font-medium rounded-l-lg transition-colors
-                ${isLogin ? "bg-infojet-blue text-white" : "bg-gray-100 text-gray-600"}`}
+              className={`flex-1 py-3 text-center font-mono text-sm tracking-wider transition-colors rounded-l
+                ${isLogin ? "bg-hud-cyan/20 text-hud-cyan border border-hud-cyan" : "bg-cockpit text-hud-green/50 border border-hud-green/20"}`}
             >
-              Login
+              LOGIN
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-3 text-center font-medium rounded-r-lg transition-colors
-                ${!isLogin ? "bg-infojet-blue text-white" : "bg-gray-100 text-gray-600"}`}
+              className={`flex-1 py-3 text-center font-mono text-sm tracking-wider transition-colors rounded-r
+                ${!isLogin ? "bg-hud-cyan/20 text-hud-cyan border border-hud-cyan" : "bg-cockpit text-hud-green/50 border border-hud-green/20"}`}
             >
-              Register
+              REGISTER
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                <label className="block text-xs font-mono text-hud-cyan mb-1 tracking-wider">CALLSIGN</label>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-infojet-blue focus:border-transparent"
+                  className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none"
                   required={!isLogin}
                   data-testid="username-input"
                 />
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-xs font-mono text-hud-cyan mb-1 tracking-wider">EMAIL IDENTIFIER</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-infojet-blue focus:border-transparent"
+                className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none"
                 required
                 data-testid="email-input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="block text-xs font-mono text-hud-cyan mb-1 tracking-wider">ACCESS CODE</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-infojet-blue focus:border-transparent"
+                className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none"
                 required
                 data-testid="password-input"
               />
@@ -323,109 +414,228 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-infojet-blue to-infojet-green text-white font-medium rounded-lg hover:shadow-lg transition-all disabled:opacity-50"
+              className="w-full py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all disabled:opacity-50"
               data-testid="submit-btn"
             >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : isLogin ? "Login" : "Create Account"}
+              {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : isLogin ? "AUTHENTICATE" : "INITIATE REGISTRATION"}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Subscribe for just <span className="font-bold text-infojet-green">$0.99</span> to unlock all features!</p>
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-hud-cyan/20"></div>
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-2 bg-cockpit-dark text-hud-cyan/60 font-mono">OR</span>
+              </div>
+            </div>
+            <button
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full mt-4 py-3 bg-cockpit border border-hud-green/30 text-hud-green font-mono tracking-wider rounded hover:bg-hud-green/10 transition-all flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              GOOGLE AUTH (DEMO)
+            </button>
           </div>
-        </div>
+
+          <div className="mt-6 text-center">
+            <p className="text-hud-green text-sm font-mono">
+              LIFETIME ACCESS: <span className="text-hud-cyan font-bold">$0.95</span>
+            </p>
+          </div>
+        </HUDFrame>
       </div>
     </div>
   );
 };
 
-// Home Page
+// Book Promo Banner
+const BookPromoBanner = ({ compact = false }) => (
+  <div className={`bg-cockpit-dark border border-hud-orange/30 rounded-lg overflow-hidden ${compact ? 'p-4' : 'p-6'}`}>
+    <div className="flex flex-col md:flex-row gap-4 items-center">
+      <img 
+        src={BOOK_IMAGES.author} 
+        alt="John Selman - Author"
+        className={`${compact ? 'w-16 h-16' : 'w-24 h-24'} rounded-lg border-2 border-hud-orange object-cover`}
+      />
+      <div className="flex-1 text-center md:text-left">
+        <h3 className="text-hud-orange font-mono text-lg font-bold tracking-wider">
+          LETTERS TO EVELYN
+        </h3>
+        <p className="text-hud-cyan/80 text-sm font-mono mt-1">
+          By World Record Aviation Holder John Selman
+        </p>
+        <div className="flex items-center justify-center md:justify-start gap-1 mt-2">
+          {[...Array(5)].map((_, i) => (
+            <Star key={i} className="w-4 h-4 fill-hud-orange text-hud-orange" />
+          ))}
+          <span className="text-hud-green text-xs ml-2 font-mono">15 Five-Star Reviews</span>
+        </div>
+        {!compact && (
+          <p className="text-hud-green/70 text-xs mt-2 font-mono italic">
+            "A profound and unforgettable literary piece... poetic prose and introspective storytelling"
+          </p>
+        )}
+      </div>
+      <a
+        href={BOOK_INFO.amazonUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="px-6 py-3 bg-hud-orange/20 border border-hud-orange text-hud-orange font-mono text-sm tracking-wider rounded hover:bg-hud-orange/30 transition-all flex items-center gap-2"
+      >
+        <ShoppingCart className="w-4 h-4" />
+        GET NOW
+      </a>
+    </div>
+  </div>
+);
+
+// Home Page - Command Center
 const HomePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-infojet-blue to-infojet-green rounded-2xl p-8 text-white mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome to InfoJet, {user?.username}!</h1>
-          <p className="text-white/80 mb-6">
-            Your personal gateway to the World Wide Web Information Exchange. 
-            Create categories, write protocols, and collate information from across the internet.
-          </p>
-          <button
-            onClick={() => navigate("/infojet")}
-            className="px-6 py-3 bg-white text-infojet-blue font-medium rounded-lg hover:shadow-lg transition-all"
-            data-testid="start-searching-btn"
-          >
-            Start Searching
-          </button>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
-          <QuickStatCard title="Create Categories" icon={FolderTree} onClick={() => navigate("/categories")} />
-          <QuickStatCard title="Search & Collate" icon={Search} onClick={() => navigate("/infojet")} />
-          <QuickStatCard title="View Statistics" icon={BarChart3} onClick={() => navigate("/statistics")} />
-        </div>
-
-        {/* InfoJet 2.0 Guide */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-infojet-blue" />
-            InfoJet 2.0 Protocol Guide
-          </h2>
-          <div className="prose max-w-none">
-            <p className="text-gray-600 mb-4">
-              InfoJet 2.0 is a powerful Boolean search language that lets you precisely define what information you're looking for.
-            </p>
-
-            <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-3">Syntax Rules:</h3>
-            <ul className="space-y-2 text-gray-600">
-              <li><code className="bg-gray-100 px-2 py-1 rounded">(word1 or word2)</code> - Match ANY word in the group</li>
-              <li><code className="bg-gray-100 px-2 py-1 rounded">&</code> - AND operator between groups</li>
-              <li><code className="bg-gray-100 px-2 py-1 rounded">+</code> - INCLUDE ALL words (all must be present)</li>
-              <li><code className="bg-gray-100 px-2 py-1 rounded">^</code> - EXCLUDE ALL words (none should be present)</li>
-            </ul>
-
-            <h3 className="text-lg font-semibold text-gray-800 mt-6 mb-3">Examples:</h3>
-            <div className="space-y-4">
-              <div className="bg-cream rounded-lg p-4">
-                <p className="font-medium text-gray-800">American Civil War Category:</p>
-                <code className="text-sm text-infojet-blue block mt-2">
-                  (American civil war or civil war) & (1860 or 1861 or 1862 or 1863 or 1864 or 1865)+
-                </code>
-              </div>
-              <div className="bg-cream rounded-lg p-4">
-                <p className="font-medium text-gray-800">Heroes Subcategory:</p>
-                <code className="text-sm text-infojet-blue block mt-2">
-                  (hero or heroes or heroic) & (civil war) & (villain or enemy)^
-                </code>
+        <HUDFrame title="COMMAND CENTER" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg mb-8">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <img 
+              src={BOOK_IMAGES.globe}
+              alt="InfoPilot Global Network"
+              className="w-32 h-32 rounded-lg border border-hud-cyan/50 object-cover"
+            />
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">
+                WELCOME, {user?.username?.toUpperCase()}
+              </h1>
+              <p className="text-hud-cyan/80 mb-4 font-mono text-sm">
+                Your tactical gateway to the World Wide Web Information Exchange.
+                Create categories, write protocols, and collate intelligence from across the internet.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => navigate("/infopilot")}
+                  className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all flex items-center gap-2"
+                  data-testid="start-searching-btn"
+                >
+                  <Radar className="w-5 h-5" />
+                  BEGIN SEARCH
+                </button>
+                <button
+                  onClick={() => navigate("/subscribe")}
+                  className="px-6 py-3 bg-hud-green/20 border border-hud-green text-hud-green font-mono tracking-wider rounded hover:bg-hud-green/30 transition-all flex items-center gap-2"
+                >
+                  <Zap className="w-5 h-5" />
+                  UPGRADE $0.95
+                </button>
               </div>
             </div>
           </div>
+        </HUDFrame>
+
+        {/* Book Promo */}
+        <div className="mb-8">
+          <BookPromoBanner />
         </div>
+
+        {/* Quick Actions */}
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          <QuickActionCard 
+            title="CREATE CATEGORIES" 
+            icon={FolderTree} 
+            onClick={() => navigate("/categories")}
+            color="cyan"
+          />
+          <QuickActionCard 
+            title="SEARCH & COLLATE" 
+            icon={Radar} 
+            onClick={() => navigate("/infopilot")}
+            color="green"
+          />
+          <QuickActionCard 
+            title="VIEW INTEL" 
+            icon={BarChart3} 
+            onClick={() => navigate("/statistics")}
+            color="orange"
+          />
+        </div>
+
+        {/* InfoPilot 2.0 Guide */}
+        <HUDFrame title="INFOPILOT 2.0 PROTOCOL MANUAL" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
+          <div className="space-y-6">
+            <p className="text-hud-green/80 font-mono text-sm">
+              InfoPilot 2.0 is a powerful Boolean search protocol that lets you precisely define what intelligence you're seeking.
+            </p>
+
+            <div>
+              <h3 className="text-hud-cyan font-mono text-sm tracking-wider mb-3">SYNTAX COMMANDS:</h3>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div className="bg-cockpit p-3 rounded border border-hud-green/20">
+                  <code className="text-hud-green text-sm">(word1 or word2)</code>
+                  <p className="text-hud-cyan/60 text-xs mt-1">Match ANY word in group</p>
+                </div>
+                <div className="bg-cockpit p-3 rounded border border-hud-green/20">
+                  <code className="text-hud-green text-sm">&</code>
+                  <p className="text-hud-cyan/60 text-xs mt-1">AND operator between groups</p>
+                </div>
+                <div className="bg-cockpit p-3 rounded border border-hud-green/20">
+                  <code className="text-hud-green text-sm">+</code>
+                  <p className="text-hud-cyan/60 text-xs mt-1">INCLUDE ALL (must be present)</p>
+                </div>
+                <div className="bg-cockpit p-3 rounded border border-hud-green/20">
+                  <code className="text-hud-red text-sm">^</code>
+                  <p className="text-hud-cyan/60 text-xs mt-1">EXCLUDE ALL (none should be present)</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-hud-cyan font-mono text-sm tracking-wider mb-3">EXAMPLE PROTOCOLS:</h3>
+              <div className="bg-cockpit p-4 rounded border border-hud-cyan/20 font-mono text-sm">
+                <p className="text-hud-orange mb-2">// American Civil War Category</p>
+                <p className="text-hud-green">(American civil war or civil war) & (1860 or 1861 or 1862 or 1863)+</p>
+                <p className="text-hud-orange mt-4 mb-2">// Heroes Subcategory</p>
+                <p className="text-hud-green">(hero or heroes or heroic) & (civil war)+ & (villain)^</p>
+              </div>
+            </div>
+          </div>
+        </HUDFrame>
       </div>
     </Layout>
   );
 };
 
-const QuickStatCard = ({ title, icon: Icon, onClick }) => (
-  <button
-    onClick={onClick}
-    className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all text-left group"
-    data-testid={`quick-stat-${title.toLowerCase().replace(/\s/g, '-')}`}
-  >
-    <div className="w-12 h-12 bg-infojet-blue/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-infojet-blue group-hover:text-white transition-colors">
-      <Icon className="w-6 h-6 text-infojet-blue group-hover:text-white" />
-    </div>
-    <h3 className="font-semibold text-gray-800">{title}</h3>
-  </button>
-);
+const QuickActionCard = ({ title, icon: Icon, onClick, color = "cyan" }) => {
+  const colorClasses = {
+    cyan: "border-hud-cyan/30 hover:border-hud-cyan text-hud-cyan",
+    green: "border-hud-green/30 hover:border-hud-green text-hud-green",
+    orange: "border-hud-orange/30 hover:border-hud-orange text-hud-orange"
+  };
 
-// InfoJet Search Page
-const InfoJetPage = () => {
+  return (
+    <button
+      onClick={onClick}
+      className={`bg-cockpit-dark p-6 rounded-lg border ${colorClasses[color]} transition-all hover:bg-opacity-80 text-left group`}
+    >
+      <div className={`w-12 h-12 rounded-lg border ${colorClasses[color]} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+        <Icon className="w-6 h-6" />
+      </div>
+      <h3 className="font-mono text-sm tracking-wider">{title}</h3>
+    </button>
+  );
+};
+
+// InfoPilot Search Page
+const InfoPilotPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
@@ -446,12 +656,12 @@ const InfoJetPage = () => {
 
   const handleCollate = async () => {
     if (!searchQuery.trim()) {
-      toast.error("Please enter a search query");
+      toast.error("ENTER SEARCH PARAMETERS");
       return;
     }
 
     if (categories.length === 0) {
-      toast.error("Please create at least one category with a protocol first");
+      toast.error("CREATE CATEGORY PROTOCOLS FIRST");
       return;
     }
 
@@ -462,9 +672,9 @@ const InfoJetPage = () => {
         max_results: 20
       });
       setResults(res.data);
-      toast.success(`Collated ${res.data.categorized_count} results!`);
+      toast.success(`COLLATED ${res.data.categorized_count} TARGETS`);
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Search failed");
+      toast.error(error.response?.data?.detail || "SEARCH FAILED");
     } finally {
       setLoading(false);
     }
@@ -474,83 +684,73 @@ const InfoJetPage = () => {
     <Layout>
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">InfoJet Search</h1>
-          <p className="text-gray-600">Search the web and automatically categorize results using your protocols.</p>
+          <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">INFOPILOT SEARCH</h1>
+          <p className="text-hud-cyan/80 font-mono text-sm">Search the web and automatically categorize results using your protocols.</p>
         </div>
 
         {/* Search Modifiers Reference */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-infojet-blue" />
-            Google Search Modifiers
-          </h3>
-          <div className="grid md:grid-cols-2 gap-2 text-sm text-gray-600">
-            <div><code className="bg-gray-100 px-2 py-0.5 rounded">site:example.com</code> - Search within a site</div>
-            <div><code className="bg-gray-100 px-2 py-0.5 rounded">"exact phrase"</code> - Exact match</div>
-            <div><code className="bg-gray-100 px-2 py-0.5 rounded">-word</code> - Exclude word</div>
-            <div><code className="bg-gray-100 px-2 py-0.5 rounded">filetype:pdf</code> - Specific file type</div>
-            <div><code className="bg-gray-100 px-2 py-0.5 rounded">intitle:word</code> - Word in title</div>
-            <div><code className="bg-gray-100 px-2 py-0.5 rounded">inurl:word</code> - Word in URL</div>
+        <HUDFrame title="SEARCH MODIFIERS" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg mb-6">
+          <div className="grid md:grid-cols-2 gap-2 text-sm font-mono">
+            <div><code className="text-hud-cyan">site:example.com</code> <span className="text-hud-green/60">- Search within a site</span></div>
+            <div><code className="text-hud-cyan">"exact phrase"</code> <span className="text-hud-green/60">- Exact match</span></div>
+            <div><code className="text-hud-cyan">-word</code> <span className="text-hud-green/60">- Exclude word</span></div>
+            <div><code className="text-hud-cyan">filetype:pdf</code> <span className="text-hud-green/60">- Specific file type</span></div>
           </div>
-        </div>
+        </HUDFrame>
 
         {/* Search Box */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <HUDFrame title="SEARCH PARAMETERS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg mb-6">
           <div className="flex gap-4">
-            <div className="flex-1">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Enter your search query..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-infojet-blue focus:border-transparent"
-                onKeyPress={(e) => e.key === "Enter" && handleCollate()}
-                data-testid="search-input"
-              />
-            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Enter search query..."
+              className="flex-1 px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none"
+              onKeyPress={(e) => e.key === "Enter" && handleCollate()}
+              data-testid="search-input"
+            />
             <button
               onClick={handleCollate}
               disabled={loading}
-              className="px-6 py-3 bg-gradient-to-r from-infojet-blue to-infojet-green text-white font-medium rounded-lg hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2"
+              className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all disabled:opacity-50 flex items-center gap-2"
               data-testid="collate-btn"
             >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
-              Collate
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Radar className="w-5 h-5" />}
+              COLLATE
             </button>
           </div>
 
-          {categories.length === 0 && (
-            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
-              <p>You need to create at least one category with a protocol before searching.</p>
-              <a href="/categories" className="text-infojet-blue underline">Create a category →</a>
-            </div>
-          )}
-
           {categories.length > 0 && (
             <div className="mt-4">
-              <p className="text-sm text-gray-500 mb-2">Your active categories ({categories.length}):</p>
+              <p className="text-xs text-hud-cyan/60 mb-2 font-mono">ACTIVE PROTOCOLS ({categories.length}):</p>
               <div className="flex flex-wrap gap-2">
                 {categories.slice(0, 5).map((cat) => (
-                  <span key={cat.id} className="px-3 py-1 bg-infojet-blue/10 text-infojet-blue rounded-full text-sm">
+                  <span key={cat.id} className="px-3 py-1 bg-hud-green/10 border border-hud-green/30 text-hud-green rounded text-xs font-mono">
                     {cat.name}
                   </span>
                 ))}
                 {categories.length > 5 && (
-                  <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
+                  <span className="px-3 py-1 bg-cockpit text-hud-cyan/60 rounded text-xs font-mono">
                     +{categories.length - 5} more
                   </span>
                 )}
               </div>
             </div>
           )}
+        </HUDFrame>
+
+        {/* Book Promo */}
+        <div className="mb-6">
+          <BookPromoBanner compact />
         </div>
 
         {/* Results */}
         {results && (
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h3 className="font-semibold text-gray-800 mb-4">
-              Collated Results ({results.categorized_count} of {results.total_searched} categorized)
-            </h3>
+          <HUDFrame title="COLLATED RESULTS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
+            <p className="text-hud-cyan font-mono text-sm mb-4">
+              {results.categorized_count} of {results.total_searched} targets categorized
+            </p>
             {results.results.length > 0 ? (
               <div className="space-y-4">
                 {results.results.map((result) => (
@@ -558,16 +758,16 @@ const InfoJetPage = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">No results matched your protocols.</p>
+              <p className="text-hud-orange text-center py-8 font-mono">NO MATCHES FOUND</p>
             )}
-          </div>
+          </HUDFrame>
         )}
       </div>
     </Layout>
   );
 };
 
-// Search Result Card
+// Search Result Card - Tactical Style
 const SearchResultCard = ({ result, showReactions = true }) => {
   const [reacting, setReacting] = useState(false);
 
@@ -575,73 +775,51 @@ const SearchResultCard = ({ result, showReactions = true }) => {
     setReacting(true);
     try {
       await axios.post(`${API}/results/${result.id}/react`, { reaction_type: type });
-      toast.success("Reaction added!");
+      toast.success("REACTION LOGGED");
     } catch (error) {
-      toast.error("Failed to add reaction");
+      toast.error("REACTION FAILED");
     } finally {
       setReacting(false);
     }
   };
 
   const reactions = [
-    { type: "like", icon: ThumbsUp, label: "Like" },
-    { type: "love", icon: Heart, label: "Love" },
-    { type: "funny", icon: Smile, label: "Funny" },
-    { type: "sad", icon: Frown, label: "Sad" },
-    { type: "caution", icon: AlertTriangle, label: "Caution" },
-    { type: "spam", icon: Flag, label: "Spam" },
-    { type: "best", icon: Award, label: "Best" },
+    { type: "like", icon: ThumbsUp },
+    { type: "love", icon: Heart },
+    { type: "best", icon: Award },
+    { type: "caution", icon: AlertTriangle },
   ];
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow" data-testid={`result-${result.id}`}>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <a
-            href={result.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-infojet-blue hover:underline font-medium block truncate"
-          >
-            {result.title}
-          </a>
-          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{result.snippet}</p>
-          <div className="flex flex-wrap gap-2 mt-2">
-            <span className="px-2 py-0.5 bg-infojet-green/10 text-infojet-green text-xs rounded-full">
-              {result.article_type}
-            </span>
-            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-              {result.domain}
-            </span>
-            {result.detected_year && (
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
-                {result.detected_year}
-              </span>
-            )}
-          </div>
-          {result.category_names && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {result.category_names.map((name, idx) => (
-                <span key={idx} className="px-2 py-0.5 bg-infojet-blue/10 text-infojet-blue text-xs rounded-full">
-                  {name}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+    <div className="bg-cockpit p-4 rounded border border-hud-green/20 hover:border-hud-cyan/50 transition-colors">
+      <a
+        href={result.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-hud-cyan hover:underline font-mono text-sm block truncate"
+      >
+        {result.title}
+      </a>
+      <p className="text-hud-green/60 text-xs mt-1 line-clamp-2 font-mono">{result.snippet}</p>
+      <div className="flex flex-wrap gap-2 mt-2">
+        <span className="px-2 py-0.5 bg-hud-orange/20 text-hud-orange text-xs rounded font-mono">
+          {result.article_type}
+        </span>
+        <span className="px-2 py-0.5 bg-cockpit-dark text-hud-cyan/60 text-xs rounded font-mono">
+          {result.domain}
+        </span>
       </div>
 
       {showReactions && (
-        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-100">
-          {reactions.map(({ type, icon: Icon, label }) => (
+        <div className="flex gap-2 mt-3 pt-3 border-t border-hud-green/10">
+          {reactions.map(({ type, icon: Icon }) => (
             <button
               key={type}
               onClick={() => handleReaction(type)}
               disabled={reacting}
-              className="flex items-center gap-1 px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-              title={label}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-hud-green/60 hover:text-hud-cyan rounded transition-colors font-mono"
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3 h-3" />
               {result.reactions?.[type] > 0 && <span>{result.reactions[type]}</span>}
             </button>
           ))}
@@ -669,7 +847,7 @@ const CategoriesPage = () => {
       const res = await axios.get(`${API}/categories`);
       setCategories(res.data.filter(c => c.user_id === user?.id));
     } catch (error) {
-      toast.error("Failed to fetch categories");
+      toast.error("FAILED TO LOAD CATEGORIES");
     } finally {
       setLoading(false);
     }
@@ -685,244 +863,136 @@ const CategoriesPage = () => {
         parent_id: newCategory.parentId || null,
         is_public: newCategory.isPublic
       });
-      toast.success("Category created!");
+      toast.success("CATEGORY CREATED");
       setShowCreate(false);
       setNewCategory({ name: "", protocol: "", parentId: null, isPublic: true });
       fetchCategories();
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Failed to create category");
+      toast.error(error.response?.data?.detail || "CREATION FAILED");
     } finally {
       setCreating(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this category?")) return;
+    if (!window.confirm("DELETE THIS CATEGORY?")) return;
     try {
       await axios.delete(`${API}/categories/${id}`);
-      toast.success("Category deleted");
+      toast.success("CATEGORY DELETED");
       fetchCategories();
     } catch (error) {
-      toast.error("Failed to delete category");
+      toast.error("DELETE FAILED");
     }
   };
-
-  const toggleVisibility = async (id, currentVisibility) => {
-    try {
-      await axios.put(`${API}/categories/${id}/visibility?is_public=${!currentVisibility}`);
-      toast.success("Visibility updated");
-      fetchCategories();
-    } catch (error) {
-      toast.error("Failed to update visibility");
-    }
-  };
-
-  const buildTree = (cats, parentId = null, level = 0) => {
-    return cats
-      .filter(c => c.parent_id === parentId)
-      .map(cat => ({
-        ...cat,
-        level,
-        children: buildTree(cats, cat.id, level + 1)
-      }));
-  };
-
-  const categoryTree = buildTree(categories);
 
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">My Categories</h1>
-            <p className="text-gray-600">Create and manage your InfoJet 2.0 categories and protocols.</p>
+            <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">CATEGORIES</h1>
+            <p className="text-hud-cyan/80 font-mono text-sm">Manage your InfoPilot 2.0 protocols.</p>
           </div>
           <button
             onClick={() => setShowCreate(true)}
-            className="px-4 py-2 bg-infojet-blue text-white rounded-lg hover:bg-infojet-blue/90 transition-colors flex items-center gap-2"
+            className="px-4 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-colors flex items-center gap-2"
             data-testid="create-category-btn"
           >
             <Plus className="w-5 h-5" />
-            New Category
+            NEW CATEGORY
           </button>
         </div>
 
-        {/* Create Category Modal */}
+        {/* Create Modal */}
         {showCreate && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Create Category</h2>
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <HUDFrame title="CREATE CATEGORY" className="bg-cockpit-dark border border-hud-cyan/30 rounded-lg max-w-lg w-full">
               <form onSubmit={handleCreate} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                  <label className="block text-xs font-mono text-hud-cyan mb-1">CATEGORY NAME</label>
                   <input
                     type="text"
                     value={newCategory.name}
                     onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                    placeholder="e.g., American Civil War"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-infojet-blue"
+                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan"
                     required
                     data-testid="category-name-input"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">InfoJet 2.0 Protocol</label>
+                  <label className="block text-xs font-mono text-hud-cyan mb-1">INFOPILOT 2.0 PROTOCOL</label>
                   <textarea
                     value={newCategory.protocol}
                     onChange={(e) => setNewCategory({ ...newCategory, protocol: e.target.value })}
                     placeholder="(word1 or word2) & (word3)+ & (excluded)^"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-infojet-blue h-24"
+                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono h-24 focus:border-hud-cyan"
                     required
                     data-testid="protocol-input"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Use & for AND, "or" for OR, + for include all, ^ for exclude all
-                  </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Parent Category (optional)</label>
-                  <select
-                    value={newCategory.parentId || ""}
-                    onChange={(e) => setNewCategory({ ...newCategory, parentId: e.target.value || null })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-infojet-blue"
-                    data-testid="parent-select"
-                  >
-                    <option value="">None (Main Category)</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {"—".repeat(cat.level)} {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isPublic"
-                    checked={newCategory.isPublic}
-                    onChange={(e) => setNewCategory({ ...newCategory, isPublic: e.target.checked })}
-                    className="rounded"
-                    data-testid="public-checkbox"
-                  />
-                  <label htmlFor="isPublic" className="text-sm text-gray-700">Make this category public</label>
-                </div>
-                <div className="flex gap-4 pt-4">
+                <div className="flex gap-4">
                   <button
                     type="button"
                     onClick={() => setShowCreate(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                    className="flex-1 px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded hover:bg-hud-green/10"
                   >
-                    Cancel
+                    CANCEL
                   </button>
                   <button
                     type="submit"
                     disabled={creating}
-                    className="flex-1 px-4 py-2 bg-infojet-blue text-white rounded-lg hover:bg-infojet-blue/90 disabled:opacity-50"
+                    className="flex-1 px-4 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded hover:bg-hud-cyan/30 disabled:opacity-50"
                     data-testid="save-category-btn"
                   >
-                    {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Create"}
+                    {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "CREATE"}
                   </button>
                 </div>
               </form>
-            </div>
+            </HUDFrame>
           </div>
         )}
 
         {/* Categories List */}
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-infojet-blue" />
+            <Loader2 className="w-8 h-8 animate-spin text-hud-cyan" />
           </div>
         ) : categories.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-            <FolderTree className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">No categories yet</h3>
-            <p className="text-gray-600 mb-6">Create your first category to start organizing information.</p>
+          <HUDFrame title="NO CATEGORIES" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
+            <FolderTree className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
+            <p className="text-hud-green font-mono mb-4">CREATE YOUR FIRST CATEGORY TO BEGIN</p>
             <button
               onClick={() => setShowCreate(true)}
-              className="px-6 py-3 bg-infojet-blue text-white rounded-lg hover:bg-infojet-blue/90"
+              className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded hover:bg-hud-cyan/30"
             >
-              Create First Category
+              CREATE CATEGORY
             </button>
-          </div>
+          </HUDFrame>
         ) : (
-          <div className="bg-white rounded-2xl shadow-lg p-6">
-            <CategoryTree
-              categories={categoryTree}
-              onDelete={handleDelete}
-              onToggleVisibility={toggleVisibility}
-            />
+          <div className="space-y-3">
+            {categories.map((cat) => (
+              <div key={cat.id} className="bg-cockpit-dark p-4 rounded border border-hud-green/20 hover:border-hud-cyan/50 transition-colors">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-hud-cyan font-mono font-bold">{cat.name}</h3>
+                    <p className="text-hud-green/60 text-xs font-mono mt-1 truncate">{cat.protocol_string}</p>
+                    <span className={`inline-block mt-2 px-2 py-0.5 text-xs rounded font-mono ${cat.is_public ? "bg-hud-green/20 text-hud-green" : "bg-hud-orange/20 text-hud-orange"}`}>
+                      {cat.is_public ? "PUBLIC" : "PRIVATE"}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(cat.id)}
+                    className="p-2 text-hud-red/60 hover:text-hud-red rounded"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
     </Layout>
-  );
-};
-
-const CategoryTree = ({ categories, onDelete, onToggleVisibility, level = 0 }) => {
-  const [expanded, setExpanded] = useState({});
-
-  const toggleExpand = (id) => {
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  return (
-    <div className="space-y-2">
-      {categories.map((cat) => (
-        <div key={cat.id} style={{ marginLeft: level * 20 }}>
-          <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-            {cat.children?.length > 0 && (
-              <button onClick={() => toggleExpand(cat.id)} className="p-1">
-                {expanded[cat.id] ? (
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-gray-500" />
-                )}
-              </button>
-            )}
-            {!cat.children?.length && <div className="w-6" />}
-
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-gray-800">{cat.name}</span>
-                <span className={`px-2 py-0.5 text-xs rounded-full ${cat.is_public ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"}`}>
-                  {cat.is_public ? "Public" : "Private"}
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 mt-1 font-mono truncate">{cat.protocol_string}</p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onToggleVisibility(cat.id, cat.is_public)}
-                className="p-2 text-gray-500 hover:text-infojet-blue rounded-lg hover:bg-white"
-                title={cat.is_public ? "Make private" : "Make public"}
-              >
-                {cat.is_public ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-              </button>
-              <button
-                onClick={() => onDelete(cat.id)}
-                className="p-2 text-gray-500 hover:text-red-500 rounded-lg hover:bg-white"
-                title="Delete"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {expanded[cat.id] && cat.children?.length > 0 && (
-            <div className="mt-2">
-              <CategoryTree
-                categories={cat.children}
-                onDelete={onDelete}
-                onToggleVisibility={onToggleVisibility}
-                level={level + 1}
-              />
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
   );
 };
 
@@ -931,10 +1001,6 @@ const UltimateSearchPage = () => {
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [aggregationType, setAggregationType] = useState("and_or");
-  const [articleTypes, setArticleTypes] = useState([]);
-  const [selectedArticleTypes, setSelectedArticleTypes] = useState([]);
-  const [domains, setDomains] = useState([]);
-  const [selectedDomains, setSelectedDomains] = useState([]);
   const [keyword, setKeyword] = useState("");
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -943,7 +1009,6 @@ const UltimateSearchPage = () => {
 
   useEffect(() => {
     fetchCategories();
-    fetchFilters();
   }, []);
 
   const fetchCategories = async () => {
@@ -955,220 +1020,134 @@ const UltimateSearchPage = () => {
     }
   };
 
-  const fetchFilters = async () => {
-    try {
-      const res = await axios.get(`${API}/ultimate-search/filters`);
-      setArticleTypes(res.data.article_types);
-      setDomains(res.data.domains);
-    } catch (error) {
-      console.error("Failed to fetch filters");
-    }
-  };
-
   const handleSearch = async (newPage = 1) => {
     setLoading(true);
     try {
       const res = await axios.post(`${API}/ultimate-search`, {
         category_ids: selectedCategories,
         aggregation_type: aggregationType,
-        article_types: selectedArticleTypes,
-        domains: selectedDomains,
         keyword: keyword || null,
         page: newPage
       });
       setResults(res.data);
       setPage(newPage);
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Search failed");
+      toast.error(error.response?.data?.detail || "SEARCH FAILED");
     } finally {
       setLoading(false);
     }
-  };
-
-  const toggleCategory = (id) => {
-    setSelectedCategories((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-    );
   };
 
   return (
     <Layout>
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Ultimate Search</h1>
-          <p className="text-gray-600">Search through your collated results with advanced filters.</p>
+          <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">ULTIMATE SEARCH</h1>
+          <p className="text-hud-cyan/80 font-mono text-sm">Advanced filtering of collated intelligence.</p>
         </div>
 
         <div className="grid lg:grid-cols-4 gap-6">
-          {/* Filters Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Categories */}
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <FolderTree className="w-5 h-5 text-infojet-blue" />
-                Categories
-              </h3>
+          {/* Filters */}
+          <div className="lg:col-span-1 space-y-4">
+            <HUDFrame title="CATEGORIES" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {categories.map((cat) => (
                   <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={selectedCategories.includes(cat.id)}
-                      onChange={() => toggleCategory(cat.id)}
-                      className="rounded text-infojet-blue"
+                      onChange={() => {
+                        setSelectedCategories(prev =>
+                          prev.includes(cat.id) ? prev.filter(c => c !== cat.id) : [...prev, cat.id]
+                        );
+                      }}
+                      className="rounded bg-cockpit border-hud-green/30 text-hud-cyan"
                     />
-                    <span className="text-sm text-gray-700">{cat.name}</span>
+                    <span className="text-sm text-hud-green font-mono">{cat.name}</span>
                   </label>
                 ))}
               </div>
-            </div>
+            </HUDFrame>
 
-            {/* Search Aggregation */}
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <h3 className="font-semibold text-gray-800 mb-3">Search Aggregation</h3>
+            <HUDFrame title="AGGREGATION" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg">
               <div className="space-y-2">
                 {[
-                  { value: "and_or", label: "And/Or", desc: "All selected + possibly others" },
-                  { value: "and", label: "And", desc: "Exactly selected categories only" },
-                  { value: "or", label: "Or", desc: "Any of selected categories" },
+                  { value: "and_or", label: "AND/OR" },
+                  { value: "and", label: "AND" },
+                  { value: "or", label: "OR" },
                 ].map((opt) => (
-                  <label key={opt.value} className="flex items-start gap-2 cursor-pointer">
+                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
                       name="aggregation"
                       value={opt.value}
                       checked={aggregationType === opt.value}
                       onChange={(e) => setAggregationType(e.target.value)}
-                      className="mt-1 text-infojet-blue"
+                      className="text-hud-cyan"
                     />
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">{opt.label}</span>
-                      <p className="text-xs text-gray-500">{opt.desc}</p>
-                    </div>
+                    <span className="text-sm text-hud-green font-mono">{opt.label}</span>
                   </label>
                 ))}
               </div>
-            </div>
-
-            {/* Article Types */}
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <h3 className="font-semibold text-gray-800 mb-3">Article Types</h3>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {articleTypes.map((type) => (
-                  <label key={type} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedArticleTypes.includes(type)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedArticleTypes([...selectedArticleTypes, type]);
-                        } else {
-                          setSelectedArticleTypes(selectedArticleTypes.filter((t) => t !== type));
-                        }
-                      }}
-                      className="rounded text-infojet-blue"
-                    />
-                    <span className="text-sm text-gray-700">{type}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Domains */}
-            {domains.length > 0 && (
-              <div className="bg-white rounded-xl shadow-lg p-4">
-                <h3 className="font-semibold text-gray-800 mb-3">Top Domains</h3>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {domains.slice(0, 10).map((domain) => (
-                    <label key={domain} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedDomains.includes(domain)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedDomains([...selectedDomains, domain]);
-                          } else {
-                            setSelectedDomains(selectedDomains.filter((d) => d !== domain));
-                          }
-                        }}
-                        className="rounded text-infojet-blue"
-                      />
-                      <span className="text-sm text-gray-700 truncate">{domain}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+            </HUDFrame>
           </div>
 
-          {/* Results Area */}
+          {/* Results */}
           <div className="lg:col-span-3">
-            {/* Search Bar */}
-            <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
-              <div className="flex gap-4">
-                <input
-                  type="text"
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  placeholder="Search keywords in titles and snippets..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-infojet-blue"
-                  data-testid="ultimate-search-input"
-                />
-                <button
-                  onClick={() => handleSearch(1)}
-                  disabled={loading}
-                  className="px-6 py-2 bg-infojet-blue text-white rounded-lg hover:bg-infojet-blue/90 disabled:opacity-50 flex items-center gap-2"
-                  data-testid="ultimate-search-btn"
-                >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
-                  Search
-                </button>
-              </div>
+            <div className="flex gap-4 mb-6">
+              <input
+                type="text"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                placeholder="Keyword filter..."
+                className="flex-1 px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan"
+                data-testid="ultimate-search-input"
+              />
+              <button
+                onClick={() => handleSearch(1)}
+                disabled={loading}
+                className="px-6 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded hover:bg-hud-cyan/30 disabled:opacity-50 flex items-center gap-2"
+                data-testid="ultimate-search-btn"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Target className="w-5 h-5" />}
+                SEARCH
+              </button>
             </div>
 
-            {/* Results */}
-            {results && (
+            {results ? (
               <>
-                <div className="mb-4 text-sm text-gray-600">
-                  Found {results.total} results (Page {results.page} of {results.total_pages})
-                </div>
-                <div className="space-y-4">
+                <p className="text-hud-cyan font-mono text-sm mb-4">
+                  {results.total} RESULTS | PAGE {results.page} OF {results.total_pages}
+                </p>
+                <div className="space-y-3">
                   {results.results.map((result) => (
                     <SearchResultCard key={result.id} result={result} />
                   ))}
                 </div>
-
-                {/* Pagination */}
                 {results.total_pages > 1 && (
                   <div className="flex justify-center gap-2 mt-6">
                     <button
                       onClick={() => handleSearch(page - 1)}
-                      disabled={page === 1 || loading}
-                      className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
+                      disabled={page === 1}
+                      className="px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded disabled:opacity-50"
                     >
-                      Previous
+                      PREV
                     </button>
-                    <span className="px-4 py-2 text-gray-600">
-                      Page {page} of {results.total_pages}
-                    </span>
                     <button
                       onClick={() => handleSearch(page + 1)}
-                      disabled={page === results.total_pages || loading}
-                      className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
+                      disabled={page === results.total_pages}
+                      className="px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded disabled:opacity-50"
                     >
-                      Next
+                      NEXT
                     </button>
                   </div>
                 )}
               </>
-            )}
-
-            {!results && (
-              <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-                <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">Start Searching</h3>
-                <p className="text-gray-600">Select categories and filters, then click Search to view your collated results.</p>
-              </div>
+            ) : (
+              <HUDFrame title="AWAITING PARAMETERS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
+                <Target className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
+                <p className="text-hud-green font-mono">SELECT CATEGORIES AND EXECUTE SEARCH</p>
+              </HUDFrame>
             )}
           </div>
         </div>
@@ -1191,40 +1170,37 @@ const StatisticsPage = () => {
       const res = await axios.get(`${API}/statistics`);
       setStats(res.data);
     } catch (error) {
-      toast.error("Failed to load statistics");
+      toast.error("FAILED TO LOAD INTEL");
     } finally {
       setLoading(false);
     }
   };
 
-  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82ca9d"];
+  const COLORS = ["#00ffff", "#00ff88", "#ff8800", "#ff0066", "#8844ff"];
 
   return (
     <Layout>
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Statistics</h1>
-          <p className="text-gray-600">View insights about your collated data.</p>
+          <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">INTEL STATISTICS</h1>
+          <p className="text-hud-cyan/80 font-mono text-sm">Analysis of collated data.</p>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-infojet-blue" />
+            <Loader2 className="w-8 h-8 animate-spin text-hud-cyan" />
           </div>
         ) : stats ? (
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Summary Cards */}
             <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Total Results" value={stats.total_results} />
-              <StatCard label="Categories" value={stats.total_categories} />
-              <StatCard label="Domains" value={stats.top_domains?.length || 0} />
-              <StatCard label="Article Types" value={stats.article_types?.length || 0} />
+              <StatCard label="TOTAL RESULTS" value={stats.total_results} />
+              <StatCard label="CATEGORIES" value={stats.total_categories} />
+              <StatCard label="DOMAINS" value={stats.top_domains?.length || 0} />
+              <StatCard label="ARTICLE TYPES" value={stats.article_types?.length || 0} />
             </div>
 
-            {/* Article Types Pie Chart */}
             {stats.article_types?.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="font-semibold text-gray-800 mb-4">Article Types Distribution</h3>
+              <HUDFrame title="ARTICLE TYPES" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
@@ -1233,58 +1209,39 @@ const StatisticsPage = () => {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      outerRadius={100}
+                      outerRadius={80}
                       label
                     >
                       {stats.article_types.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid #00ffff' }} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
+              </HUDFrame>
             )}
 
-            {/* Top Domains Bar Chart */}
             {stats.top_domains?.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="font-semibold text-gray-800 mb-4">Top Domains</h3>
+              <HUDFrame title="TOP DOMAINS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={stats.top_domains.map((d) => ({ name: d._id?.substring(0, 20) || "Unknown", count: d.count }))}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#0088FE" />
+                  <BarChart data={stats.top_domains.map((d) => ({ name: d._id?.substring(0, 15) || "Unknown", count: d.count }))}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                    <XAxis dataKey="name" tick={{ fill: '#00ff88', fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
+                    <YAxis tick={{ fill: '#00ffff' }} />
+                    <Tooltip contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid #00ffff' }} />
+                    <Bar dataKey="count" fill="#00ffff" />
                   </BarChart>
                 </ResponsiveContainer>
-              </div>
-            )}
-
-            {/* By Category */}
-            {stats.by_category?.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-lg p-6 md:col-span-2">
-                <h3 className="font-semibold text-gray-800 mb-4">Results by Category</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={stats.by_category.map((c) => ({ name: c.name?.substring(0, 15) || "Unknown", count: c.count }))}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#00C49F" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              </HUDFrame>
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-            <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Data Yet</h3>
-            <p className="text-gray-600">Start collating search results to see statistics.</p>
-          </div>
+          <HUDFrame title="NO DATA" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
+            <BarChart3 className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
+            <p className="text-hud-green font-mono">COLLATE DATA TO VIEW STATISTICS</p>
+          </HUDFrame>
         )}
       </div>
     </Layout>
@@ -1292,9 +1249,9 @@ const StatisticsPage = () => {
 };
 
 const StatCard = ({ label, value }) => (
-  <div className="bg-white rounded-xl shadow-lg p-6 text-center">
-    <p className="text-3xl font-bold text-infojet-blue">{value}</p>
-    <p className="text-sm text-gray-600 mt-1">{label}</p>
+  <div className="bg-cockpit-dark p-6 rounded-lg border border-hud-cyan/30 text-center">
+    <p className="text-3xl font-bold text-hud-cyan font-mono">{value}</p>
+    <p className="text-sm text-hud-green/60 mt-1 font-mono">{label}</p>
   </div>
 );
 
@@ -1303,21 +1260,18 @@ const GlobalDatabasePage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState(null);
 
   useEffect(() => {
     fetchData();
-  }, [page, selectedCategory]);
+  }, [page]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: page.toString() });
-      if (selectedCategory) params.append("category_id", selectedCategory);
-      const res = await axios.get(`${API}/global-database?${params}`);
+      const res = await axios.get(`${API}/global-database?page=${page}`);
       setData(res.data);
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Failed to load global database");
+      toast.error(error.response?.data?.detail || "FAILED TO LOAD DATABASE");
     } finally {
       setLoading(false);
     }
@@ -1327,88 +1281,232 @@ const GlobalDatabasePage = () => {
     <Layout>
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Global Research Database</h1>
-          <p className="text-gray-600">Explore public categories and results from all users.</p>
+          <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">GLOBAL DATABASE</h1>
+          <p className="text-hud-cyan/80 font-mono text-sm">Access public categories from all pilots.</p>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Categories Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-lg p-4">
-              <h3 className="font-semibold text-gray-800 mb-3">Public Categories</h3>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                <button
-                  onClick={() => {
-                    setSelectedCategory(null);
-                    setPage(1);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm ${!selectedCategory ? "bg-infojet-blue text-white" : "hover:bg-gray-100"}`}
-                >
-                  All Categories
-                </button>
-                {data?.public_categories?.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      setSelectedCategory(cat.id);
-                      setPage(1);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm ${selectedCategory === cat.id ? "bg-infojet-blue text-white" : "hover:bg-gray-100"}`}
-                  >
-                    {cat.name}
-                  </button>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-hud-cyan" />
+          </div>
+        ) : data?.results?.length > 0 ? (
+          <>
+            <p className="text-hud-cyan font-mono text-sm mb-4">
+              {data.total} RECORDS | PAGE {data.page} OF {data.total_pages}
+            </p>
+            <div className="space-y-3">
+              {data.results.map((result) => (
+                <SearchResultCard key={result.id} result={result} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <HUDFrame title="NO PUBLIC DATA" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
+            <Globe className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
+            <p className="text-hud-green font-mono">NO PUBLIC RESULTS AVAILABLE</p>
+          </HUDFrame>
+        )}
+      </div>
+    </Layout>
+  );
+};
+
+// Book Page
+const BookPage = () => {
+  return (
+    <Layout>
+      <div className="max-w-4xl mx-auto">
+        <HUDFrame title="LETTERS TO EVELYN" className="bg-cockpit-dark/80 border border-hud-orange/30 rounded-lg mb-8">
+          <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex-shrink-0">
+              <img 
+                src={BOOK_IMAGES.author}
+                alt="John Selman"
+                className="w-48 h-48 rounded-lg border-2 border-hud-orange object-cover"
+              />
+              <div className="flex justify-center mt-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-6 h-6 fill-hud-orange text-hud-orange" />
                 ))}
+              </div>
+              <p className="text-center text-hud-green text-sm font-mono mt-2">15 Five-Star Reviews</p>
+            </div>
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-hud-orange font-mono tracking-wider mb-2">
+                LETTERS TO EVELYN
+              </h1>
+              <p className="text-hud-cyan text-lg font-mono mb-4">By John Selman</p>
+              <p className="text-hud-green/80 font-mono text-sm mb-4">
+                A prolific odyssey of love and redemption - from the author who holds a World Record in Aviation.
+              </p>
+              <p className="text-hud-green/60 font-mono text-sm mb-6 italic">
+                "A profound and unforgettable literary piece... poetic prose and introspective storytelling create an immersive reading experience that is as enlightening as it is emotionally resonant."
+                <br />— Divine Zape, Readers' Favorite
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href={BOOK_INFO.amazonUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-hud-orange/20 border border-hud-orange text-hud-orange font-mono tracking-wider rounded hover:bg-hud-orange/30 transition-all flex items-center gap-2"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  BUY ON AMAZON
+                </a>
+                <a
+                  href={BOOK_INFO.officialUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all flex items-center gap-2"
+                >
+                  <ExternalLink className="w-5 h-5" />
+                  OFFICIAL SITE
+                </a>
               </div>
             </div>
           </div>
+        </HUDFrame>
 
-          {/* Results */}
-          <div className="lg:col-span-3">
-            {loading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-infojet-blue" />
+        {/* Reviews */}
+        <HUDFrame title="CRITICAL ACCLAIM" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg mb-8">
+          <div className="space-y-4">
+            {BOOK_INFO.quotes.map((quote, idx) => (
+              <div key={idx} className="bg-cockpit p-4 rounded border border-hud-green/20">
+                <p className="text-hud-green/80 font-mono text-sm italic">"{quote.text}"</p>
+                <p className="text-hud-cyan text-xs font-mono mt-2">— {quote.author}</p>
               </div>
-            ) : data?.results?.length > 0 ? (
-              <>
-                <div className="mb-4 text-sm text-gray-600">
-                  Found {data.total} results (Page {data.page} of {data.total_pages})
-                </div>
-                <div className="space-y-4">
-                  {data.results.map((result) => (
-                    <SearchResultCard key={result.id} result={result} />
-                  ))}
-                </div>
-
-                {data.total_pages > 1 && (
-                  <div className="flex justify-center gap-2 mt-6">
-                    <button
-                      onClick={() => setPage(page - 1)}
-                      disabled={page === 1}
-                      className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    <span className="px-4 py-2 text-gray-600">
-                      Page {page} of {data.total_pages}
-                    </span>
-                    <button
-                      onClick={() => setPage(page + 1)}
-                      disabled={page === data.total_pages}
-                      className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-                <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Public Results</h3>
-                <p className="text-gray-600">There are no public results available yet.</p>
-              </div>
-            )}
+            ))}
           </div>
+        </HUDFrame>
+
+        {/* Links */}
+        <HUDFrame title="PURCHASE LINKS" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg">
+          <div className="grid md:grid-cols-2 gap-4">
+            {[
+              { label: "Amazon", url: BOOK_INFO.amazonUrl },
+              { label: "Official Website", url: BOOK_INFO.officialUrl },
+              { label: "Sintra Site", url: BOOK_INFO.sintraUrl },
+              { label: "Readers' Favorite", url: BOOK_INFO.readersFavoriteUrl },
+              { label: "Google Drive Preview", url: BOOK_INFO.googleDriveUrl },
+            ].map((link, idx) => (
+              <a
+                key={idx}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-3 bg-cockpit border border-hud-cyan/30 rounded hover:border-hud-cyan transition-colors text-hud-green font-mono text-sm"
+              >
+                <ExternalLink className="w-4 h-4 text-hud-cyan" />
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </HUDFrame>
+      </div>
+    </Layout>
+  );
+};
+
+// Subscribe Page
+const SubscribePage = () => {
+  const { user, refreshUser } = useAuth();
+  const [processing, setProcessing] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState("paypal");
+
+  const handlePayment = async () => {
+    setProcessing(true);
+    try {
+      await axios.post(`${API}/payments/process`, {
+        payment_method: selectedMethod,
+        item_type: "subscription",
+        amount: 0.95
+      });
+      toast.success("PAYMENT SUCCESSFUL (SANDBOX)");
+      await refreshUser();
+    } catch (error) {
+      toast.error("PAYMENT FAILED");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  if (user?.is_paid) {
+    return (
+      <Layout>
+        <div className="max-w-lg mx-auto">
+          <HUDFrame title="LIFETIME ACCESS ACTIVE" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg text-center py-12">
+            <Shield className="w-20 h-20 text-hud-green mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-hud-green font-mono mb-2">PREMIUM STATUS ACTIVE</h2>
+            <p className="text-hud-cyan/80 font-mono text-sm">You have unlimited access to all features.</p>
+          </HUDFrame>
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="max-w-lg mx-auto">
+        <HUDFrame title="UPGRADE TO PREMIUM" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
+          <div className="text-center mb-6">
+            <div className="text-5xl font-bold text-hud-cyan font-mono mb-2">$0.95</div>
+            <p className="text-hud-green font-mono">LIFETIME ACCESS</p>
+          </div>
+
+          <div className="space-y-3 mb-6">
+            {[
+              "Unlimited search results pages",
+              "Unlimited categories",
+              "Advanced statistics",
+              "Global Research Database",
+              "Priority support"
+            ].map((feature, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-hud-green font-mono text-sm">
+                <Zap className="w-4 h-4 text-hud-cyan" />
+                {feature}
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-3 mb-6">
+            <p className="text-xs text-hud-cyan font-mono mb-2">SELECT PAYMENT METHOD:</p>
+            {[
+              { id: "paypal", label: "PayPal (Sandbox)" },
+              { id: "google_pay", label: "Google Pay (Sandbox)" },
+              { id: "shopify", label: "Shopify (Sandbox)" }
+            ].map((method) => (
+              <label key={method.id} className="flex items-center gap-3 p-3 bg-cockpit border border-hud-green/20 rounded cursor-pointer hover:border-hud-cyan/50">
+                <input
+                  type="radio"
+                  name="payment"
+                  value={method.id}
+                  checked={selectedMethod === method.id}
+                  onChange={(e) => setSelectedMethod(e.target.value)}
+                  className="text-hud-cyan"
+                />
+                <span className="text-hud-green font-mono text-sm">{method.label}</span>
+              </label>
+            ))}
+          </div>
+
+          <button
+            onClick={handlePayment}
+            disabled={processing}
+            className="w-full py-4 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {processing ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
+            PROCESS PAYMENT
+          </button>
+
+          <p className="text-center text-hud-orange text-xs font-mono mt-4">
+            * SANDBOX MODE - No real charges
+          </p>
+        </HUDFrame>
+
+        {/* Book Promo */}
+        <div className="mt-8">
+          <BookPromoBanner />
         </div>
       </div>
     </Layout>
@@ -1420,8 +1518,6 @@ const AdminPage = () => {
   const [settings, setSettings] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [newBlockedWord, setNewBlockedWord] = useState("");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -1437,78 +1533,9 @@ const AdminPage = () => {
       setSettings(settingsRes.data);
       setUsers(usersRes.data);
     } catch (error) {
-      toast.error("Failed to load admin data");
+      toast.error("FAILED TO LOAD ADMIN DATA");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSaveSettings = async () => {
-    setSaving(true);
-    try {
-      await axios.put(`${API}/admin/settings`, {
-        results_per_page: settings.results_per_page,
-        free_user_pages: settings.free_user_pages,
-        max_category_levels: settings.max_category_levels,
-        subscription_price: settings.subscription_price,
-        informative_min_words: settings.informative_min_words,
-        phd_keyword_count: settings.phd_keyword_count,
-        blog_keyword_count: settings.blog_keyword_count
-      });
-      toast.success("Settings saved!");
-    } catch (error) {
-      toast.error("Failed to save settings");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleAddBlockedWord = async () => {
-    if (!newBlockedWord.trim()) return;
-    try {
-      await axios.post(`${API}/admin/ban-word?word=${encodeURIComponent(newBlockedWord)}`);
-      setSettings({
-        ...settings,
-        blocked_words: [...settings.blocked_words, newBlockedWord.toLowerCase()]
-      });
-      setNewBlockedWord("");
-      toast.success("Word blocked!");
-    } catch (error) {
-      toast.error("Failed to block word");
-    }
-  };
-
-  const handleRemoveBlockedWord = async (word) => {
-    try {
-      await axios.delete(`${API}/admin/ban-word/${encodeURIComponent(word)}`);
-      setSettings({
-        ...settings,
-        blocked_words: settings.blocked_words.filter((w) => w !== word)
-      });
-      toast.success("Word unblocked!");
-    } catch (error) {
-      toast.error("Failed to unblock word");
-    }
-  };
-
-  const handleTogglePaid = async (userId, currentStatus) => {
-    try {
-      await axios.post(`${API}/admin/set-paid/${userId}?is_paid=${!currentStatus}`);
-      setUsers(users.map((u) => (u.id === userId ? { ...u, is_paid: !currentStatus } : u)));
-      toast.success("User status updated!");
-    } catch (error) {
-      toast.error("Failed to update user status");
-    }
-  };
-
-  const handleBanUser = async (userId) => {
-    if (!window.confirm("Ban this user?")) return;
-    try {
-      await axios.post(`${API}/admin/ban-user/${userId}`);
-      setUsers(users.map((u) => (u.id === userId ? { ...u, is_banned: true } : u)));
-      toast.success("User banned!");
-    } catch (error) {
-      toast.error("Failed to ban user");
     }
   };
 
@@ -1516,8 +1543,9 @@ const AdminPage = () => {
     return (
       <Layout>
         <div className="text-center py-12">
-          <h1 className="text-2xl font-bold text-gray-800">Access Denied</h1>
-          <p className="text-gray-600 mt-2">You need admin privileges to access this page.</p>
+          <Shield className="w-16 h-16 text-hud-red/50 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-hud-red font-mono">ACCESS DENIED</h1>
+          <p className="text-hud-cyan/60 mt-2 font-mono">Admin clearance required</p>
         </div>
       </Layout>
     );
@@ -1527,189 +1555,88 @@ const AdminPage = () => {
     <Layout>
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Admin Panel</h1>
-          <p className="text-gray-600">Manage settings, users, and content moderation.</p>
+          <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">ADMIN CONTROL</h1>
+          <p className="text-hud-cyan/80 font-mono text-sm">System configuration and user management.</p>
         </div>
 
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-infojet-blue" />
+            <Loader2 className="w-8 h-8 animate-spin text-hud-cyan" />
           </div>
         ) : (
           <div className="space-y-6">
-            {/* General Settings */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">General Settings</h2>
+            <HUDFrame title="SYSTEM SETTINGS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Results Per Page</label>
+                  <label className="block text-xs font-mono text-hud-cyan mb-1">RESULTS PER PAGE</label>
                   <input
                     type="number"
                     value={settings?.results_per_page || 20}
-                    onChange={(e) => setSettings({ ...settings, results_per_page: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    data-testid="results-per-page-input"
+                    readOnly
+                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Free User Pages Limit</label>
+                  <label className="block text-xs font-mono text-hud-cyan mb-1">FREE USER PAGES</label>
                   <input
                     type="number"
                     value={settings?.free_user_pages || 1}
-                    onChange={(e) => setSettings({ ...settings, free_user_pages: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                    data-testid="free-pages-input"
+                    readOnly
+                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Category Levels</label>
+                  <label className="block text-xs font-mono text-hud-cyan mb-1">SUBSCRIPTION PRICE</label>
+                  <input
+                    type="text"
+                    value={`$${settings?.subscription_price || 0.95}`}
+                    readOnly
+                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-hud-cyan mb-1">MAX CATEGORY LEVELS</label>
                   <input
                     type="number"
                     value={settings?.max_category_levels || 100}
-                    onChange={(e) => setSettings({ ...settings, max_category_levels: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Subscription Price ($)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={settings?.subscription_price || 0.99}
-                    onChange={(e) => setSettings({ ...settings, subscription_price: parseFloat(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    readOnly
+                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono"
                   />
                 </div>
               </div>
+            </HUDFrame>
 
-              <h3 className="font-medium text-gray-800 mt-6 mb-3">Article Classification Settings</h3>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Informative Min Words</label>
-                  <input
-                    type="number"
-                    value={settings?.informative_min_words || 1500}
-                    onChange={(e) => setSettings({ ...settings, informative_min_words: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ph.D Keyword Count</label>
-                  <input
-                    type="number"
-                    value={settings?.phd_keyword_count || 3}
-                    onChange={(e) => setSettings({ ...settings, phd_keyword_count: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Blog Keyword Count</label>
-                  <input
-                    type="number"
-                    value={settings?.blog_keyword_count || 3}
-                    onChange={(e) => setSettings({ ...settings, blog_keyword_count: parseInt(e.target.value) })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                  />
-                </div>
-              </div>
-
-              <button
-                onClick={handleSaveSettings}
-                disabled={saving}
-                className="mt-6 px-6 py-2 bg-infojet-blue text-white rounded-lg hover:bg-infojet-blue/90 disabled:opacity-50"
-                data-testid="save-settings-btn"
-              >
-                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Save Settings"}
-              </button>
-            </div>
-
-            {/* Blocked Words */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Blocked Words</h2>
-              <div className="flex gap-2 mb-4">
-                <input
-                  type="text"
-                  value={newBlockedWord}
-                  onChange={(e) => setNewBlockedWord(e.target.value)}
-                  placeholder="Add word to block..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                  data-testid="blocked-word-input"
-                />
-                <button
-                  onClick={handleAddBlockedWord}
-                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                  data-testid="add-blocked-word-btn"
-                >
-                  Block
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {settings?.blocked_words?.map((word) => (
-                  <span key={word} className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm">
-                    {word}
-                    <button onClick={() => handleRemoveBlockedWord(word)} className="hover:text-red-900">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* User Management */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">User Management</h2>
+            <HUDFrame title="USER ROSTER" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Username</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Email</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
+                    <tr className="border-b border-hud-cyan/30">
+                      <th className="text-left py-3 px-4 text-xs font-mono text-hud-cyan">CALLSIGN</th>
+                      <th className="text-left py-3 px-4 text-xs font-mono text-hud-cyan">EMAIL</th>
+                      <th className="text-left py-3 px-4 text-xs font-mono text-hud-cyan">STATUS</th>
                     </tr>
                   </thead>
                   <tbody>
                     {users.map((u) => (
-                      <tr key={u.id} className="border-b hover:bg-gray-50">
+                      <tr key={u.id} className="border-b border-hud-green/10">
                         <td className="py-3 px-4">
-                          <span className="font-medium">{u.username}</span>
+                          <span className="text-hud-green font-mono text-sm">{u.username}</span>
                           {u.is_admin && (
-                            <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">Admin</span>
+                            <span className="ml-2 px-2 py-0.5 bg-hud-orange/20 text-hud-orange text-xs rounded font-mono">ADMIN</span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-sm text-gray-600">{u.email}</td>
+                        <td className="py-3 px-4 text-sm text-hud-cyan/60 font-mono">{u.email}</td>
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 text-xs rounded-full ${u.is_paid ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
-                            {u.is_paid ? "Premium" : "Free"}
+                          <span className={`px-2 py-0.5 text-xs rounded font-mono ${u.is_paid ? "bg-hud-green/20 text-hud-green" : "bg-hud-orange/20 text-hud-orange"}`}>
+                            {u.is_paid ? "PREMIUM" : "FREE"}
                           </span>
-                          {u.is_banned && (
-                            <span className="ml-1 px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full">Banned</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleTogglePaid(u.id, u.is_paid)}
-                              className="text-sm text-infojet-blue hover:underline"
-                            >
-                              {u.is_paid ? "Remove Premium" : "Make Premium"}
-                            </button>
-                            {!u.is_banned && !u.is_admin && (
-                              <button
-                                onClick={() => handleBanUser(u.id)}
-                                className="text-sm text-red-500 hover:underline"
-                              >
-                                Ban
-                              </button>
-                            )}
-                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </div>
+            </HUDFrame>
           </div>
         )}
       </div>
@@ -1721,66 +1648,29 @@ const AdminPage = () => {
 function App() {
   return (
     <AuthProvider>
-      <Toaster position="top-right" richColors />
+      <Toaster 
+        position="top-right" 
+        toastOptions={{
+          style: {
+            background: '#0a0a0a',
+            border: '1px solid #00ffff',
+            color: '#00ff88',
+            fontFamily: 'monospace'
+          }
+        }}
+      />
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/infojet"
-            element={
-              <ProtectedRoute>
-                <InfoJetPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/ultimate-search"
-            element={
-              <ProtectedRoute>
-                <UltimateSearchPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/categories"
-            element={
-              <ProtectedRoute>
-                <CategoriesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/statistics"
-            element={
-              <ProtectedRoute>
-                <StatisticsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/global-database"
-            element={
-              <ProtectedRoute>
-                <GlobalDatabasePage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+          <Route path="/infopilot" element={<ProtectedRoute><InfoPilotPage /></ProtectedRoute>} />
+          <Route path="/ultimate-search" element={<ProtectedRoute><UltimateSearchPage /></ProtectedRoute>} />
+          <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
+          <Route path="/statistics" element={<ProtectedRoute><StatisticsPage /></ProtectedRoute>} />
+          <Route path="/global-database" element={<ProtectedRoute><GlobalDatabasePage /></ProtectedRoute>} />
+          <Route path="/book" element={<ProtectedRoute><BookPage /></ProtectedRoute>} />
+          <Route path="/subscribe" element={<ProtectedRoute><SubscribePage /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </BrowserRouter>
