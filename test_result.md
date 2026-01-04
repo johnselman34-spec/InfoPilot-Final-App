@@ -220,17 +220,38 @@ backend:
           comment: "Minor: Admin settings endpoint has ObjectId serialization issue. Core functionality not affected"
 
 frontend:
-  - task: "Frontend Loading"
+  - task: "Frontend Loading and Splash Screen"
     implemented: true
     working: "NA"
-    file: "/app/frontend/src/App.js"
+    file: "/app/frontend/app/_layout.tsx"
+    stuck_count: 3
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported app stuck on splash screen, recurring issue"
+        - working: "NA"
+          agent: "main"
+          comment: "Fixed _layout.tsx with better timeout handling, cleaner async flow, better error handling, and more informative console logs. Changed from 2s to 3s max timeout. Added isMounted flag to prevent state updates after unmount."
+        - working: "NA"
+          agent: "testing"
+          comment: "Frontend testing not performed - backend issues resolved. Frontend should now work with working backend APIs"
+  
+  - task: "Upgrade/Subscription Button"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/(tabs)/home.tsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported upgrade button does nothing"
         - working: "NA"
-          agent: "testing"
-          comment: "Frontend testing not performed - backend issues resolved. Frontend should now work with working backend APIs"
+          agent: "main"
+          comment: "Upgrade button now functional. Displays modal with premium features, calls /api/users/subscribe endpoint. For demo purposes, immediately activates premium without real payment. User provided Google Play payment profile ID: 3834-4026-0543 for future integration."
 
 metadata:
   created_by: "testing_agent"
