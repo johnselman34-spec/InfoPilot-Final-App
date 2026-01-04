@@ -395,17 +395,21 @@ async def search_google(search_req: SearchRequest, current_user: User = Depends(
 
 @api_router.post("/collate")
 async def collate_results(collate_req: CollateRequest, current_user: User = Depends(get_current_user)):
-    """Collate search results into categories based on protocols"""
+    """Collate search results AUTOMATICALLY into ALL matching categories based on protocols"""
     try:
-        # Get user's protocols
+        # Get ALL user's protocols and categories
         protocols = await db.protocols.find({"userId": current_user.id}).to_list(1000)
+        categories = await db.categories.find({"userId": current_user.id}).to_list(1000)
         
         if not protocols:
-            return {"success": True, "message": "No protocols found", "categorized": 0}
+            return {"success": True, "message": "No protocols found. Please create protocols first.", "categorized": 0}
         
-        # Get search results (assuming they were just searched)
+        # Get search results
         api_key = os.environ.get('GOOGLE_API_KEY', '')
         cx = os.environ.get('GOOGLE_CX', '')
+        
+        if not api_key or not cx:
+            raise HTTPException(status_code=500, detail="Google API credentials not configured")
         
         service = build("customsearch", "v1", developerKey=api_key)
         result = service.cse().list(
@@ -417,39 +421,78 @@ async def collate_results(collate_req: CollateRequest, current_user: User = Depe
         items = result.get('items', [])
         categorized_count = 0
         
-        # For each search result, classify and match to categories
+        # For each search result, classify and AUTOMATICALLY match to ALL relevant categories
         for item in items:
-            # Classify content
-            classification = await classify_content(item.get('snippet', ''), item.get('link', ''))
+            title = item.get('title', '')
+            snippet = item.get('snippet', '')
+            link = item.get('link', '')
+            combined_text = f"{title} {snippet}".lower()
             
-            # Match against protocols
+            # Classify content using AI
+            classification = await classify_content(snippet, link)
+            
+            # AUTOMATICALLY match against ALL protocols
             matched_categories = []
             for protocol in protocols:
-                # Simple matching - check if query terms appear in snippet
-                if any(term.lower() in item.get('snippet', '').lower() for term in collate_req.query.split()):
+                # Parse the protocol and check if this result matches
+                protocol_expression = protocol.get('booleanExpression', '').lower()
+                
+                # Extract all terms from protocol (simplified matching)
+                # Remove special characters and get terms
+                terms = re.findall(r'\(([^)]+)\)', protocol_expression)
+                
+                match_score = 0
+                required_matches = 0
+                
+                for term_group in terms:
+                    # Split by 'or' to get individual terms
+                    or_terms = [t.strip() for t in term_group.split(' or ')]
+                    required_matches += 1
+                    
+                    # Check if any term in this group matches
+                    if any(term.lower() in combined_text for term in or_terms):
+                        match_score += 1
+                
+                # If most terms match, add this category
+                if required_matches > 0 and match_score >= (required_matches * 0.5):  # 50% match threshold
                     matched_categories.append(protocol['categoryId'])
             
-            # Save to database
-            if matched_categories:
-                search_result = {
-                    "userId": current_user.id,
-                    "title": item.get('title', ''),
-                    "url": item.get('link', ''),
-                    "snippet": item.get('snippet', ''),
-                    "displayLink": item.get('displayLink', ''),
-                    "classification": classification,
-                    "categories": matched_categories,
-                    "query": collate_req.query,
-                    "createdAt": datetime.utcnow()
-                }
+            # ALWAYS save result, even if no categories matched (for user to see all results)
+            search_result = {
+                "userId": current_user.id,
+                "title": title,
+                "url": link,
+                "snippet": snippet,
+                "displayLink": item.get('displayLink', ''),
+                "classification": classification,
+                "categories": matched_categories if matched_categories else ["uncategorized"],
+                "query": collate_req.query,
+                "createdAt": datetime.utcnow()
+            }
+            
+            # Check if this URL already exists for this user
+            existing = await db.search_results.find_one({
+                "userId": current_user.id,
+                "url": link
+            })
+            
+            if not existing:
                 await db.search_results.insert_one(search_result)
+                categorized_count += 1
+            else:
+                # Update existing result with new categories
+                await db.search_results.update_one(
+                    {"_id": existing["_id"]},
+                    {"$set": {"categories": list(set(existing.get("categories", []) + matched_categories))}}
+                )
                 categorized_count += 1
         
         return {
             "success": True,
-            "message": f"Categorized {categorized_count} results",
+            "message": f"Successfully collated {categorized_count} results into your categories automatically!",
             "categorized": categorized_count,
-            "total": len(items)
+            "total": len(items),
+            "protocols_used": len(protocols)
         }
     except Exception as e:
         logger.error(f"Collate error: {e}")
