@@ -890,6 +890,57 @@ async def delete_category(category_id: str, user: dict = Depends(require_user)):
     
     return {"message": "Category deleted"}
 
+@api_router.put("/categories/{category_id}", response_model=CategoryResponse)
+async def update_category(category_id: str, data: CategoryUpdate, user: dict = Depends(require_user)):
+    """Update a category's name, protocol, or visibility"""
+    category = await db.categories.find_one({"id": category_id, "user_id": user["id"]})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    update_data = {}
+    blocked_words = await get_blocked_words()
+    
+    # Update name if provided
+    if data.name is not None:
+        has_blocked, found = contains_blocked_words(data.name, blocked_words)
+        if has_blocked:
+            raise HTTPException(status_code=400, detail=f"Category name contains blocked words: {found}")
+        update_data["name"] = data.name
+    
+    # Update protocol if provided
+    if data.protocol_string is not None:
+        # Validate protocol syntax
+        is_valid, error = InfoPilot2Parser.validate_protocol(data.protocol_string)
+        if not is_valid:
+            raise HTTPException(status_code=400, detail=f"Invalid protocol: {error}")
+        
+        # Check for blocked words in protocol
+        has_blocked, found = contains_blocked_words(data.protocol_string, blocked_words)
+        if has_blocked:
+            raise HTTPException(status_code=400, detail=f"Protocol contains blocked words: {found}")
+        
+        update_data["protocol_string"] = data.protocol_string
+    
+    # Update visibility if provided
+    if data.is_public is not None:
+        update_data["is_public"] = data.is_public
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No updates provided")
+    
+    await db.categories.update_one(
+        {"id": category_id, "user_id": user["id"]},
+        {"$set": update_data}
+    )
+    
+    # Fetch updated category
+    updated_category = await db.categories.find_one({"id": category_id})
+    created_at = updated_category["created_at"]
+    if isinstance(created_at, str):
+        created_at = datetime.fromisoformat(created_at)
+    
+    return CategoryResponse(**{**updated_category, "created_at": created_at})
+
 @api_router.put("/categories/{category_id}/visibility")
 async def update_category_visibility(category_id: str, is_public: bool, user: dict = Depends(require_user)):
     result = await db.categories.update_one(
