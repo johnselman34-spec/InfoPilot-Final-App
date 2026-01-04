@@ -9,6 +9,7 @@ import re
 import jwt
 import bcrypt
 import httpx
+import stripe
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional, Dict, Any
