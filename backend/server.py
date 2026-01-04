@@ -215,9 +215,9 @@ class AdminSettings(BaseModel):
     phd_keyword_count: int = 3
     blog_keyword_count: int = 3
 
-# Payment Models (Sandbox)
+# Payment Models (Stripe Integration)
 class PaymentRequest(BaseModel):
-    payment_method: str  # paypal, google_pay, shopify
+    payment_method_id: str  # Stripe payment method ID
     item_type: str  # subscription, book
     amount: float
 
@@ -225,7 +225,17 @@ class PaymentResponse(BaseModel):
     success: bool
     transaction_id: str
     message: str
-    sandbox: bool = True
+    client_secret: Optional[str] = None
+
+class CreatePaymentIntentRequest(BaseModel):
+    item_type: str  # subscription or book
+    
+class StripeConfigResponse(BaseModel):
+    publishable_key: str
+    sale_price: float
+    regular_price: float
+    is_sale_active: bool
+    sale_end_date: Optional[str] = None
 
 # ============================================
 # INFOPILOT 2.0 PROTOCOL PARSER
