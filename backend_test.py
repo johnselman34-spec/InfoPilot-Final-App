@@ -269,6 +269,34 @@ class InfoPilotTester:
             self.results["admin_settings"]["details"] = f"Status: {response['status_code']}, Data: {response['data']}"
             print(f"❌ Admin settings: FAIL - {response['data']}")
     
+    async def test_collate_search(self):
+        """Test collate search functionality"""
+        print("🔍 Testing collate search...")
+        
+        if not self.auth_token or not self.test_category_id:
+            self.results["collate_search"]["status"] = "❌ FAIL"
+            self.results["collate_search"]["details"] = "No auth token or category ID available"
+            print("❌ Collate search: FAIL - Missing prerequisites")
+            return
+        
+        collate_data = {
+            "category_id": self.test_category_id,
+            "search_query": "artificial intelligence research"
+        }
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        response = await self.make_request("POST", "/search/collate", collate_data, headers)
+        
+        if response["success"] and response["data"].get("success"):
+            processed_count = response["data"].get("processed_count", 0)
+            self.results["collate_search"]["status"] = "✅ PASS"
+            self.results["collate_search"]["details"] = f"Collated {processed_count} results"
+            print(f"✅ Collate search: PASS - Processed {processed_count} results")
+        else:
+            self.results["collate_search"]["status"] = "❌ FAIL"
+            self.results["collate_search"]["details"] = f"Status: {response['status_code']}, Data: {response['data']}"
+            print(f"❌ Collate search: FAIL - {response['data']}")
+    
     async def run_all_tests(self):
         """Run all backend tests"""
         print("🚀 Starting InfoPilot Backend API Tests")
