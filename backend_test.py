@@ -25,6 +25,8 @@ class InfoPilotTester:
             "user_registration": {"status": "pending", "details": ""},
             "user_login": {"status": "pending", "details": ""},
             "auth_verification": {"status": "pending", "details": ""},
+            "subscription_endpoint": {"status": "pending", "details": ""},
+            "subscription_verification": {"status": "pending", "details": ""},
             "category_creation": {"status": "pending", "details": ""},
             "category_retrieval": {"status": "pending", "details": ""},
             "google_search": {"status": "pending", "details": ""},
