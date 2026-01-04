@@ -316,6 +316,7 @@ class InfoPilotTester:
             await self.test_category_retrieval()
             await self.test_google_search()
             await self.test_admin_settings()
+            await self.test_collate_search()
             
         finally:
             await self.cleanup_session()
