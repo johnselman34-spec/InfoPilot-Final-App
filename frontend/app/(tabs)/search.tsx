@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/utils/colors';
@@ -7,35 +7,91 @@ import { CustomInput } from '../../src/components/CustomInput';
 import { CustomButton } from '../../src/components/CustomButton';
 import { useCategoryStore } from '../../src/store/categoryStore';
 import { searchAPI } from '../../src/services/api';
+import axios from 'axios';
 
 export default function SearchScreen() {
-  const { categories } = useCategoryStore();
+  const { categories, fetchCategories } = useCategoryStore();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [collating, setCollating] = useState(false);
+  const [googleResults, setGoogleResults] = useState<any[]>([]);
 
-  const handleCollate = async () => {
-    if (!searchQuery || !selectedCategory) {
-      Alert.alert('Error', 'Please enter a search query and select a category');
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const handleGoogleSearch = async () => {
+    if (!searchQuery) {
+      Alert.alert('Error', 'Please enter a search query');
       return;
     }
 
     try {
-      setLoading(true);
-      const response = await searchAPI.collate({
-        category_id: selectedCategory,
-        search_query: searchQuery,
+      setSearching(true);
+      // Perform Google search via backend (which uses SerpAPI)
+      const response = await axios.get(`${process.env.EXPO_PUBLIC_BACKEND_URL}/api/search/google`, {
+        params: { q: searchQuery }
       });
-      Alert.alert('Success', response.data.message);
+      
+      setGoogleResults(response.data.results || []);
+      
+      if (response.data.results?.length === 0) {
+        Alert.alert('No Results', 'No search results found. Try different keywords.');
+      }
+    } catch (error: any) {
+      console.error('Search error:', error);
+      Alert.alert('Search Error', error.response?.data?.detail || 'Failed to search. Please try again.');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleCollateAll = async () => {
+    if (selectedCategories.length === 0) {
+      Alert.alert('Error', 'Please select at least one category to collate results into');
+      return;
+    }
+
+    if (googleResults.length === 0) {
+      Alert.alert('Error', 'No search results to collate. Search first!');
+      return;
+    }
+
+    try {
+      setCollating(true);
+      
+      // Collate results for each selected category
+      const promises = selectedCategories.map(categoryId =>
+        searchAPI.collate({
+          category_id: categoryId,
+          search_query: searchQuery,
+        })
+      );
+      
+      await Promise.all(promises);
+      
+      Alert.alert(
+        'Success!', 
+        `Collated ${googleResults.length} search results into ${selectedCategories.length} ${selectedCategories.length === 1 ? 'category' : 'categories'}`
+      );
+      
+      // Reset
+      setGoogleResults([]);
       setSearchQuery('');
-      // Fetch results
-      const resultsResponse = await searchAPI.getResults({ category_ids: selectedCategory });
-      setResults(resultsResponse.data.results);
+      setSelectedCategories([]);
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.detail || 'Failed to collate search results');
     } finally {
-      setLoading(false);
+      setCollating(false);
+    }
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    if (selectedCategories.includes(categoryId)) {
+      setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
+    } else {
+      setSelectedCategories([...selectedCategories, categoryId]);
     }
   };
 
