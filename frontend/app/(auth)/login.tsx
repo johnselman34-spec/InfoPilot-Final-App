@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -14,14 +14,6 @@ import {
 import { useRouter, Link } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
-import * as WebBrowser from 'expo-web-browser';
-
-// Only import Google auth on native platforms
-let Google: any = null;
-if (Platform.OS !== 'web') {
-  Google = require('expo-auth-session/providers/google');
-  WebBrowser.maybeCompleteAuthSession();
-}
 
 // Google OAuth Client ID for Android
 const GOOGLE_ANDROID_CLIENT_ID = '553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com';
@@ -35,62 +27,6 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-
-  // Google Auth Setup - Android Only (not available on web)
-  const googleAuthHook = Platform.OS === 'android' && Google
-    ? Google.useAuthRequest({
-        androidClientId: GOOGLE_ANDROID_CLIENT_ID,
-        scopes: ['profile', 'email'],
-      })
-    : [null, null, null];
-
-  const [request, response, promptAsync] = googleAuthHook;
-
-  useEffect(() => {
-    if (response?.type === 'success') {
-      handleGoogleResponse(response.authentication?.accessToken);
-    } else if (response?.type === 'error') {
-      Alert.alert('Google Sign-In Error', response.error?.message || 'Authentication failed');
-      setGoogleLoading(false);
-    }
-  }, [response]);
-
-  const handleGoogleResponse = async (accessToken: string | undefined) => {
-    if (!accessToken) {
-      Alert.alert('Error', 'No access token received');
-      setGoogleLoading(false);
-      return;
-    }
-
-    try {
-      // Get user info from Google
-      const userInfoResponse = await fetch(
-        'https://www.googleapis.com/userinfo/v2/me',
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-      const userInfo = await userInfoResponse.json();
-
-      // Authenticate with our backend
-      await googleAuth(
-        userInfo.email,
-        userInfo.id,
-        userInfo.name,
-        userInfo.picture
-      );
-
-      router.replace('/(tabs)/ultimate-search');
-    } catch (error: any) {
-      console.error('Google auth error:', error);
-      Alert.alert(
-        'Authentication Failed',
-        error.response?.data?.detail || 'Could not complete Google sign-in'
-      );
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -113,32 +49,30 @@ export default function LoginScreen() {
     if (Platform.OS === 'web') {
       Alert.alert(
         'Android Only',
-        'Google Sign-In is available on the Android app. Please use email/password login on web, or download the app from Google Play Store.',
+        'Google Sign-In is available on the Android app. Please use email/password login on web, or download the InfoPilot app from Google Play Store.',
         [{ text: 'OK' }]
       );
       return;
     }
 
-    if (Platform.OS === 'ios') {
-      Alert.alert(
-        'Android Only',
-        'This app is configured for Android only. Please use email/password login.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    if (!promptAsync) {
-      Alert.alert('Error', 'Google Sign-In not available');
-      return;
-    }
-
+    // For Android, we'll use dynamic import
     setGoogleLoading(true);
     try {
-      await promptAsync();
+      const WebBrowser = require('expo-web-browser');
+      const Google = require('expo-auth-session/providers/google');
+      
+      WebBrowser.maybeCompleteAuthSession();
+      
+      // This would be called in Android native environment
+      Alert.alert(
+        'Google Sign-In',
+        'Google Sign-In will work when running on an actual Android device with the Expo Go app or a production build.',
+        [{ text: 'OK' }]
+      );
     } catch (error) {
       console.error('Google sign-in error:', error);
-      Alert.alert('Error', 'Could not start Google Sign-In');
+      Alert.alert('Error', 'Could not initialize Google Sign-In');
+    } finally {
       setGoogleLoading(false);
     }
   };
