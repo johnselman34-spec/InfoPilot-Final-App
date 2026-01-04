@@ -206,6 +206,9 @@ backend:
         - working: true
           agent: "testing"
           comment: "Collate search working correctly, processed 10 results with AI classification"
+        - working: true
+          agent: "testing"
+          comment: "Re-tested collate search with InfoPilot 2.0 protocol. Backend logs show 200 OK response. AI classification and protocol matching working correctly."
 
   - task: "User Subscription API"
     implemented: true
