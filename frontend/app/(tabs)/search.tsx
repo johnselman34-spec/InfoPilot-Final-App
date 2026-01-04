@@ -319,6 +319,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textLight,
     textAlign: 'center',
+    marginTop: 12,
   },
   categoriesGrid: {
     flexDirection: 'row',
