@@ -477,9 +477,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   resultUrl: {
-    fontSize: 12,
+    fontSize: 11,
     color: colors.textLight,
-    marginTop: 4,
   },
   categoriesSection: {
     backgroundColor: colors.white,
