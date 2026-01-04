@@ -310,10 +310,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyCategory: {
-    padding: 20,
+    padding: 32,
     backgroundColor: colors.lightGray,
     borderRadius: 8,
-    marginBottom: 16,
+    alignItems: 'center',
   },
   emptyCategoryText: {
     fontSize: 14,
