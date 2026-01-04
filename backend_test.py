@@ -354,13 +354,23 @@ class InfoPilotTester:
         await self.setup_session()
         
         try:
-            # Test in logical order
+            # Test in logical order - Priority Tests from review request
             await self.test_health_check()
+            
+            # Priority 1: User Authentication Flow
             await self.test_user_registration()
             await self.test_user_login()
             await self.test_auth_verification()
+            
+            # Priority 2: NEW Subscription Endpoint
+            await self.test_subscription_endpoint()
+            await self.test_subscription_verification()
+            
+            # Priority 3: Category Operations
             await self.test_category_creation()
             await self.test_category_retrieval()
+            
+            # Additional tests
             await self.test_google_search()
             await self.test_admin_settings()
             await self.test_collate_search()
