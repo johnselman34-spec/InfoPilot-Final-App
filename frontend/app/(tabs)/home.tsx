@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/store/authStore';
 import { useCategoryStore } from '../../src/store/categoryStore';
 import { colors } from '../../src/utils/colors';
 import { useRouter } from 'expo-router';
+import { userAPI } from '../../src/services/api';
+import { CustomButton } from '../../src/components/CustomButton';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const { categories, fetchCategories, isLoading } = useCategoryStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
+  const [upgrading, setUpgrading] = useState(false);
 
   useEffect(() => {
     fetchCategories();
