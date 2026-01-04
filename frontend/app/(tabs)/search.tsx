@@ -503,10 +503,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   collateInfo: {
-    fontSize: 14,
-    color: colors.textLight,
+    fontSize: 13,
+    color: colors.white,
     textAlign: 'center',
-    marginTop: 12,
-    lineHeight: 20,
   },
 });
