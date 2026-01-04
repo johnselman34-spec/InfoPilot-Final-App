@@ -370,15 +370,10 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   resultCard: {
-    backgroundColor: colors.white,
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: colors.lightGray,
+    padding: 12,
+    borderRadius: 8,
     marginBottom: 12,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   resultTitle: {
     fontSize: 16,
