@@ -125,7 +125,7 @@ export default function SearchScreen() {
                 {googleResults.length} Search Results
               </Text>
               <Text style={styles.resultsSubtitle}>
-                Review results, then select categories to collate
+                Ready to categorize into your {categories.length} {categories.length === 1 ? 'category' : 'categories'}
               </Text>
             </View>
 
@@ -144,77 +144,19 @@ export default function SearchScreen() {
                 </View>
               ))}
             </ScrollView>
-          </View>
-        )}
 
-        {/* Step 2: Select Categories */}
-        {googleResults.length > 0 && (
-          <View style={styles.categoriesSection}>
-            <View style={styles.stepHeader}>
-              <View style={styles.stepBadge}>
-                <Text style={styles.stepBadgeText}>2</Text>
-              </View>
-              <Text style={styles.stepTitle}>Select Categories</Text>
+            <View style={styles.collateSection}>
+              <CustomButton
+                title={collating ? "Categorizing..." : `Collate All ${googleResults.length} Results`}
+                onPress={handleCollateAll}
+                loading={collating}
+                style={styles.collateButton}
+              />
+              
+              <Text style={styles.collateInfo}>
+                Results will be automatically categorized into all your categories using InfoPilot 2.0 protocols and AI
+              </Text>
             </View>
-
-            {categories.length === 0 ? (
-              <View style={styles.emptyCategory}>
-                <Ionicons name="folder-open-outline" size={48} color={colors.gray} />
-                <Text style={styles.emptyCategoryText}>
-                  No categories yet. Create categories first!
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.categoriesGrid}>
-                {categories.map((category) => (
-                  <TouchableOpacity
-                    key={category.id}
-                    style={[
-                      styles.categoryChip,
-                      selectedCategories.includes(category.id) && styles.categoryChipSelected,
-                    ]}
-                    onPress={() => toggleCategory(category.id)}
-                  >
-                    <Ionicons
-                      name={selectedCategories.includes(category.id) ? "checkbox" : "square-outline"}
-                      size={20}
-                      color={selectedCategories.includes(category.id) ? colors.white : colors.primary}
-                    />
-                    <Text
-                      style={[
-                        styles.categoryChipText,
-                        selectedCategories.includes(category.id) && styles.categoryChipTextSelected,
-                      ]}
-                    >
-                      {category.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Step 3: Collate Button */}
-        {googleResults.length > 0 && selectedCategories.length > 0 && (
-          <View style={styles.collateSection}>
-            <View style={styles.stepHeader}>
-              <View style={styles.stepBadge}>
-                <Text style={styles.stepBadgeText}>3</Text>
-              </View>
-              <Text style={styles.stepTitle}>Collate Results</Text>
-            </View>
-
-            <CustomButton
-              title={collating ? "Collating..." : `Collate All ${googleResults.length} Results`}
-              onPress={handleCollateAll}
-              loading={collating}
-              style={styles.collateButton}
-            />
-            
-            <Text style={styles.collateInfo}>
-              Results will be categorized into {selectedCategories.length} {selectedCategories.length === 1 ? 'category' : 'categories'} using InfoPilot 2.0 protocols
-            </Text>
           </View>
         )}
 
