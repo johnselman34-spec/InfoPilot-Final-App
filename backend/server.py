@@ -551,7 +551,7 @@ async def get_payment_link(user = Depends(get_current_user)):
         "payment_url": PAYPAL_PAYMENT_LINK,
         "price": 0.99,
         "currency": "USD",
-        "description": "InfoJet Premium Subscription"
+        "description": "InfoPilot Premium Subscription"
     }
 
 @api_router.post("/payment/verify")
