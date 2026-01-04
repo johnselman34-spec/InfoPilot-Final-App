@@ -57,25 +57,60 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
+    if (user?.isPaid) {
+      Alert.alert('Already Subscribed', 'You are already a Premium member!');
+      return;
+    }
+
     Alert.alert(
-      'Upgrade to Premium',
-      'Get unlimited search results and access to all features for only $0.99/month',
+      '⭐ Upgrade to Premium',
+      'Get unlimited search results and access to all features for only $0.99/month\n\n' +
+      'Premium Benefits:\n' +
+      '• Unlimited search results (20 per page)\n' +
+      '• Full protocol access\n' +
+      '• Priority support\n' +
+      '• Advanced features',
       [
         { text: 'Maybe Later', style: 'cancel' },
         {
           text: 'Upgrade Now',
           onPress: async () => {
             try {
-              if (!token) return;
-              await axios.post(
+              if (!token) {
+                Alert.alert('Error', 'Please login first');
+                return;
+              }
+              
+              setRefreshing(true);
+              const response = await axios.post(
                 `${API_URL}/api/subscription/activate`,
                 {},
                 { headers: { Authorization: `Bearer ${token}` } }
               );
-              Alert.alert('Success', 'Subscription activated!');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to activate subscription');
+              
+              // Refresh user data
+              const userResponse = await axios.get(
+                `${API_URL}/api/auth/me`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              
+              // Update local user state
+              await AsyncStorage.setItem('user', JSON.stringify(userResponse.data));
+              
+              Alert.alert(
+                '🎉 Success!',
+                'Your Premium subscription is now active!\n\nEnjoy unlimited searches and all premium features.',
+                [{ text: 'Awesome!', onPress: () => loadStats() }]
+              );
+            } catch (error: any) {
+              console.error('Upgrade error:', error);
+              Alert.alert(
+                'Error',
+                error.response?.data?.detail || 'Failed to activate subscription. Please try again.'
+              );
+            } finally {
+              setRefreshing(false);
             }
           },
         },
