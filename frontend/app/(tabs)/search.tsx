@@ -382,10 +382,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   resultSnippet: {
-    fontSize: 14,
+    fontSize: 13,
     color: colors.text,
-    lineHeight: 20,
-    marginBottom: 8,
+    lineHeight: 18,
+    marginBottom: 6,
   },
   resultMeta: {
     flexDirection: 'row',
