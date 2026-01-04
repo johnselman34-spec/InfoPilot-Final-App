@@ -28,7 +28,8 @@ class InfoPilotTester:
             "category_creation": {"status": "pending", "details": ""},
             "category_retrieval": {"status": "pending", "details": ""},
             "google_search": {"status": "pending", "details": ""},
-            "admin_settings": {"status": "pending", "details": ""}
+            "admin_settings": {"status": "pending", "details": ""},
+            "collate_search": {"status": "pending", "details": ""}
         }
     
     async def setup_session(self):
