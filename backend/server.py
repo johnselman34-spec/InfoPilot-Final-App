@@ -185,13 +185,44 @@ class CollateRequest(BaseModel):
 
 class UltimateSearchRequest(BaseModel):
     category_ids: List[str] = []
-    aggregation_type: str = "and_or"
+    aggregation_type: str = "and_or"  # "and_or", "or", "and"
+    document_types: List[str] = []  # PhD, PhD Informative, Personal Report (Organic), etc.
     article_types: List[str] = []
     domains: List[str] = []
     year_from: Optional[int] = None
     year_to: Optional[int] = None
     keyword: Optional[str] = None
+    ai_query: Optional[str] = None  # AI-powered intelligent search query
     page: int = 1
+
+# Document Type Classifications
+DOCUMENT_TYPES = [
+    "PhD Document",
+    "PhD Informative", 
+    "Personal Report (Organic)",
+    "Personal Report (Collected)",
+    "News Article",
+    "PDF Document",
+    "MS Word Document",
+    "Educational (Non-Curricular)",
+    "Blog Post",
+    "Government Document",
+    "Research Paper",
+    "Other"
+]
+
+class AISearchRequest(BaseModel):
+    query: str
+    category_ids: List[str] = []
+    
+class SearchResultDeleteRequest(BaseModel):
+    result_ids: List[str]
+    
+class CollateSessionResponse(BaseModel):
+    session_id: str
+    timestamp: str
+    result_count: int
+    results: List[Dict[str, Any]]
 
 class AdminSettingsUpdate(BaseModel):
     results_per_page: Optional[int] = None
