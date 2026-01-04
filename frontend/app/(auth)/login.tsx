@@ -150,9 +150,9 @@ export default function LoginScreen() {
         {/* Logo */}
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>IJ</Text>
+            <Text style={styles.logoText}>IP</Text>
           </View>
-          <Text style={styles.title}>InfoJet</Text>
+          <Text style={styles.title}>InfoPilot</Text>
           <Text style={styles.subtitle}>World Wide Web Information Exchange</Text>
         </View>
 
