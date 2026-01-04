@@ -67,9 +67,9 @@ export default function RegisterScreen() {
         {/* Logo */}
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>IJ</Text>
+            <Text style={styles.logoText}>IP</Text>
           </View>
-          <Text style={styles.title}>Join InfoJet</Text>
+          <Text style={styles.title}>Join InfoPilot</Text>
           <Text style={styles.subtitle}>Create your account</Text>
         </View>
 
