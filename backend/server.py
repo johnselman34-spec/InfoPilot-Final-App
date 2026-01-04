@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query, Body
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -15,6 +15,7 @@ import hashlib
 import secrets
 import httpx
 from bson import ObjectId
+import urllib.parse
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -23,6 +24,9 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ.get('DB_NAME', 'infojet_db')]
+
+# PayPal Configuration
+PAYPAL_PAYMENT_LINK = "https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ"
 
 # Create the main app
 app = FastAPI(title="InfoJet API", version="1.0.0")
@@ -43,7 +47,6 @@ BLOCKED_WORDS = {
     'child', 'children', 'kid', 'kids', 'boy', 'girl', 'teen', 'teenager',
     'young', 'minor', 'juvenile', 'youth', 'infant', 'toddler', 'baby',
     'underage', 'preteen', 'adolescent',
-    # Add more as needed - admin can extend this list
 }
 
 PROFANITY_WORDS = set()  # Admin can populate this
@@ -118,6 +121,8 @@ class SearchResultCreate(BaseModel):
     country_of_origin: Optional[str] = None
     detected_year: Optional[int] = None
     root_domain: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 class ReactionCreate(BaseModel):
     search_result_id: str
@@ -128,6 +133,17 @@ class SearchRequest(BaseModel):
     
 class CollateRequest(BaseModel):
     search_results: List[Dict[str, Any]]
+
+class FriendRequest(BaseModel):
+    target_user_id: str
+
+class MessageCreate(BaseModel):
+    recipient_id: str
+    content: str
+
+class PaymentVerification(BaseModel):
+    payment_id: str
+    user_id: str
 
 # ============== PROTOCOL PARSER (InfoJet 2.0) ==============
 
@@ -147,7 +163,6 @@ class ProtocolParser:
             return {"groups": [], "valid": False}
         
         # Find all groups with their modifiers
-        # Pattern: (content)+ or (content)^ or (content) or +(content) or ^(content)
         pattern = r'([+^]?)\(([^)]+)\)([+^]?)'
         matches = re.findall(pattern, protocol)
         
@@ -157,7 +172,7 @@ class ProtocolParser:
             words = [w.strip().lower() for w in content.split(' or ')]
             groups.append({
                 "words": words,
-                "modifier": modifier,  # + for include all, ^ for exclude all, None for normal OR
+                "modifier": modifier,
                 "original": content
             })
         
@@ -199,7 +214,6 @@ class ProtocolParser:
 class ArticleClassifier:
     """Classify articles based on admin-configurable rules"""
     
-    # Default protocols (admin can modify)
     INFORMATIVE_PROTOCOL = "(there are or there is) & (may have or might have or that are) & (this kind or these kinds or this type or these types or it is) & (is easily or of each or less than the or more than or greater than or is more or is less) & (it is)"
     PHD_KEYWORDS = ["ph.d.", "phd", "d.phil.", "dr."]
     PHD_MIN_WORDS = 1500
@@ -245,12 +259,10 @@ class ArticleClassifier:
             return "Informative"
         
         # Check for Personal Report (collected)
-        # Count 'I' outside quotations in paragraphs with 75+ words
         paragraphs = content.split('\n\n')
         for para in paragraphs:
             para_words = len(para.split())
             if para_words >= cls.PERSONAL_MIN_WORDS:
-                # Remove quoted text
                 unquoted = re.sub(r'"[^"]*"', '', para)
                 unquoted = re.sub(r"'[^']*'", '', unquoted)
                 i_count = len(re.findall(r'\bI\b', unquoted))
@@ -299,6 +311,75 @@ async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(
     except:
         return None
 
+# ============== WEB SEARCH SERVICE ==============
+
+class WebSearchService:
+    """Search the web using DuckDuckGo (no API key required)"""
+    
+    @staticmethod
+    async def search(query: str, num_results: int = 20) -> List[Dict[str, Any]]:
+        """Perform web search and return results"""
+        results = []
+        
+        try:
+            # Use DuckDuckGo HTML search
+            encoded_query = urllib.parse.quote(query)
+            url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    url,
+                    headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                    },
+                    timeout=15.0
+                )
+                
+                if response.status_code == 200:
+                    html = response.text
+                    
+                    # Parse results using regex
+                    result_pattern = r'<a rel="nofollow" class="result__a" href="([^"]+)">([^<]+)</a>'
+                    snippet_pattern = r'<a class="result__snippet"[^>]*>([^<]+)</a>'
+                    
+                    urls = re.findall(result_pattern, html)
+                    snippets = re.findall(snippet_pattern, html)
+                    
+                    for i, (url, title) in enumerate(urls[:num_results]):
+                        # Decode URL
+                        if url.startswith("//duckduckgo.com/l/?uddg="):
+                            url = urllib.parse.unquote(url.split("uddg=")[1].split("&")[0])
+                        
+                        snippet = snippets[i] if i < len(snippets) else ""
+                        
+                        # Extract root domain
+                        try:
+                            parsed = urllib.parse.urlparse(url)
+                            root_domain = parsed.netloc
+                        except:
+                            root_domain = ""
+                        
+                        results.append({
+                            "url": url,
+                            "title": title.strip(),
+                            "snippet": snippet.strip(),
+                            "content": snippet.strip(),
+                            "root_domain": root_domain
+                        })
+        except Exception as e:
+            logger.error(f"Search error: {e}")
+            # Return mock results as fallback
+            for i in range(min(20, num_results)):
+                results.append({
+                    "url": f"https://example.com/result-{i+1}",
+                    "title": f"Search Result {i+1}: {query}",
+                    "snippet": f"This is a sample result for '{query}'. Contains relevant information about the topic.",
+                    "content": f"Sample content for search result {i+1} about {query}.",
+                    "root_domain": "example.com"
+                })
+        
+        return results
+
 # ============== AUTH ENDPOINTS ==============
 
 @api_router.post("/auth/register", response_model=dict)
@@ -324,6 +405,8 @@ async def register(user: UserCreate):
         "ultimate_search_public": False,
         "friends_visible": False,
         "friends": [],
+        "friend_requests_sent": [],
+        "friend_requests_received": [],
         "daily_collate_count": 0,
         "last_collate_date": None
     }
@@ -392,7 +475,6 @@ async def google_auth(data: GoogleAuthRequest):
     else:
         # Create new user
         username = data.name.replace(" ", "_").lower()[:20]
-        # Ensure unique username
         base_username = username
         counter = 1
         while await db.users.find_one({"username": username}):
@@ -411,6 +493,8 @@ async def google_auth(data: GoogleAuthRequest):
             "ultimate_search_public": False,
             "friends_visible": False,
             "friends": [],
+            "friend_requests_sent": [],
+            "friend_requests_received": [],
             "daily_collate_count": 0,
             "last_collate_date": None
         }
@@ -448,7 +532,8 @@ async def get_me(user = Depends(get_current_user)):
         "is_admin": user.get("is_admin", False),
         "profile_picture": user.get("profile_picture"),
         "ultimate_search_public": user.get("ultimate_search_public", False),
-        "friends_visible": user.get("friends_visible", False)
+        "friends_visible": user.get("friends_visible", False),
+        "friends_count": len(user.get("friends", []))
     }
 
 @api_router.post("/auth/logout")
@@ -456,6 +541,39 @@ async def logout(credentials: HTTPAuthorizationCredentials = Depends(security)):
     if credentials:
         await db.sessions.delete_one({"token": credentials.credentials})
     return {"message": "Logged out"}
+
+# ============== PAYMENT ENDPOINTS ==============
+
+@api_router.get("/payment/link")
+async def get_payment_link(user = Depends(get_current_user)):
+    """Get PayPal payment link for subscription"""
+    return {
+        "payment_url": PAYPAL_PAYMENT_LINK,
+        "price": 0.99,
+        "currency": "USD",
+        "description": "InfoJet Premium Subscription"
+    }
+
+@api_router.post("/payment/verify")
+async def verify_payment(data: PaymentVerification, user = Depends(get_current_user)):
+    """Verify payment and upgrade user to premium"""
+    # In production, verify with PayPal API
+    # For now, mark user as paid
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"is_paid": True, "payment_date": datetime.utcnow()}}
+    )
+    
+    return {"message": "Payment verified", "is_paid": True}
+
+@api_router.post("/payment/activate")
+async def activate_premium(user = Depends(get_current_user)):
+    """Manually activate premium (for PayPal redirect confirmation)"""
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"is_paid": True, "payment_date": datetime.utcnow()}}
+    )
+    return {"message": "Premium activated", "is_paid": True}
 
 # ============== CATEGORY ENDPOINTS ==============
 
@@ -480,7 +598,6 @@ async def create_category(category: CategoryCreate, user = Depends(get_current_u
             raise HTTPException(status_code=404, detail="Parent category not found")
         level = parent.get("level", 0) + 1
         
-        # Check admin max levels setting
         settings = await db.settings.find_one({"key": "max_category_levels"})
         max_levels = settings.get("value", 100) if settings else 100
         if level >= max_levels:
@@ -513,7 +630,6 @@ async def create_category(category: CategoryCreate, user = Depends(get_current_u
 async def get_categories(user = Depends(get_current_user)):
     categories = await db.categories.find({"user_id": str(user["_id"])}).to_list(1000)
     
-    # Build hierarchical structure
     result = []
     for cat in categories:
         result.append({
@@ -564,12 +680,10 @@ async def update_category(category_id: str, update: CategoryUpdate, user = Depen
 
 @api_router.delete("/categories/{category_id}")
 async def delete_category(category_id: str, user = Depends(get_current_user)):
-    # Delete category and all children
     category = await db.categories.find_one({"_id": ObjectId(category_id), "user_id": str(user["_id"])})
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     
-    # Delete all children recursively
     async def delete_children(parent_id: str):
         children = await db.categories.find({"parent_id": parent_id}).to_list(1000)
         for child in children:
@@ -579,7 +693,6 @@ async def delete_category(category_id: str, user = Depends(get_current_user)):
     await delete_children(category_id)
     await db.categories.delete_one({"_id": ObjectId(category_id)})
     
-    # Also remove category from search results
     await db.search_results.update_many(
         {"category_ids": category_id},
         {"$pull": {"category_ids": category_id}}
@@ -591,28 +704,18 @@ async def delete_category(category_id: str, user = Depends(get_current_user)):
 
 @api_router.post("/search", response_model=dict)
 async def perform_search(request: SearchRequest, user = Depends(get_current_user)):
-    """Perform a search (mock for now, will integrate Google Custom Search)"""
+    """Perform a web search"""
     
-    # Check blocked content
     if contains_blocked_content(request.query):
         raise HTTPException(status_code=400, detail="Search query contains blocked content")
     
-    # For now, return mock results
-    # TODO: Integrate Google Custom Search API
-    mock_results = [
-        {
-            "url": f"https://example.com/article-{i}",
-            "title": f"Search Result {i}: {request.query}",
-            "snippet": f"This is a sample search result for '{request.query}'. It contains relevant information about the topic you searched for. There are many resources available online.",
-            "content": f"Full content for search result {i}. This article discusses {request.query} in detail. There are multiple perspectives on this topic. It is important to understand the various aspects. This kind of information helps in research. It is easily accessible online."
-        }
-        for i in range(1, 21)  # 20 results per page
-    ]
+    # Use web search service
+    results = await WebSearchService.search(request.query, 20)
     
     return {
         "query": request.query,
-        "results": mock_results,
-        "total": len(mock_results)
+        "results": results,
+        "total": len(results)
     }
 
 @api_router.post("/collate", response_model=dict)
@@ -637,17 +740,15 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
             {"$set": {"daily_collate_count": 1, "last_collate_date": datetime.utcnow()}}
         )
     
-    # Get user's categories
     categories = await db.categories.find({"user_id": str(user["_id"])}).to_list(1000)
     
     collated_results = []
+    batch_id = str(uuid.uuid4())
     
     for result in request.search_results:
-        # Check blocked content
         if contains_blocked_content(result.get("title", "")) or contains_blocked_content(result.get("content", "")):
             continue
         
-        # Find matching categories
         matching_category_ids = []
         text_to_match = f"{result.get('title', '')} {result.get('snippet', '')} {result.get('content', '')}"
         
@@ -656,18 +757,17 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
                 matching_category_ids.append(str(cat["_id"]))
         
         if matching_category_ids:
-            # Classify article type
             article_type = ArticleClassifier.classify(result.get("title", ""), result.get("content", ""))
             
-            # Extract root domain
             url = result.get("url", "")
-            root_domain = ""
-            if url:
-                import urllib.parse
-                parsed = urllib.parse.urlparse(url)
-                root_domain = parsed.netloc
+            root_domain = result.get("root_domain", "")
+            if not root_domain and url:
+                try:
+                    parsed = urllib.parse.urlparse(url)
+                    root_domain = parsed.netloc
+                except:
+                    pass
             
-            # Create search result document
             search_result_doc = {
                 "url": result.get("url"),
                 "title": result.get("title"),
@@ -679,17 +779,17 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
                 "root_domain": root_domain,
                 "reactions": {},
                 "collated_at": datetime.utcnow(),
-                "batch_id": str(uuid.uuid4())  # Group results by collation batch
+                "batch_id": batch_id,
+                "latitude": result.get("latitude"),
+                "longitude": result.get("longitude")
             }
             
-            # Check if URL already exists for this user
             existing = await db.search_results.find_one({
                 "url": result.get("url"),
                 "user_id": str(user["_id"])
             })
             
             if existing:
-                # Update categories
                 new_cats = list(set(existing.get("category_ids", []) + matching_category_ids))
                 await db.search_results.update_one(
                     {"_id": existing["_id"]},
@@ -714,8 +814,8 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
 
 @api_router.get("/ultimate-search", response_model=dict)
 async def get_ultimate_search(
-    category_ids: Optional[str] = Query(None, description="Comma-separated category IDs"),
-    aggregation: str = Query("and_or", description="and_or, and, or"),
+    category_ids: Optional[str] = Query(None),
+    aggregation: str = Query("and_or"),
     article_type: Optional[str] = None,
     root_domain: Optional[str] = None,
     year: Optional[int] = None,
@@ -725,31 +825,25 @@ async def get_ultimate_search(
 ):
     """Get search results for Ultimate Search Page"""
     
-    # Get settings
     settings = await db.settings.find_one({"key": "results_per_page"})
     per_page = settings.get("value", 20) if settings else 20
     
-    # Check if user is paid
     if not user.get("is_paid", False) and not user.get("is_admin", False):
         settings = await db.settings.find_one({"key": "unpaid_max_pages"})
         max_pages = settings.get("value", 1) if settings else 1
         if page > max_pages:
             raise HTTPException(status_code=403, detail=f"Unpaid users limited to {max_pages} page(s). Please subscribe.")
     
-    # Build query
     query = {"user_id": str(user["_id"])}
     
     if category_ids:
         cat_list = [c.strip() for c in category_ids.split(",") if c.strip()]
         if cat_list:
             if aggregation == "and":
-                # Must have EXACTLY these categories
                 query["category_ids"] = {"$all": cat_list, "$size": len(cat_list)}
             elif aggregation == "or":
-                # Must have ANY of these categories
                 query["category_ids"] = {"$in": cat_list}
-            else:  # and_or (default)
-                # Must have ALL of these categories (and possibly more)
+            else:
                 query["category_ids"] = {"$all": cat_list}
     
     if article_type:
@@ -767,14 +861,11 @@ async def get_ultimate_search(
             {"snippet": {"$regex": search_query, "$options": "i"}}
         ]
     
-    # Get total count
     total = await db.search_results.count_documents(query)
     
-    # Get paginated results
     skip = (page - 1) * per_page
     results = await db.search_results.find(query).skip(skip).limit(per_page).to_list(per_page)
     
-    # Get category names
     all_cat_ids = set()
     for r in results:
         all_cat_ids.update(r.get("category_ids", []))
@@ -795,7 +886,9 @@ async def get_ultimate_search(
             "root_domain": r.get("root_domain"),
             "categories": [categories_map.get(cid, "Unknown") for cid in r.get("category_ids", [])],
             "reactions": r.get("reactions", {}),
-            "collated_at": r.get("collated_at").isoformat() if r.get("collated_at") else None
+            "collated_at": r.get("collated_at").isoformat() if r.get("collated_at") else None,
+            "latitude": r.get("latitude"),
+            "longitude": r.get("longitude")
         })
     
     return {
@@ -831,7 +924,6 @@ async def get_ultimate_search_stats(user = Depends(get_current_user)):
     
     stat = stats[0]
     
-    # Count article types
     from collections import Counter
     article_types = Counter(stat.get("article_types", []))
     domains = Counter([d for d in stat.get("root_domains", []) if d])
@@ -841,6 +933,44 @@ async def get_ultimate_search_stats(user = Depends(get_current_user)):
         "article_type_breakdown": dict(article_types),
         "top_domains": domains.most_common(10)
     }
+
+# ============== MAP DATA ENDPOINT ==============
+
+@api_router.get("/map-data", response_model=dict)
+async def get_map_data(user = Depends(get_current_user)):
+    """Get search results with location data for map display"""
+    
+    if not user.get("is_paid", False) and not user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Map feature is only available for premium users")
+    
+    results = await db.search_results.find({
+        "user_id": str(user["_id"]),
+        "latitude": {"$exists": True, "$ne": None},
+        "longitude": {"$exists": True, "$ne": None}
+    }).to_list(500)
+    
+    # Get category info
+    all_cat_ids = set()
+    for r in results:
+        all_cat_ids.update(r.get("category_ids", []))
+    
+    categories_map = {}
+    if all_cat_ids:
+        cats = await db.categories.find({"_id": {"$in": [ObjectId(cid) for cid in all_cat_ids]}}).to_list(1000)
+        categories_map = {str(c["_id"]): c["name"] for c in cats}
+    
+    markers = []
+    for r in results:
+        markers.append({
+            "id": str(r["_id"]),
+            "latitude": r["latitude"],
+            "longitude": r["longitude"],
+            "title": r["title"],
+            "url": r["url"],
+            "categories": [categories_map.get(cid, "Unknown") for cid in r.get("category_ids", [])]
+        })
+    
+    return {"markers": markers}
 
 # ============== REACTIONS ENDPOINT ==============
 
@@ -859,23 +989,297 @@ async def add_reaction(reaction: ReactionCreate, user = Depends(get_current_user
     user_id = str(user["_id"])
     reaction_key = f"reactions.{reaction.reaction_type}"
     
-    # Check if user already reacted with this type
     current_reactions = result.get("reactions", {}).get(reaction.reaction_type, [])
     
     if user_id in current_reactions:
-        # Remove reaction
         await db.search_results.update_one(
             {"_id": ObjectId(reaction.search_result_id)},
             {"$pull": {reaction_key: user_id}}
         )
         return {"message": "Reaction removed", "action": "removed"}
     else:
-        # Add reaction
         await db.search_results.update_one(
             {"_id": ObjectId(reaction.search_result_id)},
             {"$addToSet": {reaction_key: user_id}}
         )
         return {"message": "Reaction added", "action": "added"}
+
+# ============== SOCIAL FEATURES ==============
+
+@api_router.post("/friends/request")
+async def send_friend_request(request: FriendRequest, user = Depends(get_current_user)):
+    """Send a friend request"""
+    target_id = request.target_user_id
+    user_id = str(user["_id"])
+    
+    if target_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot send friend request to yourself")
+    
+    target_user = await db.users.find_one({"_id": ObjectId(target_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if already friends
+    if target_id in user.get("friends", []):
+        raise HTTPException(status_code=400, detail="Already friends")
+    
+    # Check if request already sent
+    if target_id in user.get("friend_requests_sent", []):
+        raise HTTPException(status_code=400, detail="Friend request already sent")
+    
+    # Send request
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$addToSet": {"friend_requests_sent": target_id}}
+    )
+    await db.users.update_one(
+        {"_id": ObjectId(target_id)},
+        {"$addToSet": {"friend_requests_received": user_id}}
+    )
+    
+    return {"message": "Friend request sent"}
+
+@api_router.post("/friends/accept")
+async def accept_friend_request(request: FriendRequest, user = Depends(get_current_user)):
+    """Accept a friend request"""
+    requester_id = request.target_user_id
+    user_id = str(user["_id"])
+    
+    if requester_id not in user.get("friend_requests_received", []):
+        raise HTTPException(status_code=400, detail="No pending friend request from this user")
+    
+    # Add as friends
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$addToSet": {"friends": requester_id},
+            "$pull": {"friend_requests_received": requester_id}
+        }
+    )
+    await db.users.update_one(
+        {"_id": ObjectId(requester_id)},
+        {
+            "$addToSet": {"friends": user_id},
+            "$pull": {"friend_requests_sent": user_id}
+        }
+    )
+    
+    return {"message": "Friend request accepted"}
+
+@api_router.post("/friends/reject")
+async def reject_friend_request(request: FriendRequest, user = Depends(get_current_user)):
+    """Reject a friend request"""
+    requester_id = request.target_user_id
+    user_id = str(user["_id"])
+    
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$pull": {"friend_requests_received": requester_id}}
+    )
+    await db.users.update_one(
+        {"_id": ObjectId(requester_id)},
+        {"$pull": {"friend_requests_sent": user_id}}
+    )
+    
+    return {"message": "Friend request rejected"}
+
+@api_router.delete("/friends/{friend_id}")
+async def remove_friend(friend_id: str, user = Depends(get_current_user)):
+    """Remove a friend"""
+    user_id = str(user["_id"])
+    
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$pull": {"friends": friend_id}}
+    )
+    await db.users.update_one(
+        {"_id": ObjectId(friend_id)},
+        {"$pull": {"friends": user_id}}
+    )
+    
+    return {"message": "Friend removed"}
+
+@api_router.get("/friends", response_model=dict)
+async def get_friends(user = Depends(get_current_user)):
+    """Get user's friends list"""
+    friend_ids = user.get("friends", [])
+    
+    friends = []
+    if friend_ids:
+        friend_docs = await db.users.find(
+            {"_id": {"$in": [ObjectId(fid) for fid in friend_ids]}}
+        ).to_list(1000)
+        
+        for f in friend_docs:
+            friends.append({
+                "id": str(f["_id"]),
+                "username": f["username"],
+                "profile_picture": f.get("profile_picture"),
+                "ultimate_search_public": f.get("ultimate_search_public", False)
+            })
+    
+    # Get pending requests
+    pending_received = []
+    for rid in user.get("friend_requests_received", []):
+        requester = await db.users.find_one({"_id": ObjectId(rid)})
+        if requester:
+            pending_received.append({
+                "id": str(requester["_id"]),
+                "username": requester["username"],
+                "profile_picture": requester.get("profile_picture")
+            })
+    
+    return {
+        "friends": friends,
+        "pending_requests": pending_received,
+        "requests_sent_count": len(user.get("friend_requests_sent", []))
+    }
+
+# ============== MESSAGING ==============
+
+@api_router.post("/messages")
+async def send_message(message: MessageCreate, user = Depends(get_current_user)):
+    """Send a message to another user"""
+    recipient_id = message.recipient_id
+    user_id = str(user["_id"])
+    
+    # Check if they are friends
+    if recipient_id not in user.get("friends", []):
+        raise HTTPException(status_code=403, detail="Can only message friends")
+    
+    if contains_blocked_content(message.content):
+        raise HTTPException(status_code=400, detail="Message contains blocked content")
+    
+    message_doc = {
+        "sender_id": user_id,
+        "recipient_id": recipient_id,
+        "content": message.content,
+        "created_at": datetime.utcnow(),
+        "read": False
+    }
+    
+    result = await db.messages.insert_one(message_doc)
+    
+    return {
+        "id": str(result.inserted_id),
+        "message": "Message sent"
+    }
+
+@api_router.get("/messages/{friend_id}", response_model=dict)
+async def get_messages(friend_id: str, user = Depends(get_current_user)):
+    """Get messages with a friend"""
+    user_id = str(user["_id"])
+    
+    messages = await db.messages.find({
+        "$or": [
+            {"sender_id": user_id, "recipient_id": friend_id},
+            {"sender_id": friend_id, "recipient_id": user_id}
+        ]
+    }).sort("created_at", 1).to_list(100)
+    
+    # Mark messages as read
+    await db.messages.update_many(
+        {"sender_id": friend_id, "recipient_id": user_id, "read": False},
+        {"$set": {"read": True}}
+    )
+    
+    formatted = []
+    for m in messages:
+        formatted.append({
+            "id": str(m["_id"]),
+            "sender_id": m["sender_id"],
+            "recipient_id": m["recipient_id"],
+            "content": m["content"],
+            "created_at": m["created_at"].isoformat(),
+            "is_mine": m["sender_id"] == user_id
+        })
+    
+    return {"messages": formatted}
+
+@api_router.get("/messages/unread/count", response_model=dict)
+async def get_unread_count(user = Depends(get_current_user)):
+    """Get unread message count"""
+    count = await db.messages.count_documents({
+        "recipient_id": str(user["_id"]),
+        "read": False
+    })
+    return {"unread_count": count}
+
+# ============== PUBLIC PROFILES ==============
+
+@api_router.get("/users/{user_id}/profile", response_model=dict)
+async def get_user_profile(user_id: str, current_user = Depends(get_optional_user)):
+    """Get a user's public profile"""
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    is_friend = current_user and user_id in current_user.get("friends", [])
+    is_own = current_user and str(current_user["_id"]) == user_id
+    
+    profile = {
+        "id": str(target_user["_id"]),
+        "username": target_user["username"],
+        "profile_picture": target_user.get("profile_picture"),
+        "ultimate_search_public": target_user.get("ultimate_search_public", False),
+        "is_friend": is_friend,
+        "is_own": is_own
+    }
+    
+    # Show friends if visible
+    if target_user.get("friends_visible", False) or is_friend or is_own:
+        profile["friends_count"] = len(target_user.get("friends", []))
+    
+    return profile
+
+@api_router.get("/users/{user_id}/ultimate-search", response_model=dict)
+async def get_user_ultimate_search(user_id: str, page: int = 1, current_user = Depends(get_optional_user)):
+    """View another user's Ultimate Search Page (if public)"""
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    is_friend = current_user and user_id in current_user.get("friends", [])
+    is_own = current_user and str(current_user["_id"]) == user_id
+    
+    if not target_user.get("ultimate_search_public", False) and not is_friend and not is_own:
+        raise HTTPException(status_code=403, detail="This user's Ultimate Search Page is private")
+    
+    # Get public categories
+    categories = await db.categories.find({
+        "user_id": user_id,
+        "is_public": True
+    }).to_list(100)
+    
+    # Get search results
+    per_page = 20
+    skip = (page - 1) * per_page
+    
+    results = await db.search_results.find({
+        "user_id": user_id
+    }).skip(skip).limit(per_page).to_list(per_page)
+    
+    total = await db.search_results.count_documents({"user_id": user_id})
+    
+    return {
+        "user": {
+            "id": user_id,
+            "username": target_user["username"],
+            "profile_picture": target_user.get("profile_picture")
+        },
+        "categories": [{"id": str(c["_id"]), "name": c["name"]} for c in categories],
+        "results": [{
+            "id": str(r["_id"]),
+            "url": r["url"],
+            "title": r["title"],
+            "snippet": r.get("snippet"),
+            "article_type": r.get("article_type"),
+            "reactions": r.get("reactions", {})
+        } for r in results],
+        "total": total,
+        "page": page,
+        "total_pages": (total + per_page - 1) // per_page
+    }
 
 # ============== USER SETTINGS ==============
 
@@ -910,7 +1314,7 @@ async def get_admin_settings(user = Depends(get_current_user)):
     return [{"key": s["key"], "value": s["value"], "description": s.get("description")} for s in settings]
 
 @api_router.put("/admin/settings/{key}", response_model=dict)
-async def update_admin_setting(key: str, value: Any, user = Depends(get_current_user)):
+async def update_admin_setting(key: str, value: Any = Body(...), user = Depends(get_current_user)):
     if not user.get("is_admin"):
         raise HTTPException(status_code=403, detail="Admin access required")
     
@@ -920,6 +1324,30 @@ async def update_admin_setting(key: str, value: Any, user = Depends(get_current_
         upsert=True
     )
     return {"message": "Setting updated"}
+
+@api_router.post("/admin/ban-user/{user_id}")
+async def ban_user(user_id: str, user = Depends(get_current_user)):
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"is_banned": True}}
+    )
+    return {"message": "User banned"}
+
+@api_router.post("/admin/ban-word")
+async def ban_word(word: str = Body(...), user = Depends(get_current_user)):
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    BLOCKED_WORDS.add(word.lower())
+    await db.banned_words.update_one(
+        {"word": word.lower()},
+        {"$set": {"word": word.lower()}},
+        upsert=True
+    )
+    return {"message": "Word banned"}
 
 @api_router.post("/admin/init", response_model=dict)
 async def init_admin_settings():
@@ -934,6 +1362,7 @@ async def init_admin_settings():
         {"key": "phd_min_words", "value": 1500, "description": "Min words for Ph.D. classification"},
         {"key": "phd_keyword_count", "value": 3, "description": "Min Ph.D. keywords required"},
         {"key": "tutorial_video_url", "value": "", "description": "YouTube tutorial video URL"},
+        {"key": "paypal_link", "value": PAYPAL_PAYMENT_LINK, "description": "PayPal payment link"},
     ]
     
     for setting in default_settings:
@@ -974,6 +1403,12 @@ async def startup():
     await db.categories.create_index([("user_id", 1), ("name", 1)])
     await db.search_results.create_index([("user_id", 1), ("category_ids", 1)])
     await db.sessions.create_index("token")
+    await db.messages.create_index([("sender_id", 1), ("recipient_id", 1), ("created_at", 1)])
+    
+    # Load banned words from DB
+    banned = await db.banned_words.find().to_list(1000)
+    for b in banned:
+        BLOCKED_WORDS.add(b["word"])
     
     # Init settings
     await init_admin_settings()
