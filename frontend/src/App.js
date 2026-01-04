@@ -325,18 +325,21 @@ const LoginPage = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    // Demo Google login
+  const handleGoogleLogin = async (credentialResponse) => {
     setLoading(true);
     try {
-      await googleLogin("demo_credential_" + Date.now());
-      toast.success("GOOGLE AUTH SUCCESSFUL (DEMO)");
+      const response = await googleLogin(credentialResponse.credential);
+      toast.success("GOOGLE AUTH SUCCESSFUL");
       navigate("/");
     } catch (error) {
-      toast.error("Google authentication failed");
+      toast.error(error.response?.data?.detail || "Google authentication failed");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleError = () => {
+    toast.error("Google Sign-In failed. Please try again.");
   };
 
   return (
