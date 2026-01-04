@@ -178,7 +178,7 @@ export default function InfoJetScreen() {
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Ionicons name="globe" size={28} color="#2196F3" />
-          <Text style={styles.headerTitle}>InfoJet Search</Text>
+          <Text style={styles.headerTitle}>InfoPilot Search</Text>
         </View>
         <TouchableOpacity
           style={styles.operatorsToggle}
