@@ -148,8 +148,8 @@ class InfoPilotTester:
         print("🔍 Testing user login...")
         
         login_data = {
-            "username": "testuser_infopilot_2024",
-            "password": "SecurePassword123!"
+            "username": "testuser123",
+            "password": "TestPass123"
         }
         
         response = await self.make_request("POST", "/auth/login", login_data)
