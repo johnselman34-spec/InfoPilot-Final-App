@@ -368,7 +368,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 16,
   },
   resultCard: {
     backgroundColor: colors.white,
