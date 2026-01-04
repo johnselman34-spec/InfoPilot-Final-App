@@ -377,6 +377,16 @@ async def collate_search(request: CollateRequest, authorization: Optional[str] =
         
         organic_results = results.get("organic_results", [])
         
+        # Batch query: Get all existing URLs upfront to avoid N+1 queries
+        all_urls = [result.get("link", "") for result in organic_results]
+        existing_results = await db.search_results.find({
+            "user_id": user["id"],
+            "url": {"$in": all_urls}
+        }, {"url": 1, "id": 1, "category_ids": 1}).to_list(len(all_urls))
+        
+        # Create a lookup dictionary for O(1) access
+        existing_by_url = {result["url"]: result for result in existing_results}
+        
         # Process each result
         processed_count = 0
         for result in organic_results:
