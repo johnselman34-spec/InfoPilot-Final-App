@@ -75,7 +75,7 @@ DEFAULT_BLOCKED_WORDS = [
 # ============================================
 # Welcome Sale: $0.75 for 2 months starting today
 # After sale: $4.70/year
-SALE_START_DATE = datetime(2025, 1, 4, tzinfo=timezone.utc)  # Today
+SALE_START_DATE = datetime(2026, 1, 4, tzinfo=timezone.utc)  # Today
 SALE_END_DATE = SALE_START_DATE + timedelta(days=60)  # 2 months from now
 SALE_PRICE = 0.75  # Welcome sale price
 REGULAR_PRICE = 4.70  # Regular yearly price after sale
