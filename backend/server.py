@@ -125,6 +125,11 @@ class CategoryCreate(BaseModel):
     parent_id: Optional[str] = None  # For subcategories
     is_public: bool = True
 
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    protocol_string: Optional[str] = None
+    is_public: Optional[bool] = None
+
 class CategoryResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
