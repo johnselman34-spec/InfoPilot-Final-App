@@ -129,11 +129,86 @@ export default function HomeScreen() {
                 </Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.upgradeButton}>
+            <TouchableOpacity 
+              style={styles.upgradeButton}
+              onPress={() => setUpgradeModalVisible(true)}
+            >
               <Text style={styles.upgradeButtonText}>Upgrade</Text>
             </TouchableOpacity>
           </View>
         )}
+
+        {/* Upgrade Modal */}
+        <Modal
+          visible={upgradeModalVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setUpgradeModalVisible(false)}
+        >
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Upgrade to Premium</Text>
+              <TouchableOpacity onPress={() => setUpgradeModalVisible(false)}>
+                <Ionicons name="close" size={28} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent}>
+              <View style={styles.pricingCard}>
+                <Ionicons name="star" size={64} color={colors.accent} />
+                <Text style={styles.pricingTitle}>Premium Plan</Text>
+                <Text style={styles.pricingPrice}>$0.99</Text>
+                <Text style={styles.pricingPeriod}>per month</Text>
+              </View>
+
+              <View style={styles.featuresList}>
+                <Text style={styles.featuresTitle}>Premium Features:</Text>
+                
+                <View style={styles.featureItem}>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.secondary} />
+                  <Text style={styles.featureText}>Unlimited search results (no 1-page limit)</Text>
+                </View>
+
+                <View style={styles.featureItem}>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.secondary} />
+                  <Text style={styles.featureText}>Unlimited categories and protocols</Text>
+                </View>
+
+                <View style={styles.featureItem}>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.secondary} />
+                  <Text style={styles.featureText}>Advanced AI categorization</Text>
+                </View>
+
+                <View style={styles.featureItem}>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.secondary} />
+                  <Text style={styles.featureText}>Priority search speed</Text>
+                </View>
+
+                <View style={styles.featureItem}>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.secondary} />
+                  <Text style={styles.featureText}>Export and share categories</Text>
+                </View>
+
+                <View style={styles.featureItem}>
+                  <Ionicons name="checkmark-circle" size={24} color={colors.secondary} />
+                  <Text style={styles.featureText}>Ad-free experience</Text>
+                </View>
+              </View>
+
+              <CustomButton
+                title="Subscribe Now - $0.99/month"
+                onPress={handleUpgrade}
+                loading={upgrading}
+                style={styles.subscribeButton}
+              />
+
+              <Text style={styles.disclaimer}>
+                For demo purposes, clicking Subscribe will activate premium features immediately. 
+                In production, this would integrate with Google Play Billing.
+              </Text>
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
       </ScrollView>
     </SafeAreaView>
   );
