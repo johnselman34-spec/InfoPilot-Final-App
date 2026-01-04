@@ -285,7 +285,7 @@ export default function CategoriesScreen() {
               onChangeText={setName}
             />
 
-            <Text style={styles.label}>Protocol (InfoJet 2.0)</Text>
+            <Text style={styles.label}>Protocol (InfoPilot 2.0)</Text>
             <TextInput
               style={[styles.input, styles.protocolInput]}
               placeholder="(word1 or word2) & (word3)+ & (exclude)^"
