@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,9 +15,15 @@ import { useRouter, Link } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
 
 WebBrowser.maybeCompleteAuthSession();
+
+// Google OAuth Client IDs - You'll need to replace these with your own from Google Cloud Console
+const GOOGLE_WEB_CLIENT_ID = ''; // Add your web client ID here
+const GOOGLE_ANDROID_CLIENT_ID = ''; // Add your Android client ID here
+const GOOGLE_IOS_CLIENT_ID = ''; // Add your iOS client ID here
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -25,8 +31,63 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  // Google Auth Setup
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    scopes: ['profile', 'email'],
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      handleGoogleResponse(response.authentication?.accessToken);
+    } else if (response?.type === 'error') {
+      Alert.alert('Google Sign-In Error', response.error?.message || 'Authentication failed');
+      setGoogleLoading(false);
+    }
+  }, [response]);
+
+  const handleGoogleResponse = async (accessToken: string | undefined) => {
+    if (!accessToken) {
+      Alert.alert('Error', 'No access token received');
+      setGoogleLoading(false);
+      return;
+    }
+
+    try {
+      // Get user info from Google
+      const userInfoResponse = await fetch(
+        'https://www.googleapis.com/userinfo/v2/me',
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      const userInfo = await userInfoResponse.json();
+
+      // Authenticate with our backend
+      await googleAuth(
+        userInfo.email,
+        userInfo.id,
+        userInfo.name,
+        userInfo.picture
+      );
+
+      router.replace('/(tabs)/ultimate-search');
+    } catch (error: any) {
+      console.error('Google auth error:', error);
+      Alert.alert(
+        'Authentication Failed',
+        error.response?.data?.detail || 'Could not complete Google sign-in'
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -46,12 +107,35 @@ export default function LoginScreen() {
   };
 
   const handleGoogleLogin = async () => {
-    // For demo purposes, simulate Google login
-    Alert.alert(
-      'Google Sign-In',
-      'Google Sign-In will be configured with your Google Cloud credentials. For now, please use email/password login or register.',
-      [{ text: 'OK' }]
-    );
+    // Check if Google OAuth is configured
+    if (!GOOGLE_WEB_CLIENT_ID && !GOOGLE_ANDROID_CLIENT_ID && !GOOGLE_IOS_CLIENT_ID) {
+      Alert.alert(
+        'Google Sign-In Setup Required',
+        'To enable Google Sign-In, you need to:\n\n' +
+        '1. Go to Google Cloud Console\n' +
+        '2. Create OAuth 2.0 credentials\n' +
+        '3. Add the Client IDs to the app\n\n' +
+        'For now, please use email/password login.',
+        [
+          { text: 'Use Email Login', style: 'cancel' },
+          {
+            text: 'Learn More',
+            onPress: () => {
+              WebBrowser.openBrowserAsync('https://console.cloud.google.com/apis/credentials');
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    setGoogleLoading(true);
+    try {
+      await promptAsync();
+    } catch (error) {
+      console.error('Google sign-in error:', error);
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -145,10 +229,30 @@ export default function LoginScreen() {
           </View>
 
           {/* Google Login */}
-          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-            <Ionicons name="logo-google" size={20} color="#DB4437" />
-            <Text style={styles.googleButtonText}>Continue with Google</Text>
+          <TouchableOpacity
+            style={[styles.googleButton, googleLoading && styles.buttonDisabled]}
+            onPress={handleGoogleLogin}
+            disabled={googleLoading}
+          >
+            {googleLoading ? (
+              <ActivityIndicator color="#DB4437" />
+            ) : (
+              <>
+                <Ionicons name="logo-google" size={20} color="#DB4437" />
+                <Text style={styles.googleButtonText}>Continue with Google</Text>
+              </>
+            )}
           </TouchableOpacity>
+
+          {/* Setup Notice */}
+          {!GOOGLE_WEB_CLIENT_ID && (
+            <View style={styles.setupNotice}>
+              <Ionicons name="information-circle" size={16} color="#FF9800" />
+              <Text style={styles.setupNoticeText}>
+                Google Sign-In requires OAuth setup in Google Cloud Console
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Register Link */}
@@ -320,6 +424,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
+  },
+  setupNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  setupNoticeText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 12,
+    color: '#E65100',
   },
   registerContainer: {
     flexDirection: 'row',
