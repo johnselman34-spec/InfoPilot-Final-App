@@ -44,7 +44,7 @@ ARTICLE_TYPE: [type]
 BANNED_CONTENT: [yes/no]
 CONFIDENCE: [high/medium/low]
 REASON: [brief explanation]"""
-            ).with_model("openai", "gpt-5.2")
+            ).with_model("openai", "gpt-4")
             
             user_message = UserMessage(
                 text=f"""Analyze this article:
@@ -111,7 +111,7 @@ Rules:
 - Use semantic understanding to match concepts, not just exact words
 
 Respond with only: MATCH or NO_MATCH"""
-            ).with_model("openai", "gpt-5.2")
+            ).with_model("openai", "gpt-4")
             
             terms_str = "\n".join([f"Group {i+1} ({g.get('modifier', 'normal')}): {', '.join(g['terms'])}" 
                                    for i, g in enumerate(protocol_terms)])
