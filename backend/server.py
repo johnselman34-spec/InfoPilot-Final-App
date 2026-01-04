@@ -73,7 +73,21 @@ DEFAULT_BLOCKED_WORDS = [
 # ============================================
 # SUBSCRIPTION & BOOK INFO
 # ============================================
-SUBSCRIPTION_PRICE = 0.95  # Lifetime access
+# Welcome Sale: $0.75 for 2 months starting today
+# After sale: $4.70/year
+SALE_START_DATE = datetime(2025, 1, 4, tzinfo=timezone.utc)  # Today
+SALE_END_DATE = SALE_START_DATE + timedelta(days=60)  # 2 months from now
+SALE_PRICE = 0.75  # Welcome sale price
+REGULAR_PRICE = 4.70  # Regular yearly price after sale
+
+def get_current_subscription_price():
+    """Get the current subscription price based on sale status"""
+    now = datetime.now(timezone.utc)
+    if now < SALE_END_DATE:
+        return SALE_PRICE, True, SALE_END_DATE
+    return REGULAR_PRICE, False, None
+
+SUBSCRIPTION_PRICE = SALE_PRICE  # Default to sale price
 BOOK_INFO = {
     "title": "Letters to Evelyn",
     "author": "John Selman",
