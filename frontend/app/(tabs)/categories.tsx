@@ -374,12 +374,24 @@ const styles = StyleSheet.create({
     backgroundColor: colors.lightGray,
     padding: 12,
     borderRadius: 8,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   exampleText: {
     fontSize: 14,
     color: colors.text,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  infoLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 12,
+    color: colors.textLight,
+    lineHeight: 18,
+    marginBottom: 20,
   },
   checkboxRow: {
     flexDirection: 'row',
