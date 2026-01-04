@@ -41,6 +41,11 @@ GOOGLE_IOS_CLIENT_ID = os.environ.get('GOOGLE_IOS_CLIENT_ID', '553762726406-a6it
 # All valid Google Client IDs (for token verification)
 GOOGLE_CLIENT_IDS = [GOOGLE_WEB_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID]
 
+# Stripe Configuration
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+stripe.api_key = STRIPE_SECRET_KEY
+
 # Create the main app without a prefix
 app = FastAPI(title="InfoPilot API", version="2.0.0")
 
