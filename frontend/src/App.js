@@ -1131,7 +1131,7 @@ const CategoriesPage = () => {
                       title="Edit Category"
                       data-testid={`edit-category-${cat.id}`}
                     >
-                      <Settings className="w-4 h-4" />
+                      <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(cat.id)}
