@@ -99,113 +99,173 @@ export default function SearchScreen() {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>InfoJet Search</Text>
-          <Text style={styles.subtitle}>Collate search results using your protocols</Text>
+          <Text style={styles.title}>InfoPilot Search</Text>
+          <Text style={styles.subtitle}>Search Google, then collate results into your categories</Text>
         </View>
 
+        {/* Step 1: Google Search */}
         <View style={styles.searchSection}>
+          <View style={styles.stepHeader}>
+            <View style={styles.stepBadge}>
+              <Text style={styles.stepBadgeText}>1</Text>
+            </View>
+            <Text style={styles.stepTitle}>Search Google</Text>
+          </View>
+
           <CustomInput
-            label="Search Query"
+            label="Enter your search query"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Enter your Google search query"
+            placeholder="e.g., American Civil War heroes"
           />
 
-          <Text style={styles.label}>Select Category</Text>
-          {categories.length === 0 ? (
-            <View style={styles.emptyCategory}>
-              <Text style={styles.emptyCategoryText}>
-                No categories yet. Create a category first!
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.categoriesGrid}>
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.categoryChip,
-                    selectedCategory === category.id && styles.categoryChipSelected,
-                  ]}
-                  onPress={() => setSelectedCategory(category.id)}
-                >
-                  <Text
-                    style={[
-                      styles.categoryChipText,
-                      selectedCategory === category.id && styles.categoryChipTextSelected,
-                    ]}
-                  >
-                    {category.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
           <CustomButton
-            title="Collate Results"
-            onPress={handleCollate}
-            loading={loading}
-            disabled={!searchQuery || !selectedCategory}
-            style={styles.collateButton}
+            title={searching ? "Searching..." : "Search Google"}
+            onPress={handleGoogleSearch}
+            loading={searching}
+            style={styles.searchButton}
           />
         </View>
 
-        {results.length > 0 && (
+        {/* Search Results */}
+        {googleResults.length > 0 && (
           <View style={styles.resultsSection}>
-            <Text style={styles.resultsTitle}>Recent Results</Text>
-            {results.map((result, index) => (
-              <View key={index} style={styles.resultCard}>
-                <Text style={styles.resultTitle} numberOfLines={2}>
-                  {result.title}
-                </Text>
-                <Text style={styles.resultSnippet} numberOfLines={3}>
-                  {result.snippet}
-                </Text>
-                <View style={styles.resultMeta}>
-                  <Text style={styles.resultDomain}>{result.root_domain}</Text>
-                  <Text style={styles.resultType}>{result.article_type}</Text>
+            <View style={styles.resultsHeader}>
+              <Text style={styles.resultsTitle}>
+                {googleResults.length} Search Results
+              </Text>
+              <Text style={styles.resultsSubtitle}>
+                Review results, then select categories to collate
+              </Text>
+            </View>
+
+            <ScrollView style={styles.resultsList} nestedScrollEnabled>
+              {googleResults.slice(0, 10).map((result: any, index: number) => (
+                <View key={index} style={styles.resultCard}>
+                  <Text style={styles.resultTitle} numberOfLines={2}>
+                    {result.title}
+                  </Text>
+                  <Text style={styles.resultSnippet} numberOfLines={3}>
+                    {result.snippet}
+                  </Text>
+                  <Text style={styles.resultUrl} numberOfLines={1}>
+                    {result.link}
+                  </Text>
                 </View>
-              </View>
-            ))}
+              ))}
+            </ScrollView>
           </View>
         )}
 
-        <View style={styles.infoSection}>
-          <Text style={styles.infoTitle}>How InfoJet Works</Text>
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>1</Text>
+        {/* Step 2: Select Categories */}
+        {googleResults.length > 0 && (
+          <View style={styles.categoriesSection}>
+            <View style={styles.stepHeader}>
+              <View style={styles.stepBadge}>
+                <Text style={styles.stepBadgeText}>2</Text>
+              </View>
+              <Text style={styles.stepTitle}>Select Categories</Text>
             </View>
-            <Text style={styles.stepText}>
-              Enter your Google search query above
+
+            {categories.length === 0 ? (
+              <View style={styles.emptyCategory}>
+                <Ionicons name="folder-open-outline" size={48} color={colors.gray} />
+                <Text style={styles.emptyCategoryText}>
+                  No categories yet. Create categories first!
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.categoriesGrid}>
+                {categories.map((category) => (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={[
+                      styles.categoryChip,
+                      selectedCategories.includes(category.id) && styles.categoryChipSelected,
+                    ]}
+                    onPress={() => toggleCategory(category.id)}
+                  >
+                    <Ionicons
+                      name={selectedCategories.includes(category.id) ? "checkbox" : "square-outline"}
+                      size={20}
+                      color={selectedCategories.includes(category.id) ? colors.white : colors.primary}
+                    />
+                    <Text
+                      style={[
+                        styles.categoryChipText,
+                        selectedCategories.includes(category.id) && styles.categoryChipTextSelected,
+                      ]}
+                    >
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Step 3: Collate Button */}
+        {googleResults.length > 0 && selectedCategories.length > 0 && (
+          <View style={styles.collateSection}>
+            <View style={styles.stepHeader}>
+              <View style={styles.stepBadge}>
+                <Text style={styles.stepBadgeText}>3</Text>
+              </View>
+              <Text style={styles.stepTitle}>Collate Results</Text>
+            </View>
+
+            <CustomButton
+              title={collating ? "Collating..." : `Collate All ${googleResults.length} Results`}
+              onPress={handleCollateAll}
+              loading={collating}
+              style={styles.collateButton}
+            />
+            
+            <Text style={styles.collateInfo}>
+              Results will be categorized into {selectedCategories.length} {selectedCategories.length === 1 ? 'category' : 'categories'} using InfoPilot 2.0 protocols
             </Text>
           </View>
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>2</Text>
+        )}
+
+        {/* Info Section */}
+        {googleResults.length === 0 && (
+          <View style={styles.infoSection}>
+            <Text style={styles.infoTitle}>How InfoPilot Works</Text>
+            <View style={styles.stepItem}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>1</Text>
+              </View>
+              <Text style={styles.stepText}>
+                Enter your search query and click "Search Google"
+              </Text>
             </View>
-            <Text style={styles.stepText}>
-              Select a category with an InfoJet 2.0 protocol
-            </Text>
-          </View>
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>3</Text>
+            <View style={styles.stepItem}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>2</Text>
+              </View>
+              <Text style={styles.stepText}>
+                Review the Google search results
+              </Text>
             </View>
-            <Text style={styles.stepText}>
-              Click Collate to search Google and categorize results
-            </Text>
-          </View>
-          <View style={styles.stepItem}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>4</Text>
+            <View style={styles.stepItem}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>3</Text>
+              </View>
+              <Text style={styles.stepText}>
+                Select categories with InfoPilot 2.0 protocols
+              </Text>
             </View>
-            <Text style={styles.stepText}>
-              AI classifies articles and filters inappropriate content
-            </Text>
+            <View style={styles.stepItem}>
+              <View style={styles.stepNumber}>
+                <Text style={styles.stepNumberText}>4</Text>
+              </View>
+              <Text style={styles.stepText}>
+                Click "Collate All" to automatically categorize results using AI
+              </Text>
+            </View>
           </View>
-        </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
