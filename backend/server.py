@@ -1378,7 +1378,7 @@ async def init_admin_settings():
 
 @api_router.get("/")
 async def root():
-    return {"message": "InfoJet API v1.0", "status": "healthy"}
+    return {"message": "InfoPilot API v1.0", "status": "healthy"}
 
 @api_router.get("/health")
 async def health_check():
