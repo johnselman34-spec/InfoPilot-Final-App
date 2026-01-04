@@ -32,11 +32,23 @@ load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
+client = AsyncIOMotorClient(mongo_url, serverSelectionTimeoutMS=5000)
 db = client[os.environ['DB_NAME']]
 
 # Create the main app
 app = FastAPI(title="InfoPilot API")
+
+# Test MongoDB connection on startup
+@app.on_event("startup")
+async def startup_db_client():
+    try:
+        # Test the connection
+        await client.admin.command('ping')
+        logger.info("Successfully connected to MongoDB")
+    except Exception as e:
+        logger.error(f"Failed to connect to MongoDB: {str(e)}")
+        logger.error(f"MongoDB URL: {mongo_url.split('@')[1] if '@' in mongo_url else mongo_url}")
+        raise Exception(f"MongoDB connection failed: {str(e)}")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
