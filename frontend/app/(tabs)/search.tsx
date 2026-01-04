@@ -376,10 +376,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   resultTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: colors.primary,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   resultSnippet: {
     fontSize: 14,
