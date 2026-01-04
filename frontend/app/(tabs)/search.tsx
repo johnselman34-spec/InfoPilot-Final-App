@@ -474,7 +474,6 @@ const styles = StyleSheet.create({
   },
   resultsList: {
     maxHeight: 300,
-    marginBottom: 16,
   },
   resultUrl: {
     fontSize: 11,
