@@ -104,23 +104,11 @@ export default function LoginScreen() {
 
   const handleGoogleLogin = async () => {
     // Check if Google OAuth is configured
-    if (!GOOGLE_WEB_CLIENT_ID && !GOOGLE_ANDROID_CLIENT_ID && !GOOGLE_IOS_CLIENT_ID) {
+    if (!GOOGLE_ANDROID_CLIENT_ID) {
       Alert.alert(
-        'Google Sign-In Setup Required',
-        'To enable Google Sign-In, you need to:\n\n' +
-        '1. Go to Google Cloud Console\n' +
-        '2. Create OAuth 2.0 credentials\n' +
-        '3. Add the Client IDs to the app\n\n' +
-        'For now, please use email/password login.',
-        [
-          { text: 'Use Email Login', style: 'cancel' },
-          {
-            text: 'Learn More',
-            onPress: () => {
-              WebBrowser.openBrowserAsync('https://console.cloud.google.com/apis/credentials');
-            },
-          },
-        ]
+        'Google Sign-In Not Configured',
+        'Please add your Android OAuth Client ID to enable Google Sign-In.',
+        [{ text: 'OK' }]
       );
       return;
     }
@@ -130,6 +118,7 @@ export default function LoginScreen() {
       await promptAsync();
     } catch (error) {
       console.error('Google sign-in error:', error);
+      Alert.alert('Error', 'Could not start Google Sign-In');
       setGoogleLoading(false);
     }
   };
