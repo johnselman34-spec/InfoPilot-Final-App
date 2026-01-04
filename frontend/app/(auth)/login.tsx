@@ -213,7 +213,7 @@ export default function LoginScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          {/* Google Login */}
+          {/* Google Login - Android Only */}
           <TouchableOpacity
             style={[styles.googleButton, googleLoading && styles.buttonDisabled]}
             onPress={handleGoogleLogin}
@@ -228,16 +228,6 @@ export default function LoginScreen() {
               </>
             )}
           </TouchableOpacity>
-
-          {/* Setup Notice */}
-          {!GOOGLE_WEB_CLIENT_ID && (
-            <View style={styles.setupNotice}>
-              <Ionicons name="information-circle" size={16} color="#FF9800" />
-              <Text style={styles.setupNoticeText}>
-                Google Sign-In requires OAuth setup in Google Cloud Console
-              </Text>
-            </View>
-          )}
         </View>
 
         {/* Register Link */}
