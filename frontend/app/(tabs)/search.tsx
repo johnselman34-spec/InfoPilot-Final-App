@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   collateButton: {
-    marginTop: 4,
+    marginBottom: 12,
   },
   resultsSection: {
     marginBottom: 24,
