@@ -177,7 +177,7 @@ export default function SearchScreen() {
                 <Text style={styles.stepNumberText}>2</Text>
               </View>
               <Text style={styles.stepText}>
-                Review the Google search results
+                Review the Google search results (up to 20 results)
               </Text>
             </View>
             <View style={styles.stepItem}>
@@ -185,7 +185,7 @@ export default function SearchScreen() {
                 <Text style={styles.stepNumberText}>3</Text>
               </View>
               <Text style={styles.stepText}>
-                Select categories with InfoPilot 2.0 protocols
+                Click "Collate All" to automatically categorize results into ALL your categories
               </Text>
             </View>
             <View style={styles.stepItem}>
@@ -193,7 +193,7 @@ export default function SearchScreen() {
                 <Text style={styles.stepNumberText}>4</Text>
               </View>
               <Text style={styles.stepText}>
-                Click "Collate All" to automatically categorize results using AI
+                AI matches results to each category's InfoPilot 2.0 protocol automatically
               </Text>
             </View>
           </View>
