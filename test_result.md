@@ -73,6 +73,9 @@ backend:
       - working: true
         agent: "main"
         comment: "API returns sale info including countdown - verified via curl"
+      - working: true
+        agent: "testing"
+        comment: "✅ RE-TESTED: GET /api/subscription/info working perfectly. Returns correct sale pricing ($0.75), is_sale_active: true, sale_end_date: 2026-03-05. All pricing logic functioning as expected."
 
 frontend:
   - task: "Futuristic Theme (Red/Pink/Purple/Blue)"
