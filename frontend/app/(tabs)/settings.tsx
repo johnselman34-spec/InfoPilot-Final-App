@@ -243,7 +243,7 @@ export default function SettingsScreen() {
           
           <TouchableOpacity style={styles.aboutItem}>
             <Ionicons name="information-circle-outline" size={22} color="#666" />
-            <Text style={styles.aboutText}>About InfoJet</Text>
+            <Text style={styles.aboutText}>About InfoPilot</Text>
             <Ionicons name="chevron-forward" size={20} color="#ccc" />
           </TouchableOpacity>
 
