@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   collateSection: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.secondary,
     padding: 20,
     borderRadius: 12,
     marginBottom: 24,
