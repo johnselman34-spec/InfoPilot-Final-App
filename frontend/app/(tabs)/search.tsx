@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   searchButton: {
-    marginTop: 16,
+    marginTop: 8,
   },
   resultsHeader: {
     marginBottom: 16,
