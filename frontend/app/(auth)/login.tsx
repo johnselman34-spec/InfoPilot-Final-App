@@ -20,10 +20,8 @@ import * as Google from 'expo-auth-session/providers/google';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Google OAuth Client IDs - You'll need to replace these with your own from Google Cloud Console
-const GOOGLE_WEB_CLIENT_ID = ''; // Add your web client ID here
-const GOOGLE_ANDROID_CLIENT_ID = ''; // Add your Android client ID here
-const GOOGLE_IOS_CLIENT_ID = ''; // Add your iOS client ID here
+// Google OAuth Client ID for Android
+const GOOGLE_ANDROID_CLIENT_ID = '553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com';
 
 export default function LoginScreen() {
   const router = useRouter();
