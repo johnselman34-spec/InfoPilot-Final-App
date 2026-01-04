@@ -353,7 +353,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   resultsSection: {
+    backgroundColor: colors.white,
+    padding: 20,
+    borderRadius: 12,
     marginBottom: 24,
+    maxHeight: 400,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   resultsTitle: {
     fontSize: 20,
