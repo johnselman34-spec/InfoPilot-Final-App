@@ -836,8 +836,11 @@ const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
   const [newCategory, setNewCategory] = useState({ name: "", protocol: "", parentId: null, isPublic: true });
   const [creating, setCreating] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -876,6 +879,38 @@ const CategoriesPage = () => {
     }
   };
 
+  const handleEdit = (cat) => {
+    setEditingCategory({
+      id: cat.id,
+      name: cat.name,
+      protocol_string: cat.protocol_string,
+      is_public: cat.is_public
+    });
+    setShowEdit(true);
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    if (!editingCategory) return;
+    
+    setUpdating(true);
+    try {
+      await axios.put(`${API}/categories/${editingCategory.id}`, {
+        name: editingCategory.name,
+        protocol_string: editingCategory.protocol_string,
+        is_public: editingCategory.is_public
+      });
+      toast.success("CATEGORY UPDATED");
+      setShowEdit(false);
+      setEditingCategory(null);
+      fetchCategories();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "UPDATE FAILED");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm("DELETE THIS CATEGORY?")) return;
     try {
@@ -884,6 +919,16 @@ const CategoriesPage = () => {
       fetchCategories();
     } catch (error) {
       toast.error("DELETE FAILED");
+    }
+  };
+
+  const handleToggleVisibility = async (id, currentVisibility) => {
+    try {
+      await axios.put(`${API}/categories/${id}`, { is_public: !currentVisibility });
+      toast.success("VISIBILITY UPDATED");
+      fetchCategories();
+    } catch (error) {
+      toast.error("UPDATE FAILED");
     }
   };
 
@@ -932,6 +977,31 @@ const CategoriesPage = () => {
                     data-testid="protocol-input"
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-mono text-hud-cyan mb-1">PARENT CATEGORY (OPTIONAL)</label>
+                  <select
+                    value={newCategory.parentId || ""}
+                    onChange={(e) => setNewCategory({ ...newCategory, parentId: e.target.value || null })}
+                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan"
+                  >
+                    <option value="">None (Main Category)</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {"—".repeat(cat.level || 0)} {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isPublic"
+                    checked={newCategory.isPublic}
+                    onChange={(e) => setNewCategory({ ...newCategory, isPublic: e.target.checked })}
+                    className="rounded bg-cockpit border-hud-green/30"
+                  />
+                  <label htmlFor="isPublic" className="text-sm text-hud-green font-mono">Make this category public</label>
+                </div>
                 <div className="flex gap-4">
                   <button
                     type="button"
@@ -947,6 +1017,68 @@ const CategoriesPage = () => {
                     data-testid="save-category-btn"
                   >
                     {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "CREATE"}
+                  </button>
+                </div>
+              </form>
+            </HUDFrame>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {showEdit && editingCategory && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <HUDFrame title="EDIT CATEGORY" className="bg-cockpit-dark border border-hud-orange/30 rounded-lg max-w-lg w-full">
+              <form onSubmit={handleUpdate} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-mono text-hud-orange mb-1">CATEGORY NAME</label>
+                  <input
+                    type="text"
+                    value={editingCategory.name}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                    className="w-full px-4 py-2 bg-cockpit border border-hud-orange/30 rounded text-hud-green font-mono focus:border-hud-orange"
+                    required
+                    data-testid="edit-category-name-input"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-hud-orange mb-1">INFOPILOT 2.0 PROTOCOL</label>
+                  <textarea
+                    value={editingCategory.protocol_string}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, protocol_string: e.target.value })}
+                    placeholder="(word1 or word2) & (word3)+ & (excluded)^"
+                    className="w-full px-4 py-2 bg-cockpit border border-hud-orange/30 rounded text-hud-green font-mono h-32 focus:border-hud-orange"
+                    required
+                    data-testid="edit-protocol-input"
+                  />
+                  <p className="text-xs text-hud-cyan/60 mt-1 font-mono">
+                    Syntax: (word1 or word2) & (required)+ & (excluded)^
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="editIsPublic"
+                    checked={editingCategory.is_public}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, is_public: e.target.checked })}
+                    className="rounded bg-cockpit border-hud-orange/30"
+                  />
+                  <label htmlFor="editIsPublic" className="text-sm text-hud-green font-mono">Make this category public</label>
+                </div>
+                <div className="flex gap-4">
+                  <button
+                    type="button"
+                    onClick={() => { setShowEdit(false); setEditingCategory(null); }}
+                    className="flex-1 px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded hover:bg-hud-green/10"
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updating}
+                    className="flex-1 px-4 py-2 bg-hud-orange/20 border border-hud-orange text-hud-orange font-mono rounded hover:bg-hud-orange/30 disabled:opacity-50"
+                    data-testid="update-category-btn"
+                  >
+                    {updating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "UPDATE"}
                   </button>
                 </div>
               </form>
@@ -975,19 +1107,40 @@ const CategoriesPage = () => {
             {categories.map((cat) => (
               <div key={cat.id} className="bg-cockpit-dark p-4 rounded border border-hud-green/20 hover:border-hud-cyan/50 transition-colors">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <h3 className="text-hud-cyan font-mono font-bold">{cat.name}</h3>
-                    <p className="text-hud-green/60 text-xs font-mono mt-1 truncate">{cat.protocol_string}</p>
-                    <span className={`inline-block mt-2 px-2 py-0.5 text-xs rounded font-mono ${cat.is_public ? "bg-hud-green/20 text-hud-green" : "bg-hud-orange/20 text-hud-orange"}`}>
-                      {cat.is_public ? "PUBLIC" : "PRIVATE"}
-                    </span>
+                    <p className="text-hud-green/60 text-xs font-mono mt-1 break-all">{cat.protocol_string}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <button
+                        onClick={() => handleToggleVisibility(cat.id, cat.is_public)}
+                        className={`px-2 py-0.5 text-xs rounded font-mono cursor-pointer hover:opacity-80 ${cat.is_public ? "bg-hud-green/20 text-hud-green" : "bg-hud-orange/20 text-hud-orange"}`}
+                      >
+                        {cat.is_public ? "PUBLIC" : "PRIVATE"}
+                      </button>
+                      {cat.level > 0 && (
+                        <span className="px-2 py-0.5 text-xs rounded font-mono bg-hud-cyan/10 text-hud-cyan/60">
+                          LEVEL {cat.level}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(cat.id)}
-                    className="p-2 text-hud-red/60 hover:text-hud-red rounded"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1 ml-2">
+                    <button
+                      onClick={() => handleEdit(cat)}
+                      className="p-2 text-hud-cyan/60 hover:text-hud-cyan rounded hover:bg-hud-cyan/10"
+                      title="Edit Category"
+                      data-testid={`edit-category-${cat.id}`}
+                    >
+                      <Settings className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(cat.id)}
+                      className="p-2 text-hud-red/60 hover:text-hud-red rounded hover:bg-hud-red/10"
+                      title="Delete Category"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
