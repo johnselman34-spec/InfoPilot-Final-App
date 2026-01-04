@@ -329,13 +329,13 @@ const styles = StyleSheet.create({
   categoryChip: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: colors.lightGray,
     borderWidth: 2,
     borderColor: colors.border,
-    gap: 8,
   },
   categoryChipSelected: {
     backgroundColor: colors.primary,
