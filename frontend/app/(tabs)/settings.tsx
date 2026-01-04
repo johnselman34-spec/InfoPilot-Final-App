@@ -67,7 +67,7 @@ export default function SettingsScreen() {
 
   const handleSubscribe = async () => {
     Alert.alert(
-      'Subscribe to InfoJet Premium',
+      'Subscribe to InfoPilot Premium',
       'Get full access to InfoJet for only $0.99!\n\n• Unlimited search result pages\n• Interactive world map\n• All premium features\n• Support development',
       [
         { text: 'Maybe Later', style: 'cancel' },
