@@ -415,11 +415,8 @@ async def collate_search(request: CollateRequest, authorization: Optional[str] =
                 root_domain = extract_root_domain(url)
                 year = extract_year_from_text(f"{title} {snippet}")
                 
-                # Check if result already exists
-                existing = await db.search_results.find_one({
-                    "user_id": user["id"],
-                    "url": url
-                })
+                # Check if result already exists (using batched lookup)
+                existing = existing_by_url.get(url)
                 
                 if existing:
                     # Update category_ids if not already included
