@@ -27,6 +27,29 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
+  const handleUpgrade = async () => {
+    try {
+      setUpgrading(true);
+      // Call backend to mark user as subscribed
+      await userAPI.subscribe();
+      
+      // Update local user state
+      if (user) {
+        updateUser({ ...user, subscription_status: 'paid' });
+      }
+      
+      Alert.alert(
+        'Subscription Activated!',
+        'You now have unlimited access to all InfoPilot features!',
+        [{ text: 'OK', onPress: () => setUpgradeModalVisible(false) }]
+      );
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.detail || 'Failed to upgrade. Please try again.');
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView
