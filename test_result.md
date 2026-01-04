@@ -104,15 +104,18 @@ frontend:
 
   - task: "Stripe Checkout Integration"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/frontend/src/App.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Stripe Elements integrated. When user clicks PAY button, creates payment intent and shows Stripe form. Needs testing."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUE: Stripe payment integration not working. Subscribe page redirects to login when accessed directly. PAY button not found on subscribe page when authenticated. User session management issue preventing access to payment flow. Frontend authentication state not persisting properly for protected routes."
 
   - task: "Book Promotion with New Images"
     implemented: true
