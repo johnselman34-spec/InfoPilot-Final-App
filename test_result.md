@@ -207,6 +207,18 @@ backend:
           agent: "testing"
           comment: "Collate search working correctly, processed 10 results with AI classification"
 
+  - task: "User Subscription API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "NEW subscription endpoint /api/users/subscribe working correctly. Successfully updates user subscription_status to 'paid'. Tested with user testuser123_new and verified status change via /api/auth/me endpoint."
+
   - task: "Admin Settings API"
     implemented: true
     working: false
