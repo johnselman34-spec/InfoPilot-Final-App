@@ -5,36 +5,51 @@ import { ActivityIndicator, View, Text } from 'react-native';
 import { colors } from '../src/utils/colors';
 
 export default function RootLayout() {
-  const [showContent, setShowContent] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // FORCE the app to show content after 2 seconds no matter what
-    const forceTimeout = setTimeout(() => {
-      console.log('FORCE TIMEOUT: Showing content now');
-      setShowContent(true);
-    }, 2000);
+    let isMounted = true;
 
-    // Try to load user but don't wait for it
-    useAuthStore.getState().loadUser().catch(err => {
-      console.error('Load user error:', err);
-    }).finally(() => {
-      setShowContent(true);
-      clearTimeout(forceTimeout);
-    });
+    const initializeApp = async () => {
+      try {
+        console.log('🚀 App initialization started');
+        
+        // Load user with a shorter timeout
+        await useAuthStore.getState().loadUser();
+        
+        console.log('✅ User loaded successfully');
+      } catch (err) {
+        console.error('❌ Load user error:', err);
+        // Continue anyway - user might not be logged in
+      } finally {
+        if (isMounted) {
+          console.log('✅ App ready - showing content');
+          setIsReady(true);
+        }
+      }
+    };
 
-    // Cleanup
+    // Set a maximum timeout of 3 seconds
+    const maxTimeout = setTimeout(() => {
+      if (isMounted) {
+        console.log('⏱️ Max timeout reached - forcing app to show');
+        setIsReady(true);
+      }
+    }, 3000);
+
+    initializeApp();
+
     return () => {
-      clearTimeout(forceTimeout);
-      setShowContent(true); // Ensure we show content on unmount
+      isMounted = false;
+      clearTimeout(maxTimeout);
     };
   }, []);
 
-  // Always show content after component mounts or 2 seconds
-  if (!showContent) {
+  if (!isReady) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 16, color: colors.text }}>Loading...</Text>
+        <Text style={{ marginTop: 16, color: colors.text }}>Loading InfoPilot...</Text>
       </View>
     );
   }
