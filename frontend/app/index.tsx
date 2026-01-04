@@ -24,7 +24,7 @@ export default function SplashScreen() {
     <View style={styles.container}>
       <View style={styles.logoContainer}>
         <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>IJ</Text>
+          <Text style={styles.logoText}>IP</Text>
         </View>
         <Text style={styles.title}>InfoPilot</Text>
         <Text style={styles.subtitle}>World Wide Web Information Exchange</Text>
