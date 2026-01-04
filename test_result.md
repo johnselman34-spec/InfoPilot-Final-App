@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "User reported seeing a blank white screen with just the InfoPilot logo. App failed to load properly and user had to shut down the app."
+user_problem_statement: "User reported two issues: 1) App was stuck on splash screen with white logo, 2) Upgrade button on home screen was not functional. User has provided Google Play payment profile ID: 3834-4026-0543"
 
 backend:
   - task: "Health Check Endpoint"
