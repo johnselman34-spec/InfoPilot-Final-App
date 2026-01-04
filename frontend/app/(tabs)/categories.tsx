@@ -198,7 +198,7 @@ export default function CategoriesScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Categories & Protocols</Text>
-          <Text style={styles.headerSubtitle}>InfoJet 2.0 Boolean Language</Text>
+          <Text style={styles.sectionTitle}>InfoPilot 2.0 Boolean Language</Text>
         </View>
         <TouchableOpacity
           style={styles.addButton}
