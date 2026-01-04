@@ -1,9 +1,12 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform, View } from 'react-native';
+import { Platform, View, Text } from 'react-native';
+import { useAuth } from '../../src/context/AuthContext';
 
 export default function TabLayout() {
+  const { user } = useAuth();
+  
   return (
     <Tabs
       screenOptions={{
@@ -18,7 +21,7 @@ export default function TabLayout() {
           paddingTop: 10,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '500',
         },
       }}
@@ -26,7 +29,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="ultimate-search"
         options={{
-          title: 'Ultimate Search',
+          title: 'Search',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="search" size={size} color={color} />
           ),
@@ -47,6 +50,24 @@ export default function TabLayout() {
           title: 'Categories',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="folder" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: 'Map',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="map" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="social"
+        options={{
+          title: 'Social',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="people" size={size} color={color} />
           ),
         }}
       />

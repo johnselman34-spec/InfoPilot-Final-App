@@ -15,6 +15,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import { api } from '../../src/services/api';
 
+const PAYPAL_LINK = 'https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ';
+
 export default function SettingsScreen() {
   const router = useRouter();
   const { user, logout, refreshUser } = useAuth();
@@ -42,7 +44,6 @@ export default function SettingsScreen() {
       await refreshUser();
     } catch (error) {
       Alert.alert('Error', 'Could not update setting');
-      // Revert
       if (setting === 'ultimate_search_public') setUltimateSearchPublic(!value);
       if (setting === 'friends_visible') setFriendsVisible(!value);
     } finally {
@@ -64,17 +65,42 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const handleSubscribe = () => {
+  const handleSubscribe = async () => {
     Alert.alert(
-      'Subscribe',
-      'Get full access to InfoJet for only $0.99!\n\n• Unlimited search result pages\n• Access to all features\n• Support development',
+      'Subscribe to InfoJet Premium',
+      'Get full access to InfoJet for only $0.99!\n\n• Unlimited search result pages\n• Interactive world map\n• All premium features\n• Support development',
       [
         { text: 'Maybe Later', style: 'cancel' },
         {
-          text: 'Subscribe Now',
-          onPress: () => {
-            // PayPal integration placeholder
-            Alert.alert('Coming Soon', 'PayPal payment integration will be available soon!');
+          text: 'Subscribe via PayPal',
+          onPress: async () => {
+            try {
+              await Linking.openURL(PAYPAL_LINK);
+              // After returning, ask if payment was completed
+              setTimeout(() => {
+                Alert.alert(
+                  'Payment Complete?',
+                  'Did you complete your PayPal payment?',
+                  [
+                    { text: 'No', style: 'cancel' },
+                    {
+                      text: 'Yes, Activate Premium',
+                      onPress: async () => {
+                        try {
+                          await api.post('/payment/activate', {});
+                          await refreshUser();
+                          Alert.alert('Success!', 'Welcome to InfoJet Premium!');
+                        } catch (error) {
+                          Alert.alert('Error', 'Could not activate premium');
+                        }
+                      },
+                    },
+                  ]
+                );
+              }, 2000);
+            } catch (error) {
+              Alert.alert('Error', 'Could not open PayPal');
+            }
           },
         },
       ]
@@ -133,12 +159,33 @@ export default function SettingsScreen() {
                 <View style={styles.subscribeText}>
                   <Text style={styles.subscribeTitle}>Upgrade to Premium</Text>
                   <Text style={styles.subscribeDesc}>
-                    Unlimited pages, all features, only $0.99
+                    Unlimited pages, world map, all features
                   </Text>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.priceText}>Only $0.99</Text>
+                    <View style={styles.paypalBadge}>
+                      <Text style={styles.paypalText}>PayPal</Text>
+                    </View>
+                  </View>
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={24} color="#2196F3" />
             </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Premium Active */}
+        {user?.is_paid && (
+          <View style={styles.section}>
+            <View style={styles.premiumActiveCard}>
+              <Ionicons name="checkmark-circle" size={32} color="#4CAF50" />
+              <View style={styles.premiumActiveText}>
+                <Text style={styles.premiumActiveTitle}>Premium Active</Text>
+                <Text style={styles.premiumActiveDesc}>
+                  Thank you for supporting InfoJet!
+                </Text>
+              </View>
+            </View>
           </View>
         )}
 
@@ -182,7 +229,6 @@ export default function SettingsScreen() {
             />
           </View>
 
-          {/* Privacy Recommendation */}
           <View style={styles.privacyNotice}>
             <Ionicons name="shield-checkmark" size={18} color="#4CAF50" />
             <Text style={styles.privacyText}>
@@ -231,6 +277,7 @@ export default function SettingsScreen() {
           <Text style={styles.footerText}>InfoJet v1.0.0</Text>
           <Text style={styles.footerText}>InfoJet Inc. | Brunswick, Maine</Text>
           <Text style={styles.footerText}>© 2025 John Selman</Text>
+          <Text style={styles.footerText}>john.1976.selman@gmail.com</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -375,6 +422,50 @@ const styles = StyleSheet.create({
   subscribeDesc: {
     fontSize: 12,
     color: '#666',
+    marginTop: 2,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  priceText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  paypalBadge: {
+    backgroundColor: '#003087',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  paypalText: {
+    fontSize: 10,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  premiumActiveCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#C8E6C9',
+  },
+  premiumActiveText: {
+    marginLeft: 14,
+  },
+  premiumActiveTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E7D32',
+  },
+  premiumActiveDesc: {
+    fontSize: 12,
+    color: '#4CAF50',
     marginTop: 2,
   },
   settingItem: {
