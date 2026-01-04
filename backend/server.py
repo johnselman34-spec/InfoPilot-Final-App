@@ -29,7 +29,7 @@ db = client[os.environ.get('DB_NAME', 'infojet_db')]
 PAYPAL_PAYMENT_LINK = "https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ"
 
 # Create the main app
-app = FastAPI(title="InfoJet API", version="1.0.0")
+app = FastAPI(title="InfoPilot API", version="1.0.0")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
