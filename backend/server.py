@@ -339,14 +339,13 @@ async def collate_search(request: CollateRequest, authorization: Optional[str] =
         
         # Search with SerpAPI
         serpapi_key = os.getenv("SERPAPI_KEY")
-        params = {
-            "q": final_query,
-            "api_key": serpapi_key,
-            "num": 20  # Get 20 results
-        }
+        client = SerpApiClient(api_key=serpapi_key)
         
-        search = GoogleSearch(params)
-        results = search.get_dict()
+        results = client.search({
+            "q": final_query,
+            "engine": "google",
+            "num": 20
+        })
         
         organic_results = results.get("organic_results", [])
         
