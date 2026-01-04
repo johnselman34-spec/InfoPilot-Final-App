@@ -16,7 +16,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const API_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, token } = useAuthStore();
   const router = useRouter();
 
   const handleLogout = () => {
