@@ -499,7 +499,12 @@ async def get_search_results(
         
         skip = (page - 1) * results_per_page
         
-        results = await db.search_results.find(query).skip(skip).limit(results_per_page).to_list(results_per_page)
+        results = await db.search_results.find(
+            query,
+            {"_id": 0, "id": 1, "url": 1, "title": 1, "snippet": 1, "article_type": 1, "root_domain": 1, 
+             "year": 1, "category_ids": 1, "created_at": 1, "likes": 1, "loves": 1, "funnys": 1, 
+             "sads": 1, "cautions": 1, "spams": 1, "bests": 1}
+        ).skip(skip).limit(results_per_page).to_list(results_per_page)
         total = await db.search_results.count_documents(query)
         
         return {
