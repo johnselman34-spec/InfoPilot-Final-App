@@ -327,12 +327,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: colors.lightGray,
     borderWidth: 2,
     borderColor: colors.border,
+    gap: 8,
   },
   categoryChipSelected: {
     backgroundColor: colors.primary,
