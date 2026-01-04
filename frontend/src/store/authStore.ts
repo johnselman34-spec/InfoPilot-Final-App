@@ -67,11 +67,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
 
       // Add timeout to prevent infinite loading
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise<never>((_, reject) => 
         setTimeout(() => reject(new Error('Request timeout')), 10000)
       );
 
-      const response = await Promise.race([
+      const response: any = await Promise.race([
         authAPI.getMe(),
         timeoutPromise
       ]);
