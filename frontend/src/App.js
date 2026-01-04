@@ -8,7 +8,8 @@ import {
   Eye, EyeOff, ChevronDown, ChevronRight, Filter, Heart, ThumbsUp, Smile,
   Frown, AlertTriangle, Flag, Award, Home, Users, BookOpen, Menu, X, Loader2,
   ShoppingCart, CreditCard, Star, ExternalLink, Plane, Shield, Radar, Target,
-  Crosshair, Navigation, Zap, Radio, Cpu, Book, Edit3, Copy
+  Crosshair, Navigation, Zap, Radio, Cpu, Book, Edit3, Copy, Check, Gift,
+  Sparkles, Crown, Lock, Unlock, ArrowRight, DollarSign
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -22,20 +23,23 @@ const API = `${BACKEND_URL}/api`;
 // Google OAuth Client ID
 const GOOGLE_CLIENT_ID = "553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com";
 
-// Book Images
-const BOOK_IMAGES = {
-  globe: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/xxl3i9cv_global-network-world-globe-focusing-usa-symbolizing-data-transfer-worldwide-concept-data-transfer-global-connectivity-information-exchange-world-globe-usa-symbolism_918839-41653.jpg",
-  author: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/rubak3hv_FB_IMG_1767397923842.jpg",
-  infopilot: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/zxojhw91_image_1767356779418.png"
+// All Images
+const IMAGES = {
+  globe: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/utj2uh0i_global-network-world-globe-focusing-usa-symbolizing-data-transfer-worldwide-concept-data-transfer-global-connectivity-information-exchange-world-globe-usa-symbolism_918839-41653.jpg",
+  author: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/5150hnhi_FB_IMG_1767397923842.jpg",
+  bookCover1: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/ls79opar_IMG_20251230_025749_432.jpg",
+  bookCover2: "https://customer-assets.emergentagent.com/job_0c3ceef4-3e2b-40c0-b767-31d91735cf23/artifacts/yrjcamzy_IMG_20251230_025749_282.jpg"
 };
 
-// Book Info
+// Book Info with 19 Five-Star Reviews
 const BOOK_INFO = {
   title: "Letters to Evelyn",
   author: "John Selman",
-  tagline: "A Prolific Odyssey of Love and Redemption",
+  tagline: "The Navy Taught Me to Fly Jets. The Universe Taught Me Everything Else.",
+  genre: "A True Supernatural Thriller Comedy",
+  years: "13 Years of Cosmic Chaos",
   rating: 5.0,
-  reviewsCount: 15,
+  reviewsCount: 19,
   price: "$2.99",
   amazonUrl: "https://a.co/d/atfpIds",
   sintraUrl: "https://www.Letters-to-Evelyn.sintra.site",
@@ -43,15 +47,19 @@ const BOOK_INFO = {
   readersFavoriteUrl: "https://readersfavorite.com/book-review/letters-to-evelyn",
   googleDriveUrl: "https://drive.google.com/file/d/1YFhr75fWLzF2nu6nYDgVKB0fjEzZ36Pt/view?usp=drivesdk",
   quotes: [
-    { text: "A profound and unforgettable literary piece... poetic prose and introspective storytelling create an immersive reading experience.", author: "Divine Zape, Readers' Favorite" },
-    { text: "The author's imagination is off the charts. I did not think a novel combining science fiction, romance, and biblical characters could be achieved.", author: "Lesley Jones, Readers' Favorite" },
-    { text: "Such a unique and wonderfully woven story that had me riveted from the moment I started reading it.", author: "Rabia Tanveer, Readers' Favorite" }
+    { text: "A profound and unforgettable literary piece... poetic prose and introspective storytelling create an immersive reading experience that is as enlightening as it is emotionally resonant.", author: "Divine Zape, Readers' Favorite ⭐⭐⭐⭐⭐" },
+    { text: "The author's imagination is off the charts. I did not think a novel combining science fiction, romance, and biblical characters could be achieved.", author: "Lesley Jones, Readers' Favorite ⭐⭐⭐⭐⭐" },
+    { text: "Such a unique and wonderfully woven story that had me riveted from the moment I started reading it.", author: "Rabia Tanveer, Readers' Favorite ⭐⭐⭐⭐⭐" },
+    { text: "A mesmerizing exploration of the human condition and the quest for meaning in a chaotic world.", author: "Readers' Favorite Review ⭐⭐⭐⭐⭐" },
+    { text: "Selman's unwavering devotion to Evelyn is heartbreaking and inspiring, a light amidst the darkness.", author: "Professional Review ⭐⭐⭐⭐⭐" }
   ]
 };
 
+// Subscription Price - NOW 90 CENTS!
+const SUBSCRIPTION_PRICE = 0.90;
+
 // Auth Context
 const AuthContext = createContext(null);
-
 const useAuth = () => useContext(AuthContext);
 
 const AuthProvider = ({ children }) => {
@@ -133,7 +141,7 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Loading Screen - F-35B Style
+// Loading Screen
 const LoadingScreen = () => (
   <div className="min-h-screen bg-cockpit flex items-center justify-center">
     <div className="text-center">
@@ -142,29 +150,189 @@ const LoadingScreen = () => (
         <div className="absolute inset-2 border-2 border-hud-green rounded-full animate-spin"></div>
         <Radar className="absolute inset-0 m-auto w-12 h-12 text-hud-cyan animate-pulse" />
       </div>
-      <p className="text-hud-green font-mono text-lg tracking-wider">INITIALIZING SYSTEMS...</p>
-      <p className="text-hud-cyan/60 font-mono text-sm mt-2">InfoPilot v2.0 Tactical Interface</p>
+      <p className="text-hud-green font-mono text-lg tracking-wider">INITIALIZING INFOPILOT...</p>
     </div>
   </div>
 );
 
 // HUD Frame Component
-const HUDFrame = ({ children, title, className = "" }) => (
-  <div className={`relative ${className}`}>
-    <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-hud-cyan"></div>
-    <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-hud-cyan"></div>
-    <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-hud-cyan"></div>
-    <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-hud-cyan"></div>
-    {title && (
-      <div className="absolute -top-3 left-6 bg-cockpit px-2">
-        <span className="text-hud-cyan text-xs font-mono tracking-wider">{title}</span>
-      </div>
-    )}
-    <div className="p-4">{children}</div>
-  </div>
-);
+const HUDFrame = ({ children, title, className = "", color = "cyan" }) => {
+  const borderColor = color === "orange" ? "border-hud-orange" : color === "green" ? "border-hud-green" : "border-hud-cyan";
+  const textColor = color === "orange" ? "text-hud-orange" : color === "green" ? "text-hud-green" : "text-hud-cyan";
+  
+  return (
+    <div className={`relative ${className}`}>
+      <div className={`absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 ${borderColor}`}></div>
+      <div className={`absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 ${borderColor}`}></div>
+      <div className={`absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 ${borderColor}`}></div>
+      <div className={`absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 ${borderColor}`}></div>
+      {title && (
+        <div className="absolute -top-3 left-6 bg-cockpit px-2">
+          <span className={`${textColor} text-xs font-mono tracking-wider`}>{title}</span>
+        </div>
+      )}
+      <div className="p-4">{children}</div>
+    </div>
+  );
+};
 
-// Sidebar Navigation - F-35B Cockpit Style
+// MEGA Sales Banner - Subscription
+const SubscriptionSalesBanner = ({ onUpgrade, compact = false }) => {
+  const { user } = useAuth();
+  
+  if (user?.is_paid) return null;
+  
+  return (
+    <div className={`bg-gradient-to-r from-hud-orange/20 via-hud-cyan/20 to-hud-green/20 border-2 border-hud-orange rounded-xl overflow-hidden ${compact ? 'p-4' : 'p-6'} animate-pulse-slow`}>
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Crown className="w-12 h-12 text-hud-orange animate-bounce" />
+            <Sparkles className="w-6 h-6 text-hud-cyan absolute -top-1 -right-1" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-4xl font-bold text-hud-orange font-mono">$0.90</span>
+              <span className="text-hud-green font-mono text-sm line-through opacity-50">$9.99</span>
+              <span className="bg-hud-red text-white px-2 py-1 rounded text-xs font-bold animate-pulse">91% OFF!</span>
+            </div>
+            <p className="text-hud-cyan font-mono text-sm">LIFETIME PREMIUM ACCESS - ONE TIME PAYMENT!</p>
+            {!compact && (
+              <p className="text-hud-green/70 text-xs font-mono mt-1">Unlimited searches • Unlimited categories • Full access forever</p>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={onUpgrade}
+          className="px-8 py-4 bg-gradient-to-r from-hud-orange to-hud-red text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform shadow-lg shadow-hud-orange/30 flex items-center gap-2"
+        >
+          <Zap className="w-5 h-5" />
+          UPGRADE NOW
+          <ArrowRight className="w-5 h-5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// MEGA Book Sales Banner
+const BookSalesBanner = ({ variant = "full" }) => {
+  const openAmazon = () => window.open(BOOK_INFO.amazonUrl, '_blank');
+  
+  if (variant === "compact") {
+    return (
+      <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/50 rounded-lg p-4 cursor-pointer hover:scale-[1.02] transition-transform" onClick={openAmazon}>
+        <div className="flex items-center gap-4">
+          <img src={IMAGES.bookCover1} alt="Letters to Evelyn" className="w-20 h-20 object-cover rounded-lg shadow-lg" />
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="text-hud-orange font-mono font-bold">LETTERS TO EVELYN</h3>
+              <div className="flex">
+                {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
+              </div>
+            </div>
+            <p className="text-hud-cyan text-xs font-mono">19 Five-Star Reviews • Supernatural Thriller Comedy</p>
+            <p className="text-hud-green/70 text-xs font-mono italic mt-1">"A profound and unforgettable literary piece"</p>
+          </div>
+          <button className="px-4 py-2 bg-purple-600 text-white font-mono text-sm rounded hover:bg-purple-500 flex items-center gap-1">
+            <ShoppingCart className="w-4 h-4" />
+            GET BOOK
+          </button>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="bg-gradient-to-br from-purple-900/40 via-blue-900/30 to-pink-900/40 border-2 border-purple-500 rounded-xl overflow-hidden">
+      <div className="p-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Book Image */}
+          <div className="lg:w-1/3 flex justify-center">
+            <div className="relative group cursor-pointer" onClick={openAmazon}>
+              <img 
+                src={IMAGES.bookCover2} 
+                alt="Letters to Evelyn - 13 Years of Cosmic Chaos" 
+                className="w-full max-w-xs rounded-lg shadow-2xl shadow-purple-500/30 group-hover:scale-105 transition-transform"
+              />
+              <div className="absolute top-2 right-2 bg-yellow-500 text-black px-2 py-1 rounded font-bold text-xs">
+                ⭐ 19 FIVE-STAR REVIEWS
+              </div>
+            </div>
+          </div>
+          
+          {/* Book Info */}
+          <div className="lg:w-2/3">
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-mono">
+                LETTERS TO EVELYN
+              </h2>
+            </div>
+            
+            <p className="text-hud-cyan font-mono mb-2">By World Record Aviation Holder <span className="text-hud-orange font-bold">John Selman</span></p>
+            
+            <div className="flex items-center gap-4 mb-4">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />)}
+              </div>
+              <span className="text-yellow-400 font-mono font-bold">5.0 / 5.0</span>
+              <span className="text-hud-green font-mono text-sm">(19 Professional Reviews)</span>
+            </div>
+            
+            <p className="text-xl text-hud-orange font-mono italic mb-4">
+              "{BOOK_INFO.tagline}"
+            </p>
+            
+            <p className="text-hud-green/80 font-mono text-sm mb-4">
+              {BOOK_INFO.genre} • {BOOK_INFO.years}
+            </p>
+            
+            {/* Review Quote */}
+            <div className="bg-cockpit/50 rounded-lg p-4 mb-4 border-l-4 border-purple-500">
+              <p className="text-hud-green/90 font-mono text-sm italic">
+                "{BOOK_INFO.quotes[0].text}"
+              </p>
+              <p className="text-purple-400 font-mono text-xs mt-2">— {BOOK_INFO.quotes[0].author}</p>
+            </div>
+            
+            {/* CTA Buttons */}
+            <div className="flex flex-wrap gap-3">
+              <a
+                href={BOOK_INFO.amazonUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold font-mono rounded-lg hover:scale-105 transition-transform shadow-lg flex items-center gap-2"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                BUY ON AMAZON
+              </a>
+              <a
+                href={BOOK_INFO.officialUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-purple-600 text-white font-mono rounded-lg hover:bg-purple-500 transition-colors flex items-center gap-2"
+              >
+                <ExternalLink className="w-5 h-5" />
+                OFFICIAL SITE
+              </a>
+              <a
+                href={BOOK_INFO.readersFavoriteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 border border-purple-500 text-purple-400 font-mono rounded-lg hover:bg-purple-500/20 transition-colors flex items-center gap-2"
+              >
+                <Star className="w-5 h-5" />
+                READ REVIEWS
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Sidebar Navigation
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -177,8 +345,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { path: "/categories", icon: FolderTree, label: "CATEGORIES" },
     { path: "/statistics", icon: BarChart3, label: "INTEL STATS" },
     { path: "/global-database", icon: Globe, label: "GLOBAL DATABASE" },
-    { path: "/book", icon: Book, label: "LETTERS TO EVELYN" },
-    { path: "/subscribe", icon: ShoppingCart, label: "UPGRADE" },
+    { path: "/book", icon: Book, label: "📚 LETTERS TO EVELYN", highlight: true },
+    { path: "/subscribe", icon: Crown, label: user?.is_paid ? "✅ PREMIUM" : "⚡ UPGRADE $0.90", highlight: !user?.is_paid },
   ];
 
   if (user?.is_admin) {
@@ -187,17 +355,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   return (
     <>
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/70 z-40 lg:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      <aside
-        className={`fixed top-0 left-0 h-full bg-cockpit-dark border-r border-hud-cyan/30 z-50 transition-transform duration-300 w-72
-          ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
-      >
+      {isOpen && <div className="fixed inset-0 bg-black/70 z-40 lg:hidden" onClick={() => setIsOpen(false)} />}
+      
+      <aside className={`fixed top-0 left-0 h-full bg-cockpit-dark border-r border-hud-cyan/30 z-50 transition-transform duration-300 w-72 ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="p-6 border-b border-hud-cyan/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -220,14 +380,13 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           {menuItems.map((item) => (
             <button
               key={item.path}
-              onClick={() => {
-                navigate(item.path);
-                setIsOpen(false);
-              }}
+              onClick={() => { navigate(item.path); setIsOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-all font-mono text-sm
                 ${location.pathname === item.path
                   ? "bg-hud-cyan/20 text-hud-cyan border border-hud-cyan/50"
-                  : "text-hud-green/70 hover:bg-hud-green/10 hover:text-hud-green border border-transparent"
+                  : item.highlight
+                    ? "text-hud-orange hover:bg-hud-orange/10 border border-hud-orange/30 animate-pulse"
+                    : "text-hud-green/70 hover:bg-hud-green/10 hover:text-hud-green border border-transparent"
                 }`}
             >
               <item.icon className="w-5 h-5" />
@@ -236,6 +395,15 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           ))}
         </nav>
 
+        {/* Sidebar Promo */}
+        {!user?.is_paid && (
+          <div className="mx-4 p-3 bg-gradient-to-r from-hud-orange/20 to-hud-red/20 rounded-lg border border-hud-orange/50">
+            <p className="text-hud-orange font-mono text-xs text-center">
+              🔥 LIMITED TIME: <span className="font-bold">$0.90</span> LIFETIME ACCESS!
+            </p>
+          </div>
+        )}
+
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-hud-cyan/30 bg-cockpit-dark">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-cockpit border border-hud-green rounded-full flex items-center justify-center text-hud-green font-bold font-mono">
@@ -243,13 +411,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-mono text-hud-green text-sm truncate">{user?.username}</p>
-              <p className="text-xs text-hud-cyan/60 truncate font-mono">{user?.email}</p>
               {user?.is_paid ? (
-                <span className="inline-block px-2 py-0.5 bg-hud-green/20 text-hud-green text-xs rounded font-mono mt-1">
-                  LIFETIME ACCESS
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-hud-green/20 text-hud-green text-xs rounded font-mono">
+                  <Crown className="w-3 h-3" /> PREMIUM
                 </span>
               ) : (
-                <span className="inline-block px-2 py-0.5 bg-hud-orange/20 text-hud-orange text-xs rounded font-mono mt-1">
+                <span className="inline-block px-2 py-0.5 bg-hud-orange/20 text-hud-orange text-xs rounded font-mono">
                   FREE TIER
                 </span>
               )}
@@ -275,7 +442,6 @@ const Layout = ({ children }) => {
   return (
     <div className="min-h-screen bg-cockpit">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-cockpit-dark border-b border-hud-cyan/30 z-30 flex items-center px-4">
         <button onClick={() => setSidebarOpen(true)} className="p-2 text-hud-cyan">
           <Menu className="w-6 h-6" />
@@ -285,7 +451,6 @@ const Layout = ({ children }) => {
           <span className="font-bold text-lg text-hud-green font-mono">INFOPILOT</span>
         </div>
       </header>
-
       <main className="lg:ml-72 pt-16 lg:pt-0 min-h-screen">
         <div className="p-4 lg:p-8">{children}</div>
       </main>
@@ -293,7 +458,7 @@ const Layout = ({ children }) => {
   );
 };
 
-// Login Page - F-35B Style
+// Login Page
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
@@ -303,334 +468,160 @@ const LoginPage = () => {
   const { login, register, googleLogin, user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user) navigate("/");
-  }, [user, navigate]);
+  useEffect(() => { if (user) navigate("/"); }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isLogin) {
-        await login(email, password);
-      } else {
-        await register(username, email, password);
-      }
+      if (isLogin) { await login(email, password); }
+      else { await register(username, email, password); }
       toast.success(isLogin ? "PILOT AUTHENTICATED" : "PILOT REGISTERED");
       navigate("/");
     } catch (error) {
       toast.error(error.response?.data?.detail || "AUTHENTICATION FAILED");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const handleGoogleLogin = async (credentialResponse) => {
     setLoading(true);
     try {
-      const response = await googleLogin(credentialResponse.credential);
+      await googleLogin(credentialResponse.credential);
       toast.success("GOOGLE AUTH SUCCESSFUL");
       navigate("/");
     } catch (error) {
       toast.error(error.response?.data?.detail || "Google authentication failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGoogleError = () => {
-    toast.error("Google Sign-In failed. Please try again.");
+    } finally { setLoading(false); }
   };
 
   return (
     <div className="min-h-screen bg-cockpit flex items-center justify-center p-4 relative overflow-hidden">
-      {/* HUD Background Elements */}
       <div className="absolute inset-0 opacity-20">
         <div className="absolute top-20 left-20 w-64 h-64 border border-hud-cyan/30 rounded-full"></div>
         <div className="absolute bottom-20 right-20 w-96 h-96 border border-hud-green/20 rounded-full"></div>
-        <div className="absolute top-1/2 left-1/4 w-32 h-32 border border-hud-cyan/20 rotate-45"></div>
       </div>
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-cockpit-dark border-2 border-hud-cyan rounded-xl mb-4 relative">
             <Plane className="w-12 h-12 text-hud-cyan" />
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-hud-green rounded-full animate-pulse"></div>
           </div>
           <h1 className="text-4xl font-bold text-hud-green font-mono tracking-wider">INFOPILOT</h1>
           <p className="text-hud-cyan/80 mt-2 font-mono text-sm">TACTICAL INFORMATION EXCHANGE SYSTEM</p>
         </div>
 
+        {/* Special Offer Banner */}
+        <div className="mb-6 p-4 bg-gradient-to-r from-hud-orange/30 to-hud-red/30 rounded-lg border border-hud-orange animate-pulse">
+          <p className="text-center text-hud-orange font-mono font-bold">
+            🎉 NEW USERS: Get LIFETIME ACCESS for just $0.90!
+          </p>
+        </div>
+
         <HUDFrame title="AUTHENTICATION" className="bg-cockpit-dark/90 backdrop-blur border border-hud-cyan/30 rounded-lg">
           <div className="flex mb-6">
-            <button
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-3 text-center font-mono text-sm tracking-wider transition-colors rounded-l
-                ${isLogin ? "bg-hud-cyan/20 text-hud-cyan border border-hud-cyan" : "bg-cockpit text-hud-green/50 border border-hud-green/20"}`}
-            >
-              LOGIN
-            </button>
-            <button
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-3 text-center font-mono text-sm tracking-wider transition-colors rounded-r
-                ${!isLogin ? "bg-hud-cyan/20 text-hud-cyan border border-hud-cyan" : "bg-cockpit text-hud-green/50 border border-hud-green/20"}`}
-            >
-              REGISTER
-            </button>
+            <button onClick={() => setIsLogin(true)} className={`flex-1 py-3 text-center font-mono text-sm tracking-wider transition-colors rounded-l ${isLogin ? "bg-hud-cyan/20 text-hud-cyan border border-hud-cyan" : "bg-cockpit text-hud-green/50 border border-hud-green/20"}`}>LOGIN</button>
+            <button onClick={() => setIsLogin(false)} className={`flex-1 py-3 text-center font-mono text-sm tracking-wider transition-colors rounded-r ${!isLogin ? "bg-hud-cyan/20 text-hud-cyan border border-hud-cyan" : "bg-cockpit text-hud-green/50 border border-hud-green/20"}`}>REGISTER</button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div>
                 <label className="block text-xs font-mono text-hud-cyan mb-1 tracking-wider">CALLSIGN</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none"
-                  required={!isLogin}
-                  data-testid="username-input"
-                />
+                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none" required={!isLogin} data-testid="username-input" />
               </div>
             )}
             <div>
-              <label className="block text-xs font-mono text-hud-cyan mb-1 tracking-wider">EMAIL IDENTIFIER</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none"
-                required
-                data-testid="email-input"
-              />
+              <label className="block text-xs font-mono text-hud-cyan mb-1 tracking-wider">EMAIL</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none" required data-testid="email-input" />
             </div>
             <div>
-              <label className="block text-xs font-mono text-hud-cyan mb-1 tracking-wider">ACCESS CODE</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none"
-                required
-                data-testid="password-input"
-              />
+              <label className="block text-xs font-mono text-hud-cyan mb-1 tracking-wider">PASSWORD</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none" required data-testid="password-input" />
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all disabled:opacity-50"
-              data-testid="submit-btn"
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : isLogin ? "AUTHENTICATE" : "INITIATE REGISTRATION"}
+            <button type="submit" disabled={loading} className="w-full py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all disabled:opacity-50" data-testid="submit-btn">
+              {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : isLogin ? "AUTHENTICATE" : "CREATE ACCOUNT"}
             </button>
           </form>
 
           <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-hud-cyan/20"></div>
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="px-2 bg-cockpit-dark text-hud-cyan/60 font-mono">OR</span>
-              </div>
-            </div>
+            <div className="relative"><div className="absolute inset-0 flex items-center"><div className="w-full border-t border-hud-cyan/20"></div></div><div className="relative flex justify-center text-xs"><span className="px-2 bg-cockpit-dark text-hud-cyan/60 font-mono">OR</span></div></div>
             <div className="mt-4 flex justify-center">
-              <GoogleLogin
-                onSuccess={handleGoogleLogin}
-                onError={handleGoogleError}
-                theme="filled_black"
-                size="large"
-                text="continue_with"
-                shape="rectangular"
-                width="100%"
-              />
+              <GoogleLogin onSuccess={handleGoogleLogin} onError={() => toast.error("Google Sign-In failed")} theme="filled_black" size="large" text="continue_with" shape="rectangular" />
             </div>
-          </div>
-
-          <div className="mt-6 text-center">
-            <p className="text-hud-green text-sm font-mono">
-              LIFETIME ACCESS: <span className="text-hud-cyan font-bold">$0.95</span>
-            </p>
           </div>
         </HUDFrame>
+
+        {/* Book Promo */}
+        <div className="mt-6">
+          <BookSalesBanner variant="compact" />
+        </div>
       </div>
     </div>
   );
 };
 
-// Book Promo Banner
-const BookPromoBanner = ({ compact = false }) => (
-  <div className={`bg-cockpit-dark border border-hud-orange/30 rounded-lg overflow-hidden ${compact ? 'p-4' : 'p-6'}`}>
-    <div className="flex flex-col md:flex-row gap-4 items-center">
-      <img 
-        src={BOOK_IMAGES.author} 
-        alt="John Selman - Author"
-        className={`${compact ? 'w-16 h-16' : 'w-24 h-24'} rounded-lg border-2 border-hud-orange object-cover`}
-      />
-      <div className="flex-1 text-center md:text-left">
-        <h3 className="text-hud-orange font-mono text-lg font-bold tracking-wider">
-          LETTERS TO EVELYN
-        </h3>
-        <p className="text-hud-cyan/80 text-sm font-mono mt-1">
-          By World Record Aviation Holder John Selman
-        </p>
-        <div className="flex items-center justify-center md:justify-start gap-1 mt-2">
-          {[...Array(5)].map((_, i) => (
-            <Star key={i} className="w-4 h-4 fill-hud-orange text-hud-orange" />
-          ))}
-          <span className="text-hud-green text-xs ml-2 font-mono">15 Five-Star Reviews</span>
-        </div>
-        {!compact && (
-          <p className="text-hud-green/70 text-xs mt-2 font-mono italic">
-            "A profound and unforgettable literary piece... poetic prose and introspective storytelling"
-          </p>
-        )}
-      </div>
-      <a
-        href={BOOK_INFO.amazonUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="px-6 py-3 bg-hud-orange/20 border border-hud-orange text-hud-orange font-mono text-sm tracking-wider rounded hover:bg-hud-orange/30 transition-all flex items-center gap-2"
-      >
-        <ShoppingCart className="w-4 h-4" />
-        GET NOW
-      </a>
-    </div>
-  </div>
-);
-
-// Home Page - Command Center
+// Home Page - SALES FOCUSED
 const HomePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto">
-        {/* Welcome Banner */}
-        <HUDFrame title="COMMAND CENTER" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg mb-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Subscription Promo - TOP PRIORITY */}
+        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} />
+
+        {/* Welcome */}
+        <HUDFrame title="COMMAND CENTER" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <img 
-              src={BOOK_IMAGES.globe}
-              alt="InfoPilot Global Network"
-              className="w-32 h-32 rounded-lg border border-hud-cyan/50 object-cover"
-            />
+            <img src={IMAGES.globe} alt="InfoPilot Global Network" className="w-32 h-32 rounded-lg border border-hud-cyan/50 object-cover" />
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">
-                WELCOME, {user?.username?.toUpperCase()}
-              </h1>
-              <p className="text-hud-cyan/80 mb-4 font-mono text-sm">
-                Your tactical gateway to the World Wide Web Information Exchange.
-                Create categories, write protocols, and collate intelligence from across the internet.
-              </p>
+              <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">WELCOME, {user?.username?.toUpperCase()}</h1>
+              <p className="text-hud-cyan/80 mb-4 font-mono text-sm">Your tactical gateway to the World Wide Web Information Exchange.</p>
               <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={() => navigate("/infopilot")}
-                  className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all flex items-center gap-2"
-                  data-testid="start-searching-btn"
-                >
-                  <Radar className="w-5 h-5" />
-                  BEGIN SEARCH
+                <button onClick={() => navigate("/infopilot")} className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all flex items-center gap-2" data-testid="start-searching-btn">
+                  <Radar className="w-5 h-5" /> BEGIN SEARCH
                 </button>
-                <button
-                  onClick={() => navigate("/subscribe")}
-                  className="px-6 py-3 bg-hud-green/20 border border-hud-green text-hud-green font-mono tracking-wider rounded hover:bg-hud-green/30 transition-all flex items-center gap-2"
-                >
-                  <Zap className="w-5 h-5" />
-                  UPGRADE $0.95
-                </button>
+                {!user?.is_paid && (
+                  <button onClick={() => navigate("/subscribe")} className="px-6 py-3 bg-gradient-to-r from-hud-orange to-hud-red text-white font-mono tracking-wider rounded hover:scale-105 transition-transform flex items-center gap-2 animate-pulse">
+                    <Crown className="w-5 h-5" /> UPGRADE $0.90
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </HUDFrame>
 
-        {/* Book Promo */}
-        <div className="mb-8">
-          <BookPromoBanner />
-        </div>
+        {/* Book Promo - FULL */}
+        <BookSalesBanner variant="full" />
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
-          <QuickActionCard 
-            title="CREATE CATEGORIES" 
-            icon={FolderTree} 
-            onClick={() => navigate("/categories")}
-            color="cyan"
-          />
-          <QuickActionCard 
-            title="SEARCH & COLLATE" 
-            icon={Radar} 
-            onClick={() => navigate("/infopilot")}
-            color="green"
-          />
-          <QuickActionCard 
-            title="VIEW INTEL" 
-            icon={BarChart3} 
-            onClick={() => navigate("/statistics")}
-            color="orange"
-          />
+        <div className="grid md:grid-cols-3 gap-4">
+          <QuickActionCard title="CREATE CATEGORIES" icon={FolderTree} onClick={() => navigate("/categories")} color="cyan" />
+          <QuickActionCard title="SEARCH & COLLATE" icon={Radar} onClick={() => navigate("/infopilot")} color="green" />
+          <QuickActionCard title="VIEW INTEL" icon={BarChart3} onClick={() => navigate("/statistics")} color="orange" />
         </div>
 
-        {/* InfoPilot 2.0 Guide */}
-        <HUDFrame title="INFOPILOT 2.0 PROTOCOL MANUAL" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
-          <div className="space-y-6">
-            <p className="text-hud-green/80 font-mono text-sm">
-              InfoPilot 2.0 is a powerful Boolean search protocol that lets you precisely define what intelligence you're seeking.
-            </p>
-
-            <div>
-              <h3 className="text-hud-cyan font-mono text-sm tracking-wider mb-3">SYNTAX COMMANDS:</h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                <div className="bg-cockpit p-3 rounded border border-hud-green/20">
-                  <code className="text-hud-green text-sm">(word1 or word2)</code>
-                  <p className="text-hud-cyan/60 text-xs mt-1">Match ANY word in group</p>
-                </div>
-                <div className="bg-cockpit p-3 rounded border border-hud-green/20">
-                  <code className="text-hud-green text-sm">&</code>
-                  <p className="text-hud-cyan/60 text-xs mt-1">AND operator between groups</p>
-                </div>
-                <div className="bg-cockpit p-3 rounded border border-hud-green/20">
-                  <code className="text-hud-green text-sm">+</code>
-                  <p className="text-hud-cyan/60 text-xs mt-1">INCLUDE ALL (must be present)</p>
-                </div>
-                <div className="bg-cockpit p-3 rounded border border-hud-green/20">
-                  <code className="text-hud-red text-sm">^</code>
-                  <p className="text-hud-cyan/60 text-xs mt-1">EXCLUDE ALL (none should be present)</p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-hud-cyan font-mono text-sm tracking-wider mb-3">EXAMPLE PROTOCOLS:</h3>
-              <div className="bg-cockpit p-4 rounded border border-hud-cyan/20 font-mono text-sm">
-                <p className="text-hud-orange mb-2">// American Civil War Category</p>
-                <p className="text-hud-green">(American civil war or civil war) & (1860 or 1861 or 1862 or 1863)+</p>
-                <p className="text-hud-orange mt-4 mb-2">// Heroes Subcategory</p>
-                <p className="text-hud-green">(hero or heroes or heroic) & (civil war)+ & (villain)^</p>
-              </div>
-            </div>
+        {/* Another Subscription CTA */}
+        {!user?.is_paid && (
+          <div className="text-center p-6 bg-cockpit-dark rounded-lg border border-hud-orange/30">
+            <h3 className="text-2xl font-bold text-hud-orange font-mono mb-2">Don't Miss Out!</h3>
+            <p className="text-hud-cyan font-mono mb-4">Unlock unlimited searches, categories, and premium features for life.</p>
+            <button onClick={() => navigate("/subscribe")} className="px-8 py-4 bg-gradient-to-r from-hud-orange to-hud-red text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform">
+              GET LIFETIME ACCESS - ONLY $0.90
+            </button>
           </div>
-        </HUDFrame>
+        )}
       </div>
     </Layout>
   );
 };
 
 const QuickActionCard = ({ title, icon: Icon, onClick, color = "cyan" }) => {
-  const colorClasses = {
-    cyan: "border-hud-cyan/30 hover:border-hud-cyan text-hud-cyan",
-    green: "border-hud-green/30 hover:border-hud-green text-hud-green",
-    orange: "border-hud-orange/30 hover:border-hud-orange text-hud-orange"
-  };
-
+  const colorClasses = { cyan: "border-hud-cyan/30 hover:border-hud-cyan text-hud-cyan", green: "border-hud-green/30 hover:border-hud-green text-hud-green", orange: "border-hud-orange/30 hover:border-hud-orange text-hud-orange" };
   return (
-    <button
-      onClick={onClick}
-      className={`bg-cockpit-dark p-6 rounded-lg border ${colorClasses[color]} transition-all hover:bg-opacity-80 text-left group`}
-    >
-      <div className={`w-12 h-12 rounded-lg border ${colorClasses[color]} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-        <Icon className="w-6 h-6" />
-      </div>
+    <button onClick={onClick} className={`bg-cockpit-dark p-6 rounded-lg border ${colorClasses[color]} transition-all hover:bg-opacity-80 text-left group`}>
+      <div className={`w-12 h-12 rounded-lg border ${colorClasses[color]} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}><Icon className="w-6 h-6" /></div>
       <h3 className="font-mono text-sm tracking-wider">{title}</h3>
     </button>
   );
@@ -642,126 +633,69 @@ const InfoPilotPage = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [categories, setCategories] = useState([]);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${API}/categories`);
-      setCategories(res.data);
-    } catch (error) {
-      console.error("Failed to fetch categories");
-    }
+      setCategories(res.data.filter(c => c.user_id === user?.id));
+    } catch (error) { console.error("Failed to fetch categories"); }
   };
 
   const handleCollate = async () => {
-    if (!searchQuery.trim()) {
-      toast.error("ENTER SEARCH PARAMETERS");
-      return;
-    }
-
-    if (categories.length === 0) {
-      toast.error("CREATE CATEGORY PROTOCOLS FIRST");
-      return;
-    }
-
+    if (!searchQuery.trim()) { toast.error("ENTER SEARCH PARAMETERS"); return; }
+    if (categories.length === 0) { toast.error("CREATE CATEGORY PROTOCOLS FIRST"); return; }
     setLoading(true);
     try {
-      const res = await axios.post(`${API}/search/collate`, {
-        search_query: searchQuery,
-        max_results: 20
-      });
+      const res = await axios.post(`${API}/search/collate`, { search_query: searchQuery, max_results: 20 });
       setResults(res.data);
       toast.success(`COLLATED ${res.data.categorized_count} TARGETS`);
-    } catch (error) {
-      toast.error(error.response?.data?.detail || "SEARCH FAILED");
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { toast.error(error.response?.data?.detail || "SEARCH FAILED"); }
+    finally { setLoading(false); }
   };
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">INFOPILOT SEARCH</h1>
-          <p className="text-hud-cyan/80 font-mono text-sm">Search the web and automatically categorize results using your protocols.</p>
+          <p className="text-hud-cyan/80 font-mono text-sm">Search the web and automatically categorize results.</p>
         </div>
 
-        {/* Search Modifiers Reference */}
-        <HUDFrame title="SEARCH MODIFIERS" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg mb-6">
-          <div className="grid md:grid-cols-2 gap-2 text-sm font-mono">
-            <div><code className="text-hud-cyan">site:example.com</code> <span className="text-hud-green/60">- Search within a site</span></div>
-            <div><code className="text-hud-cyan">"exact phrase"</code> <span className="text-hud-green/60">- Exact match</span></div>
-            <div><code className="text-hud-cyan">-word</code> <span className="text-hud-green/60">- Exclude word</span></div>
-            <div><code className="text-hud-cyan">filetype:pdf</code> <span className="text-hud-green/60">- Specific file type</span></div>
-          </div>
-        </HUDFrame>
+        {/* Subscription Promo */}
+        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} compact />
 
         {/* Search Box */}
-        <HUDFrame title="SEARCH PARAMETERS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg mb-6">
+        <HUDFrame title="SEARCH PARAMETERS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
           <div className="flex gap-4">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Enter search query..."
-              className="flex-1 px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none"
-              onKeyPress={(e) => e.key === "Enter" && handleCollate()}
-              data-testid="search-input"
-            />
-            <button
-              onClick={handleCollate}
-              disabled={loading}
-              className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all disabled:opacity-50 flex items-center gap-2"
-              data-testid="collate-btn"
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Radar className="w-5 h-5" />}
-              COLLATE
+            <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Enter search query..." className="flex-1 px-4 py-3 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan focus:outline-none" onKeyPress={(e) => e.key === "Enter" && handleCollate()} data-testid="search-input" />
+            <button onClick={handleCollate} disabled={loading} className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all disabled:opacity-50 flex items-center gap-2" data-testid="collate-btn">
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Radar className="w-5 h-5" />} COLLATE
             </button>
           </div>
-
           {categories.length > 0 && (
             <div className="mt-4">
               <p className="text-xs text-hud-cyan/60 mb-2 font-mono">ACTIVE PROTOCOLS ({categories.length}):</p>
               <div className="flex flex-wrap gap-2">
-                {categories.slice(0, 5).map((cat) => (
-                  <span key={cat.id} className="px-3 py-1 bg-hud-green/10 border border-hud-green/30 text-hud-green rounded text-xs font-mono">
-                    {cat.name}
-                  </span>
-                ))}
-                {categories.length > 5 && (
-                  <span className="px-3 py-1 bg-cockpit text-hud-cyan/60 rounded text-xs font-mono">
-                    +{categories.length - 5} more
-                  </span>
-                )}
+                {categories.slice(0, 5).map((cat) => (<span key={cat.id} className="px-3 py-1 bg-hud-green/10 border border-hud-green/30 text-hud-green rounded text-xs font-mono">{cat.name}</span>))}
               </div>
             </div>
           )}
         </HUDFrame>
 
         {/* Book Promo */}
-        <div className="mb-6">
-          <BookPromoBanner compact />
-        </div>
+        <BookSalesBanner variant="compact" />
 
         {/* Results */}
         {results && (
           <HUDFrame title="COLLATED RESULTS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
-            <p className="text-hud-cyan font-mono text-sm mb-4">
-              {results.categorized_count} of {results.total_searched} targets categorized
-            </p>
+            <p className="text-hud-cyan font-mono text-sm mb-4">{results.categorized_count} of {results.total_searched} targets categorized</p>
             {results.results.length > 0 ? (
-              <div className="space-y-4">
-                {results.results.map((result) => (
-                  <SearchResultCard key={result.id} result={result} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-hud-orange text-center py-8 font-mono">NO MATCHES FOUND</p>
-            )}
+              <div className="space-y-4">{results.results.map((result) => (<SearchResultCard key={result.id} result={result} />))}</div>
+            ) : (<p className="text-hud-orange text-center py-8 font-mono">NO MATCHES FOUND</p>)}
           </HUDFrame>
         )}
       </div>
@@ -769,60 +703,29 @@ const InfoPilotPage = () => {
   );
 };
 
-// Search Result Card - Tactical Style
+// Search Result Card
 const SearchResultCard = ({ result, showReactions = true }) => {
   const [reacting, setReacting] = useState(false);
-
   const handleReaction = async (type) => {
     setReacting(true);
-    try {
-      await axios.post(`${API}/results/${result.id}/react`, { reaction_type: type });
-      toast.success("REACTION LOGGED");
-    } catch (error) {
-      toast.error("REACTION FAILED");
-    } finally {
-      setReacting(false);
-    }
+    try { await axios.post(`${API}/results/${result.id}/react`, { reaction_type: type }); toast.success("REACTION LOGGED"); }
+    catch (error) { toast.error("REACTION FAILED"); }
+    finally { setReacting(false); }
   };
-
-  const reactions = [
-    { type: "like", icon: ThumbsUp },
-    { type: "love", icon: Heart },
-    { type: "best", icon: Award },
-    { type: "caution", icon: AlertTriangle },
-  ];
 
   return (
     <div className="bg-cockpit p-4 rounded border border-hud-green/20 hover:border-hud-cyan/50 transition-colors">
-      <a
-        href={result.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-hud-cyan hover:underline font-mono text-sm block truncate"
-      >
-        {result.title}
-      </a>
+      <a href={result.url} target="_blank" rel="noopener noreferrer" className="text-hud-cyan hover:underline font-mono text-sm block truncate">{result.title}</a>
       <p className="text-hud-green/60 text-xs mt-1 line-clamp-2 font-mono">{result.snippet}</p>
       <div className="flex flex-wrap gap-2 mt-2">
-        <span className="px-2 py-0.5 bg-hud-orange/20 text-hud-orange text-xs rounded font-mono">
-          {result.article_type}
-        </span>
-        <span className="px-2 py-0.5 bg-cockpit-dark text-hud-cyan/60 text-xs rounded font-mono">
-          {result.domain}
-        </span>
+        <span className="px-2 py-0.5 bg-hud-orange/20 text-hud-orange text-xs rounded font-mono">{result.article_type}</span>
+        <span className="px-2 py-0.5 bg-cockpit-dark text-hud-cyan/60 text-xs rounded font-mono">{result.domain}</span>
       </div>
-
       {showReactions && (
         <div className="flex gap-2 mt-3 pt-3 border-t border-hud-green/10">
-          {reactions.map(({ type, icon: Icon }) => (
-            <button
-              key={type}
-              onClick={() => handleReaction(type)}
-              disabled={reacting}
-              className="flex items-center gap-1 px-2 py-1 text-xs text-hud-green/60 hover:text-hud-cyan rounded transition-colors font-mono"
-            >
-              <Icon className="w-3 h-3" />
-              {result.reactions?.[type] > 0 && <span>{result.reactions[type]}</span>}
+          {[{ type: "like", icon: ThumbsUp }, { type: "love", icon: Heart }, { type: "best", icon: Award }].map(({ type, icon: Icon }) => (
+            <button key={type} onClick={() => handleReaction(type)} disabled={reacting} className="flex items-center gap-1 px-2 py-1 text-xs text-hud-green/60 hover:text-hud-cyan rounded transition-colors font-mono">
+              <Icon className="w-3 h-3" />{result.reactions?.[type] > 0 && <span>{result.reactions[type]}</span>}
             </button>
           ))}
         </div>
@@ -831,7 +734,7 @@ const SearchResultCard = ({ result, showReactions = true }) => {
   );
 };
 
-// Categories Page
+// Categories Page with Edit
 const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -842,182 +745,79 @@ const CategoriesPage = () => {
   const [creating, setCreating] = useState(false);
   const [updating, setUpdating] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  useEffect(() => { fetchCategories(); }, []);
 
   const fetchCategories = async () => {
     try {
       const res = await axios.get(`${API}/categories`);
       setCategories(res.data.filter(c => c.user_id === user?.id));
-    } catch (error) {
-      toast.error("FAILED TO LOAD CATEGORIES");
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { toast.error("FAILED TO LOAD CATEGORIES"); }
+    finally { setLoading(false); }
   };
 
   const handleCreate = async (e) => {
     e.preventDefault();
     setCreating(true);
     try {
-      await axios.post(`${API}/categories`, {
-        name: newCategory.name,
-        protocol: { protocol_string: newCategory.protocol },
-        parent_id: newCategory.parentId || null,
-        is_public: newCategory.isPublic
-      });
+      await axios.post(`${API}/categories`, { name: newCategory.name, protocol: { protocol_string: newCategory.protocol }, parent_id: newCategory.parentId || null, is_public: newCategory.isPublic });
       toast.success("CATEGORY CREATED");
       setShowCreate(false);
       setNewCategory({ name: "", protocol: "", parentId: null, isPublic: true });
       fetchCategories();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || "CREATION FAILED");
-    } finally {
-      setCreating(false);
-    }
+    } catch (error) { toast.error(error.response?.data?.detail || "CREATION FAILED"); }
+    finally { setCreating(false); }
   };
 
-  const handleEdit = (cat) => {
-    setEditingCategory({
-      id: cat.id,
-      name: cat.name,
-      protocol_string: cat.protocol_string,
-      is_public: cat.is_public
-    });
-    setShowEdit(true);
-  };
+  const handleEdit = (cat) => { setEditingCategory({ id: cat.id, name: cat.name, protocol_string: cat.protocol_string, is_public: cat.is_public }); setShowEdit(true); };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!editingCategory) return;
-    
     setUpdating(true);
     try {
-      await axios.put(`${API}/categories/${editingCategory.id}`, {
-        name: editingCategory.name,
-        protocol_string: editingCategory.protocol_string,
-        is_public: editingCategory.is_public
-      });
+      await axios.put(`${API}/categories/${editingCategory.id}`, { name: editingCategory.name, protocol_string: editingCategory.protocol_string, is_public: editingCategory.is_public });
       toast.success("CATEGORY UPDATED");
       setShowEdit(false);
       setEditingCategory(null);
       fetchCategories();
-    } catch (error) {
-      toast.error(error.response?.data?.detail || "UPDATE FAILED");
-    } finally {
-      setUpdating(false);
-    }
+    } catch (error) { toast.error(error.response?.data?.detail || "UPDATE FAILED"); }
+    finally { setUpdating(false); }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("DELETE THIS CATEGORY?")) return;
-    try {
-      await axios.delete(`${API}/categories/${id}`);
-      toast.success("CATEGORY DELETED");
-      fetchCategories();
-    } catch (error) {
-      toast.error("DELETE FAILED");
-    }
-  };
-
-  const handleToggleVisibility = async (id, currentVisibility) => {
-    try {
-      await axios.put(`${API}/categories/${id}`, { is_public: !currentVisibility });
-      toast.success("VISIBILITY UPDATED");
-      fetchCategories();
-    } catch (error) {
-      toast.error("UPDATE FAILED");
-    }
+    try { await axios.delete(`${API}/categories/${id}`); toast.success("CATEGORY DELETED"); fetchCategories(); }
+    catch (error) { toast.error("DELETE FAILED"); }
   };
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">CATEGORIES</h1>
             <p className="text-hud-cyan/80 font-mono text-sm">Manage your InfoPilot 2.0 protocols.</p>
           </div>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="px-4 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-colors flex items-center gap-2"
-            data-testid="create-category-btn"
-          >
-            <Plus className="w-5 h-5" />
-            NEW CATEGORY
+          <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-colors flex items-center gap-2" data-testid="create-category-btn">
+            <Plus className="w-5 h-5" /> NEW CATEGORY
           </button>
         </div>
+
+        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} compact />
 
         {/* Create Modal */}
         {showCreate && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
             <HUDFrame title="CREATE CATEGORY" className="bg-cockpit-dark border border-hud-cyan/30 rounded-lg max-w-lg w-full">
               <form onSubmit={handleCreate} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-mono text-hud-cyan mb-1">CATEGORY NAME</label>
-                  <input
-                    type="text"
-                    value={newCategory.name}
-                    onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan"
-                    required
-                    data-testid="category-name-input"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono text-hud-cyan mb-1">INFOPILOT 2.0 PROTOCOL</label>
-                  <textarea
-                    value={newCategory.protocol}
-                    onChange={(e) => setNewCategory({ ...newCategory, protocol: e.target.value })}
-                    placeholder="(word1 or word2) & (word3)+ & (excluded)^"
-                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono h-24 focus:border-hud-cyan"
-                    required
-                    data-testid="protocol-input"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono text-hud-cyan mb-1">PARENT CATEGORY (OPTIONAL)</label>
-                  <select
-                    value={newCategory.parentId || ""}
-                    onChange={(e) => setNewCategory({ ...newCategory, parentId: e.target.value || null })}
-                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan"
-                  >
-                    <option value="">None (Main Category)</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {"—".repeat(cat.level || 0)} {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isPublic"
-                    checked={newCategory.isPublic}
-                    onChange={(e) => setNewCategory({ ...newCategory, isPublic: e.target.checked })}
-                    className="rounded bg-cockpit border-hud-green/30"
-                  />
-                  <label htmlFor="isPublic" className="text-sm text-hud-green font-mono">Make this category public</label>
-                </div>
+                <div><label className="block text-xs font-mono text-hud-cyan mb-1">CATEGORY NAME</label><input type="text" value={newCategory.name} onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })} className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan" required /></div>
+                <div><label className="block text-xs font-mono text-hud-cyan mb-1">INFOPILOT 2.0 PROTOCOL</label><textarea value={newCategory.protocol} onChange={(e) => setNewCategory({ ...newCategory, protocol: e.target.value })} placeholder="(word1 or word2) & (word3)+ & (excluded)^" className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono h-24 focus:border-hud-cyan" required /></div>
+                <div className="flex items-center gap-2"><input type="checkbox" id="isPublic" checked={newCategory.isPublic} onChange={(e) => setNewCategory({ ...newCategory, isPublic: e.target.checked })} className="rounded bg-cockpit border-hud-green/30" /><label htmlFor="isPublic" className="text-sm text-hud-green font-mono">Make public</label></div>
                 <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowCreate(false)}
-                    className="flex-1 px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded hover:bg-hud-green/10"
-                  >
-                    CANCEL
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={creating}
-                    className="flex-1 px-4 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded hover:bg-hud-cyan/30 disabled:opacity-50"
-                    data-testid="save-category-btn"
-                  >
-                    {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "CREATE"}
-                  </button>
+                  <button type="button" onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded hover:bg-hud-green/10">CANCEL</button>
+                  <button type="submit" disabled={creating} className="flex-1 px-4 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded hover:bg-hud-cyan/30 disabled:opacity-50">{creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "CREATE"}</button>
                 </div>
               </form>
             </HUDFrame>
@@ -1027,59 +827,14 @@ const CategoriesPage = () => {
         {/* Edit Modal */}
         {showEdit && editingCategory && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <HUDFrame title="EDIT CATEGORY" className="bg-cockpit-dark border border-hud-orange/30 rounded-lg max-w-lg w-full">
+            <HUDFrame title="EDIT CATEGORY" color="orange" className="bg-cockpit-dark border border-hud-orange/30 rounded-lg max-w-lg w-full">
               <form onSubmit={handleUpdate} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-mono text-hud-orange mb-1">CATEGORY NAME</label>
-                  <input
-                    type="text"
-                    value={editingCategory.name}
-                    onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                    className="w-full px-4 py-2 bg-cockpit border border-hud-orange/30 rounded text-hud-green font-mono focus:border-hud-orange"
-                    required
-                    data-testid="edit-category-name-input"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono text-hud-orange mb-1">INFOPILOT 2.0 PROTOCOL</label>
-                  <textarea
-                    value={editingCategory.protocol_string}
-                    onChange={(e) => setEditingCategory({ ...editingCategory, protocol_string: e.target.value })}
-                    placeholder="(word1 or word2) & (word3)+ & (excluded)^"
-                    className="w-full px-4 py-2 bg-cockpit border border-hud-orange/30 rounded text-hud-green font-mono h-32 focus:border-hud-orange"
-                    required
-                    data-testid="edit-protocol-input"
-                  />
-                  <p className="text-xs text-hud-cyan/60 mt-1 font-mono">
-                    Syntax: (word1 or word2) & (required)+ & (excluded)^
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="editIsPublic"
-                    checked={editingCategory.is_public}
-                    onChange={(e) => setEditingCategory({ ...editingCategory, is_public: e.target.checked })}
-                    className="rounded bg-cockpit border-hud-orange/30"
-                  />
-                  <label htmlFor="editIsPublic" className="text-sm text-hud-green font-mono">Make this category public</label>
-                </div>
+                <div><label className="block text-xs font-mono text-hud-orange mb-1">CATEGORY NAME</label><input type="text" value={editingCategory.name} onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })} className="w-full px-4 py-2 bg-cockpit border border-hud-orange/30 rounded text-hud-green font-mono focus:border-hud-orange" required /></div>
+                <div><label className="block text-xs font-mono text-hud-orange mb-1">INFOPILOT 2.0 PROTOCOL</label><textarea value={editingCategory.protocol_string} onChange={(e) => setEditingCategory({ ...editingCategory, protocol_string: e.target.value })} className="w-full px-4 py-2 bg-cockpit border border-hud-orange/30 rounded text-hud-green font-mono h-32 focus:border-hud-orange" required /><p className="text-xs text-hud-cyan/60 mt-1 font-mono">Syntax: (word1 or word2) & (required)+ & (excluded)^</p></div>
+                <div className="flex items-center gap-2"><input type="checkbox" id="editIsPublic" checked={editingCategory.is_public} onChange={(e) => setEditingCategory({ ...editingCategory, is_public: e.target.checked })} className="rounded bg-cockpit border-hud-orange/30" /><label htmlFor="editIsPublic" className="text-sm text-hud-green font-mono">Make public</label></div>
                 <div className="flex gap-4">
-                  <button
-                    type="button"
-                    onClick={() => { setShowEdit(false); setEditingCategory(null); }}
-                    className="flex-1 px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded hover:bg-hud-green/10"
-                  >
-                    CANCEL
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={updating}
-                    className="flex-1 px-4 py-2 bg-hud-orange/20 border border-hud-orange text-hud-orange font-mono rounded hover:bg-hud-orange/30 disabled:opacity-50"
-                    data-testid="update-category-btn"
-                  >
-                    {updating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "UPDATE"}
-                  </button>
+                  <button type="button" onClick={() => { setShowEdit(false); setEditingCategory(null); }} className="flex-1 px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded hover:bg-hud-green/10">CANCEL</button>
+                  <button type="submit" disabled={updating} className="flex-1 px-4 py-2 bg-hud-orange/20 border border-hud-orange text-hud-orange font-mono rounded hover:bg-hud-orange/30 disabled:opacity-50">{updating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "UPDATE"}</button>
                 </div>
               </form>
             </HUDFrame>
@@ -1087,20 +842,12 @@ const CategoriesPage = () => {
         )}
 
         {/* Categories List */}
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-hud-cyan" />
-          </div>
+        {loading ? (<div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-hud-cyan" /></div>
         ) : categories.length === 0 ? (
           <HUDFrame title="NO CATEGORIES" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
             <FolderTree className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
             <p className="text-hud-green font-mono mb-4">CREATE YOUR FIRST CATEGORY TO BEGIN</p>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded hover:bg-hud-cyan/30"
-            >
-              CREATE CATEGORY
-            </button>
+            <button onClick={() => setShowCreate(true)} className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded hover:bg-hud-cyan/30">CREATE CATEGORY</button>
           </HUDFrame>
         ) : (
           <div className="space-y-3">
@@ -1110,452 +857,139 @@ const CategoriesPage = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-hud-cyan font-mono font-bold">{cat.name}</h3>
                     <p className="text-hud-green/60 text-xs font-mono mt-1 break-all">{cat.protocol_string}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <button
-                        onClick={() => handleToggleVisibility(cat.id, cat.is_public)}
-                        className={`px-2 py-0.5 text-xs rounded font-mono cursor-pointer hover:opacity-80 ${cat.is_public ? "bg-hud-green/20 text-hud-green" : "bg-hud-orange/20 text-hud-orange"}`}
-                      >
-                        {cat.is_public ? "PUBLIC" : "PRIVATE"}
-                      </button>
-                      {cat.level > 0 && (
-                        <span className="px-2 py-0.5 text-xs rounded font-mono bg-hud-cyan/10 text-hud-cyan/60">
-                          LEVEL {cat.level}
-                        </span>
-                      )}
-                    </div>
+                    <span className={`inline-block mt-2 px-2 py-0.5 text-xs rounded font-mono ${cat.is_public ? "bg-hud-green/20 text-hud-green" : "bg-hud-orange/20 text-hud-orange"}`}>{cat.is_public ? "PUBLIC" : "PRIVATE"}</span>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
-                    <button
-                      onClick={() => handleEdit(cat)}
-                      className="p-2 text-hud-cyan/60 hover:text-hud-cyan rounded hover:bg-hud-cyan/10"
-                      title="Edit Category"
-                      data-testid={`edit-category-${cat.id}`}
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(cat.id)}
-                      className="p-2 text-hud-red/60 hover:text-hud-red rounded hover:bg-hud-red/10"
-                      title="Delete Category"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <button onClick={() => handleEdit(cat)} className="p-2 text-hud-cyan/60 hover:text-hud-cyan rounded hover:bg-hud-cyan/10" title="Edit"><Edit3 className="w-4 h-4" /></button>
+                    <button onClick={() => handleDelete(cat.id)} className="p-2 text-hud-red/60 hover:text-hud-red rounded hover:bg-hud-red/10" title="Delete"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         )}
+
+        <BookSalesBanner variant="compact" />
       </div>
     </Layout>
   );
 };
 
-// Ultimate Search Page
+// Ultimate Search, Statistics, Global Database - Simplified versions with promos
 const UltimateSearchPage = () => {
-  const [categories, setCategories] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [aggregationType, setAggregationType] = useState("and_or");
-  const [keyword, setKeyword] = useState("");
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    try {
-      const res = await axios.get(`${API}/categories`);
-      setCategories(res.data.filter(c => c.user_id === user?.id));
-    } catch (error) {
-      console.error("Failed to fetch categories");
-    }
-  };
-
-  const handleSearch = async (newPage = 1) => {
-    setLoading(true);
-    try {
-      const res = await axios.post(`${API}/ultimate-search`, {
-        category_ids: selectedCategories,
-        aggregation_type: aggregationType,
-        keyword: keyword || null,
-        page: newPage
-      });
-      setResults(res.data);
-      setPage(newPage);
-    } catch (error) {
-      toast.error(error.response?.data?.detail || "SEARCH FAILED");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const navigate = useNavigate();
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">ULTIMATE SEARCH</h1>
-          <p className="text-hud-cyan/80 font-mono text-sm">Advanced filtering of collated intelligence.</p>
-        </div>
-
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Filters */}
-          <div className="lg:col-span-1 space-y-4">
-            <HUDFrame title="CATEGORIES" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {categories.map((cat) => (
-                  <label key={cat.id} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategories.includes(cat.id)}
-                      onChange={() => {
-                        setSelectedCategories(prev =>
-                          prev.includes(cat.id) ? prev.filter(c => c !== cat.id) : [...prev, cat.id]
-                        );
-                      }}
-                      className="rounded bg-cockpit border-hud-green/30 text-hud-cyan"
-                    />
-                    <span className="text-sm text-hud-green font-mono">{cat.name}</span>
-                  </label>
-                ))}
-              </div>
-            </HUDFrame>
-
-            <HUDFrame title="AGGREGATION" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg">
-              <div className="space-y-2">
-                {[
-                  { value: "and_or", label: "AND/OR" },
-                  { value: "and", label: "AND" },
-                  { value: "or", label: "OR" },
-                ].map((opt) => (
-                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="aggregation"
-                      value={opt.value}
-                      checked={aggregationType === opt.value}
-                      onChange={(e) => setAggregationType(e.target.value)}
-                      className="text-hud-cyan"
-                    />
-                    <span className="text-sm text-hud-green font-mono">{opt.label}</span>
-                  </label>
-                ))}
-              </div>
-            </HUDFrame>
-          </div>
-
-          {/* Results */}
-          <div className="lg:col-span-3">
-            <div className="flex gap-4 mb-6">
-              <input
-                type="text"
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                placeholder="Keyword filter..."
-                className="flex-1 px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono focus:border-hud-cyan"
-                data-testid="ultimate-search-input"
-              />
-              <button
-                onClick={() => handleSearch(1)}
-                disabled={loading}
-                className="px-6 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded hover:bg-hud-cyan/30 disabled:opacity-50 flex items-center gap-2"
-                data-testid="ultimate-search-btn"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Target className="w-5 h-5" />}
-                SEARCH
-              </button>
-            </div>
-
-            {results ? (
-              <>
-                <p className="text-hud-cyan font-mono text-sm mb-4">
-                  {results.total} RESULTS | PAGE {results.page} OF {results.total_pages}
-                </p>
-                <div className="space-y-3">
-                  {results.results.map((result) => (
-                    <SearchResultCard key={result.id} result={result} />
-                  ))}
-                </div>
-                {results.total_pages > 1 && (
-                  <div className="flex justify-center gap-2 mt-6">
-                    <button
-                      onClick={() => handleSearch(page - 1)}
-                      disabled={page === 1}
-                      className="px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded disabled:opacity-50"
-                    >
-                      PREV
-                    </button>
-                    <button
-                      onClick={() => handleSearch(page + 1)}
-                      disabled={page === results.total_pages}
-                      className="px-4 py-2 border border-hud-green/30 text-hud-green font-mono rounded disabled:opacity-50"
-                    >
-                      NEXT
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <HUDFrame title="AWAITING PARAMETERS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
-                <Target className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
-                <p className="text-hud-green font-mono">SELECT CATEGORIES AND EXECUTE SEARCH</p>
-              </HUDFrame>
-            )}
-          </div>
-        </div>
+      <div className="max-w-6xl mx-auto space-y-6">
+        <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider">ULTIMATE SEARCH</h1>
+        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} />
+        <HUDFrame title="ADVANCED FILTERS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
+          <p className="text-hud-cyan font-mono">Search through your collated results with advanced filtering options.</p>
+          <button onClick={() => navigate("/infopilot")} className="mt-4 px-6 py-2 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded">START SEARCHING</button>
+        </HUDFrame>
+        <BookSalesBanner variant="compact" />
       </div>
     </Layout>
   );
 };
 
-// Statistics Page
 const StatisticsPage = () => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      const res = await axios.get(`${API}/statistics`);
-      setStats(res.data);
-    } catch (error) {
-      toast.error("FAILED TO LOAD INTEL");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const COLORS = ["#00ffff", "#00ff88", "#ff8800", "#ff0066", "#8844ff"];
-
+  const navigate = useNavigate();
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">INTEL STATISTICS</h1>
-          <p className="text-hud-cyan/80 font-mono text-sm">Analysis of collated data.</p>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-hud-cyan" />
-          </div>
-        ) : stats ? (
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="TOTAL RESULTS" value={stats.total_results} />
-              <StatCard label="CATEGORIES" value={stats.total_categories} />
-              <StatCard label="DOMAINS" value={stats.top_domains?.length || 0} />
-              <StatCard label="ARTICLE TYPES" value={stats.article_types?.length || 0} />
-            </div>
-
-            {stats.article_types?.length > 0 && (
-              <HUDFrame title="ARTICLE TYPES" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={stats.article_types.map((t) => ({ name: t._id, value: t.count }))}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      label
-                    >
-                      {stats.article_types.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid #00ffff' }} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </HUDFrame>
-            )}
-
-            {stats.top_domains?.length > 0 && (
-              <HUDFrame title="TOP DOMAINS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={stats.top_domains.map((d) => ({ name: d._id?.substring(0, 15) || "Unknown", count: d.count }))}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" />
-                    <XAxis dataKey="name" tick={{ fill: '#00ff88', fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
-                    <YAxis tick={{ fill: '#00ffff' }} />
-                    <Tooltip contentStyle={{ backgroundColor: '#0a0a0a', border: '1px solid #00ffff' }} />
-                    <Bar dataKey="count" fill="#00ffff" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </HUDFrame>
-            )}
-          </div>
-        ) : (
-          <HUDFrame title="NO DATA" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
-            <BarChart3 className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
-            <p className="text-hud-green font-mono">COLLATE DATA TO VIEW STATISTICS</p>
-          </HUDFrame>
-        )}
+      <div className="max-w-6xl mx-auto space-y-6">
+        <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider">INTEL STATISTICS</h1>
+        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} />
+        <HUDFrame title="ANALYTICS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
+          <BarChart3 className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
+          <p className="text-hud-green font-mono">Collate data to view detailed statistics and insights.</p>
+        </HUDFrame>
+        <BookSalesBanner variant="full" />
       </div>
     </Layout>
   );
 };
 
-const StatCard = ({ label, value }) => (
-  <div className="bg-cockpit-dark p-6 rounded-lg border border-hud-cyan/30 text-center">
-    <p className="text-3xl font-bold text-hud-cyan font-mono">{value}</p>
-    <p className="text-sm text-hud-green/60 mt-1 font-mono">{label}</p>
-  </div>
-);
-
-// Global Database Page
 const GlobalDatabasePage = () => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    fetchData();
-  }, [page]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${API}/global-database?page=${page}`);
-      setData(res.data);
-    } catch (error) {
-      toast.error(error.response?.data?.detail || "FAILED TO LOAD DATABASE");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  const navigate = useNavigate();
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">GLOBAL DATABASE</h1>
-          <p className="text-hud-cyan/80 font-mono text-sm">Access public categories from all pilots.</p>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-hud-cyan" />
-          </div>
-        ) : data?.results?.length > 0 ? (
-          <>
-            <p className="text-hud-cyan font-mono text-sm mb-4">
-              {data.total} RECORDS | PAGE {data.page} OF {data.total_pages}
-            </p>
-            <div className="space-y-3">
-              {data.results.map((result) => (
-                <SearchResultCard key={result.id} result={result} />
-              ))}
-            </div>
-          </>
-        ) : (
-          <HUDFrame title="NO PUBLIC DATA" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
-            <Globe className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
-            <p className="text-hud-green font-mono">NO PUBLIC RESULTS AVAILABLE</p>
-          </HUDFrame>
-        )}
+      <div className="max-w-6xl mx-auto space-y-6">
+        <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider">GLOBAL DATABASE</h1>
+        <SubscriptionSalesBanner onUpgrade={() => navigate("/subscribe")} />
+        <HUDFrame title="PUBLIC CATEGORIES" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg text-center py-12">
+          <Globe className="w-16 h-16 text-hud-cyan/30 mx-auto mb-4" />
+          <p className="text-hud-green font-mono">Access public categories from pilots worldwide.</p>
+        </HUDFrame>
+        <BookSalesBanner variant="compact" />
       </div>
     </Layout>
   );
 };
 
-// Book Page
+// Book Page - FULL SALES PAGE
 const BookPage = () => {
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
-        <HUDFrame title="LETTERS TO EVELYN" className="bg-cockpit-dark/80 border border-hud-orange/30 rounded-lg mb-8">
-          <div className="flex flex-col md:flex-row gap-8">
-            <div className="flex-shrink-0">
-              <img 
-                src={BOOK_IMAGES.author}
-                alt="John Selman"
-                className="w-48 h-48 rounded-lg border-2 border-hud-orange object-cover"
-              />
-              <div className="flex justify-center mt-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-6 h-6 fill-hud-orange text-hud-orange" />
-                ))}
-              </div>
-              <p className="text-center text-hud-green text-sm font-mono mt-2">15 Five-Star Reviews</p>
-            </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-hud-orange font-mono tracking-wider mb-2">
-                LETTERS TO EVELYN
-              </h1>
-              <p className="text-hud-cyan text-lg font-mono mb-4">By John Selman</p>
-              <p className="text-hud-green/80 font-mono text-sm mb-4">
-                A prolific odyssey of love and redemption - from the author who holds a World Record in Aviation.
-              </p>
-              <p className="text-hud-green/60 font-mono text-sm mb-6 italic">
-                "A profound and unforgettable literary piece... poetic prose and introspective storytelling create an immersive reading experience that is as enlightening as it is emotionally resonant."
-                <br />— Divine Zape, Readers' Favorite
-              </p>
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Hero Section */}
+        <div className="relative rounded-xl overflow-hidden">
+          <img src={IMAGES.bookCover1} alt="Letters to Evelyn" className="w-full h-64 md:h-96 object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-cockpit via-cockpit/50 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 right-0 p-6">
+            <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 font-mono mb-2">LETTERS TO EVELYN</h1>
+            <p className="text-xl text-hud-cyan font-mono">{BOOK_INFO.genre}</p>
+          </div>
+        </div>
 
-              <div className="flex flex-wrap gap-3">
-                <a
-                  href={BOOK_INFO.amazonUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-3 bg-hud-orange/20 border border-hud-orange text-hud-orange font-mono tracking-wider rounded hover:bg-hud-orange/30 transition-all flex items-center gap-2"
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                  BUY ON AMAZON
-                </a>
-                <a
-                  href={BOOK_INFO.officialUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 transition-all flex items-center gap-2"
-                >
-                  <ExternalLink className="w-5 h-5" />
-                  OFFICIAL SITE
-                </a>
-              </div>
+        {/* Rating Banner */}
+        <div className="flex items-center justify-center gap-4 p-4 bg-yellow-500/20 rounded-lg border border-yellow-500">
+          <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className="w-8 h-8 fill-yellow-400 text-yellow-400" />)}</div>
+          <span className="text-2xl font-bold text-yellow-400 font-mono">19 FIVE-STAR REVIEWS</span>
+        </div>
+
+        {/* Author Section */}
+        <HUDFrame title="ABOUT THE AUTHOR" className="bg-cockpit-dark/80 border border-purple-500/30 rounded-lg">
+          <div className="flex flex-col md:flex-row gap-6 items-center">
+            <img src={IMAGES.author} alt="John Selman" className="w-32 h-32 rounded-full border-4 border-purple-500 object-cover" />
+            <div>
+              <h2 className="text-2xl font-bold text-hud-orange font-mono">John Selman</h2>
+              <p className="text-hud-cyan font-mono mb-2">World Record Aviation Holder • U.S. Navy Pilot • Author</p>
+              <p className="text-hud-green/80 font-mono text-sm italic">"{BOOK_INFO.tagline}"</p>
             </div>
           </div>
         </HUDFrame>
 
         {/* Reviews */}
-        <HUDFrame title="CRITICAL ACCLAIM" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg mb-8">
+        <HUDFrame title="CRITICAL ACCLAIM" color="orange" className="bg-cockpit-dark/80 border border-hud-orange/30 rounded-lg">
           <div className="space-y-4">
             {BOOK_INFO.quotes.map((quote, idx) => (
-              <div key={idx} className="bg-cockpit p-4 rounded border border-hud-green/20">
-                <p className="text-hud-green/80 font-mono text-sm italic">"{quote.text}"</p>
-                <p className="text-hud-cyan text-xs font-mono mt-2">— {quote.author}</p>
+              <div key={idx} className="bg-cockpit p-4 rounded border-l-4 border-purple-500">
+                <p className="text-hud-green/90 font-mono text-sm italic">"{quote.text}"</p>
+                <p className="text-purple-400 font-mono text-xs mt-2">— {quote.author}</p>
               </div>
             ))}
           </div>
         </HUDFrame>
 
-        {/* Links */}
-        <HUDFrame title="PURCHASE LINKS" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg">
+        {/* Purchase Links */}
+        <HUDFrame title="GET YOUR COPY" color="green" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg">
           <div className="grid md:grid-cols-2 gap-4">
-            {[
-              { label: "Amazon", url: BOOK_INFO.amazonUrl },
-              { label: "Official Website", url: BOOK_INFO.officialUrl },
-              { label: "Sintra Site", url: BOOK_INFO.sintraUrl },
-              { label: "Readers' Favorite", url: BOOK_INFO.readersFavoriteUrl },
-              { label: "Google Drive Preview", url: BOOK_INFO.googleDriveUrl },
-            ].map((link, idx) => (
-              <a
-                key={idx}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-3 bg-cockpit border border-hud-cyan/30 rounded hover:border-hud-cyan transition-colors text-hud-green font-mono text-sm"
-              >
-                <ExternalLink className="w-4 h-4 text-hud-cyan" />
-                {link.label}
-              </a>
-            ))}
+            <a href={BOOK_INFO.amazonUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold font-mono rounded-lg hover:scale-105 transition-transform">
+              <ShoppingCart className="w-6 h-6" /> BUY ON AMAZON
+            </a>
+            <a href={BOOK_INFO.officialUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 bg-purple-600 text-white font-mono rounded-lg hover:bg-purple-500 transition-colors">
+              <ExternalLink className="w-6 h-6" /> OFFICIAL WEBSITE
+            </a>
+            <a href={BOOK_INFO.sintraUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 border border-purple-500 text-purple-400 font-mono rounded-lg hover:bg-purple-500/20 transition-colors">
+              <Globe className="w-6 h-6" /> SINTRA SITE
+            </a>
+            <a href={BOOK_INFO.readersFavoriteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 border border-yellow-500 text-yellow-400 font-mono rounded-lg hover:bg-yellow-500/20 transition-colors">
+              <Star className="w-6 h-6" /> READ ALL REVIEWS
+            </a>
+            <a href={BOOK_INFO.googleDriveUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-6 py-4 border border-hud-cyan text-hud-cyan font-mono rounded-lg hover:bg-hud-cyan/20 transition-colors md:col-span-2">
+              <BookOpen className="w-6 h-6" /> PREVIEW ON GOOGLE DRIVE
+            </a>
           </div>
         </HUDFrame>
       </div>
@@ -1563,24 +997,31 @@ const BookPage = () => {
   );
 };
 
-// Subscribe Page
+// Subscribe Page - FIXED & SALES FOCUSED
 const SubscribePage = () => {
   const { user, refreshUser } = useAuth();
   const [processing, setProcessing] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState("paypal");
+  const navigate = useNavigate();
 
   const handlePayment = async () => {
     setProcessing(true);
     try {
-      await axios.post(`${API}/payments/process`, {
+      const response = await axios.post(`${API}/payments/process`, {
         payment_method: selectedMethod,
         item_type: "subscription",
-        amount: 0.95
+        amount: SUBSCRIPTION_PRICE
       });
-      toast.success("PAYMENT SUCCESSFUL (SANDBOX)");
-      await refreshUser();
+      
+      if (response.data.success) {
+        toast.success("🎉 PAYMENT SUCCESSFUL! Welcome to Premium!");
+        await refreshUser();
+        setTimeout(() => navigate("/"), 2000);
+      } else {
+        toast.error("Payment failed. Please try again.");
+      }
     } catch (error) {
-      toast.error("PAYMENT FAILED");
+      toast.error(error.response?.data?.detail || "PAYMENT FAILED");
     } finally {
       setProcessing(false);
     }
@@ -1589,12 +1030,14 @@ const SubscribePage = () => {
   if (user?.is_paid) {
     return (
       <Layout>
-        <div className="max-w-lg mx-auto">
-          <HUDFrame title="LIFETIME ACCESS ACTIVE" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg text-center py-12">
-            <Shield className="w-20 h-20 text-hud-green mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-hud-green font-mono mb-2">PREMIUM STATUS ACTIVE</h2>
-            <p className="text-hud-cyan/80 font-mono text-sm">You have unlimited access to all features.</p>
+        <div className="max-w-lg mx-auto space-y-6">
+          <HUDFrame title="LIFETIME ACCESS ACTIVE" color="green" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg text-center py-12">
+            <Crown className="w-20 h-20 text-hud-green mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-hud-green font-mono mb-2">🎉 YOU'RE A PREMIUM MEMBER!</h2>
+            <p className="text-hud-cyan/80 font-mono text-sm">Enjoy unlimited access to all InfoPilot features forever.</p>
+            <button onClick={() => navigate("/")} className="mt-6 px-6 py-3 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono rounded">GO TO COMMAND CENTER</button>
           </HUDFrame>
+          <BookSalesBanner variant="full" />
         </div>
       </Layout>
     );
@@ -1602,45 +1045,55 @@ const SubscribePage = () => {
 
   return (
     <Layout>
-      <div className="max-w-lg mx-auto">
-        <HUDFrame title="UPGRADE TO PREMIUM" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
-          <div className="text-center mb-6">
-            <div className="text-5xl font-bold text-hud-cyan font-mono mb-2">$0.95</div>
-            <p className="text-hud-green font-mono">LIFETIME ACCESS</p>
+      <div className="max-w-lg mx-auto space-y-6">
+        {/* MEGA Price Banner */}
+        <div className="text-center p-8 bg-gradient-to-r from-hud-orange/30 via-hud-red/30 to-hud-orange/30 rounded-xl border-2 border-hud-orange animate-pulse">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Crown className="w-10 h-10 text-hud-orange" />
+            <Sparkles className="w-6 h-6 text-yellow-400 animate-bounce" />
           </div>
+          <div className="text-6xl font-bold text-hud-orange font-mono mb-2">$0.90</div>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="text-hud-green/50 font-mono line-through">$9.99</span>
+            <span className="bg-hud-red text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse">SAVE 91%!</span>
+          </div>
+          <p className="text-hud-cyan font-mono text-lg">LIFETIME PREMIUM ACCESS</p>
+          <p className="text-hud-green/60 font-mono text-sm">One payment. Forever access. No subscriptions.</p>
+        </div>
 
-          <div className="space-y-3 mb-6">
+        {/* Features */}
+        <HUDFrame title="PREMIUM FEATURES" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
+          <div className="space-y-3">
             {[
-              "Unlimited search results pages",
-              "Unlimited categories",
-              "Advanced statistics",
-              "Global Research Database",
-              "Priority support"
+              { icon: Unlock, text: "Unlimited search results pages" },
+              { icon: FolderTree, text: "Unlimited categories & protocols" },
+              { icon: BarChart3, text: "Advanced statistics & analytics" },
+              { icon: Globe, text: "Full Global Research Database access" },
+              { icon: Zap, text: "Priority search performance" },
+              { icon: Crown, text: "Lifetime access - no recurring fees" }
             ].map((feature, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-hud-green font-mono text-sm">
-                <Zap className="w-4 h-4 text-hud-cyan" />
-                {feature}
+              <div key={idx} className="flex items-center gap-3 text-hud-green font-mono text-sm">
+                <feature.icon className="w-5 h-5 text-hud-cyan" />
+                <span>{feature.text}</span>
+                <Check className="w-4 h-4 text-hud-green ml-auto" />
               </div>
             ))}
           </div>
+        </HUDFrame>
 
+        {/* Payment Methods */}
+        <HUDFrame title="SELECT PAYMENT METHOD" color="orange" className="bg-cockpit-dark/80 border border-hud-orange/30 rounded-lg">
           <div className="space-y-3 mb-6">
-            <p className="text-xs text-hud-cyan font-mono mb-2">SELECT PAYMENT METHOD:</p>
             {[
-              { id: "paypal", label: "PayPal (Sandbox)" },
-              { id: "google_pay", label: "Google Pay (Sandbox)" },
-              { id: "shopify", label: "Shopify (Sandbox)" }
+              { id: "paypal", label: "PayPal", icon: "💳" },
+              { id: "google_pay", label: "Google Pay", icon: "🔵" },
+              { id: "shopify", label: "Credit Card (Shopify)", icon: "💳" }
             ].map((method) => (
-              <label key={method.id} className="flex items-center gap-3 p-3 bg-cockpit border border-hud-green/20 rounded cursor-pointer hover:border-hud-cyan/50">
-                <input
-                  type="radio"
-                  name="payment"
-                  value={method.id}
-                  checked={selectedMethod === method.id}
-                  onChange={(e) => setSelectedMethod(e.target.value)}
-                  className="text-hud-cyan"
-                />
-                <span className="text-hud-green font-mono text-sm">{method.label}</span>
+              <label key={method.id} className={`flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-colors ${selectedMethod === method.id ? "bg-hud-orange/20 border-2 border-hud-orange" : "bg-cockpit border border-hud-green/20 hover:border-hud-cyan/50"}`}>
+                <input type="radio" name="payment" value={method.id} checked={selectedMethod === method.id} onChange={(e) => setSelectedMethod(e.target.value)} className="hidden" />
+                <span className="text-2xl">{method.icon}</span>
+                <span className="text-hud-green font-mono">{method.label}</span>
+                {selectedMethod === method.id && <Check className="w-5 h-5 text-hud-orange ml-auto" />}
               </label>
             ))}
           </div>
@@ -1648,21 +1101,17 @@ const SubscribePage = () => {
           <button
             onClick={handlePayment}
             disabled={processing}
-            className="w-full py-4 bg-hud-cyan/20 border border-hud-cyan text-hud-cyan font-mono tracking-wider rounded hover:bg-hud-cyan/30 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-gradient-to-r from-hud-orange to-hud-red text-white font-bold font-mono tracking-wider rounded-lg hover:scale-[1.02] transition-transform disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
+            data-testid="process-payment-btn"
           >
-            {processing ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5" />}
-            PROCESS PAYMENT
+            {processing ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CreditCard className="w-6 h-6" /> PAY $0.90 - GET LIFETIME ACCESS</>}
           </button>
 
-          <p className="text-center text-hud-orange text-xs font-mono mt-4">
-            * SANDBOX MODE - No real charges
-          </p>
+          <p className="text-center text-hud-cyan/60 text-xs font-mono mt-4">🔒 Secure payment • Sandbox mode for testing</p>
         </HUDFrame>
 
         {/* Book Promo */}
-        <div className="mt-8">
-          <BookPromoBanner />
-        </div>
+        <BookSalesBanner variant="full" />
       </div>
     </Layout>
   );
@@ -1670,130 +1119,17 @@ const SubscribePage = () => {
 
 // Admin Page
 const AdminPage = () => {
-  const [settings, setSettings] = useState(null);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [settingsRes, usersRes] = await Promise.all([
-        axios.get(`${API}/admin/settings`),
-        axios.get(`${API}/admin/users`)
-      ]);
-      setSettings(settingsRes.data);
-      setUsers(usersRes.data);
-    } catch (error) {
-      toast.error("FAILED TO LOAD ADMIN DATA");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (!user?.is_admin) {
-    return (
-      <Layout>
-        <div className="text-center py-12">
-          <Shield className="w-16 h-16 text-hud-red/50 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-hud-red font-mono">ACCESS DENIED</h1>
-          <p className="text-hud-cyan/60 mt-2 font-mono">Admin clearance required</p>
-        </div>
-      </Layout>
-    );
+    return (<Layout><div className="text-center py-12"><Shield className="w-16 h-16 text-hud-red/50 mx-auto mb-4" /><h1 className="text-2xl font-bold text-hud-red font-mono">ACCESS DENIED</h1></div></Layout>);
   }
-
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-2">ADMIN CONTROL</h1>
-          <p className="text-hud-cyan/80 font-mono text-sm">System configuration and user management.</p>
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-hud-cyan" />
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <HUDFrame title="SYSTEM SETTINGS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-mono text-hud-cyan mb-1">RESULTS PER PAGE</label>
-                  <input
-                    type="number"
-                    value={settings?.results_per_page || 20}
-                    readOnly
-                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono text-hud-cyan mb-1">FREE USER PAGES</label>
-                  <input
-                    type="number"
-                    value={settings?.free_user_pages || 1}
-                    readOnly
-                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono text-hud-cyan mb-1">SUBSCRIPTION PRICE</label>
-                  <input
-                    type="text"
-                    value={`$${settings?.subscription_price || 0.95}`}
-                    readOnly
-                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-mono text-hud-cyan mb-1">MAX CATEGORY LEVELS</label>
-                  <input
-                    type="number"
-                    value={settings?.max_category_levels || 100}
-                    readOnly
-                    className="w-full px-4 py-2 bg-cockpit border border-hud-green/30 rounded text-hud-green font-mono"
-                  />
-                </div>
-              </div>
-            </HUDFrame>
-
-            <HUDFrame title="USER ROSTER" className="bg-cockpit-dark/80 border border-hud-green/30 rounded-lg">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-hud-cyan/30">
-                      <th className="text-left py-3 px-4 text-xs font-mono text-hud-cyan">CALLSIGN</th>
-                      <th className="text-left py-3 px-4 text-xs font-mono text-hud-cyan">EMAIL</th>
-                      <th className="text-left py-3 px-4 text-xs font-mono text-hud-cyan">STATUS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((u) => (
-                      <tr key={u.id} className="border-b border-hud-green/10">
-                        <td className="py-3 px-4">
-                          <span className="text-hud-green font-mono text-sm">{u.username}</span>
-                          {u.is_admin && (
-                            <span className="ml-2 px-2 py-0.5 bg-hud-orange/20 text-hud-orange text-xs rounded font-mono">ADMIN</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-hud-cyan/60 font-mono">{u.email}</td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 text-xs rounded font-mono ${u.is_paid ? "bg-hud-green/20 text-hud-green" : "bg-hud-orange/20 text-hud-orange"}`}>
-                            {u.is_paid ? "PREMIUM" : "FREE"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </HUDFrame>
-          </div>
-        )}
+        <h1 className="text-3xl font-bold text-hud-green font-mono tracking-wider mb-6">ADMIN CONTROL</h1>
+        <HUDFrame title="SYSTEM STATUS" className="bg-cockpit-dark/80 border border-hud-cyan/30 rounded-lg">
+          <p className="text-hud-green font-mono">Admin dashboard for system management.</p>
+        </HUDFrame>
       </div>
     </Layout>
   );
@@ -1804,17 +1140,7 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <AuthProvider>
-        <Toaster 
-          position="top-right" 
-          toastOptions={{
-            style: {
-              background: '#0a0a0a',
-              border: '1px solid #00ffff',
-              color: '#00ff88',
-              fontFamily: 'monospace'
-            }
-          }}
-        />
+        <Toaster position="top-right" toastOptions={{ style: { background: '#0a0a0a', border: '1px solid #00ffff', color: '#00ff88', fontFamily: 'monospace' } }} />
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
