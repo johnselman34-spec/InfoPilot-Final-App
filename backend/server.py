@@ -748,44 +748,176 @@ async def get_me(user: dict = Depends(require_user)):
     )
 
 # ============================================
-# API ROUTES - PAYMENTS (SANDBOX)
+# API ROUTES - PAYMENTS (STRIPE INTEGRATION)
 # ============================================
+
+@api_router.get("/payments/config", response_model=StripeConfigResponse)
+async def get_stripe_config():
+    """Get Stripe configuration and current pricing"""
+    price, is_sale, sale_end = get_current_subscription_price()
+    return StripeConfigResponse(
+        publishable_key=STRIPE_PUBLISHABLE_KEY,
+        sale_price=SALE_PRICE,
+        regular_price=REGULAR_PRICE,
+        is_sale_active=is_sale,
+        sale_end_date=sale_end.isoformat() if sale_end else None
+    )
+
+@api_router.post("/payments/create-intent")
+async def create_payment_intent(data: CreatePaymentIntentRequest, user: dict = Depends(require_user)):
+    """
+    Create a Stripe Payment Intent for subscription or book purchase
+    """
+    try:
+        price, is_sale, _ = get_current_subscription_price()
+        
+        if data.item_type == "subscription":
+            amount = int(price * 100)  # Convert to cents
+            description = f"InfoPilot Lifetime Subscription {'(Welcome Sale!)' if is_sale else ''}"
+        elif data.item_type == "book":
+            amount = 299  # $2.99 for book
+            description = "Letters to Evelyn - Digital Book"
+        else:
+            raise HTTPException(status_code=400, detail="Invalid item type")
+        
+        # Create Stripe Payment Intent
+        intent = stripe.PaymentIntent.create(
+            amount=amount,
+            currency="usd",
+            metadata={
+                "user_id": user["id"],
+                "user_email": user["email"],
+                "item_type": data.item_type,
+                "is_sale": str(is_sale)
+            },
+            description=description,
+            automatic_payment_methods={"enabled": True}
+        )
+        
+        return {
+            "client_secret": intent.client_secret,
+            "payment_intent_id": intent.id,
+            "amount": amount / 100
+        }
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@api_router.post("/payments/confirm", response_model=PaymentResponse)
+async def confirm_payment(payment_intent_id: str, user: dict = Depends(require_user)):
+    """
+    Confirm payment was successful and update user subscription
+    """
+    try:
+        # Retrieve the payment intent to verify it succeeded
+        intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+        
+        if intent.status != "succeeded":
+            raise HTTPException(status_code=400, detail=f"Payment not completed. Status: {intent.status}")
+        
+        item_type = intent.metadata.get("item_type", "subscription")
+        transaction_id = f"STRIPE_{intent.id}"
+        
+        # Log the payment
+        payment_record = {
+            "id": str(uuid.uuid4()),
+            "user_id": user["id"],
+            "transaction_id": transaction_id,
+            "stripe_payment_intent_id": intent.id,
+            "payment_method": "stripe",
+            "item_type": item_type,
+            "amount": intent.amount / 100,
+            "currency": intent.currency.upper(),
+            "status": "completed",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.payments.insert_one(payment_record)
+        
+        # Update user's paid status if subscription
+        if item_type == "subscription":
+            await db.users.update_one(
+                {"id": user["id"]},
+                {"$set": {
+                    "is_paid": True, 
+                    "subscription_date": datetime.now(timezone.utc).isoformat(),
+                    "subscription_type": "lifetime"
+                }}
+            )
+        
+        return PaymentResponse(
+            success=True,
+            transaction_id=transaction_id,
+            message=f"Payment successful! {'Your subscription is now active.' if item_type == 'subscription' else 'Thank you for your purchase!'}"
+        )
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error confirming payment: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 @api_router.post("/payments/process", response_model=PaymentResponse)
 async def process_payment(data: PaymentRequest, user: dict = Depends(require_user)):
     """
-    Process payment (SANDBOX MODE)
-    Supports: PayPal, Google Pay, Shopify
+    Legacy payment processing endpoint (for backward compatibility)
+    Now uses Stripe
     """
-    transaction_id = f"SANDBOX_{data.payment_method.upper()}_{uuid.uuid4().hex[:12].upper()}"
-    
-    # Log the payment attempt
-    payment_record = {
-        "id": str(uuid.uuid4()),
-        "user_id": user["id"],
-        "transaction_id": transaction_id,
-        "payment_method": data.payment_method,
-        "item_type": data.item_type,
-        "amount": data.amount,
-        "status": "completed",
-        "sandbox": True,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db.payments.insert_one(payment_record)
-    
-    # Update user's paid status if subscription
-    if data.item_type == "subscription":
-        await db.users.update_one(
-            {"id": user["id"]},
-            {"$set": {"is_paid": True, "subscription_date": datetime.now(timezone.utc).isoformat()}}
+    try:
+        price, is_sale, _ = get_current_subscription_price()
+        
+        # Create and confirm payment in one step using payment method
+        intent = stripe.PaymentIntent.create(
+            amount=int(data.amount * 100),
+            currency="usd",
+            payment_method=data.payment_method_id,
+            confirm=True,
+            automatic_payment_methods={
+                "enabled": True,
+                "allow_redirects": "never"
+            },
+            metadata={
+                "user_id": user["id"],
+                "user_email": user["email"],
+                "item_type": data.item_type
+            }
         )
-    
-    return PaymentResponse(
-        success=True,
-        transaction_id=transaction_id,
-        message=f"Payment processed successfully via {data.payment_method} (SANDBOX MODE)",
-        sandbox=True
-    )
+        
+        transaction_id = f"STRIPE_{intent.id}"
+        
+        # Log the payment
+        payment_record = {
+            "id": str(uuid.uuid4()),
+            "user_id": user["id"],
+            "transaction_id": transaction_id,
+            "stripe_payment_intent_id": intent.id,
+            "payment_method": "stripe",
+            "item_type": data.item_type,
+            "amount": data.amount,
+            "currency": "USD",
+            "status": "completed",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.payments.insert_one(payment_record)
+        
+        # Update user's paid status if subscription
+        if data.item_type == "subscription":
+            await db.users.update_one(
+                {"id": user["id"]},
+                {"$set": {
+                    "is_paid": True, 
+                    "subscription_date": datetime.now(timezone.utc).isoformat(),
+                    "subscription_type": "lifetime"
+                }}
+            )
+        
+        return PaymentResponse(
+            success=True,
+            transaction_id=transaction_id,
+            message=f"Payment processed successfully via Stripe"
+        )
+    except stripe.error.CardError as e:
+        logger.error(f"Card error: {str(e)}")
+        raise HTTPException(status_code=402, detail=f"Card declined: {e.user_message}")
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 @api_router.get("/payments/history")
 async def get_payment_history(user: dict = Depends(require_user)):
