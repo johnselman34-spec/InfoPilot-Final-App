@@ -145,7 +145,7 @@ class PaymentVerification(BaseModel):
     payment_id: str
     user_id: str
 
-# ============== PROTOCOL PARSER (InfoJet 2.0) ==============
+# ============== PROTOCOL PARSER (InfoPilot 2.0) ==============
 
 class ProtocolParser:
     """Parse and evaluate InfoJet 2.0 Boolean protocols"""
