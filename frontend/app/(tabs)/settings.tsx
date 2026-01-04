@@ -182,7 +182,7 @@ export default function SettingsScreen() {
               <View style={styles.premiumActiveText}>
                 <Text style={styles.premiumActiveTitle}>Premium Active</Text>
                 <Text style={styles.premiumActiveDesc}>
-                  Thank you for supporting InfoJet!
+                  Thank you for supporting InfoPilot!
                 </Text>
               </View>
             </View>
