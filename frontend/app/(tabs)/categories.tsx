@@ -220,7 +220,7 @@ export default function CategoriesScreen() {
           renderItem={renderCategory}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
-          ListEmptyComponent=(
+          ListEmptyComponent={
             <View style={styles.emptyState}>
               <Ionicons name="folder-open" size={64} color="#CCC" />
               <Text style={styles.emptyText}>No categories yet</Text>
@@ -228,7 +228,7 @@ export default function CategoriesScreen() {
                 Tap the + button to create your first category
               </Text>
             </View>
-          )
+          }
         />
       )}
 
