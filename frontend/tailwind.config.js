@@ -57,7 +57,16 @@ module.exports = {
 			ivory: '#FFFFF0',
 			'infojet-blue': '#0066CC',
 			'infojet-green': '#00AA66',
-			'infojet-light-blue': '#E6F2FF'
+			'infojet-light-blue': '#E6F2FF',
+			'cockpit': '#0a0a0a',
+			'cockpit-dark': '#050505',
+			'cockpit-light': '#141414',
+			'hud-cyan': '#00ffff',
+			'hud-green': '#00ff88',
+			'hud-orange': '#ff8800',
+			'hud-red': '#ff0044',
+			'hud-yellow': '#ffff00',
+			'hud-blue': '#0088ff'
   		},
   		keyframes: {
   			'accordion-down': {
