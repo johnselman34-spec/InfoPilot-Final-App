@@ -1,15 +1,21 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import re
+import jwt
+import bcrypt
+import httpx
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from typing import List, Optional, Dict, Any
 import uuid
-from datetime import datetime, timezone
-
+from datetime import datetime, timezone, timedelta
+from bs4 import BeautifulSoup
+import asyncio
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -17,54 +23,1154 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ.get('DB_NAME', 'infojet_db')]
+
+# JWT Settings
+JWT_SECRET = os.environ.get('JWT_SECRET', 'infojet-secret-key-2024')
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24 * 7  # 1 week
 
 # Create the main app without a prefix
-app = FastAPI()
+app = FastAPI(title="InfoJet API", version="1.0.0")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# Security
+security = HTTPBearer(auto_error=False)
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# ============================================
+# BLOCKED WORDS LIST (Expandable by Admin)
+# ============================================
+DEFAULT_BLOCKED_WORDS = [
+    "child", "children", "boy", "girl", "teen", "young", "minor", "kid", "kids",
+    "porn", "xxx", "nude", "naked", "sex", "fuck", "shit", "damn", "ass", "bitch"
+]
+
+# ============================================
+# PYDANTIC MODELS
+# ============================================
+
+class UserCreate(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    email: EmailStr
+    password: str = Field(..., min_length=6)
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    username: str
+    email: str
+    is_admin: bool = False
+    is_paid: bool = False
+    profile_photo: Optional[str] = None
+    created_at: datetime
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+class ProtocolCreate(BaseModel):
+    """InfoJet 2.0 Protocol - Boolean search syntax"""
+    protocol_string: str  # e.g., "(word1 or word2) & (word3)+ & (word4)^"
+
+class CategoryCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    protocol: ProtocolCreate
+    parent_id: Optional[str] = None  # For subcategories
+    is_public: bool = True
+
+class CategoryResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    user_id: str
+    name: str
+    protocol_string: str
+    parent_id: Optional[str] = None
+    is_public: bool = True
+    level: int = 0  # 0 = main category, 1 = subcategory, etc.
+    created_at: datetime
+
+class ArticleReaction(BaseModel):
+    reaction_type: str  # like, love, funny, sad, caution, spam, best
+
+class SearchResultResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    user_id: str
+    url: str
+    title: str
+    snippet: str
+    article_type: str  # Informative, Blog, Forum, News Article, etc.
+    categories: List[str]  # Category IDs this article matches
+    domain: str
+    detected_year: Optional[int] = None
+    word_count: int = 0
+    reactions: Dict[str, int] = {}
+    collated_at: datetime
+
+class CollateRequest(BaseModel):
+    search_query: str
+    max_results: int = 20
+
+class UltimateSearchRequest(BaseModel):
+    category_ids: List[str] = []
+    aggregation_type: str = "and_or"  # and_or, and, or
+    article_types: List[str] = []
+    domains: List[str] = []
+    year_from: Optional[int] = None
+    year_to: Optional[int] = None
+    keyword: Optional[str] = None
+    page: int = 1
+
+class AdminSettingsUpdate(BaseModel):
+    results_per_page: Optional[int] = None
+    free_user_pages: Optional[int] = None
+    max_category_levels: Optional[int] = None
+    blocked_words: Optional[List[str]] = None
+    subscription_price: Optional[float] = None
+    informative_min_words: Optional[int] = None
+    phd_keyword_count: Optional[int] = None
+    blog_keyword_count: Optional[int] = None
+
+class AdminSettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = "admin_settings"
+    results_per_page: int = 20
+    free_user_pages: int = 1
+    max_category_levels: int = 100
+    blocked_words: List[str] = DEFAULT_BLOCKED_WORDS
+    subscription_price: float = 0.99
+    informative_min_words: int = 1500
+    phd_keyword_count: int = 3
+    blog_keyword_count: int = 3
+
+# ============================================
+# INFOJET 2.0 PROTOCOL PARSER
+# ============================================
+
+class InfoJet2Parser:
+    """
+    InfoJet 2.0 Boolean Protocol Parser
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    Syntax:
+    - (word1 or word2 or word3) - Match ANY word in the group
+    - & - AND operator between groups
+    - + suffix - INCLUDE ALL words in the group (all must be present)
+    - ^ suffix - EXCLUDE ALL words in the group (none should be present)
+    
+    Example:
+    (American civil war or civil war) & (hero or heroes)+ & (villain)^
+    """
+    
+    @staticmethod
+    def parse_protocol(protocol_string: str) -> Dict[str, Any]:
+        """Parse InfoJet 2.0 protocol string into structured format"""
+        result = {
+            "groups": [],
+            "valid": True,
+            "error": None
+        }
+        
+        try:
+            # Split by & to get groups
+            groups = re.split(r'\s*&\s*', protocol_string.strip())
+            
+            for group in groups:
+                group = group.strip()
+                if not group:
+                    continue
+                
+                # Check for modifiers
+                include_all = False
+                exclude_all = False
+                
+                # Check for + or ^ at start or end
+                if group.startswith('+') or group.endswith('+'):
+                    include_all = True
+                    group = group.strip('+').strip()
+                elif group.startswith('^') or group.endswith('^'):
+                    exclude_all = True
+                    group = group.strip('^').strip()
+                
+                # Extract words from parentheses
+                match = re.match(r'\(([^)]+)\)', group)
+                if match:
+                    words_str = match.group(1)
+                    # Split by 'or' (case insensitive)
+                    words = [w.strip() for w in re.split(r'\s+or\s+', words_str, flags=re.IGNORECASE)]
+                    
+                    result["groups"].append({
+                        "words": words,
+                        "include_all": include_all,
+                        "exclude_all": exclude_all,
+                        "operator": "OR"  # Within group, words are OR'd
+                    })
+                else:
+                    # Single word without parentheses
+                    result["groups"].append({
+                        "words": [group],
+                        "include_all": include_all,
+                        "exclude_all": exclude_all,
+                        "operator": "OR"
+                    })
+            
+            if not result["groups"]:
+                result["valid"] = False
+                result["error"] = "No valid groups found in protocol"
+                
+        except Exception as e:
+            result["valid"] = False
+            result["error"] = str(e)
+        
+        return result
+    
+    @staticmethod
+    def match_content(content: str, parsed_protocol: Dict[str, Any]) -> bool:
+        """Check if content matches the parsed protocol"""
+        if not parsed_protocol["valid"]:
+            return False
+        
+        content_lower = content.lower()
+        
+        for group in parsed_protocol["groups"]:
+            words = group["words"]
+            include_all = group["include_all"]
+            exclude_all = group["exclude_all"]
+            
+            if exclude_all:
+                # None of these words should be present
+                for word in words:
+                    if word.lower() in content_lower:
+                        return False
+            elif include_all:
+                # ALL words must be present
+                for word in words:
+                    if word.lower() not in content_lower:
+                        return False
+            else:
+                # At least ONE word must be present (OR logic)
+                found = False
+                for word in words:
+                    if word.lower() in content_lower:
+                        found = True
+                        break
+                if not found:
+                    return False
+        
+        return True
+    
+    @staticmethod
+    def validate_protocol(protocol_string: str) -> tuple[bool, str]:
+        """Validate protocol syntax"""
+        parsed = InfoJet2Parser.parse_protocol(protocol_string)
+        if not parsed["valid"]:
+            return False, parsed["error"]
+        if len(parsed["groups"]) == 0:
+            return False, "Protocol must contain at least one group"
+        return True, "Valid protocol"
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+# ============================================
+# ARTICLE CLASSIFIER
+# ============================================
 
-# Add your routes to the router instead of directly to app
+class ArticleClassifier:
+    """Classifies articles based on InfoJet rules"""
+    
+    INFORMATIVE_PROTOCOL = "(there are or there is) & (may have or might have or that are) & (this kind or these kinds or this type or these types or it is) & (is easily or of each or less than the or more than or greater than or is more or is less) & (it is)"
+    NEWS_PROTOCOL = "(news) & (news or story or news story) & (news or story or news story)"
+    
+    @staticmethod
+    def classify(content: str, title: str, word_count: int, settings: AdminSettings) -> str:
+        """Classify article type based on content"""
+        content_lower = content.lower()
+        title_lower = title.lower()
+        
+        # Check for Forum
+        if 'forum' in title_lower:
+            return "Forum"
+        
+        # Check for Blog
+        blog_count = content_lower.count('blog')
+        if blog_count >= settings.blog_keyword_count and 'blog' in title_lower:
+            return "Blog"
+        
+        # Check for Informative Ph.D
+        phd_keywords = ['ph.d', 'phd', 'd.phil', 'dr.']
+        phd_count = sum(content_lower.count(kw) for kw in phd_keywords)
+        if phd_count >= settings.phd_keyword_count and word_count >= settings.informative_min_words:
+            # Check if meets informative protocol
+            parsed = InfoJet2Parser.parse_protocol(ArticleClassifier.INFORMATIVE_PROTOCOL)
+            if InfoJet2Parser.match_content(content, parsed):
+                return "Informative Ph.D"
+        
+        # Check for Informative
+        parsed = InfoJet2Parser.parse_protocol(ArticleClassifier.INFORMATIVE_PROTOCOL)
+        if InfoJet2Parser.match_content(content, parsed):
+            return "Informative"
+        
+        # Check for Personal Report (collected)
+        # Count 'I' outside quotations in paragraphs
+        paragraphs = content.split('\n\n')
+        for para in paragraphs:
+            words = para.split()
+            if len(words) >= 75:
+                # Count 'I' (as standalone word)
+                i_count = len([w for w in words if w.strip('.,!?;:') == 'I'])
+                if i_count >= 3:
+                    return "Personal Report (collected)"
+        
+        # Check for News Article
+        news_count = content_lower.count('news')
+        if news_count >= 3:
+            return "News Article"
+        
+        parsed = InfoJet2Parser.parse_protocol(ArticleClassifier.NEWS_PROTOCOL)
+        if InfoJet2Parser.match_content(content, parsed):
+            return "News Article"
+        
+        # Default
+        return "News Article"
+
+# ============================================
+# CONTENT FILTER
+# ============================================
+
+async def get_blocked_words() -> List[str]:
+    """Get blocked words from admin settings"""
+    settings = await db.admin_settings.find_one({"id": "admin_settings"})
+    if settings:
+        return settings.get("blocked_words", DEFAULT_BLOCKED_WORDS)
+    return DEFAULT_BLOCKED_WORDS
+
+def contains_blocked_words(text: str, blocked_words: List[str]) -> tuple[bool, List[str]]:
+    """Check if text contains any blocked words"""
+    text_lower = text.lower()
+    found = []
+    for word in blocked_words:
+        if word.lower() in text_lower:
+            found.append(word)
+    return len(found) > 0, found
+
+# ============================================
+# AUTHENTICATION HELPERS
+# ============================================
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode(), hashed.encode())
+
+def create_token(user_id: str) -> str:
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Optional[dict]:
+    if not credentials:
+        return None
+    try:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        user_id = payload.get("user_id")
+        user = await db.users.find_one({"id": user_id})
+        return user
+    except:
+        return None
+
+async def require_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    user = await get_current_user(credentials)
+    if not user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    return user
+
+async def require_admin(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    user = await require_user(credentials)
+    if not user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
+
+async def require_paid_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+    user = await require_user(credentials)
+    if not user.get("is_paid", False) and not user.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Paid subscription required")
+    return user
+
+# ============================================
+# WEB SEARCH & CONTENT FETCHER
+# ============================================
+
+async def fetch_page_content(url: str) -> Dict[str, Any]:
+    """Fetch and parse webpage content"""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(url, follow_redirects=True)
+            if response.status_code != 200:
+                return {"success": False, "error": f"HTTP {response.status_code}"}
+            
+            soup = BeautifulSoup(response.text, 'lxml')
+            
+            # Extract title
+            title = soup.title.string if soup.title else ""
+            
+            # Extract main content
+            for tag in soup(['script', 'style', 'nav', 'footer', 'header']):
+                tag.decompose()
+            
+            text = soup.get_text(separator=' ', strip=True)
+            word_count = len(text.split())
+            
+            # Extract year from content
+            year_match = re.search(r'\b(19|20)\d{2}\b', text)
+            detected_year = int(year_match.group()) if year_match else None
+            
+            # Extract domain
+            from urllib.parse import urlparse
+            domain = urlparse(url).netloc
+            
+            return {
+                "success": True,
+                "title": title[:500] if title else "Untitled",
+                "content": text[:50000],  # Limit content
+                "word_count": word_count,
+                "detected_year": detected_year,
+                "domain": domain
+            }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+async def web_search(query: str, num_results: int = 20) -> List[Dict[str, Any]]:
+    """
+    Perform web search using DuckDuckGo HTML (free, no API key needed)
+    """
+    results = []
+    try:
+        search_url = f"https://html.duckduckgo.com/html/?q={query}"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.get(search_url, headers=headers, follow_redirects=True)
+            
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'lxml')
+                
+                # Find search results
+                for result in soup.select('.result')[:num_results]:
+                    title_elem = result.select_one('.result__title a')
+                    snippet_elem = result.select_one('.result__snippet')
+                    
+                    if title_elem:
+                        # DuckDuckGo uses redirect URLs, extract actual URL
+                        href = title_elem.get('href', '')
+                        # Extract uddg parameter which contains the actual URL
+                        url_match = re.search(r'uddg=([^&]+)', href)
+                        if url_match:
+                            from urllib.parse import unquote
+                            url = unquote(url_match.group(1))
+                        else:
+                            url = href
+                        
+                        results.append({
+                            "url": url,
+                            "title": title_elem.get_text(strip=True),
+                            "snippet": snippet_elem.get_text(strip=True) if snippet_elem else ""
+                        })
+    except Exception as e:
+        logger.error(f"Search error: {e}")
+    
+    return results
+
+# ============================================
+# API ROUTES - HEALTH & STATUS
+# ============================================
+
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "InfoJet API v1.0 - World Wide Web Information Exchange"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
+@api_router.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "InfoJet"}
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
+# ============================================
+# API ROUTES - AUTHENTICATION
+# ============================================
+
+@api_router.post("/auth/register", response_model=TokenResponse)
+async def register(data: UserCreate):
+    # Check blocked words in username
+    blocked_words = await get_blocked_words()
+    has_blocked, found = contains_blocked_words(data.username, blocked_words)
+    if has_blocked:
+        raise HTTPException(status_code=400, detail=f"Username contains blocked words: {found}")
     
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
+    # Check if email exists
+    if await db.users.find_one({"email": data.email}):
+        raise HTTPException(status_code=400, detail="Email already registered")
     
-    return status_checks
+    # Check if username exists
+    if await db.users.find_one({"username": data.username}):
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
+    user_id = str(uuid.uuid4())
+    user = {
+        "id": user_id,
+        "username": data.username,
+        "email": data.email,
+        "password_hash": hash_password(data.password),
+        "is_admin": False,
+        "is_paid": False,
+        "profile_photo": None,
+        "friends": [],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.users.insert_one(user)
+    
+    token = create_token(user_id)
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse(
+            id=user_id,
+            username=data.username,
+            email=data.email,
+            is_admin=False,
+            is_paid=False,
+            created_at=datetime.fromisoformat(user["created_at"])
+        )
+    )
+
+@api_router.post("/auth/login", response_model=TokenResponse)
+async def login(data: UserLogin):
+    user = await db.users.find_one({"email": data.email})
+    if not user or not verify_password(data.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    token = create_token(user["id"])
+    return TokenResponse(
+        access_token=token,
+        user=UserResponse(
+            id=user["id"],
+            username=user["username"],
+            email=user["email"],
+            is_admin=user.get("is_admin", False),
+            is_paid=user.get("is_paid", False),
+            profile_photo=user.get("profile_photo"),
+            created_at=datetime.fromisoformat(user["created_at"]) if isinstance(user["created_at"], str) else user["created_at"]
+        )
+    )
+
+@api_router.get("/auth/me", response_model=UserResponse)
+async def get_me(user: dict = Depends(require_user)):
+    return UserResponse(
+        id=user["id"],
+        username=user["username"],
+        email=user["email"],
+        is_admin=user.get("is_admin", False),
+        is_paid=user.get("is_paid", False),
+        profile_photo=user.get("profile_photo"),
+        created_at=datetime.fromisoformat(user["created_at"]) if isinstance(user["created_at"], str) else user["created_at"]
+    )
+
+# ============================================
+# API ROUTES - CATEGORIES & PROTOCOLS
+# ============================================
+
+@api_router.post("/categories", response_model=CategoryResponse)
+async def create_category(data: CategoryCreate, user: dict = Depends(require_user)):
+    # Validate protocol
+    is_valid, error = InfoJet2Parser.validate_protocol(data.protocol.protocol_string)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=f"Invalid protocol: {error}")
+    
+    # Check blocked words in category name and protocol
+    blocked_words = await get_blocked_words()
+    has_blocked, found = contains_blocked_words(data.name, blocked_words)
+    if has_blocked:
+        raise HTTPException(status_code=400, detail=f"Category name contains blocked words: {found}")
+    
+    has_blocked, found = contains_blocked_words(data.protocol.protocol_string, blocked_words)
+    if has_blocked:
+        raise HTTPException(status_code=400, detail=f"Protocol contains blocked words: {found}")
+    
+    # Determine level
+    level = 0
+    if data.parent_id:
+        parent = await db.categories.find_one({"id": data.parent_id, "user_id": user["id"]})
+        if not parent:
+            raise HTTPException(status_code=404, detail="Parent category not found")
+        level = parent.get("level", 0) + 1
+        
+        # Check max levels
+        settings = await db.admin_settings.find_one({"id": "admin_settings"})
+        max_levels = settings.get("max_category_levels", 100) if settings else 100
+        if level > max_levels:
+            raise HTTPException(status_code=400, detail=f"Maximum category depth of {max_levels} exceeded")
+    
+    category_id = str(uuid.uuid4())
+    category = {
+        "id": category_id,
+        "user_id": user["id"],
+        "name": data.name,
+        "protocol_string": data.protocol.protocol_string,
+        "parent_id": data.parent_id,
+        "is_public": data.is_public,
+        "level": level,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.categories.insert_one(category)
+    
+    return CategoryResponse(**{**category, "created_at": datetime.fromisoformat(category["created_at"])})
+
+@api_router.get("/categories", response_model=List[CategoryResponse])
+async def get_categories(
+    user_id: Optional[str] = None,
+    include_public: bool = True,
+    user: dict = Depends(require_user)
+):
+    """Get categories - own categories and optionally public ones"""
+    query = {"$or": [{"user_id": user["id"]}]}
+    
+    if include_public:
+        if user_id:
+            query["$or"].append({"user_id": user_id, "is_public": True})
+        else:
+            query["$or"].append({"is_public": True})
+    
+    categories = await db.categories.find(query).to_list(1000)
+    
+    result = []
+    for cat in categories:
+        created_at = cat["created_at"]
+        if isinstance(created_at, str):
+            created_at = datetime.fromisoformat(created_at)
+        result.append(CategoryResponse(**{**cat, "created_at": created_at}))
+    
+    return result
+
+@api_router.get("/categories/{category_id}", response_model=CategoryResponse)
+async def get_category(category_id: str, user: dict = Depends(require_user)):
+    category = await db.categories.find_one({"id": category_id})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    # Check access
+    if category["user_id"] != user["id"] and not category.get("is_public", True):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    created_at = category["created_at"]
+    if isinstance(created_at, str):
+        created_at = datetime.fromisoformat(created_at)
+    
+    return CategoryResponse(**{**category, "created_at": created_at})
+
+@api_router.delete("/categories/{category_id}")
+async def delete_category(category_id: str, user: dict = Depends(require_user)):
+    category = await db.categories.find_one({"id": category_id, "user_id": user["id"]})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    # Delete category and all subcategories
+    await db.categories.delete_many({
+        "$or": [
+            {"id": category_id},
+            {"parent_id": category_id}
+        ],
+        "user_id": user["id"]
+    })
+    
+    return {"message": "Category deleted"}
+
+@api_router.put("/categories/{category_id}/visibility")
+async def update_category_visibility(category_id: str, is_public: bool, user: dict = Depends(require_user)):
+    result = await db.categories.update_one(
+        {"id": category_id, "user_id": user["id"]},
+        {"$set": {"is_public": is_public}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return {"message": "Visibility updated"}
+
+# ============================================
+# API ROUTES - PROTOCOL VALIDATION
+# ============================================
+
+@api_router.post("/protocol/validate")
+async def validate_protocol(data: ProtocolCreate):
+    """Validate InfoJet 2.0 protocol syntax"""
+    is_valid, message = InfoJet2Parser.validate_protocol(data.protocol_string)
+    parsed = InfoJet2Parser.parse_protocol(data.protocol_string)
+    
+    return {
+        "valid": is_valid,
+        "message": message,
+        "parsed": parsed
+    }
+
+@api_router.post("/protocol/test")
+async def test_protocol(protocol_string: str, test_content: str):
+    """Test if content matches a protocol"""
+    parsed = InfoJet2Parser.parse_protocol(protocol_string)
+    matches = InfoJet2Parser.match_content(test_content, parsed)
+    
+    return {
+        "matches": matches,
+        "parsed_protocol": parsed
+    }
+
+# ============================================
+# API ROUTES - SEARCH & COLLATE (THE INFOJET PAGE)
+# ============================================
+
+@api_router.post("/search/collate")
+async def collate_search(data: CollateRequest, user: dict = Depends(require_user)):
+    """
+    Main InfoJet search - searches the web and automatically categorizes results
+    based on user's protocols
+    """
+    # Check blocked words in query
+    blocked_words = await get_blocked_words()
+    has_blocked, found = contains_blocked_words(data.search_query, blocked_words)
+    if has_blocked:
+        raise HTTPException(status_code=400, detail=f"Search query contains blocked words: {found}")
+    
+    # Get admin settings
+    settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
+    settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
+    
+    # Check if user can search (paid or admin gets unlimited)
+    if not user.get("is_paid") and not user.get("is_admin"):
+        # Free users limited
+        max_results = settings.results_per_page
+    else:
+        max_results = min(data.max_results, 100)
+    
+    # Get user's categories with protocols
+    user_categories = await db.categories.find({"user_id": user["id"]}).to_list(1000)
+    
+    if not user_categories:
+        raise HTTPException(status_code=400, detail="Create at least one category with a protocol before searching")
+    
+    # Perform web search
+    search_results = await web_search(data.search_query, max_results)
+    
+    if not search_results:
+        return {"message": "No search results found", "results": [], "categorized_count": 0}
+    
+    # Process and categorize each result
+    collated_results = []
+    
+    for result in search_results:
+        # Fetch full page content
+        page_data = await fetch_page_content(result["url"])
+        
+        if not page_data["success"]:
+            continue
+        
+        content = f"{result['title']} {result['snippet']} {page_data.get('content', '')}"
+        
+        # Check blocked words in content
+        has_blocked, _ = contains_blocked_words(content, blocked_words)
+        if has_blocked:
+            continue  # Skip blocked content
+        
+        # Match against all user protocols
+        matching_categories = []
+        for category in user_categories:
+            parsed = InfoJet2Parser.parse_protocol(category["protocol_string"])
+            if InfoJet2Parser.match_content(content, parsed):
+                matching_categories.append(category["id"])
+        
+        if matching_categories:  # Only save if matches at least one category
+            # Classify article type
+            article_type = ArticleClassifier.classify(
+                content,
+                result["title"],
+                page_data.get("word_count", 0),
+                settings
+            )
+            
+            # Create search result document
+            result_id = str(uuid.uuid4())
+            search_result = {
+                "id": result_id,
+                "user_id": user["id"],
+                "url": result["url"],
+                "title": result["title"],
+                "snippet": result["snippet"],
+                "article_type": article_type,
+                "categories": matching_categories,
+                "domain": page_data.get("domain", ""),
+                "detected_year": page_data.get("detected_year"),
+                "word_count": page_data.get("word_count", 0),
+                "reactions": {},
+                "collated_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            await db.search_results.insert_one(search_result)
+            collated_results.append(search_result)
+    
+    return {
+        "message": f"Collated {len(collated_results)} results into categories",
+        "results": collated_results,
+        "categorized_count": len(collated_results),
+        "total_searched": len(search_results)
+    }
+
+# ============================================
+# API ROUTES - ULTIMATE SEARCH PAGE
+# ============================================
+
+@api_router.post("/ultimate-search")
+async def ultimate_search(data: UltimateSearchRequest, user: dict = Depends(require_user)):
+    """
+    Search through collated results with advanced filtering
+    """
+    # Get admin settings
+    settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
+    settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
+    
+    # Check pagination limits for free users
+    if not user.get("is_paid") and not user.get("is_admin"):
+        if data.page > settings.free_user_pages:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Free users can only access {settings.free_user_pages} page(s) of results. Upgrade to continue."
+            )
+    
+    # Build query
+    query = {"user_id": user["id"]}
+    
+    # Category filtering based on aggregation type
+    if data.category_ids:
+        if data.aggregation_type == "and":
+            # Must have ONLY these categories (exact match)
+            query["categories"] = {"$all": data.category_ids, "$size": len(data.category_ids)}
+        elif data.aggregation_type == "and_or":
+            # Must have ALL these categories (plus possibly others)
+            query["categories"] = {"$all": data.category_ids}
+        else:  # "or"
+            # Must have ANY of these categories
+            query["categories"] = {"$in": data.category_ids}
+    
+    # Article type filter
+    if data.article_types:
+        query["article_type"] = {"$in": data.article_types}
+    
+    # Domain filter
+    if data.domains:
+        query["domain"] = {"$in": data.domains}
+    
+    # Year filter
+    if data.year_from or data.year_to:
+        year_query = {}
+        if data.year_from:
+            year_query["$gte"] = data.year_from
+        if data.year_to:
+            year_query["$lte"] = data.year_to
+        query["detected_year"] = year_query
+    
+    # Keyword search
+    if data.keyword:
+        query["$or"] = [
+            {"title": {"$regex": data.keyword, "$options": "i"}},
+            {"snippet": {"$regex": data.keyword, "$options": "i"}}
+        ]
+    
+    # Pagination
+    skip = (data.page - 1) * settings.results_per_page
+    limit = settings.results_per_page
+    
+    # Execute query
+    total = await db.search_results.count_documents(query)
+    results = await db.search_results.find(query).skip(skip).limit(limit).to_list(limit)
+    
+    # Get category names for display
+    category_ids = set()
+    for r in results:
+        category_ids.update(r.get("categories", []))
+    
+    categories = await db.categories.find({"id": {"$in": list(category_ids)}}).to_list(1000)
+    category_map = {c["id"]: c["name"] for c in categories}
+    
+    # Add category names to results
+    for r in results:
+        r["category_names"] = [category_map.get(cid, "Unknown") for cid in r.get("categories", [])]
+    
+    return {
+        "results": results,
+        "total": total,
+        "page": data.page,
+        "per_page": settings.results_per_page,
+        "total_pages": (total + settings.results_per_page - 1) // settings.results_per_page
+    }
+
+@api_router.get("/ultimate-search/filters")
+async def get_search_filters(user: dict = Depends(require_user)):
+    """Get available filter options for Ultimate Search"""
+    # Get unique domains
+    domains = await db.search_results.distinct("domain", {"user_id": user["id"]})
+    
+    # Get unique article types
+    article_types = await db.search_results.distinct("article_type", {"user_id": user["id"]})
+    
+    # Get year range
+    pipeline = [
+        {"$match": {"user_id": user["id"], "detected_year": {"$ne": None}}},
+        {"$group": {
+            "_id": None,
+            "min_year": {"$min": "$detected_year"},
+            "max_year": {"$max": "$detected_year"}
+        }}
+    ]
+    year_range = await db.search_results.aggregate(pipeline).to_list(1)
+    
+    return {
+        "domains": domains,
+        "article_types": article_types or ["Informative", "Informative Ph.D", "News Article", "Blog", "Forum", "Personal Report (collected)"],
+        "year_range": year_range[0] if year_range else {"min_year": 2000, "max_year": 2025}
+    }
+
+# ============================================
+# API ROUTES - REACTIONS
+# ============================================
+
+@api_router.post("/results/{result_id}/react")
+async def add_reaction(result_id: str, data: ArticleReaction, user: dict = Depends(require_user)):
+    """Add reaction to a search result"""
+    valid_reactions = ["like", "love", "funny", "sad", "caution", "spam", "best"]
+    if data.reaction_type not in valid_reactions:
+        raise HTTPException(status_code=400, detail=f"Invalid reaction. Must be one of: {valid_reactions}")
+    
+    result = await db.search_results.find_one({"id": result_id})
+    if not result:
+        raise HTTPException(status_code=404, detail="Search result not found")
+    
+    # Update reaction count
+    reaction_key = f"reactions.{data.reaction_type}"
+    await db.search_results.update_one(
+        {"id": result_id},
+        {"$inc": {reaction_key: 1}}
+    )
+    
+    # Track user's reaction
+    await db.user_reactions.update_one(
+        {"user_id": user["id"], "result_id": result_id},
+        {"$set": {"reaction_type": data.reaction_type, "created_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True
+    )
+    
+    return {"message": "Reaction added"}
+
+# ============================================
+# API ROUTES - ADMIN
+# ============================================
+
+@api_router.get("/admin/settings", response_model=AdminSettings)
+async def get_admin_settings(user: dict = Depends(require_admin)):
+    settings = await db.admin_settings.find_one({"id": "admin_settings"})
+    if not settings:
+        # Create default settings
+        default = AdminSettings().model_dump()
+        await db.admin_settings.insert_one(default)
+        return AdminSettings()
+    return AdminSettings(**settings)
+
+@api_router.put("/admin/settings")
+async def update_admin_settings(data: AdminSettingsUpdate, user: dict = Depends(require_admin)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No settings to update")
+    
+    await db.admin_settings.update_one(
+        {"id": "admin_settings"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    return {"message": "Settings updated"}
+
+@api_router.post("/admin/ban-word")
+async def ban_word(word: str, user: dict = Depends(require_admin)):
+    await db.admin_settings.update_one(
+        {"id": "admin_settings"},
+        {"$addToSet": {"blocked_words": word.lower()}},
+        upsert=True
+    )
+    return {"message": f"Word '{word}' added to blocked list"}
+
+@api_router.delete("/admin/ban-word/{word}")
+async def unban_word(word: str, user: dict = Depends(require_admin)):
+    await db.admin_settings.update_one(
+        {"id": "admin_settings"},
+        {"$pull": {"blocked_words": word.lower()}}
+    )
+    return {"message": f"Word '{word}' removed from blocked list"}
+
+@api_router.post("/admin/ban-user/{user_id}")
+async def ban_user(user_id: str, user: dict = Depends(require_admin)):
+    await db.users.update_one({"id": user_id}, {"$set": {"is_banned": True}})
+    return {"message": "User banned"}
+
+@api_router.post("/admin/make-admin/{user_id}")
+async def make_admin(user_id: str, user: dict = Depends(require_admin)):
+    await db.users.update_one({"id": user_id}, {"$set": {"is_admin": True}})
+    return {"message": "User is now admin"}
+
+@api_router.get("/admin/users")
+async def get_all_users(user: dict = Depends(require_admin)):
+    users = await db.users.find({}, {"password_hash": 0}).to_list(1000)
+    return users
+
+@api_router.post("/admin/set-paid/{user_id}")
+async def set_user_paid(user_id: str, is_paid: bool, user: dict = Depends(require_admin)):
+    await db.users.update_one({"id": user_id}, {"$set": {"is_paid": is_paid}})
+    return {"message": f"User paid status set to {is_paid}"}
+
+# ============================================
+# API ROUTES - GLOBAL RESEARCH DATABASE
+# ============================================
+
+@api_router.get("/global-database")
+async def get_global_database(
+    page: int = 1,
+    category_id: Optional[str] = None,
+    user: dict = Depends(require_user)
+):
+    """Access all public categories and their results"""
+    # Get admin settings
+    settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
+    settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
+    
+    # Check pagination limits for free users
+    if not user.get("is_paid") and not user.get("is_admin"):
+        if page > settings.free_user_pages:
+            raise HTTPException(
+                status_code=403,
+                detail="Upgrade to access more pages"
+            )
+    
+    # Get all public categories
+    public_categories = await db.categories.find({"is_public": True}).to_list(1000)
+    public_category_ids = [c["id"] for c in public_categories]
+    
+    # Build query for results
+    query = {"categories": {"$in": public_category_ids}}
+    if category_id:
+        query["categories"] = category_id
+    
+    skip = (page - 1) * settings.results_per_page
+    
+    total = await db.search_results.count_documents(query)
+    results = await db.search_results.find(query).skip(skip).limit(settings.results_per_page).to_list(settings.results_per_page)
+    
+    return {
+        "public_categories": public_categories,
+        "results": results,
+        "total": total,
+        "page": page,
+        "total_pages": (total + settings.results_per_page - 1) // settings.results_per_page
+    }
+
+# ============================================
+# API ROUTES - STATISTICS
+# ============================================
+
+@api_router.get("/statistics")
+async def get_statistics(user: dict = Depends(require_user)):
+    """Get statistics for the user's data"""
+    user_id = user["id"]
+    
+    # Count by article type
+    type_pipeline = [
+        {"$match": {"user_id": user_id}},
+        {"$group": {"_id": "$article_type", "count": {"$sum": 1}}}
+    ]
+    article_types = await db.search_results.aggregate(type_pipeline).to_list(100)
+    
+    # Count by domain
+    domain_pipeline = [
+        {"$match": {"user_id": user_id}},
+        {"$group": {"_id": "$domain", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    top_domains = await db.search_results.aggregate(domain_pipeline).to_list(10)
+    
+    # Count by year
+    year_pipeline = [
+        {"$match": {"user_id": user_id, "detected_year": {"$ne": None}}},
+        {"$group": {"_id": "$detected_year", "count": {"$sum": 1}}},
+        {"$sort": {"_id": 1}}
+    ]
+    by_year = await db.search_results.aggregate(year_pipeline).to_list(100)
+    
+    # Category counts
+    category_pipeline = [
+        {"$match": {"user_id": user_id}},
+        {"$unwind": "$categories"},
+        {"$group": {"_id": "$categories", "count": {"$sum": 1}}}
+    ]
+    category_counts = await db.search_results.aggregate(category_pipeline).to_list(100)
+    
+    # Get category names
+    cat_ids = [c["_id"] for c in category_counts]
+    categories = await db.categories.find({"id": {"$in": cat_ids}}).to_list(100)
+    cat_map = {c["id"]: c["name"] for c in categories}
+    
+    for c in category_counts:
+        c["name"] = cat_map.get(c["_id"], "Unknown")
+    
+    return {
+        "article_types": article_types,
+        "top_domains": top_domains,
+        "by_year": by_year,
+        "by_category": category_counts,
+        "total_results": await db.search_results.count_documents({"user_id": user_id}),
+        "total_categories": await db.categories.count_documents({"user_id": user_id})
+    }
+
+# ============================================
+# API ROUTES - USER SEARCH RESULTS MANAGEMENT
+# ============================================
+
+@api_router.delete("/results/{result_id}")
+async def delete_result(result_id: str, user: dict = Depends(require_user)):
+    result = await db.search_results.delete_one({"id": result_id, "user_id": user["id"]})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Result not found")
+    return {"message": "Result deleted"}
+
+@api_router.delete("/results/batch")
+async def delete_results_batch(result_ids: List[str], user: dict = Depends(require_user)):
+    """Delete multiple results at once"""
+    result = await db.search_results.delete_many({
+        "id": {"$in": result_ids},
+        "user_id": user["id"]
+    })
+    return {"message": f"Deleted {result.deleted_count} results"}
+
+# ============================================
+# SETUP & MIDDLEWARE
+# ============================================
 
 # Include the router in the main app
 app.include_router(api_router)
@@ -77,12 +1183,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+@app.on_event("startup")
+async def startup():
+    # Create indexes
+    await db.users.create_index("email", unique=True)
+    await db.users.create_index("username", unique=True)
+    await db.categories.create_index([("user_id", 1), ("parent_id", 1)])
+    await db.search_results.create_index([("user_id", 1), ("categories", 1)])
+    await db.search_results.create_index([("user_id", 1), ("article_type", 1)])
+    
+    # Initialize admin settings if not exists
+    if not await db.admin_settings.find_one({"id": "admin_settings"}):
+        await db.admin_settings.insert_one(AdminSettings().model_dump())
+    
+    logger.info("InfoJet API started successfully")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
