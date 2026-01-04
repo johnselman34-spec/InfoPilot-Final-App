@@ -34,15 +34,18 @@ backend:
 
   - task: "Stripe Payment Integration - Create Payment Intent"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Stripe integration added with test keys. Endpoint /api/payments/create-intent creates payment intent. Needs testing."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Stripe payment integration working correctly. POST /api/payments/create-intent successfully creates payment intent with client_secret. Amount correctly set to $0.75 for sale price. Stripe test keys configured properly. All authentication flows working."
 
   - task: "Welcome Sale Pricing - $0.75 for 2 months"
     implemented: true
