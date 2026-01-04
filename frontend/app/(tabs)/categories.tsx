@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginBottom: 8,
   },
-  infoText: {
+  infoTextDetail: {
     fontSize: 12,
     color: colors.textLight,
     lineHeight: 18,
