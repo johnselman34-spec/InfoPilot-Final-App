@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional
 import sys
 
 # Backend URL from frontend environment
-BACKEND_URL = "https://infojetapp.preview.emergentagent.com/api"
+BACKEND_URL = "https://infopilot-search.preview.emergentagent.com/api"
 
 class InfoPilotTester:
     def __init__(self):
