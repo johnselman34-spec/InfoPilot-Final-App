@@ -231,7 +231,7 @@ export default function CategoriesScreen() {
             <Ionicons name="folder-open-outline" size={64} color="#ccc" />
             <Text style={styles.emptyTitle}>No Categories Yet</Text>
             <Text style={styles.emptyText}>
-              Create your first category with an InfoJet 2.0 protocol to start
+              Create your first category with an InfoPilot 2.0 protocol to start
               organizing your search results!
             </Text>
             <TouchableOpacity style={styles.createFirstButton} onPress={() => openCreateModal()}>
