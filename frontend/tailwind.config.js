@@ -52,7 +52,12 @@ module.exports = {
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
   				'5': 'hsl(var(--chart-5))'
-  			}
+  			},
+			cream: '#FFFEF5',
+			ivory: '#FFFFF0',
+			'infojet-blue': '#0066CC',
+			'infojet-green': '#00AA66',
+			'infojet-light-blue': '#E6F2FF'
   		},
   		keyframes: {
   			'accordion-down': {
