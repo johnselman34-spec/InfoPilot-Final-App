@@ -1649,34 +1649,36 @@ const AdminPage = () => {
 // Main App
 function App() {
   return (
-    <AuthProvider>
-      <Toaster 
-        position="top-right" 
-        toastOptions={{
-          style: {
-            background: '#0a0a0a',
-            border: '1px solid #00ffff',
-            color: '#00ff88',
-            fontFamily: 'monospace'
-          }
-        }}
-      />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-          <Route path="/infopilot" element={<ProtectedRoute><InfoPilotPage /></ProtectedRoute>} />
-          <Route path="/ultimate-search" element={<ProtectedRoute><UltimateSearchPage /></ProtectedRoute>} />
-          <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
-          <Route path="/statistics" element={<ProtectedRoute><StatisticsPage /></ProtectedRoute>} />
-          <Route path="/global-database" element={<ProtectedRoute><GlobalDatabasePage /></ProtectedRoute>} />
-          <Route path="/book" element={<ProtectedRoute><BookPage /></ProtectedRoute>} />
-          <Route path="/subscribe" element={<ProtectedRoute><SubscribePage /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <Toaster 
+          position="top-right" 
+          toastOptions={{
+            style: {
+              background: '#0a0a0a',
+              border: '1px solid #00ffff',
+              color: '#00ff88',
+              fontFamily: 'monospace'
+            }
+          }}
+        />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+            <Route path="/infopilot" element={<ProtectedRoute><InfoPilotPage /></ProtectedRoute>} />
+            <Route path="/ultimate-search" element={<ProtectedRoute><UltimateSearchPage /></ProtectedRoute>} />
+            <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
+            <Route path="/statistics" element={<ProtectedRoute><StatisticsPage /></ProtectedRoute>} />
+            <Route path="/global-database" element={<ProtectedRoute><GlobalDatabasePage /></ProtectedRoute>} />
+            <Route path="/book" element={<ProtectedRoute><BookPage /></ProtectedRoute>} />
+            <Route path="/subscribe" element={<ProtectedRoute><SubscribePage /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 
