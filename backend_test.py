@@ -125,8 +125,8 @@ class InfoPilotTester:
         print("🔍 Testing user registration...")
         
         test_user_data = {
-            "username": "testuser123",
-            "email": "test@infopilot.com",
+            "username": "testuser123_new",
+            "email": "test_new@infopilot.com",
             "password": "TestPass123"
         }
         
