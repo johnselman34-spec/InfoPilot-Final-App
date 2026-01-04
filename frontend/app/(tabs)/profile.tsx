@@ -29,11 +29,67 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
+    if (user?.isPaid) {
+      Alert.alert('Already Subscribed', 'You are already a Premium member!');
+      return;
+    }
+
     Alert.alert(
-      'Upgrade to Premium',
-      'Enjoy unlimited searches and full access for $0.99/month',
-      [{ text: 'OK' }]
+      '⭐ Upgrade to Premium',
+      'Unlock all features for only $0.99/month\n\n' +
+      'Premium Benefits:\n' +
+      '✓ Unlimited search results\n' +
+      '✓ 20 results per page (vs 10 for free)\n' +
+      '✓ Advanced protocol features\n' +
+      '✓ Priority support\n\n' +
+      'Cancel anytime!',
+      [
+        { text: 'Maybe Later', style: 'cancel' },
+        {
+          text: 'Subscribe Now - $0.99/mo',
+          onPress: async () => {
+            try {
+              // In production, this would integrate with Shopify
+              // For now, we'll activate the subscription directly
+              const response = await axios.post(
+                `${API_URL}/api/subscription/activate`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              
+              // Refresh user data
+              const userResponse = await axios.get(
+                `${API_URL}/api/auth/me`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              
+              // Update stored user
+              await AsyncStorage.setItem('user', JSON.stringify(userResponse.data));
+              
+              // Force re-render by navigating
+              Alert.alert(
+                '🎉 Welcome to Premium!',
+                'Your subscription is now active. Enjoy unlimited access to all features!',
+                [
+                  {
+                    text: 'Start Exploring',
+                    onPress: () => {
+                      router.push('/(tabs)/home');
+                    },
+                  },
+                ]
+              );
+            } catch (error: any) {
+              console.error('Upgrade error:', error);
+              Alert.alert(
+                'Subscription Error',
+                error.response?.data?.detail || 'Unable to process subscription. Please try again.'
+              );
+            }
+          },
+        },
+      ]
     );
   };
 
