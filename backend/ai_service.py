@@ -34,10 +34,15 @@ Article Types:
 6. Personal Report (organic) - First-person narrative written by author
 7. Personal Report (collected) - Contains multiple "I" statements outside quotes
 
-You must also check for:
+You must also check for STRICTLY PROHIBITED content:
 - Inappropriate content (pornography, explicit material)
-- Child-related content (any words related to children, minors, kids)
+- Child-related content (any words related to children, minors, kids in ANY language)
 - Profanity or cuss words
+- Nuclear weapons (nuclear bomb, atomic bomb, warhead, nuclear warfare, etc.)
+- Chemical weapons (nerve agent, sarin, mustard gas, chemical warfare, etc.)
+- Biological weapons (anthrax, bioweapon, biological warfare, etc.)
+- Psychological warfare (psyops, mind control, psychological operations, etc.)
+- Interrogation technologies (torture methods, enhanced interrogation, waterboarding, etc.)
 
 Respond in this exact format:
 ARTICLE_TYPE: [type]
