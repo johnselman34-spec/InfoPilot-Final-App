@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List, Optional
 from datetime import datetime
 import asyncio
-from serpapi import GoogleSearch
+from serpapi import Client as SerpApiClient
 
 # Import our modules
 from models import (
