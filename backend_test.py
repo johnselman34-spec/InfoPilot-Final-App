@@ -189,8 +189,53 @@ class InfoPilotTester:
             self.results["auth_verification"]["details"] = f"Status: {response['status_code']}, Data: {response['data']}"
             print(f"❌ Auth verification: FAIL - {response['data']}")
     
+    async def test_subscription_endpoint(self):
+        """Test the NEW subscription endpoint"""
+        print("🔍 Testing subscription endpoint...")
+        
+        if not self.auth_token:
+            self.results["subscription_endpoint"]["status"] = "❌ FAIL"
+            self.results["subscription_endpoint"]["details"] = "No auth token available"
+            print("❌ Subscription endpoint: FAIL - No token")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        response = await self.make_request("POST", "/users/subscribe", headers=headers)
+        
+        if response["success"] and response["data"].get("success"):
+            self.results["subscription_endpoint"]["status"] = "✅ PASS"
+            self.results["subscription_endpoint"]["details"] = f"Subscription activated: {response['data'].get('message', 'Success')}"
+            print("✅ Subscription endpoint: PASS")
+        else:
+            self.results["subscription_endpoint"]["status"] = "❌ FAIL"
+            self.results["subscription_endpoint"]["details"] = f"Status: {response['status_code']}, Data: {response['data']}"
+            print(f"❌ Subscription endpoint: FAIL - {response['data']}")
+    
+    async def test_subscription_verification(self):
+        """Test that subscription status was updated correctly"""
+        print("🔍 Testing subscription verification...")
+        
+        if not self.auth_token:
+            self.results["subscription_verification"]["status"] = "❌ FAIL"
+            self.results["subscription_verification"]["details"] = "No auth token available"
+            print("❌ Subscription verification: FAIL - No token")
+            return
+        
+        headers = {"Authorization": f"Bearer {self.auth_token}"}
+        response = await self.make_request("GET", "/auth/me", headers=headers)
+        
+        if response["success"] and response["data"].get("subscription_status") == "paid":
+            self.results["subscription_verification"]["status"] = "✅ PASS"
+            self.results["subscription_verification"]["details"] = "Subscription status correctly updated to 'paid'"
+            print("✅ Subscription verification: PASS")
+        else:
+            subscription_status = response["data"].get("subscription_status", "unknown") if response["success"] else "error"
+            self.results["subscription_verification"]["status"] = "❌ FAIL"
+            self.results["subscription_verification"]["details"] = f"Subscription status: {subscription_status}, Expected: paid"
+            print(f"❌ Subscription verification: FAIL - Status: {subscription_status}")
+
     async def test_category_creation(self):
-        """Test category creation endpoint"""
+        """Test category creation endpoint with InfoPilot 2.0 protocol"""
         print("🔍 Testing category creation...")
         
         if not self.auth_token:
@@ -200,9 +245,9 @@ class InfoPilotTester:
             return
         
         category_data = {
-            "name": "Technology Research",
-            "protocol": "(artificial intelligence or AI) & (research or study) & (2024)",
-            "is_public": True
+            "name": "Tech News Analysis",
+            "protocol": "InfoPilot 2.0: technology AND (artificial intelligence OR machine learning) AND news",
+            "is_public": False
         }
         
         headers = {"Authorization": f"Bearer {self.auth_token}"}
@@ -210,7 +255,7 @@ class InfoPilotTester:
         
         if response["success"] and response["data"].get("success"):
             self.results["category_creation"]["status"] = "✅ PASS"
-            self.results["category_creation"]["details"] = "Category creation successful"
+            self.results["category_creation"]["details"] = "Category creation successful with InfoPilot 2.0 protocol"
             self.test_category_id = response["data"].get("category", {}).get("id")
             print("✅ Category creation: PASS")
         else:
