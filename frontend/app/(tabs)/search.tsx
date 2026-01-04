@@ -54,33 +54,25 @@ export default function SearchScreen() {
       return;
     }
 
-    Alert.alert(
-      'Collate Results',
-      'This will categorize search results based on your protocols',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Collate',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const response = await axios.post(
-                `${API_URL}/api/collate`,
-                { query, userId: user?.id },
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
-              Alert.alert(
-                'Success',
-                `Categorized ${response.data.categorized} out of ${response.data.total} results`
-              );
-            } catch (error) {
-              Alert.alert('Error', 'Failed to collate results');
-            }
-            setLoading(false);
-          },
-        },
-      ]
-    );
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/collate`,
+        { query, userId: user?.id },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      Alert.alert(
+        'Success! ✅',
+        `${response.data.message}\n\n` +
+        `• Collated: ${response.data.categorized}/${response.data.total} results\n` +
+        `• Using ${response.data.protocols_used} protocols\n\n` +
+        `Results are automatically saved to your matching categories!`
+      );
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.detail || 'Failed to collate results';
+      Alert.alert('Error', errorMsg);
+    }
+    setLoading(false);
   };
 
   const openURL = (url: string) => {
