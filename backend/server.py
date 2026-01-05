@@ -612,40 +612,93 @@ async def fetch_page_content(url: str) -> Dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 async def web_search(query: str, num_results: int = 20) -> List[Dict[str, Any]]:
-    """Perform web search using DuckDuckGo HTML"""
+    """Perform web search using Google Custom Search API"""
     results = []
-    try:
-        search_url = f"https://html.duckduckgo.com/html/?q={query}"
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        }
-        
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.get(search_url, headers=headers, follow_redirects=True)
+    
+    # Use Google Custom Search API if configured
+    if GOOGLE_SEARCH_API_KEY and GOOGLE_SEARCH_CX:
+        try:
+            # Google Custom Search allows max 10 results per request
+            # We need multiple requests for more results
+            pages_needed = (num_results + 9) // 10
             
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'lxml')
-                
-                for result in soup.select('.result')[:num_results]:
-                    title_elem = result.select_one('.result__title a')
-                    snippet_elem = result.select_one('.result__snippet')
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                for page in range(pages_needed):
+                    start_index = page * 10 + 1
+                    if start_index > 100:  # Google CSE limit
+                        break
                     
-                    if title_elem:
-                        href = title_elem.get('href', '')
-                        url_match = re.search(r'uddg=([^&]+)', href)
-                        if url_match:
-                            from urllib.parse import unquote
-                            url = unquote(url_match.group(1))
-                        else:
-                            url = href
+                    search_url = "https://www.googleapis.com/customsearch/v1"
+                    params = {
+                        "key": GOOGLE_SEARCH_API_KEY,
+                        "cx": GOOGLE_SEARCH_CX,
+                        "q": query,
+                        "num": min(10, num_results - len(results)),
+                        "start": start_index
+                    }
+                    
+                    response = await client.get(search_url, params=params)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        items = data.get("items", [])
                         
-                        results.append({
-                            "url": url,
-                            "title": title_elem.get_text(strip=True),
-                            "snippet": snippet_elem.get_text(strip=True) if snippet_elem else ""
-                        })
-    except Exception as e:
-        logger.error(f"Search error: {e}")
+                        for item in items:
+                            results.append({
+                                "url": item.get("link", ""),
+                                "title": item.get("title", ""),
+                                "snippet": item.get("snippet", "")
+                            })
+                            
+                            if len(results) >= num_results:
+                                break
+                    else:
+                        logger.error(f"Google Search API error: {response.status_code} - {response.text}")
+                        break
+                    
+                    if len(results) >= num_results:
+                        break
+                        
+            logger.info(f"Google Custom Search returned {len(results)} results for: {query}")
+            
+        except Exception as e:
+            logger.error(f"Google Custom Search error: {e}")
+    
+    # Fallback to DuckDuckGo if Google search fails or not configured
+    if not results:
+        logger.info("Falling back to DuckDuckGo search...")
+        try:
+            search_url = f"https://html.duckduckgo.com/html/?q={query}"
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+            
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                response = await client.get(search_url, headers=headers, follow_redirects=True)
+                
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, 'lxml')
+                    
+                    for result in soup.select('.result')[:num_results]:
+                        title_elem = result.select_one('.result__title a')
+                        snippet_elem = result.select_one('.result__snippet')
+                        
+                        if title_elem:
+                            href = title_elem.get('href', '')
+                            url_match = re.search(r'uddg=([^&]+)', href)
+                            if url_match:
+                                from urllib.parse import unquote
+                                url = unquote(url_match.group(1))
+                            else:
+                                url = href
+                            
+                            results.append({
+                                "url": url,
+                                "title": title_elem.get_text(strip=True),
+                                "snippet": snippet_elem.get_text(strip=True) if snippet_elem else ""
+                            })
+        except Exception as e:
+            logger.error(f"DuckDuckGo search error: {e}")
     
     return results
 
