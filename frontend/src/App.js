@@ -965,18 +965,395 @@ const CategoriesPage = () => {
   );
 };
 
-// Ultimate Search, Statistics, Global Database - with new theme
+// Ultimate Search Page - COMPREHENSIVE with AI Search, Document Types, AND/OR/AND Radio Buttons
 const UltimateSearchPage = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [aggregationType, setAggregationType] = useState("and_or");
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [selectedDocTypes, setSelectedDocTypes] = useState([]);
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [aiQuery, setAiQuery] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [filters, setFilters] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [selectedSession, setSelectedSession] = useState(null);
+  const [totalResults, setTotalResults] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [resultsToDelete, setResultsToDelete] = useState([]);
+  
+  // Determine if current user is the owner of their own Ultimate Search page
+  const isOwner = true; // In this context, user always owns their own search page
+  
+  useEffect(() => {
+    fetchCategories();
+    fetchFilters();
+    fetchSessions();
+  }, []);
+  
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(`${API}/categories/with-counts`);
+      setCategories(res.data.categories || []);
+    } catch (error) {
+      console.error("Failed to fetch categories");
+    }
+  };
+  
+  const fetchFilters = async () => {
+    try {
+      const res = await axios.get(`${API}/ultimate-search/filters`);
+      setFilters(res.data);
+      setDocumentTypes(res.data.document_types || []);
+    } catch (error) {
+      console.error("Failed to fetch filters");
+    }
+  };
+  
+  const fetchSessions = async () => {
+    try {
+      const res = await axios.get(`${API}/ultimate-search/sessions`);
+      setSessions(res.data.sessions || []);
+    } catch (error) {
+      console.error("Failed to fetch sessions");
+    }
+  };
+  
+  const handleSearch = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API}/ultimate-search`, {
+        category_ids: selectedCategories,
+        aggregation_type: aggregationType,
+        document_types: selectedDocTypes,
+        keyword: keyword || null,
+        ai_query: aiQuery || null,
+        page: currentPage
+      });
+      setResults(res.data.results || []);
+      setTotalResults(res.data.total || 0);
+      toast.success(`Found ${res.data.total} results`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Search failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleAISearch = async () => {
+    if (!aiQuery.trim()) {
+      toast.error("Enter an AI search query");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API}/ultimate-search/ai`, {
+        query: aiQuery,
+        category_ids: selectedCategories
+      });
+      setResults(res.data.results || []);
+      setTotalResults(res.data.total || 0);
+      toast.success(`AI found ${res.data.total} results`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "AI search failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const toggleCategory = (catId) => {
+    setSelectedCategories(prev => 
+      prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
+    );
+  };
+  
+  const toggleDocType = (docType) => {
+    setSelectedDocTypes(prev => 
+      prev.includes(docType) ? prev.filter(dt => dt !== docType) : [...prev, docType]
+    );
+  };
+  
+  const handleDeleteResults = async () => {
+    if (resultsToDelete.length === 0) return;
+    try {
+      await axios.delete(`${API}/ultimate-search/results`, { data: { result_ids: resultsToDelete } });
+      toast.success(`Deleted ${resultsToDelete.length} results`);
+      setResultsToDelete([]);
+      setShowDeleteModal(false);
+      handleSearch(); // Refresh results
+      fetchSessions();
+      fetchCategories();
+    } catch (error) {
+      toast.error("Failed to delete results");
+    }
+  };
+  
+  const handleDeleteSession = async (timestamp) => {
+    if (!window.confirm(`Delete all results from session ${timestamp}?`)) return;
+    try {
+      await axios.delete(`${API}/ultimate-search/session/${encodeURIComponent(timestamp)}`);
+      toast.success("Session deleted");
+      fetchSessions();
+      fetchCategories();
+      handleSearch();
+    } catch (error) {
+      toast.error("Failed to delete session");
+    }
+  };
+  
+  const toggleResultForDelete = (resultId) => {
+    setResultsToDelete(prev => 
+      prev.includes(resultId) ? prev.filter(id => id !== resultId) : [...prev, resultId]
+    );
+  };
+  
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">ULTIMATE SEARCH</h1>
-        <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} />
-        <FuturisticFrame title="ADVANCED FILTERS" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
-          <p className="text-purple-300 font-mono">Search through your collated results with advanced filtering options.</p>
-          <button onClick={() => navigate("/infopilot")} className="mt-4 px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02]">START SEARCHING</button>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">ULTIMATE SEARCH</h1>
+            <p className="text-purple-300/80 font-mono text-sm">Advanced filtering with AI-powered intelligent search</p>
+          </div>
+          {isOwner && (
+            <span className="px-3 py-1 bg-pink-500/20 text-pink-400 font-mono text-sm rounded border border-pink-500/50">
+              OWNER MODE: Search & Collate
+            </span>
+          )}
+        </div>
+        
+        <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} compact />
+        
+        {/* AI Search Section */}
+        <FuturisticFrame title="🤖 AI-POWERED INTELLIGENT SEARCH" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+          <div className="space-y-4">
+            <p className="text-purple-300/70 font-mono text-sm">Use natural language to find results intelligently</p>
+            <div className="flex gap-4">
+              <input 
+                type="text"
+                value={aiQuery}
+                onChange={(e) => setAiQuery(e.target.value)}
+                placeholder="Ask AI: 'Find research papers about climate change' or 'Show me educational content about history'..."
+                className="flex-1 px-4 py-3 bg-slate-950 border border-pink-500/30 rounded text-purple-300 font-mono focus:border-pink-500 focus:outline-none"
+                onKeyPress={(e) => e.key === "Enter" && handleAISearch()}
+              />
+              <button 
+                onClick={handleAISearch}
+                disabled={loading}
+                className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono tracking-wider rounded hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
+                AI SEARCH
+              </button>
+            </div>
+          </div>
         </FuturisticFrame>
+        
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Left Column - Categories with Checkboxes */}
+          <div className="lg:col-span-1 space-y-4">
+            <FuturisticFrame title="📂 CATEGORIES" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {categories.length === 0 ? (
+                  <p className="text-purple-400/60 font-mono text-sm text-center py-4">No categories yet. Create one to start!</p>
+                ) : (
+                  categories.map(cat => (
+                    <label key={cat.id} className="flex items-center gap-3 p-2 hover:bg-purple-500/10 rounded cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(cat.id)}
+                        onChange={() => toggleCategory(cat.id)}
+                        className="w-4 h-4 rounded bg-slate-950 border-purple-500/30 text-pink-500 focus:ring-pink-500"
+                      />
+                      <span className="text-purple-300 font-mono text-sm flex-1">{cat.name}</span>
+                      <span className="text-pink-400 font-mono text-xs">({cat.result_count || 0})</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </FuturisticFrame>
+            
+            {/* Aggregation Type Radio Buttons */}
+            <FuturisticFrame title="🔗 SEARCH LOGIC" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
+              <div className="space-y-3">
+                <label className="flex items-start gap-3 p-2 hover:bg-blue-500/10 rounded cursor-pointer">
+                  <input
+                    type="radio"
+                    name="aggregation"
+                    value="and_or"
+                    checked={aggregationType === "and_or"}
+                    onChange={(e) => setAggregationType(e.target.value)}
+                    className="mt-1 w-4 h-4 text-pink-500 bg-slate-950 border-blue-500/30 focus:ring-pink-500"
+                  />
+                  <div>
+                    <span className="text-blue-400 font-mono text-sm font-bold">AND/OR</span>
+                    <p className="text-purple-400/60 font-mono text-xs">Results matching ALL or ANY categories</p>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 p-2 hover:bg-blue-500/10 rounded cursor-pointer">
+                  <input
+                    type="radio"
+                    name="aggregation"
+                    value="or"
+                    checked={aggregationType === "or"}
+                    onChange={(e) => setAggregationType(e.target.value)}
+                    className="mt-1 w-4 h-4 text-pink-500 bg-slate-950 border-blue-500/30 focus:ring-pink-500"
+                  />
+                  <div>
+                    <span className="text-blue-400 font-mono text-sm font-bold">OR</span>
+                    <p className="text-purple-400/60 font-mono text-xs">Results matching ANY selected category</p>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 p-2 hover:bg-blue-500/10 rounded cursor-pointer">
+                  <input
+                    type="radio"
+                    name="aggregation"
+                    value="and"
+                    checked={aggregationType === "and"}
+                    onChange={(e) => setAggregationType(e.target.value)}
+                    className="mt-1 w-4 h-4 text-pink-500 bg-slate-950 border-blue-500/30 focus:ring-pink-500"
+                  />
+                  <div>
+                    <span className="text-blue-400 font-mono text-sm font-bold">AND</span>
+                    <p className="text-purple-400/60 font-mono text-xs">Results matching ALL selected categories</p>
+                  </div>
+                </label>
+              </div>
+            </FuturisticFrame>
+            
+            {/* Document Type Checkboxes */}
+            <FuturisticFrame title="📄 DOCUMENT TYPES" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {documentTypes.map(docType => (
+                  <label key={docType} className="flex items-center gap-3 p-2 hover:bg-purple-500/10 rounded cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedDocTypes.includes(docType)}
+                      onChange={() => toggleDocType(docType)}
+                      className="w-4 h-4 rounded bg-slate-950 border-purple-500/30 text-pink-500 focus:ring-pink-500"
+                    />
+                    <span className="text-purple-300 font-mono text-xs">{docType}</span>
+                  </label>
+                ))}
+              </div>
+            </FuturisticFrame>
+          </div>
+          
+          {/* Right Column - Search & Results */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Traditional Keyword Search */}
+            <FuturisticFrame title="🔍 KEYWORD SEARCH" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+              <div className="flex gap-4">
+                <input 
+                  type="text"
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  placeholder="Filter by keyword..."
+                  className="flex-1 px-4 py-3 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500 focus:outline-none"
+                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                />
+                <button 
+                  onClick={handleSearch}
+                  disabled={loading}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-mono tracking-wider rounded hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
+                  {isOwner ? "SEARCH & COLLATE" : "SEARCH"}
+                </button>
+              </div>
+              <div className="flex items-center gap-4 mt-4 text-xs font-mono text-purple-400/60">
+                <span>Selected: {selectedCategories.length} categories</span>
+                <span>•</span>
+                <span>Logic: {aggregationType.toUpperCase()}</span>
+                <span>•</span>
+                <span>Doc Types: {selectedDocTypes.length || "All"}</span>
+              </div>
+            </FuturisticFrame>
+            
+            {/* Results Section */}
+            <FuturisticFrame title={`📊 RESULTS (${totalResults})`} color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+              {results.length === 0 ? (
+                <div className="text-center py-12">
+                  <Search className="w-16 h-16 text-purple-500/30 mx-auto mb-4" />
+                  <p className="text-purple-300 font-mono">No results yet. Use the search above!</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {isOwner && resultsToDelete.length > 0 && (
+                    <div className="flex items-center justify-between p-3 bg-red-500/10 border border-red-500/30 rounded">
+                      <span className="text-red-400 font-mono text-sm">{resultsToDelete.length} selected for deletion</span>
+                      <button 
+                        onClick={handleDeleteResults}
+                        className="px-4 py-2 bg-red-600 text-white font-mono text-sm rounded hover:bg-red-700 flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" /> DELETE SELECTED
+                      </button>
+                    </div>
+                  )}
+                  {results.map(result => (
+                    <div key={result.id} className="bg-slate-950 p-4 rounded border border-purple-500/20 hover:border-pink-500/50 transition-colors">
+                      <div className="flex items-start gap-3">
+                        {isOwner && (
+                          <input
+                            type="checkbox"
+                            checked={resultsToDelete.includes(result.id)}
+                            onChange={() => toggleResultForDelete(result.id)}
+                            className="mt-1 w-4 h-4 rounded bg-slate-950 border-red-500/30 text-red-500 focus:ring-red-500"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <a href={result.url} target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:underline font-mono text-sm block truncate">
+                            {result.title}
+                          </a>
+                          <p className="text-purple-300/60 text-xs mt-1 line-clamp-2 font-mono">{result.snippet}</p>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            <span className="px-2 py-0.5 bg-pink-500/20 text-pink-400 text-xs rounded font-mono">{result.article_type}</span>
+                            {result.document_type && (
+                              <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded font-mono">{result.document_type}</span>
+                            )}
+                            <span className="px-2 py-0.5 bg-slate-800 text-purple-400/60 text-xs rounded font-mono">{result.domain}</span>
+                            {result.category_names?.map((name, idx) => (
+                              <span key={idx} className="px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs rounded font-mono">{name}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </FuturisticFrame>
+            
+            {/* Collate Sessions - Owner Only */}
+            {isOwner && sessions.length > 0 && (
+              <FuturisticFrame title="📅 COLLATE SESSIONS" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {sessions.map((session, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 hover:bg-blue-500/10 rounded">
+                      <div className="flex items-center gap-3">
+                        <Calendar className="w-4 h-4 text-blue-400" />
+                        <span className="text-purple-300 font-mono text-sm">{session.timestamp}</span>
+                        <span className="text-pink-400 font-mono text-xs">({session.result_count} results)</span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteSession(session.timestamp)}
+                        className="p-1 text-red-400/60 hover:text-red-400 rounded hover:bg-red-500/10"
+                        title="Delete session"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </FuturisticFrame>
+            )}
+          </div>
+        </div>
+        
         <BookSalesBanner variant="compact" />
       </div>
     </Layout>
