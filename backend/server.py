@@ -1183,6 +1183,21 @@ async def get_categories(
     
     return result
 
+@api_router.get("/categories/with-counts")
+async def get_categories_with_counts(user: dict = Depends(require_user)):
+    """Get user's categories with result counts"""
+    categories = await db.categories.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
+    
+    # Get counts for each category
+    for cat in categories:
+        count = await db.search_results.count_documents({
+            "user_id": user["id"],
+            "categories": cat["id"]
+        })
+        cat["result_count"] = count
+    
+    return {"categories": categories}
+
 @api_router.get("/categories/{category_id}", response_model=CategoryResponse)
 async def get_category(category_id: str, user: dict = Depends(require_user)):
     category = await db.categories.find_one({"id": category_id})
