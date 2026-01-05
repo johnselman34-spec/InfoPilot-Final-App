@@ -356,12 +356,14 @@ class InfoPilotTester:
             
             if response.status_code == 200:
                 data = response.json()
+                categories = data.get("categories", [])
+                
                 self.log(f"✅ Categories with counts retrieved:")
-                self.log(f"   Categories Count: {len(data) if isinstance(data, list) else 'N/A'}")
+                self.log(f"   Categories Count: {len(categories)}")
                 
                 # Check if categories have result_count field
-                if isinstance(data, list) and len(data) > 0:
-                    first_category = data[0]
+                if len(categories) > 0:
+                    first_category = categories[0]
                     if "result_count" in first_category:
                         self.log(f"   First category result_count: {first_category.get('result_count')}")
                         self.log("✅ Categories include result_count field")
