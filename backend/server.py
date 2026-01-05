@@ -1386,7 +1386,9 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
             }
             
             await db.search_results.insert_one(search_result)
-            collated_results.append(search_result)
+            # Return a clean copy without MongoDB _id
+            clean_result = {k: v for k, v in search_result.items() if k != "_id"}
+            collated_results.append(clean_result)
     
     return {
         "message": f"Collated {len(collated_results)} results into categories",
