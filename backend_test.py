@@ -520,9 +520,9 @@ class InfoPilotTester:
             return False
     
     def run_all_tests(self):
-        """Run all backend tests"""
+        """Run all backend tests for Ultimate Search features"""
         self.log("=" * 60)
-        self.log("STARTING INFOPILOT BACKEND API TESTS")
+        self.log("STARTING INFOPILOT ULTIMATE SEARCH BACKEND API TESTS")
         self.log("=" * 60)
         
         results = {}
@@ -530,27 +530,39 @@ class InfoPilotTester:
         # Test 1: Health Check
         results['health_check'] = self.test_health_check()
         
-        # Test 2: User Registration
-        results['user_registration'] = self.test_user_registration()
-        
-        # Test 3: User Login
+        # Test 2: User Login (using existing test credentials)
         results['user_login'] = self.test_user_login()
         
-        # Test 4: Auth Me
+        # Test 3: Auth Me
         results['auth_me'] = self.test_auth_me()
         
-        # Test 5: Subscription Info
-        results['subscription_info'] = self.test_subscription_info()
+        # Test 4: Create Category (needed for search tests)
+        results['create_category'] = self.test_create_category()
         
-        # Test 6: Stripe Config
-        results['stripe_config'] = self.test_stripe_config()
+        # Test 5: Search & Collate with Google Custom Search
+        results['search_collate'] = self.test_search_collate()
         
-        # Test 7: Create Payment Intent (Stripe Integration)
-        results['create_payment_intent'] = self.test_create_payment_intent()
+        # Test 6: Ultimate Search API
+        results['ultimate_search'] = self.test_ultimate_search()
+        
+        # Test 7: Categories with Counts
+        results['categories_with_counts'] = self.test_categories_with_counts()
+        
+        # Test 8: Collate Sessions
+        results['collate_sessions'] = self.test_collate_sessions()
+        
+        # Test 9: Search Filters
+        results['search_filters'] = self.test_search_filters()
+        
+        # Test 10: AI Search (optional)
+        results['ai_search'] = self.test_ai_search()
+        
+        # Test 11: Delete Results (ownership verification)
+        results['delete_results'] = self.test_delete_results()
         
         # Summary
         self.log("=" * 60)
-        self.log("TEST RESULTS SUMMARY")
+        self.log("ULTIMATE SEARCH TEST RESULTS SUMMARY")
         self.log("=" * 60)
         
         passed = 0
@@ -566,7 +578,7 @@ class InfoPilotTester:
         self.log(f"OVERALL: {passed}/{total} tests passed")
         
         if passed == total:
-            self.log("🎉 ALL TESTS PASSED!")
+            self.log("🎉 ALL ULTIMATE SEARCH TESTS PASSED!")
         else:
             self.log(f"⚠️  {total - passed} tests failed")
         
