@@ -1303,6 +1303,14 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
                 settings
             )
             
+            # Also classify document type
+            document_type = ArticleClassifier.classify_document_type(
+                result["url"],
+                content,
+                result["title"],
+                page_data.get("word_count", 0)
+            )
+            
             result_id = str(uuid.uuid4())
             search_result = {
                 "id": result_id,
@@ -1311,6 +1319,7 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
                 "title": result["title"],
                 "snippet": result["snippet"],
                 "article_type": article_type,
+                "document_type": document_type,
                 "categories": matching_categories,
                 "domain": page_data.get("domain", ""),
                 "detected_year": page_data.get("detected_year"),
