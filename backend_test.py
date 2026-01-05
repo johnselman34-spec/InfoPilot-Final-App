@@ -67,8 +67,8 @@ class InfoPilotTester:
             return False
     
     def test_user_login(self):
-        """Test user login"""
-        self.log(f"Testing user login with email: {self.test_user_email}")
+        """Test user login with existing test credentials"""
+        self.log(f"Testing user login with existing test user: {self.test_user_email}")
         try:
             payload = {
                 "email": self.test_user_email,
@@ -80,6 +80,7 @@ class InfoPilotTester:
                 data = response.json()
                 self.auth_token = data.get("access_token")
                 self.log(f"✅ Login successful: {data['user']['username']}")
+                self.log(f"✅ User is_paid: {data['user'].get('is_paid', False)}")
                 return True
             else:
                 self.log(f"❌ Login failed: {response.status_code} - {response.text}")
