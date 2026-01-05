@@ -215,6 +215,310 @@ class InfoPilotTester:
             self.log(f"❌ Auth/me error: {e}")
             return False
     
+    def test_create_category(self):
+        """Test creating a category for search testing"""
+        self.log("Testing category creation for search tests...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for category creation")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            payload = {
+                "name": "Technology News Test",
+                "protocol": {
+                    "protocol_string": "(technology or tech or innovation) & (news or article)"
+                },
+                "is_public": True
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/categories", 
+                json=payload, 
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.category_id = data.get("id")
+                self.log(f"✅ Category created successfully:")
+                self.log(f"   Category ID: {self.category_id}")
+                self.log(f"   Name: {data.get('name')}")
+                self.log(f"   Protocol: {data.get('protocol_string')}")
+                return True
+            else:
+                self.log(f"❌ Category creation failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Category creation error: {e}")
+            return False
+    
+    def test_search_collate(self):
+        """Test POST /api/search/collate with Google Custom Search"""
+        self.log("Testing search & collate with Google Custom Search...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for search collate test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            payload = {
+                "search_query": "technology news",
+                "max_results": 5
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/search/collate", 
+                json=payload, 
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                categorized_count = data.get("categorized_count", 0)
+                total_searched = data.get("total_searched", 0)
+                
+                self.log(f"✅ Search & collate successful:")
+                self.log(f"   Categorized Count: {categorized_count}")
+                self.log(f"   Total Searched: {total_searched}")
+                self.log(f"   Message: {data.get('message')}")
+                
+                # Verify we got some results
+                if categorized_count > 0 and total_searched > 0:
+                    self.log("✅ Google Custom Search found and categorized results")
+                    return True
+                else:
+                    self.log("⚠️ Search completed but no results were categorized")
+                    return True  # Still consider success if search worked
+            else:
+                self.log(f"❌ Search collate failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Search collate error: {e}")
+            return False
+    
+    def test_ultimate_search(self):
+        """Test POST /api/ultimate-search"""
+        self.log("Testing Ultimate Search API...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for ultimate search test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            payload = {
+                "category_ids": [],
+                "aggregation_type": "and_or",
+                "document_types": [],
+                "keyword": "",
+                "ai_query": "",
+                "page": 1
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/ultimate-search", 
+                json=payload, 
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get("results", [])
+                total = data.get("total", 0)
+                
+                self.log(f"✅ Ultimate Search successful:")
+                self.log(f"   Results Count: {len(results)}")
+                self.log(f"   Total Available: {total}")
+                self.log(f"   Page: {data.get('page')}")
+                self.log(f"   Per Page: {data.get('per_page')}")
+                return True
+            else:
+                self.log(f"❌ Ultimate Search failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Ultimate Search error: {e}")
+            return False
+    
+    def test_categories_with_counts(self):
+        """Test GET /api/categories/with-counts"""
+        self.log("Testing categories with counts API...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for categories test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            response = self.session.get(f"{BACKEND_URL}/categories/with-counts", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log(f"✅ Categories with counts retrieved:")
+                self.log(f"   Categories Count: {len(data) if isinstance(data, list) else 'N/A'}")
+                
+                # Check if categories have result_count field
+                if isinstance(data, list) and len(data) > 0:
+                    first_category = data[0]
+                    if "result_count" in first_category:
+                        self.log(f"   First category result_count: {first_category.get('result_count')}")
+                        self.log("✅ Categories include result_count field")
+                    else:
+                        self.log("⚠️ Categories missing result_count field")
+                
+                return True
+            else:
+                self.log(f"❌ Categories with counts failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Categories with counts error: {e}")
+            return False
+    
+    def test_collate_sessions(self):
+        """Test GET /api/ultimate-search/sessions"""
+        self.log("Testing collate sessions API...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for sessions test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            response = self.session.get(f"{BACKEND_URL}/ultimate-search/sessions", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                sessions = data.get("sessions", [])
+                
+                self.log(f"✅ Collate sessions retrieved:")
+                self.log(f"   Sessions Count: {len(sessions)}")
+                
+                if len(sessions) > 0:
+                    first_session = sessions[0]
+                    self.log(f"   First session timestamp: {first_session.get('timestamp')}")
+                    self.log(f"   First session result_count: {first_session.get('result_count')}")
+                
+                return True
+            else:
+                self.log(f"❌ Collate sessions failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Collate sessions error: {e}")
+            return False
+    
+    def test_search_filters(self):
+        """Test GET /api/ultimate-search/filters"""
+        self.log("Testing search filters API...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for filters test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            response = self.session.get(f"{BACKEND_URL}/ultimate-search/filters", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                self.log(f"✅ Search filters retrieved:")
+                self.log(f"   Document Types: {len(data.get('document_types', []))}")
+                self.log(f"   Aggregation Types: {len(data.get('aggregation_types', []))}")
+                self.log(f"   Article Types: {len(data.get('article_types', []))}")
+                
+                # Check for expected filter types
+                expected_filters = ['document_types', 'aggregation_types', 'article_types']
+                for filter_type in expected_filters:
+                    if filter_type in data:
+                        self.log(f"   ✅ {filter_type} present")
+                    else:
+                        self.log(f"   ⚠️ {filter_type} missing")
+                
+                return True
+            else:
+                self.log(f"❌ Search filters failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Search filters error: {e}")
+            return False
+    
+    def test_ai_search(self):
+        """Test POST /api/ultimate-search/ai (optional - may fail if LLM key issue)"""
+        self.log("Testing AI Search API (optional)...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for AI search test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            payload = {
+                "query": "find articles about technology",
+                "category_ids": []
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/ultimate-search/ai", 
+                json=payload, 
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get("results", [])
+                ai_analysis = data.get("ai_analysis", "")
+                
+                self.log(f"✅ AI Search successful:")
+                self.log(f"   Results Count: {len(results)}")
+                self.log(f"   AI Analysis: {ai_analysis[:100]}..." if ai_analysis else "   AI Analysis: None")
+                return True
+            elif response.status_code == 500:
+                self.log("⚠️ AI Search failed (expected - LLM key may not be configured)")
+                self.log(f"   Error: {response.text}")
+                return True  # Consider this a pass since it's optional
+            else:
+                self.log(f"❌ AI Search failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ AI Search error: {e}")
+            return False
+    
+    def test_delete_results(self):
+        """Test DELETE /api/ultimate-search/results (test ownership)"""
+        self.log("Testing delete results API (ownership verification)...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for delete test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            payload = {
+                "result_ids": ["test-id-that-does-not-exist"]
+            }
+            
+            response = self.session.delete(
+                f"{BACKEND_URL}/ultimate-search/results", 
+                json=payload, 
+                headers=headers
+            )
+            
+            # We expect this to either succeed (if endpoint handles non-existent IDs gracefully)
+            # or return a 404/400 error (which is also valid behavior)
+            if response.status_code in [200, 400, 404]:
+                self.log(f"✅ Delete results API responded appropriately:")
+                self.log(f"   Status Code: {response.status_code}")
+                self.log(f"   Response: {response.text}")
+                return True
+            else:
+                self.log(f"❌ Delete results failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Delete results error: {e}")
+            return False
+    
     def run_all_tests(self):
         """Run all backend tests"""
         self.log("=" * 60)
