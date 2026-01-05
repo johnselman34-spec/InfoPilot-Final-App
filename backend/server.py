@@ -50,6 +50,10 @@ stripe.api_key = STRIPE_SECRET_KEY
 # Emergent LLM Configuration
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
 
+# Google Custom Search Configuration
+GOOGLE_SEARCH_API_KEY = os.environ.get('GOOGLE_SEARCH_API_KEY', '')
+GOOGLE_SEARCH_CX = os.environ.get('GOOGLE_SEARCH_CX', '')
+
 # Create the main app without a prefix
 app = FastAPI(title="InfoPilot API", version="2.0.0")
 
