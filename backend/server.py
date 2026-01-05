@@ -436,6 +436,71 @@ class ArticleClassifier:
             return "News Article"
         
         return "News Article"
+    
+    @staticmethod
+    def classify_document_type(url: str, content: str, title: str, word_count: int) -> str:
+        """Classify document type based on URL, content, and structure"""
+        url_lower = url.lower()
+        content_lower = content.lower()
+        title_lower = title.lower()
+        
+        # Check file extensions in URL
+        if '.pdf' in url_lower:
+            return "PDF Document"
+        if '.doc' in url_lower or '.docx' in url_lower:
+            return "MS Word Document"
+        
+        # PhD detection
+        phd_keywords = ['ph.d', 'phd', 'd.phil', 'dissertation', 'thesis', 'doctoral']
+        phd_count = sum(content_lower.count(kw) for kw in phd_keywords)
+        
+        if phd_count >= 5:
+            # Check if it's informative (teaching) or a document
+            informative_markers = ['explains', 'shows how', 'describes', 'methodology']
+            if any(marker in content_lower for marker in informative_markers):
+                return "PhD Informative"
+            return "PhD Document"
+        
+        # Personal Report detection
+        personal_markers = ['i think', 'my experience', 'i believe', 'in my opinion', 'i found', 'i discovered']
+        personal_count = sum(content_lower.count(marker) for marker in personal_markers)
+        
+        if personal_count >= 3:
+            # Organic = original thoughts, Collected = gathered from sources
+            citation_markers = ['according to', 'source:', 'reference:', 'cited', 'et al']
+            if any(marker in content_lower for marker in citation_markers):
+                return "Personal Report (Collected)"
+            return "Personal Report (Organic)"
+        
+        # Educational content
+        educational_markers = ['learn', 'tutorial', 'guide', 'how to', 'lesson', 'course', 'educational']
+        edu_count = sum(content_lower.count(marker) for marker in educational_markers)
+        if edu_count >= 3:
+            # Check if it's curricular (formal education) or non-curricular
+            curricular_markers = ['curriculum', 'syllabus', 'grade', 'exam', 'semester']
+            if not any(marker in content_lower for marker in curricular_markers):
+                return "Educational (Non-Curricular)"
+        
+        # Government document detection
+        gov_domains = ['.gov', 'government', 'federal', 'state.', 'congress', 'senate']
+        if any(domain in url_lower or domain in content_lower for domain in gov_domains):
+            return "Government Document"
+        
+        # Research paper detection
+        research_markers = ['abstract', 'methodology', 'findings', 'conclusion', 'hypothesis', 'peer-reviewed']
+        if sum(content_lower.count(marker) for marker in research_markers) >= 3:
+            return "Research Paper"
+        
+        # News detection
+        news_markers = ['breaking', 'reported', 'news', 'journalist', 'correspondent']
+        if sum(content_lower.count(marker) for marker in news_markers) >= 2:
+            return "News Article"
+        
+        # Blog detection
+        if 'blog' in url_lower or 'blog' in title_lower:
+            return "Blog Post"
+        
+        return "Other"
 
 # ============================================
 # CONTENT FILTER
