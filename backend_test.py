@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 InfoPilot Backend API Testing Suite
-Tests authentication, Stripe payment integration, and subscription APIs
+Tests Ultimate Search Page features including search, collate, categories, and AI search
 """
 
 import requests
@@ -17,9 +17,11 @@ class InfoPilotTester:
     def __init__(self):
         self.session = requests.Session()
         self.auth_token = None
-        self.test_user_email = f"testuser_{uuid.uuid4().hex[:8]}@example.com"
-        self.test_user_password = "testpass123"
-        self.test_username = f"testuser_{uuid.uuid4().hex[:6]}"
+        # Use existing test credentials from review request
+        self.test_user_email = "stripetest123@test.com"
+        self.test_user_password = "password123"
+        self.test_username = "stripetest123"
+        self.category_id = None  # Will store created category ID
         
     def log(self, message):
         print(f"[{datetime.now().strftime('%H:%M:%S')}] {message}")
