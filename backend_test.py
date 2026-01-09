@@ -835,28 +835,43 @@ class InfoPilotTester:
         # Test 3: Auth Me
         results['auth_me'] = self.test_auth_me()
         
-        # Test 4: Create Category (needed for search tests)
+        # Test 4: Subscription Info - Price Check (regular_price: 4.62)
+        results['subscription_info_price_check'] = self.test_subscription_info_price_check()
+        
+        # Test 5: Create Category (needed for search tests)
         results['create_category'] = self.test_create_category()
         
-        # Test 5: Search & Collate with Google Custom Search
-        results['search_collate'] = self.test_search_collate()
+        # Test 6: Categories Tree Structure
+        results['categories_tree'] = self.test_categories_tree()
         
-        # Test 6: Ultimate Search API
-        results['ultimate_search'] = self.test_ultimate_search()
+        # Test 7: Create Subcategory
+        results['create_subcategory'] = self.test_create_subcategory()
         
-        # Test 7: Categories with Counts
+        # Test 8: Search Only (Preview) - technology query with 120 max results
+        results['search_only_preview'] = self.test_search_only_preview()
+        
+        # Test 9: Search & Collate - AI query with 120 max results
+        results['search_collate_ai'] = self.test_search_collate_ai()
+        
+        # Test 10: Ultimate Search with 6 pages
+        results['ultimate_search_6_pages'] = self.test_ultimate_search_6_pages()
+        
+        # Test 11: Categories with Counts
         results['categories_with_counts'] = self.test_categories_with_counts()
         
-        # Test 8: Collate Sessions
+        # Test 12: Admin Settings - Updated Fields
+        results['admin_settings'] = self.test_admin_settings()
+        
+        # Test 13: Collate Sessions
         results['collate_sessions'] = self.test_collate_sessions()
         
-        # Test 9: Search Filters
+        # Test 14: Search Filters
         results['search_filters'] = self.test_search_filters()
         
-        # Test 10: AI Search (optional)
+        # Test 15: AI Search (optional)
         results['ai_search'] = self.test_ai_search()
         
-        # Test 11: Delete Results (ownership verification)
+        # Test 16: Delete Results (ownership verification)
         results['delete_results'] = self.test_delete_results()
         
         # Summary
