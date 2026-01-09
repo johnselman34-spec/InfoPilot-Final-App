@@ -25,7 +25,7 @@ const API = `${BACKEND_URL}/api`;
 const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
 // Google OAuth Client ID
-const GOOGLE_CLIENT_ID = "553762726406-2686s7hi3g38u18bj7s4s1pi2t3ppdsm.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "259303648252-gn1amf5qt9q82b0a7m2gr6cboskv912s.apps.googleusercontent.com";
 
 // Stripe Publishable Key (will be fetched from backend)
 const stripePromise = loadStripe("pk_test_51SlzcOCoPA8fzpEMO2Kl2OnRVlTHYB3AMQIjBesYrVtcnXuMtHae6Pj9KYl55LRqWJZq5hSyxzK1PyunsN99oix500wA2Zot90");
