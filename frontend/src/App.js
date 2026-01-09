@@ -1429,36 +1429,93 @@ const UltimateSearchPage = () => {
           {/* Right Column - Search & Results */}
           <div className="lg:col-span-2 space-y-4">
             {/* Traditional Keyword Search */}
-            <FuturisticFrame title="🔍 KEYWORD SEARCH" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
-              <div className="flex gap-4">
+            <FuturisticFrame title="🔍 WEB SEARCH" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+              <div className="flex gap-4 flex-wrap">
                 <input 
                   type="text"
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
-                  placeholder="Filter by keyword..."
-                  className="flex-1 px-4 py-3 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500 focus:outline-none"
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                  placeholder="Enter search query..."
+                  className="flex-1 min-w-[200px] px-4 py-3 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500 focus:outline-none"
+                  onKeyPress={(e) => e.key === "Enter" && handleSearchOnly()}
                 />
+                {/* Search Only Button - for preview without saving */}
                 <button 
-                  onClick={handleSearch}
-                  disabled={loading}
-                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-mono tracking-wider rounded hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center gap-2"
+                  onClick={handleSearchOnly}
+                  disabled={searchOnlyLoading || loading}
+                  className="px-5 py-3 bg-slate-700 border border-purple-500 text-purple-300 font-mono tracking-wider rounded hover:bg-slate-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                  title="Preview results without saving"
                 >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
-                  {isOwner ? "SEARCH & COLLATE" : "SEARCH"}
+                  {searchOnlyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Eye className="w-5 h-5" />}
+                  SEARCH
                 </button>
+                {/* Search & Collate Button - saves to database (owner only) */}
+                {isOwner && (
+                  <button 
+                    onClick={handleSearchAndCollate}
+                    disabled={loading || searchOnlyLoading}
+                    className="px-5 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono tracking-wider rounded hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center gap-2"
+                    title="Search and save results to categories"
+                  >
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Search className="w-5 h-5" /><Plus className="w-4 h-4" /></>}
+                    SEARCH & COLLATE
+                  </button>
+                )}
               </div>
-              <div className="flex items-center gap-4 mt-4 text-xs font-mono text-purple-400/60">
+              <div className="flex items-center gap-4 mt-4 text-xs font-mono text-purple-400/60 flex-wrap">
                 <span>Selected: {selectedCategories.length} categories</span>
                 <span>•</span>
                 <span>Logic: {aggregationType.toUpperCase()}</span>
                 <span>•</span>
                 <span>Doc Types: {selectedDocTypes.length || "All"}</span>
+                <span>•</span>
+                <span>Max: 6 pages (120 results)</span>
               </div>
             </FuturisticFrame>
             
+            {/* View Saved Results Button */}
+            <FuturisticFrame title="📁 VIEW SAVED RESULTS" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
+              <div className="flex gap-4 items-center flex-wrap">
+                <p className="text-purple-300/70 font-mono text-sm flex-1">Filter through your previously collated results:</p>
+                <button 
+                  onClick={handleViewResults}
+                  disabled={loading}
+                  className="px-6 py-2 bg-blue-600/80 text-white font-mono tracking-wider rounded hover:bg-blue-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Filter className="w-4 h-4" />}
+                  FILTER RESULTS
+                </button>
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-4">
+                  <button 
+                    onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); handleViewResults(); }}
+                    disabled={currentPage <= 1}
+                    className="px-3 py-1 bg-slate-800 text-purple-400 rounded disabled:opacity-30"
+                  >
+                    ←
+                  </button>
+                  <span className="text-purple-400 font-mono text-sm">Page {currentPage} of {totalPages}</span>
+                  <button 
+                    onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); handleViewResults(); }}
+                    disabled={currentPage >= totalPages}
+                    className="px-3 py-1 bg-slate-800 text-purple-400 rounded disabled:opacity-30"
+                  >
+                    →
+                  </button>
+                </div>
+              )}
+            </FuturisticFrame>
+            
             {/* Results Section */}
-            <FuturisticFrame title={`📊 RESULTS (${totalResults})`} color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+            <FuturisticFrame title={`📊 RESULTS (${totalResults})${isPreviewResults ? ' - PREVIEW' : ''}`} color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+              {isPreviewResults && results.length > 0 && (
+                <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
+                  <p className="text-yellow-400 font-mono text-sm flex items-center gap-2">
+                    <Eye className="w-4 h-4" /> Preview mode - results not saved. Use "Search & Collate" to save.
+                  </p>
+                </div>
+              )}
               {results.length === 0 ? (
                 <div className="text-center py-12">
                   <Search className="w-16 h-16 text-purple-500/30 mx-auto mb-4" />
@@ -1466,7 +1523,7 @@ const UltimateSearchPage = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {isOwner && resultsToDelete.length > 0 && (
+                  {isOwner && !isPreviewResults && resultsToDelete.length > 0 && (
                     <div className="flex items-center justify-between p-3 bg-red-500/10 border border-red-500/30 rounded">
                       <span className="text-red-400 font-mono text-sm">{resultsToDelete.length} selected for deletion</span>
                       <button 
@@ -1478,9 +1535,9 @@ const UltimateSearchPage = () => {
                     </div>
                   )}
                   {results.map(result => (
-                    <div key={result.id} className="bg-slate-950 p-4 rounded border border-purple-500/20 hover:border-pink-500/50 transition-colors">
+                    <div key={result.id} className={`bg-slate-950 p-4 rounded border ${isPreviewResults ? 'border-yellow-500/30' : 'border-purple-500/20'} hover:border-pink-500/50 transition-colors`}>
                       <div className="flex items-start gap-3">
-                        {isOwner && (
+                        {isOwner && !isPreviewResults && (
                           <input
                             type="checkbox"
                             checked={resultsToDelete.includes(result.id)}
