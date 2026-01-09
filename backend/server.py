@@ -82,11 +82,11 @@ DEFAULT_BLOCKED_WORDS = [
 # SUBSCRIPTION & BOOK INFO
 # ============================================
 # Welcome Sale: $0.75 for 2 months starting today
-# After sale: $4.70/year
+# After sale: $4.62/year
 SALE_START_DATE = datetime(2026, 1, 4, tzinfo=timezone.utc)  # Today
 SALE_END_DATE = SALE_START_DATE + timedelta(days=60)  # 2 months from now
 SALE_PRICE = 0.75  # Welcome sale price
-REGULAR_PRICE = 4.70  # Regular yearly price after sale
+REGULAR_PRICE = 4.62  # Regular yearly price after sale
 
 def get_current_subscription_price():
     """Get the current subscription price based on sale status"""
