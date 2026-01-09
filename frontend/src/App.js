@@ -1406,9 +1406,12 @@ const UltimateSearchPage = () => {
   const [isPreviewResults, setIsPreviewResults] = useState(false);
   
   // Page customization state
-  const [pageSettings, setPageSettings] = useState({ page_name: "My Ultimate Search", photos: [] });
+  const [pageSettings, setPageSettings] = useState({ page_name: "My Ultimate Search", photos: [], show_name_suggestion: true, name_suggestions: [] });
   const [showNameEditor, setShowNameEditor] = useState(false);
   const [photos, setPhotos] = useState([]);
+  const [showPhotoUploader, setShowPhotoUploader] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   
   // Determine if current user is the owner of their own Ultimate Search page
   const isOwner = true; // In this context, user always owns their own search page
@@ -1418,7 +1421,92 @@ const UltimateSearchPage = () => {
     fetchTreeCategories();
     fetchFilters();
     fetchSessions();
+    fetchPageSettings();
+    fetchPhotos();
   }, []);
+  
+  const fetchPageSettings = async () => {
+    try {
+      const res = await axios.get(`${API}/ultimate-search/page-settings`);
+      setPageSettings(res.data);
+    } catch (error) {
+      console.error("Failed to fetch page settings");
+    }
+  };
+  
+  const fetchPhotos = async () => {
+    try {
+      const res = await axios.get(`${API}/ultimate-search/photos`);
+      setPhotos(res.data.photos || []);
+    } catch (error) {
+      console.error("Failed to fetch photos");
+    }
+  };
+  
+  const handleUpdatePageName = async (newName) => {
+    try {
+      await axios.put(`${API}/ultimate-search/page-settings`, { page_name: newName });
+      setPageSettings(prev => ({ ...prev, page_name: newName, show_name_suggestion: false }));
+      toast.success("Page name updated!");
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to update page name");
+      return false;
+    }
+  };
+  
+  const handlePhotoUpload = async (file) => {
+    if (!file) return;
+    
+    // Check file size (15MB limit)
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Photo must be less than 15MB");
+      return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+    
+    setUploadingPhoto(true);
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const base64Data = e.target.result.split(',')[1];
+          const res = await axios.post(`${API}/ultimate-search/photos`, {
+            photo_data: base64Data,
+            photo_name: file.name
+          });
+          toast.success(res.data.message);
+          fetchPhotos();
+          setShowPhotoUploader(false);
+        } catch (error) {
+          toast.error(error.response?.data?.detail || "Failed to upload photo");
+        } finally {
+          setUploadingPhoto(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast.error("Failed to process photo");
+      setUploadingPhoto(false);
+    }
+  };
+  
+  const handleDeletePhoto = async (photoId) => {
+    if (!window.confirm("Delete this photo?")) return;
+    try {
+      await axios.delete(`${API}/ultimate-search/photos/${photoId}`);
+      toast.success("Photo deleted");
+      fetchPhotos();
+    } catch (error) {
+      toast.error("Failed to delete photo");
+    }
+  };
   
   const fetchCategories = async () => {
     try {
