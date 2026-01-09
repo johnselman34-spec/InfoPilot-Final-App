@@ -303,7 +303,7 @@ const BookSalesBanner = ({ variant = "full" }) => {
                 {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />)}
               </div>
             </div>
-            <p className="text-purple-300 text-xs font-mono">19 Five-Star Reviews • Supernatural Thriller</p>
+            <p className="text-purple-300 text-xs font-mono">19 Five-Star Reviews • Supernatural Thriller Comedy</p>
             <p className="text-blue-300/70 text-xs font-mono italic mt-1">"A profound and unforgettable literary piece"</p>
           </div>
           <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-mono text-sm rounded hover:scale-105 transition-transform flex items-center gap-1">
