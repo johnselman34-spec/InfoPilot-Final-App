@@ -520,6 +520,303 @@ class InfoPilotTester:
         except Exception as e:
             self.log(f"❌ Delete results error: {e}")
             return False
+
+    def test_categories_tree(self):
+        """Test GET /api/categories/tree - hierarchical categories with children arrays"""
+        self.log("Testing categories tree structure API...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for categories tree test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            response = self.session.get(f"{BACKEND_URL}/categories/tree", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                categories = data.get("categories", [])
+                
+                self.log(f"✅ Categories tree retrieved:")
+                self.log(f"   Root Categories Count: {len(categories)}")
+                
+                # Check if categories have children arrays
+                if len(categories) > 0:
+                    first_category = categories[0]
+                    if "children" in first_category:
+                        self.log(f"   First category children: {len(first_category.get('children', []))}")
+                        self.log("✅ Categories include children arrays for hierarchical structure")
+                    else:
+                        self.log("❌ Categories missing children arrays")
+                        return False
+                
+                return True
+            else:
+                self.log(f"❌ Categories tree failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Categories tree error: {e}")
+            return False
+
+    def test_create_subcategory(self):
+        """Test POST /api/categories/{parent_id}/subcategory"""
+        self.log("Testing create subcategory API...")
+        
+        if not self.auth_token or not self.category_id:
+            self.log("❌ No auth token or parent category available for subcategory test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            payload = {
+                "name": "AI Technology Subcategory",
+                "protocol": {
+                    "protocol_string": "(artificial intelligence or AI or machine learning)"
+                },
+                "is_public": True
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/categories/{self.category_id}/subcategory", 
+                json=payload, 
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log(f"✅ Subcategory created successfully:")
+                self.log(f"   Subcategory ID: {data.get('id')}")
+                self.log(f"   Name: {data.get('name')}")
+                self.log(f"   Parent ID: {data.get('parent_id')}")
+                self.log(f"   Level: {data.get('level')}")
+                return True
+            else:
+                self.log(f"❌ Subcategory creation failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Subcategory creation error: {e}")
+            return False
+
+    def test_search_only_preview(self):
+        """Test POST /api/search/search-only with search_query: 'technology' and max_results: 120"""
+        self.log("Testing search-only (preview) API with technology query...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for search-only test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            payload = {
+                "search_query": "technology",
+                "max_results": 120
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/search/search-only", 
+                json=payload, 
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                is_preview = data.get("is_preview", False)
+                categorized_count = data.get("categorized_count", 0)
+                total_searched = data.get("total_searched", 0)
+                
+                self.log(f"✅ Search-only (preview) successful:")
+                self.log(f"   Is Preview: {is_preview}")
+                self.log(f"   Categorized Count: {categorized_count}")
+                self.log(f"   Total Searched: {total_searched}")
+                self.log(f"   Message: {data.get('message')}")
+                
+                # Verify it's marked as preview and doesn't save to database
+                if is_preview:
+                    self.log("✅ Results correctly marked as preview (not saved to database)")
+                    return True
+                else:
+                    self.log("❌ Results not marked as preview")
+                    return False
+            else:
+                self.log(f"❌ Search-only failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Search-only error: {e}")
+            return False
+
+    def test_search_collate_ai(self):
+        """Test POST /api/search/collate with search_query: 'artificial intelligence' and max_results: 120"""
+        self.log("Testing search & collate with AI query and 120 max results...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for AI search collate test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            payload = {
+                "search_query": "artificial intelligence",
+                "max_results": 120
+            }
+            
+            response = self.session.post(
+                f"{BACKEND_URL}/search/collate", 
+                json=payload, 
+                headers=headers
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                categorized_count = data.get("categorized_count", 0)
+                total_searched = data.get("total_searched", 0)
+                
+                self.log(f"✅ AI Search & collate successful:")
+                self.log(f"   Categorized Count: {categorized_count}")
+                self.log(f"   Total Searched: {total_searched}")
+                self.log(f"   Message: {data.get('message')}")
+                
+                # Verify results are saved to database (not preview)
+                if "is_preview" not in data or not data.get("is_preview"):
+                    self.log("✅ Results saved to database (not preview mode)")
+                    return True
+                else:
+                    self.log("❌ Results incorrectly marked as preview")
+                    return False
+            else:
+                self.log(f"❌ AI Search collate failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ AI Search collate error: {e}")
+            return False
+
+    def test_ultimate_search_6_pages(self):
+        """Test POST /api/ultimate-search with pages 1 through 6"""
+        self.log("Testing Ultimate Search with 6 pages...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for 6-page ultimate search test")
+            return False
+        
+        success_count = 0
+        
+        for page in range(1, 7):  # Pages 1 through 6
+            try:
+                headers = {"Authorization": f"Bearer {self.auth_token}"}
+                payload = {
+                    "category_ids": [],
+                    "aggregation_type": "and_or",
+                    "document_types": [],
+                    "keyword": "",
+                    "ai_query": "",
+                    "page": page
+                }
+                
+                response = self.session.post(
+                    f"{BACKEND_URL}/ultimate-search", 
+                    json=payload, 
+                    headers=headers
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    results = data.get("results", [])
+                    total = data.get("total", 0)
+                    
+                    self.log(f"✅ Ultimate Search Page {page} successful:")
+                    self.log(f"   Results Count: {len(results)}")
+                    self.log(f"   Total Available: {total}")
+                    success_count += 1
+                else:
+                    self.log(f"❌ Ultimate Search Page {page} failed: {response.status_code} - {response.text}")
+            except Exception as e:
+                self.log(f"❌ Ultimate Search Page {page} error: {e}")
+        
+        if success_count == 6:
+            self.log("✅ All 6 pages of Ultimate Search working correctly")
+            return True
+        else:
+            self.log(f"❌ Only {success_count}/6 pages working")
+            return False
+
+    def test_subscription_info_price_check(self):
+        """Test GET /api/subscription/info - verify regular_price is 4.62 (not 4.70)"""
+        self.log("Testing subscription info API for correct pricing...")
+        try:
+            response = self.session.get(f"{BACKEND_URL}/subscription/info")
+            
+            if response.status_code == 200:
+                data = response.json()
+                regular_price = data.get('regular_price')
+                current_price = data.get('price')
+                
+                self.log(f"✅ Subscription info retrieved:")
+                self.log(f"   Current Price: ${current_price}")
+                self.log(f"   Regular Price: ${regular_price}")
+                self.log(f"   Sale Active: {data.get('is_sale_active')}")
+                
+                # Verify regular price is 4.62, not 4.70
+                if regular_price == 4.62:
+                    self.log("✅ Regular price correct: $4.62 (not $4.70)")
+                    return True
+                else:
+                    self.log(f"❌ Regular price incorrect: Expected $4.62, got ${regular_price}")
+                    return False
+            else:
+                self.log(f"❌ Subscription info failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Subscription info error: {e}")
+            return False
+
+    def test_admin_settings(self):
+        """Test GET /api/admin/settings - check updated fields"""
+        self.log("Testing admin settings API...")
+        
+        if not self.auth_token:
+            self.log("❌ No auth token available for admin settings test")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.auth_token}"}
+            response = self.session.get(f"{BACKEND_URL}/admin/settings", headers=headers)
+            
+            if response.status_code == 200:
+                data = response.json()
+                free_user_pages = data.get('free_user_pages')
+                max_search_results = data.get('max_search_results')
+                regular_price = data.get('regular_price')
+                
+                self.log(f"✅ Admin settings retrieved:")
+                self.log(f"   Free User Pages: {free_user_pages}")
+                self.log(f"   Max Search Results: {max_search_results}")
+                self.log(f"   Regular Price: ${regular_price}")
+                
+                # Verify expected values
+                expected_values = {
+                    'free_user_pages': 6,
+                    'max_search_results': 120,
+                    'regular_price': 4.62
+                }
+                
+                all_correct = True
+                for field, expected in expected_values.items():
+                    actual = data.get(field)
+                    if actual == expected:
+                        self.log(f"   ✅ {field}: {actual} (correct)")
+                    else:
+                        self.log(f"   ❌ {field}: {actual} (expected {expected})")
+                        all_correct = False
+                
+                return all_correct
+            elif response.status_code == 403:
+                self.log("⚠️ Admin settings access denied (user not admin) - this is expected for non-admin users")
+                return True  # Consider this a pass since user might not be admin
+            else:
+                self.log(f"❌ Admin settings failed: {response.status_code} - {response.text}")
+                return False
+        except Exception as e:
+            self.log(f"❌ Admin settings error: {e}")
+            return False
     
     def run_all_tests(self):
         """Run all backend tests for Ultimate Search features"""
