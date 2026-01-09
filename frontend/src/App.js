@@ -64,7 +64,7 @@ const BOOK_INFO = {
 
 // Pricing Info
 const SALE_PRICE = 0.75;
-const REGULAR_PRICE = 4.70;
+const REGULAR_PRICE = 4.62;
 
 // Auth Context
 const AuthContext = createContext(null);
