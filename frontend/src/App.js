@@ -965,17 +965,122 @@ const CategoriesPage = () => {
   );
 };
 
+// Recursive Category Tree Component with +/- expansion
+const CategoryTreeItem = ({ category, selectedCategories, onToggle, level = 0 }) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const hasChildren = category.children && category.children.length > 0;
+  
+  return (
+    <div className="select-none">
+      <div 
+        className={`flex items-center gap-2 p-2 hover:bg-purple-500/10 rounded cursor-pointer ${level > 0 ? 'ml-' + (level * 4) : ''}`}
+        style={{ marginLeft: level * 16 }}
+      >
+        {hasChildren ? (
+          <button
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+            className="w-5 h-5 flex items-center justify-center text-purple-400 hover:text-pink-400 transition-colors"
+          >
+            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+          </button>
+        ) : (
+          <span className="w-5 h-5" />
+        )}
+        <label className="flex items-center gap-2 flex-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={selectedCategories.includes(category.id)}
+            onChange={() => onToggle(category.id)}
+            className="w-4 h-4 rounded bg-slate-950 border-purple-500/30 text-pink-500 focus:ring-pink-500"
+          />
+          <span className="text-purple-300 font-mono text-sm flex-1">{category.name}</span>
+          <span className="text-pink-400 font-mono text-xs">({category.result_count || 0})</span>
+        </label>
+      </div>
+      {hasChildren && isExpanded && (
+        <div className="border-l border-purple-500/20 ml-2">
+          {category.children.map(child => (
+            <CategoryTreeItem 
+              key={child.id} 
+              category={child} 
+              selectedCategories={selectedCategories}
+              onToggle={onToggle}
+              level={level + 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Add Subcategory Modal
+const AddSubcategoryModal = ({ parentCategory, onClose, onSuccess }) => {
+  const [name, setName] = useState("");
+  const [protocol, setProtocol] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+  const [creating, setCreating] = useState(false);
+  
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setCreating(true);
+    try {
+      await axios.post(`${API}/categories/${parentCategory.id}/subcategory`, {
+        name,
+        protocol: { protocol_string: protocol },
+        is_public: isPublic
+      });
+      toast.success("Subcategory created!");
+      onSuccess();
+      onClose();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to create subcategory");
+    } finally {
+      setCreating(false);
+    }
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      <FuturisticFrame title={`ADD SUBCATEGORY TO: ${parentCategory.name}`} color="pink" className="bg-slate-900 border border-pink-500/30 rounded-lg max-w-lg w-full">
+        <form onSubmit={handleCreate} className="space-y-4">
+          <div>
+            <label className="block text-xs font-mono text-purple-400 mb-1">SUBCATEGORY NAME</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500" required />
+          </div>
+          <div>
+            <label className="block text-xs font-mono text-purple-400 mb-1">INFOPILOT 2.0 PROTOCOL</label>
+            <textarea value={protocol} onChange={(e) => setProtocol(e.target.value)} placeholder="(word1 or word2) & (word3)+ & (excluded)^" className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono h-24 focus:border-pink-500" required />
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="checkbox" id="subIsPublic" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="rounded bg-slate-950 border-purple-500/30" />
+            <label htmlFor="subIsPublic" className="text-sm text-purple-300 font-mono">Make public</label>
+          </div>
+          <div className="flex gap-4">
+            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-purple-500/30 text-purple-300 font-mono rounded hover:bg-purple-500/10">CANCEL</button>
+            <button type="submit" disabled={creating} className="flex-1 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50">
+              {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "CREATE"}
+            </button>
+          </div>
+        </form>
+      </FuturisticFrame>
+    </div>
+  );
+};
+
 // Ultimate Search Page - COMPREHENSIVE with AI Search, Document Types, AND/OR/AND Radio Buttons
 const UltimateSearchPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
+  const [treeCategories, setTreeCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [aggregationType, setAggregationType] = useState("and_or");
   const [documentTypes, setDocumentTypes] = useState([]);
   const [selectedDocTypes, setSelectedDocTypes] = useState([]);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchOnlyLoading, setSearchOnlyLoading] = useState(false);
   const [aiQuery, setAiQuery] = useState("");
   const [keyword, setKeyword] = useState("");
   const [filters, setFilters] = useState(null);
@@ -983,14 +1088,18 @@ const UltimateSearchPage = () => {
   const [selectedSession, setSelectedSession] = useState(null);
   const [totalResults, setTotalResults] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [resultsToDelete, setResultsToDelete] = useState([]);
+  const [showAddSubcategory, setShowAddSubcategory] = useState(null);
+  const [isPreviewResults, setIsPreviewResults] = useState(false);
   
   // Determine if current user is the owner of their own Ultimate Search page
   const isOwner = true; // In this context, user always owns their own search page
   
   useEffect(() => {
     fetchCategories();
+    fetchTreeCategories();
     fetchFilters();
     fetchSessions();
   }, []);
@@ -1001,6 +1110,15 @@ const UltimateSearchPage = () => {
       setCategories(res.data.categories || []);
     } catch (error) {
       console.error("Failed to fetch categories");
+    }
+  };
+  
+  const fetchTreeCategories = async () => {
+    try {
+      const res = await axios.get(`${API}/categories/tree`);
+      setTreeCategories(res.data.categories || []);
+    } catch (error) {
+      console.error("Failed to fetch tree categories");
     }
   };
   
@@ -1023,8 +1141,51 @@ const UltimateSearchPage = () => {
     }
   };
   
-  const handleSearch = async () => {
+  // Search & Collate - saves results to database
+  const handleSearchAndCollate = async () => {
     setLoading(true);
+    setIsPreviewResults(false);
+    try {
+      const res = await axios.post(`${API}/search/collate`, {
+        search_query: keyword || aiQuery || "general search",
+        max_results: 120  // 6 pages * 20 results
+      });
+      setResults(res.data.results || []);
+      setTotalResults(res.data.categorized_count || 0);
+      toast.success(`Collated ${res.data.categorized_count} of ${res.data.total_searched} results`);
+      fetchSessions();
+      fetchCategories();
+      fetchTreeCategories();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Search & Collate failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Search Only - does NOT save to database (for visitors)
+  const handleSearchOnly = async () => {
+    setSearchOnlyLoading(true);
+    setIsPreviewResults(true);
+    try {
+      const res = await axios.post(`${API}/search/search-only`, {
+        search_query: keyword || aiQuery || "general search",
+        max_results: 120
+      });
+      setResults(res.data.results || []);
+      setTotalResults(res.data.categorized_count || 0);
+      toast.success(`Found ${res.data.categorized_count} matching results (preview only)`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Search failed");
+    } finally {
+      setSearchOnlyLoading(false);
+    }
+  };
+  
+  // View saved results with filters
+  const handleViewResults = async () => {
+    setLoading(true);
+    setIsPreviewResults(false);
     try {
       const res = await axios.post(`${API}/ultimate-search`, {
         category_ids: selectedCategories,
@@ -1036,7 +1197,8 @@ const UltimateSearchPage = () => {
       });
       setResults(res.data.results || []);
       setTotalResults(res.data.total || 0);
-      toast.success(`Found ${res.data.total} results`);
+      setTotalPages(res.data.total_pages || 1);
+      toast.success(`Found ${res.data.total} saved results`);
     } catch (error) {
       toast.error(error.response?.data?.detail || "Search failed");
     } finally {
