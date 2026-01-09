@@ -70,6 +70,118 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Google Maps API Key
+GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
+
+# ============================================
+# LOCATION EXTRACTION
+# ============================================
+# Common US cities and states for location detection
+US_CITIES = [
+    "New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia",
+    "San Antonio", "San Diego", "Dallas", "San Jose", "Austin", "Jacksonville",
+    "Fort Worth", "Columbus", "Charlotte", "San Francisco", "Indianapolis", "Seattle",
+    "Denver", "Washington", "Boston", "Nashville", "Baltimore", "Oklahoma City",
+    "Louisville", "Portland", "Las Vegas", "Milwaukee", "Albuquerque", "Tucson",
+    "Fresno", "Sacramento", "Mesa", "Atlanta", "Kansas City", "Colorado Springs",
+    "Omaha", "Raleigh", "Miami", "Cleveland", "Tulsa", "Oakland", "Minneapolis",
+    "Wichita", "Arlington", "New Orleans", "Bakersfield", "Tampa", "Aurora",
+    "Honolulu", "Anaheim", "Santa Ana", "Corpus Christi", "Riverside", "St. Louis",
+    "Lexington", "Pittsburgh", "Stockton", "Anchorage", "Cincinnati", "Saint Paul",
+    "Greensboro", "Toledo", "Newark", "Plano", "Henderson", "Lincoln", "Orlando",
+    "Jersey City", "Chula Vista", "Buffalo", "Fort Wayne", "Chandler", "St. Petersburg",
+    "Laredo", "Durham", "Irvine", "Madison", "Norfolk", "Lubbock", "Gilbert",
+    "Winston-Salem", "Glendale", "Reno", "Hialeah", "Garland", "Chesapeake",
+    "Irving", "North Las Vegas", "Scottsdale", "Baton Rouge", "Fremont", "Richmond",
+    "Boise", "San Bernardino"
+]
+
+US_STATES = [
+    "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
+    "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho",
+    "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana",
+    "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi",
+    "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey",
+    "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma",
+    "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota",
+    "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington",
+    "West Virginia", "Wisconsin", "Wyoming"
+]
+
+COUNTRIES = [
+    "United States", "USA", "U.S.", "Canada", "Mexico", "United Kingdom", "UK",
+    "Germany", "France", "Italy", "Spain", "Australia", "Japan", "China", "India",
+    "Brazil", "Russia", "South Korea", "Netherlands", "Switzerland", "Sweden",
+    "Norway", "Denmark", "Finland", "Ireland", "Belgium", "Austria", "Poland",
+    "Portugal", "Greece", "Turkey", "Israel", "Saudi Arabia", "UAE", "Egypt",
+    "South Africa", "Nigeria", "Kenya", "Argentina", "Chile", "Colombia", "Peru"
+]
+
+# City coordinates for mapping (lat, lng)
+CITY_COORDINATES = {
+    "New York": (40.7128, -74.0060), "Los Angeles": (34.0522, -118.2437),
+    "Chicago": (41.8781, -87.6298), "Houston": (29.7604, -95.3698),
+    "Phoenix": (33.4484, -112.0740), "Philadelphia": (39.9526, -75.1652),
+    "San Antonio": (29.4241, -98.4936), "San Diego": (32.7157, -117.1611),
+    "Dallas": (32.7767, -96.7970), "San Jose": (37.3382, -121.8863),
+    "Austin": (30.2672, -97.7431), "San Francisco": (37.7749, -122.4194),
+    "Seattle": (47.6062, -122.3321), "Denver": (39.7392, -104.9903),
+    "Washington": (38.9072, -77.0369), "Boston": (42.3601, -71.0589),
+    "Nashville": (36.1627, -86.7816), "Atlanta": (33.7490, -84.3880),
+    "Miami": (25.7617, -80.1918), "Portland": (45.5051, -122.6750),
+    "Las Vegas": (36.1699, -115.1398), "Minneapolis": (44.9778, -93.2650),
+    "Tampa": (27.9506, -82.4572), "Orlando": (28.5383, -81.3792),
+    "Cleveland": (41.4993, -81.6944), "Pittsburgh": (40.4406, -79.9959),
+    "Cincinnati": (39.1031, -84.5120), "Kansas City": (39.0997, -94.5786),
+    "Indianapolis": (39.7684, -86.1581), "Columbus": (39.9612, -82.9988),
+    "Charlotte": (35.2271, -80.8431), "Detroit": (42.3314, -83.0458),
+    "Baltimore": (39.2904, -76.6122), "Salt Lake City": (40.7608, -111.8910),
+    "San Juan": (18.4655, -66.1057), "Honolulu": (21.3069, -157.8583),
+    "Anchorage": (61.2181, -149.9003), "London": (51.5074, -0.1278),
+    "Paris": (48.8566, 2.3522), "Berlin": (52.5200, 13.4050),
+    "Tokyo": (35.6762, 139.6503), "Sydney": (-33.8688, 151.2093),
+    "Toronto": (43.6532, -79.3832), "Vancouver": (49.2827, -123.1207),
+}
+
+def extract_locations(content: str, title: str) -> List[Dict[str, Any]]:
+    """Extract location mentions from content and return with coordinates"""
+    locations = []
+    content_lower = content.lower()
+    title_lower = title.lower()
+    
+    # Check for city mentions
+    for city in US_CITIES:
+        if city.lower() in content_lower or city.lower() in title_lower:
+            if city in CITY_COORDINATES:
+                locations.append({
+                    "name": city,
+                    "type": "city",
+                    "lat": CITY_COORDINATES[city][0],
+                    "lng": CITY_COORDINATES[city][1]
+                })
+    
+    # Check for international cities
+    international_cities = ["London", "Paris", "Berlin", "Tokyo", "Sydney", "Toronto", "Vancouver"]
+    for city in international_cities:
+        if city.lower() in content_lower or city.lower() in title_lower:
+            if city in CITY_COORDINATES:
+                locations.append({
+                    "name": city,
+                    "type": "city",
+                    "lat": CITY_COORDINATES[city][0],
+                    "lng": CITY_COORDINATES[city][1]
+                })
+    
+    # Remove duplicates
+    seen = set()
+    unique_locations = []
+    for loc in locations:
+        if loc["name"] not in seen:
+            seen.add(loc["name"])
+            unique_locations.append(loc)
+    
+    return unique_locations[:5]  # Limit to 5 locations per result
+
 # ============================================
 # BLOCKED WORDS LIST (Expandable by Admin)
 # ============================================
