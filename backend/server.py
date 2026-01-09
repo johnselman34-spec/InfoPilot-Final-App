@@ -1642,9 +1642,25 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
     if not search_results:
         return {"message": "No search results found", "results": [], "categorized_count": 0}
     
+    # Check URLs for safety using Google Safe Browsing API
+    urls_to_check = [r["url"] for r in search_results]
+    safety_check = await check_url_safety(urls_to_check)
+    unsafe_urls = set()
+    if safety_check.get("checked"):
+        for url, status in safety_check.get("results", {}).items():
+            if not status.get("safe", True):
+                unsafe_urls.add(url)
+                logger.warning(f"Unsafe URL blocked: {url} - Threats: {status.get('threats', [])}")
+    
     collated_results = []
+    blocked_unsafe_count = 0
     
     for result in search_results:
+        # Skip unsafe URLs
+        if result["url"] in unsafe_urls:
+            blocked_unsafe_count += 1
+            continue
+        
         page_data = await fetch_page_content(result["url"])
         
         if not page_data["success"]:
@@ -1695,6 +1711,7 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
                 "detected_year": page_data.get("detected_year"),
                 "word_count": page_data.get("word_count", 0),
                 "locations": locations,
+                "safety_checked": safety_check.get("checked", False),
                 "reactions": {},
                 "collated_at": datetime.now(timezone.utc).isoformat()
             }
@@ -1704,11 +1721,17 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
             clean_result = {k: v for k, v in search_result.items() if k != "_id"}
             collated_results.append(clean_result)
     
+    response_message = f"Collated {len(collated_results)} results into categories"
+    if blocked_unsafe_count > 0:
+        response_message += f" ({blocked_unsafe_count} unsafe URLs blocked)"
+    
     return {
-        "message": f"Collated {len(collated_results)} results into categories",
+        "message": response_message,
         "results": collated_results,
         "categorized_count": len(collated_results),
-        "total_searched": len(search_results)
+        "total_searched": len(search_results),
+        "unsafe_blocked": blocked_unsafe_count,
+        "safety_checked": safety_check.get("checked", False)
     }
 
 @api_router.post("/search/search-only")
