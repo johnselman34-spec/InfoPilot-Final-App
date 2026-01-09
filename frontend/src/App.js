@@ -23,7 +23,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Google OAuth Client ID
-const GOOGLE_CLIENT_ID = "553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "553762726406-2686s7hi3g38u18bj7s4s1pi2t3ppdsm.apps.googleusercontent.com";
 
 // Stripe Publishable Key (will be fetched from backend)
 const stripePromise = loadStripe("pk_test_51SlzcOCoPA8fzpEMO2Kl2OnRVlTHYB3AMQIjBesYrVtcnXuMtHae6Pj9KYl55LRqWJZq5hSyxzK1PyunsN99oix500wA2Zot90");
