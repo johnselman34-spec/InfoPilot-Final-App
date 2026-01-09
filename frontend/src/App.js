@@ -968,6 +968,165 @@ const CategoriesPage = () => {
   );
 };
 
+// Google Maps Component with Category-Colored Markers
+const CategoryMap = ({ selectedCategories }) => {
+  const [mapData, setMapData] = useState({ markers: [], categories: {} });
+  const [selectedMarker, setSelectedMarker] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY || "",
+    id: 'google-map-script'
+  });
+  
+  const mapContainerStyle = {
+    width: '100%',
+    height: '400px',
+    borderRadius: '8px'
+  };
+  
+  const defaultCenter = useMemo(() => ({ lat: 39.8283, lng: -98.5795 }), []); // Center of USA
+  
+  const mapOptions = useMemo(() => ({
+    styles: [
+      { elementType: "geometry", stylers: [{ color: "#1a1a2e" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#1a1a2e" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#8b5cf6" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f0f1a" }] },
+      { featureType: "road", elementType: "geometry", stylers: [{ color: "#2d2d44" }] },
+      { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#1a1a2e" }] },
+      { featureType: "poi", elementType: "geometry", stylers: [{ color: "#1f1f35" }] },
+    ],
+    disableDefaultUI: false,
+    zoomControl: true,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: true
+  }), []);
+  
+  useEffect(() => {
+    fetchMapData();
+  }, [selectedCategories]);
+  
+  const fetchMapData = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/ultimate-search/map-data`);
+      let markers = res.data.markers || [];
+      
+      // Filter by selected categories if any
+      if (selectedCategories && selectedCategories.length > 0) {
+        markers = markers.filter(m => selectedCategories.includes(m.category_id));
+      }
+      
+      setMapData({
+        markers,
+        categories: res.data.categories || {}
+      });
+    } catch (error) {
+      console.error("Failed to fetch map data");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  if (loadError) {
+    return (
+      <div className="bg-slate-900/80 rounded-lg p-6 text-center">
+        <MapPin className="w-12 h-12 text-red-400 mx-auto mb-2" />
+        <p className="text-red-400 font-mono">Failed to load Google Maps</p>
+      </div>
+    );
+  }
+  
+  if (!isLoaded || loading) {
+    return (
+      <div className="bg-slate-900/80 rounded-lg p-6 text-center h-[400px] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-pink-400" />
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-4">
+      <GoogleMap
+        mapContainerStyle={mapContainerStyle}
+        center={defaultCenter}
+        zoom={4}
+        options={mapOptions}
+      >
+        {mapData.markers.map((marker) => (
+          <Marker
+            key={marker.id}
+            position={{ lat: marker.lat, lng: marker.lng }}
+            onClick={() => setSelectedMarker(marker)}
+            icon={{
+              path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+              fillColor: marker.color,
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 1,
+              scale: 1.5,
+              anchor: { x: 12, y: 24 }
+            }}
+          />
+        ))}
+        
+        {selectedMarker && (
+          <InfoWindow
+            position={{ lat: selectedMarker.lat, lng: selectedMarker.lng }}
+            onCloseClick={() => setSelectedMarker(null)}
+          >
+            <div className="bg-slate-900 p-3 max-w-xs">
+              <h3 className="font-bold text-sm mb-1" style={{ color: selectedMarker.color }}>
+                {selectedMarker.title}
+              </h3>
+              <p className="text-xs text-gray-600 mb-2">{selectedMarker.snippet?.substring(0, 100)}...</p>
+              <div className="flex flex-wrap gap-1 mb-2">
+                <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: selectedMarker.color + '30', color: selectedMarker.color }}>
+                  {selectedMarker.category_name}
+                </span>
+                <span className="text-xs px-2 py-0.5 bg-gray-200 rounded text-gray-700">
+                  📍 {selectedMarker.location_name}
+                </span>
+              </div>
+              <a 
+                href={selectedMarker.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-blue-500 hover:underline"
+              >
+                Open Article →
+              </a>
+            </div>
+          </InfoWindow>
+        )}
+      </GoogleMap>
+      
+      {/* Color Key Legend */}
+      <div className="bg-slate-900/50 rounded-lg p-4 border border-purple-500/20">
+        <h4 className="text-purple-400 font-mono text-sm mb-3 flex items-center gap-2">
+          <MapPin className="w-4 h-4" /> CATEGORY COLOR KEY
+        </h4>
+        <div className="flex flex-wrap gap-3">
+          {Object.entries(mapData.categories).map(([catId, catInfo]) => (
+            <div key={catId} className="flex items-center gap-2">
+              <div 
+                className="w-4 h-4 rounded-full border border-white/30"
+                style={{ backgroundColor: catInfo.color }}
+              />
+              <span className="text-purple-300 font-mono text-xs">{catInfo.name}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-purple-400/60 font-mono text-xs mt-3">
+          {mapData.markers.length} locations from {Object.keys(mapData.categories).length} categories
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // Recursive Category Tree Component with +/- expansion
 const CategoryTreeItem = ({ category, selectedCategories, onToggle, level = 0 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
