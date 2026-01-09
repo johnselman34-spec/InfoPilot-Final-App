@@ -1998,19 +1998,154 @@ async def get_map_data(user: dict = Depends(require_user)):
         "total_results_with_locations": len(results),
         "total_markers": len(markers)
     }
+
+# ============================================
+# API ROUTES - ULTIMATE SEARCH PAGE CUSTOMIZATION
+# ============================================
+
+@api_router.get("/ultimate-search/page-settings")
+async def get_page_settings(user: dict = Depends(require_user)):
+    """Get user's Ultimate Search page settings"""
+    settings = await db.user_page_settings.find_one({"user_id": user["id"]}, {"_id": 0})
+    
+    if not settings:
+        # Create default settings
+        settings = {
+            "user_id": user["id"],
+            "page_name": "My Ultimate Search",
+            "photos": [],
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.user_page_settings.insert_one(settings)
+        settings = {k: v for k, v in settings.items() if k != "_id"}
+    
+    # Add soft recommendation if using default name
+    show_name_suggestion = settings.get("page_name") == "My Ultimate Search"
     
     return {
-        "domains": domains,
-        "article_types": article_types or ["Informative", "Informative Ph.D", "News Article", "Blog", "Forum", "Personal Report (collected)"],
-        "document_types": DOCUMENT_TYPES,
-        "document_types_used": document_types_used,
-        "year_range": year_range[0] if year_range else {"min_year": 2000, "max_year": 2026},
-        "aggregation_types": [
-            {"value": "and_or", "label": "AND/OR - Results matching all OR any categories"},
-            {"value": "or", "label": "OR - Results matching any category"},
-            {"value": "and", "label": "AND - Results matching ALL categories"}
-        ]
+        **settings,
+        "show_name_suggestion": show_name_suggestion,
+        "name_suggestions": [
+            f"{user.get('username', 'User')}'s Research Hub",
+            f"The {user.get('username', 'User')} Intelligence Center",
+            f"{user.get('username', 'User')}'s Knowledge Base",
+            f"Project {user.get('username', 'User')} Search",
+            f"{user.get('username', 'User')}'s Discovery Portal"
+        ] if show_name_suggestion else []
     }
+
+@api_router.put("/ultimate-search/page-settings")
+async def update_page_settings(data: UpdatePageSettingsRequest, user: dict = Depends(require_user)):
+    """Update user's Ultimate Search page settings"""
+    update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    
+    if data.page_name is not None:
+        if len(data.page_name) > 100:
+            raise HTTPException(status_code=400, detail="Page name must be 100 characters or less")
+        update_data["page_name"] = data.page_name
+    
+    result = await db.user_page_settings.update_one(
+        {"user_id": user["id"]},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    settings = await db.user_page_settings.find_one({"user_id": user["id"]}, {"_id": 0})
+    return {"message": "Settings updated", "settings": settings}
+
+@api_router.post("/ultimate-search/photos")
+async def upload_photo(request: Request, user: dict = Depends(require_user)):
+    """Upload a photo to user's Ultimate Search page (max 26 photos, max 15MB each)"""
+    import base64
+    
+    # Get current settings
+    settings = await db.user_page_settings.find_one({"user_id": user["id"]})
+    if not settings:
+        settings = {"user_id": user["id"], "photos": []}
+    
+    current_photos = settings.get("photos", [])
+    
+    if len(current_photos) >= 26:
+        raise HTTPException(status_code=400, detail="Maximum of 26 photos allowed. Please delete some photos first.")
+    
+    # Parse the request body
+    body = await request.json()
+    photo_data = body.get("photo_data")  # Base64 encoded
+    photo_name = body.get("photo_name", f"photo_{len(current_photos) + 1}.jpg")
+    
+    if not photo_data:
+        raise HTTPException(status_code=400, detail="No photo data provided")
+    
+    # Check file size (base64 is ~1.37x larger than binary)
+    # 15MB binary = ~20.5MB base64
+    if len(photo_data) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Photo must be less than 15MB")
+    
+    # Store photo reference (in production, upload to cloud storage)
+    photo_id = str(uuid.uuid4())
+    photo_record = {
+        "id": photo_id,
+        "user_id": user["id"],
+        "name": photo_name,
+        "data": photo_data,  # In production, store URL from cloud storage
+        "uploaded_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.user_photos.insert_one(photo_record)
+    
+    # Update user's photo list
+    current_photos.append({
+        "id": photo_id,
+        "name": photo_name,
+        "uploaded_at": photo_record["uploaded_at"]
+    })
+    
+    await db.user_page_settings.update_one(
+        {"user_id": user["id"]},
+        {"$set": {"photos": current_photos}},
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "photo_id": photo_id,
+        "message": f"Photo uploaded successfully ({len(current_photos)}/26)",
+        "total_photos": len(current_photos)
+    }
+
+@api_router.get("/ultimate-search/photos")
+async def get_photos(user: dict = Depends(require_user)):
+    """Get all photos for user's Ultimate Search page"""
+    photos = await db.user_photos.find({"user_id": user["id"]}, {"_id": 0, "data": 0}).to_list(26)
+    return {"photos": photos, "total": len(photos), "max_allowed": 26}
+
+@api_router.get("/ultimate-search/photos/{photo_id}")
+async def get_photo(photo_id: str, user: dict = Depends(require_user)):
+    """Get a specific photo by ID"""
+    photo = await db.user_photos.find_one({"id": photo_id, "user_id": user["id"]}, {"_id": 0})
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    return photo
+
+@api_router.delete("/ultimate-search/photos/{photo_id}")
+async def delete_photo(photo_id: str, user: dict = Depends(require_user)):
+    """Delete a photo from user's Ultimate Search page"""
+    # Delete photo record
+    result = await db.user_photos.delete_one({"id": photo_id, "user_id": user["id"]})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    
+    # Update user's photo list
+    settings = await db.user_page_settings.find_one({"user_id": user["id"]})
+    if settings:
+        current_photos = [p for p in settings.get("photos", []) if p["id"] != photo_id]
+        await db.user_page_settings.update_one(
+            {"user_id": user["id"]},
+            {"$set": {"photos": current_photos}}
+        )
+    
+    return {"success": True, "message": "Photo deleted"}
 
 @api_router.get("/ultimate-search/sessions")
 async def get_collate_sessions(user: dict = Depends(require_user)):
