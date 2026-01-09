@@ -250,7 +250,7 @@ const WelcomeSaleBanner = ({ onUpgrade, compact = false }) => {
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="bg-gradient-to-r from-pink-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">🎉 WELCOME SALE!</span>
                 <span className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono">$0.75</span>
-                <span className="text-purple-400/50 font-mono text-lg line-through">$4.70/yr</span>
+                <span className="text-purple-400/50 font-mono text-lg line-through">$4.62/yr</span>
               </div>
               <p className="text-pink-300 font-mono text-sm mt-1">LIFETIME PREMIUM ACCESS - ONE TIME PAYMENT!</p>
               {!compact && saleInfo?.sale_end_date && (
