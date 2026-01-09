@@ -315,6 +315,19 @@ class UltimateSearchRequest(BaseModel):
     ai_query: Optional[str] = None  # AI-powered intelligent search query
     page: int = 1
 
+# Ultimate Search Page Customization
+class UltimateSearchPageSettings(BaseModel):
+    page_name: str = "My Ultimate Search"
+    photos: List[str] = []  # URLs of uploaded photos (max 26)
+
+class UpdatePageSettingsRequest(BaseModel):
+    page_name: Optional[str] = None
+
+class PhotoUploadResponse(BaseModel):
+    success: bool
+    photo_url: str
+    message: str
+
 # Document Type Classifications
 DOCUMENT_TYPES = [
     "PhD Document",
