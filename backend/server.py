@@ -238,9 +238,11 @@ class AdminSettingsUpdate(BaseModel):
     max_category_levels: Optional[int] = None
     blocked_words: Optional[List[str]] = None
     subscription_price: Optional[float] = None
+    regular_price: Optional[float] = None
     informative_min_words: Optional[int] = None
     phd_keyword_count: Optional[int] = None
     blog_keyword_count: Optional[int] = None
+    max_search_results: Optional[int] = None
 
 class AdminSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
