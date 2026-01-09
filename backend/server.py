@@ -1414,6 +1414,96 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
         "total_searched": len(search_results)
     }
 
+@api_router.post("/search/search-only")
+async def search_only(data: CollateRequest, user: dict = Depends(require_user)):
+    """
+    Search Only - Returns categorized results WITHOUT saving to database.
+    For visitors/friends who can view but not modify the owner's data.
+    """
+    blocked_words = await get_blocked_words()
+    has_blocked, found = contains_blocked_words(data.search_query, blocked_words)
+    if has_blocked:
+        raise HTTPException(status_code=400, detail=f"Search query contains blocked words: {found}")
+    
+    settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
+    settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
+    
+    # Allow up to 6 pages of results (120 results)
+    max_results = min(data.max_results, settings.max_search_results)
+    
+    user_categories = await db.categories.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
+    
+    if not user_categories:
+        raise HTTPException(status_code=400, detail="Create at least one category with a protocol before searching")
+    
+    search_results = await web_search(data.search_query, max_results)
+    
+    if not search_results:
+        return {"message": "No search results found", "results": [], "categorized_count": 0, "total_searched": 0}
+    
+    categorized_results = []
+    
+    for result in search_results:
+        page_data = await fetch_page_content(result["url"])
+        
+        if not page_data["success"]:
+            continue
+        
+        content = f"{result['title']} {result['snippet']} {page_data.get('content', '')}"
+        
+        has_blocked, _ = contains_blocked_words(content, blocked_words)
+        if has_blocked:
+            continue
+        
+        matching_categories = []
+        matching_category_names = []
+        for category in user_categories:
+            parsed = InfoPilot2Parser.parse_protocol(category["protocol_string"])
+            if InfoPilot2Parser.match_content(content, parsed):
+                matching_categories.append(category["id"])
+                matching_category_names.append(category["name"])
+        
+        if matching_categories:
+            article_type = ArticleClassifier.classify(
+                content,
+                result["title"],
+                page_data.get("word_count", 0),
+                settings
+            )
+            
+            document_type = ArticleClassifier.classify_document_type(
+                result["url"],
+                content,
+                result["title"],
+                page_data.get("word_count", 0)
+            )
+            
+            # Return result without saving to database
+            search_result = {
+                "id": str(uuid.uuid4()),  # Temporary ID
+                "url": result["url"],
+                "title": result["title"],
+                "snippet": result["snippet"],
+                "article_type": article_type,
+                "document_type": document_type,
+                "categories": matching_categories,
+                "category_names": matching_category_names,
+                "domain": page_data.get("domain", ""),
+                "detected_year": page_data.get("detected_year"),
+                "word_count": page_data.get("word_count", 0),
+                "is_preview": True  # Flag to indicate this is not saved
+            }
+            
+            categorized_results.append(search_result)
+    
+    return {
+        "message": f"Found {len(categorized_results)} matching results (not saved)",
+        "results": categorized_results,
+        "categorized_count": len(categorized_results),
+        "total_searched": len(search_results),
+        "is_preview": True
+    }
+
 # ============================================
 # API ROUTES - ULTIMATE SEARCH PAGE
 # ============================================
