@@ -278,7 +278,7 @@ const WelcomeSaleBanner = ({ onUpgrade, compact = false }) => {
 // MEGA Book Sales Banner - New Design
 const BookSalesBanner = ({ variant = "full" }) => {
   const [currentImage, setCurrentImage] = useState(0);
-  const bookImages = [IMAGES.bookCover1, IMAGES.bookCover2, IMAGES.bookCover3, IMAGES.bookCover4];
+  const bookImages = [IMAGES.bookCoverMain, IMAGES.bookCover1, IMAGES.bookCover2, IMAGES.bookCover3, IMAGES.bookCover4];
   
   useEffect(() => {
     const timer = setInterval(() => {
@@ -293,7 +293,7 @@ const BookSalesBanner = ({ variant = "full" }) => {
     return (
       <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 border border-purple-500/50 rounded-lg p-4 cursor-pointer hover:scale-[1.02] transition-transform" onClick={openAmazon}>
         <div className="flex items-center gap-4">
-          <img src={bookImages[currentImage]} alt="Letters to Evelyn" className="w-20 h-28 object-cover rounded-lg shadow-lg shadow-purple-500/30" />
+          <img src={IMAGES.bookCoverMain} alt="Letters to Evelyn" className="w-20 h-28 object-cover rounded-lg shadow-lg shadow-purple-500/30" />
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h3 className="text-pink-400 font-mono font-bold">LETTERS TO EVELYN</h3>
