@@ -1682,19 +1682,128 @@ const UltimateSearchPage = () => {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">ULTIMATE SEARCH</h1>
-            <p className="text-purple-300/80 font-mono text-sm">Advanced filtering with AI-powered intelligent search</p>
+        {/* Page Name Editor Modal */}
+        {showNameEditor && (
+          <PageNameEditorModal 
+            currentName={pageSettings.page_name}
+            suggestions={pageSettings.name_suggestions}
+            onSave={handleUpdatePageName}
+            onClose={() => setShowNameEditor(false)}
+          />
+        )}
+        
+        {/* Photo Gallery Modal */}
+        {showPhotoGallery && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <FuturisticFrame title="📸 YOUR PHOTO GALLERY" color="purple" className="bg-slate-900 border border-purple-500/30 rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+              <PhotoGallery 
+                photos={photos}
+                onUpload={async (base64, fileName) => {
+                  try {
+                    const res = await axios.post(`${API}/ultimate-search/photos`, {
+                      photo_data: base64,
+                      photo_name: fileName
+                    });
+                    toast.success(res.data.message);
+                    fetchPhotos();
+                  } catch (error) {
+                    toast.error(error.response?.data?.detail || "Failed to upload photo");
+                  }
+                }}
+                onDelete={handleDeletePhoto}
+              />
+              <button 
+                onClick={() => setShowPhotoGallery(false)}
+                className="mt-4 w-full px-4 py-2 border border-purple-500/30 text-purple-300 font-mono rounded hover:bg-purple-500/10"
+              >
+                CLOSE
+              </button>
+            </FuturisticFrame>
           </div>
-          {isOwner && (
-            <span className="px-3 py-1 bg-pink-500/20 text-pink-400 font-mono text-sm rounded border border-pink-500/50">
-              OWNER MODE: Search & Collate
-            </span>
-          )}
+        )}
+        
+        {/* Page Header with Custom Name */}
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 
+                className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider cursor-pointer hover:opacity-80 flex items-center gap-2"
+                onClick={() => setShowNameEditor(true)}
+                data-testid="page-name-heading"
+              >
+                {pageSettings.page_name}
+                <Edit3 className="w-5 h-5 text-pink-400/60" />
+              </h1>
+              <p className="text-purple-300/80 font-mono text-sm">Advanced filtering with AI-powered intelligent search</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* Show suggestion if using default name */}
+            {pageSettings.show_name_suggestion && (
+              <button
+                onClick={() => setShowNameEditor(true)}
+                className="px-3 py-1 bg-yellow-500/20 text-yellow-400 font-mono text-xs rounded border border-yellow-500/50 animate-pulse"
+                data-testid="customize-name-suggestion"
+              >
+                ✨ Customize your page name!
+              </button>
+            )}
+            {isOwner && (
+              <span className="px-3 py-1 bg-pink-500/20 text-pink-400 font-mono text-sm rounded border border-pink-500/50">
+                OWNER MODE: Search & Collate
+              </span>
+            )}
+          </div>
         </div>
         
         <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} compact />
+        
+        {/* Page Customization Section */}
+        <FuturisticFrame title="⚙️ CUSTOMIZE YOUR PAGE" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowNameEditor(true)}
+                className="px-4 py-2 bg-purple-500/20 border border-purple-500/30 text-purple-400 font-mono text-sm rounded hover:bg-purple-500/30 flex items-center gap-2"
+                data-testid="edit-page-name-btn"
+              >
+                <Edit3 className="w-4 h-4" /> RENAME PAGE
+              </button>
+              <button
+                onClick={() => setShowPhotoGallery(true)}
+                className="px-4 py-2 bg-pink-500/20 border border-pink-500/30 text-pink-400 font-mono text-sm rounded hover:bg-pink-500/30 flex items-center gap-2"
+                data-testid="photo-gallery-btn"
+              >
+                <Plus className="w-4 h-4" /> PHOTOS ({photos.length}/26)
+              </button>
+            </div>
+            <p className="text-purple-400/60 font-mono text-xs">
+              Make your Ultimate Search page unique! Change the name and add up to 26 photos.
+            </p>
+          </div>
+          
+          {/* Photo Preview Strip */}
+          {photos.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-purple-500/20">
+              <p className="text-purple-400/60 font-mono text-xs mb-2">YOUR PHOTOS:</p>
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {photos.slice(0, 10).map((photo) => (
+                  <div key={photo.id} className="flex-shrink-0 w-12 h-12 bg-slate-800 rounded border border-purple-500/30 flex items-center justify-center">
+                    <span className="text-purple-400/40 text-xs">{photo.name?.substring(0, 3)}</span>
+                  </div>
+                ))}
+                {photos.length > 10 && (
+                  <button 
+                    onClick={() => setShowPhotoGallery(true)}
+                    className="flex-shrink-0 w-12 h-12 bg-purple-500/20 rounded border border-purple-500/30 flex items-center justify-center text-purple-400 font-mono text-xs hover:bg-purple-500/30"
+                  >
+                    +{photos.length - 10}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </FuturisticFrame>
         
         {/* Interactive Map with Category-Colored Dots */}
         <FuturisticFrame title="🗺️ LOCATION MAP - Click dots to view articles" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
