@@ -1317,28 +1317,47 @@ const UltimateSearchPage = () => {
           </div>
         </FuturisticFrame>
         
+        {/* Add Subcategory Modal */}
+        {showAddSubcategory && (
+          <AddSubcategoryModal 
+            parentCategory={showAddSubcategory}
+            onClose={() => setShowAddSubcategory(null)}
+            onSuccess={() => { fetchCategories(); fetchTreeCategories(); }}
+          />
+        )}
+        
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left Column - Categories with Checkboxes */}
+          {/* Left Column - Hierarchical Categories with +/- expansion */}
           <div className="lg:col-span-1 space-y-4">
-            <FuturisticFrame title="📂 CATEGORIES" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {categories.length === 0 ? (
+            <FuturisticFrame title="📂 CATEGORIES (Click + to expand)" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+              <div className="space-y-1 max-h-80 overflow-y-auto">
+                {treeCategories.length === 0 ? (
                   <p className="text-purple-400/60 font-mono text-sm text-center py-4">No categories yet. Create one to start!</p>
                 ) : (
-                  categories.map(cat => (
-                    <label key={cat.id} className="flex items-center gap-3 p-2 hover:bg-purple-500/10 rounded cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedCategories.includes(cat.id)}
-                        onChange={() => toggleCategory(cat.id)}
-                        className="w-4 h-4 rounded bg-slate-950 border-purple-500/30 text-pink-500 focus:ring-pink-500"
+                  treeCategories.map(cat => (
+                    <div key={cat.id}>
+                      <CategoryTreeItem 
+                        category={cat} 
+                        selectedCategories={selectedCategories}
+                        onToggle={toggleCategory}
                       />
-                      <span className="text-purple-300 font-mono text-sm flex-1">{cat.name}</span>
-                      <span className="text-pink-400 font-mono text-xs">({cat.result_count || 0})</span>
-                    </label>
+                      {/* Add subcategory button for root categories */}
+                      <button
+                        onClick={() => setShowAddSubcategory(cat)}
+                        className="ml-7 text-xs text-pink-400/60 hover:text-pink-400 font-mono flex items-center gap-1 mb-2"
+                      >
+                        <Plus className="w-3 h-3" /> Add subcategory
+                      </button>
+                    </div>
                   ))
                 )}
               </div>
+              <button
+                onClick={() => navigate('/categories')}
+                className="mt-3 w-full px-3 py-2 bg-purple-500/20 border border-purple-500/30 text-purple-400 font-mono text-xs rounded hover:bg-purple-500/30 flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> MANAGE CATEGORIES
+              </button>
             </FuturisticFrame>
             
             {/* Aggregation Type Radio Buttons */}
