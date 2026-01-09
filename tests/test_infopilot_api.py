@@ -239,7 +239,8 @@ class TestUltimateSearch:
             json={"page_name": new_name})
         assert response.status_code == 200
         data = response.json()
-        assert data["page_name"] == new_name
+        # Response structure: {"message": "...", "settings": {"page_name": "..."}}
+        assert data["settings"]["page_name"] == new_name
     
     def test_get_map_data(self, auth_token):
         """Test getting map data for Google Maps integration"""
