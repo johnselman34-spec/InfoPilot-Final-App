@@ -1405,6 +1405,11 @@ const UltimateSearchPage = () => {
   const [showAddSubcategory, setShowAddSubcategory] = useState(null);
   const [isPreviewResults, setIsPreviewResults] = useState(false);
   
+  // Page customization state
+  const [pageSettings, setPageSettings] = useState({ page_name: "My Ultimate Search", photos: [] });
+  const [showNameEditor, setShowNameEditor] = useState(false);
+  const [photos, setPhotos] = useState([]);
+  
   // Determine if current user is the owner of their own Ultimate Search page
   const isOwner = true; // In this context, user always owns their own search page
   
