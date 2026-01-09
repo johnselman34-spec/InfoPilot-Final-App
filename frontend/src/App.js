@@ -1638,7 +1638,7 @@ const GlobalDatabasePage = () => {
 // Book Page - FULL SALES PAGE with new images
 const BookPage = () => {
   const [currentImage, setCurrentImage] = useState(0);
-  const bookImages = [IMAGES.bookCover1, IMAGES.bookCover2, IMAGES.bookCover3, IMAGES.bookCover4];
+  const bookImages = [IMAGES.bookCoverMain, IMAGES.bookCover1, IMAGES.bookCover2, IMAGES.bookCover3, IMAGES.bookCover4];
   
   return (
     <Layout>
