@@ -246,13 +246,15 @@ class AdminSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = "admin_settings"
     results_per_page: int = 20
-    free_user_pages: int = 1
+    free_user_pages: int = 6  # Increased to 6 pages for free users
     max_category_levels: int = 100
     blocked_words: List[str] = DEFAULT_BLOCKED_WORDS
-    subscription_price: float = 0.95
+    subscription_price: float = 0.75  # Current sale price
+    regular_price: float = 4.62  # Price after sale
     informative_min_words: int = 1500
     phd_keyword_count: int = 3
     blog_keyword_count: int = 3
+    max_search_results: int = 120  # 6 pages * 20 results per page
 
 # Payment Models (Stripe Integration)
 class PaymentRequest(BaseModel):
