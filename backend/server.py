@@ -1928,6 +1928,74 @@ async def get_search_filters(user: dict = Depends(require_user)):
             {"value": "and_or", "label": "AND/OR - Results matching all OR any categories"},
             {"value": "or", "label": "OR - Results matching any category"},
             {"value": "and", "label": "AND - Results matching ALL categories"}
+        ],
+        "google_maps_api_key": GOOGLE_MAPS_API_KEY
+    }
+
+@api_router.get("/ultimate-search/map-data")
+async def get_map_data(user: dict = Depends(require_user)):
+    """Get all results with location data for map display"""
+    # Get all results that have locations
+    results = await db.search_results.find(
+        {"user_id": user["id"], "locations": {"$exists": True, "$ne": []}},
+        {"_id": 0}
+    ).to_list(500)
+    
+    # Get categories for color coding
+    categories = await db.categories.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
+    
+    # Assign colors to categories
+    colors = [
+        "#ec4899", "#a855f7", "#3b82f6", "#22c55e", "#f59e0b", 
+        "#ef4444", "#06b6d4", "#8b5cf6", "#f97316", "#14b8a6",
+        "#e879f9", "#60a5fa", "#4ade80", "#fbbf24", "#f87171"
+    ]
+    category_colors = {}
+    for idx, cat in enumerate(categories):
+        category_colors[cat["id"]] = {
+            "name": cat["name"],
+            "color": colors[idx % len(colors)]
+        }
+    
+    # Build map markers
+    markers = []
+    for result in results:
+        for location in result.get("locations", []):
+            for cat_id in result.get("categories", []):
+                cat_info = category_colors.get(cat_id, {"name": "Unknown", "color": "#888888"})
+                markers.append({
+                    "id": f"{result['id']}_{location['name']}_{cat_id}",
+                    "result_id": result["id"],
+                    "title": result["title"],
+                    "url": result["url"],
+                    "snippet": result.get("snippet", ""),
+                    "location_name": location["name"],
+                    "lat": location["lat"],
+                    "lng": location["lng"],
+                    "category_id": cat_id,
+                    "category_name": cat_info["name"],
+                    "color": cat_info["color"],
+                    "article_type": result.get("article_type", ""),
+                    "document_type": result.get("document_type", "")
+                })
+    
+    return {
+        "markers": markers,
+        "categories": category_colors,
+        "total_results_with_locations": len(results),
+        "total_markers": len(markers)
+    }
+    
+    return {
+        "domains": domains,
+        "article_types": article_types or ["Informative", "Informative Ph.D", "News Article", "Blog", "Forum", "Personal Report (collected)"],
+        "document_types": DOCUMENT_TYPES,
+        "document_types_used": document_types_used,
+        "year_range": year_range[0] if year_range else {"min_year": 2000, "max_year": 2026},
+        "aggregation_types": [
+            {"value": "and_or", "label": "AND/OR - Results matching all OR any categories"},
+            {"value": "or", "label": "OR - Results matching any category"},
+            {"value": "and", "label": "AND - Results matching ALL categories"}
         ]
     }
 
