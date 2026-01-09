@@ -1835,7 +1835,7 @@ const SubscribePage = () => {
           <div className="bg-gradient-to-r from-pink-500 to-red-500 text-white px-4 py-1 rounded-full text-sm font-bold inline-block mb-4 animate-pulse">🎉 WELCOME SALE - 2 MONTHS ONLY!</div>
           <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono mb-2">$0.75</div>
           <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="text-purple-400/50 font-mono line-through">$4.70/year</span>
+            <span className="text-purple-400/50 font-mono line-through">$4.62/year</span>
             <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">SAVE 84%!</span>
           </div>
           <p className="text-pink-300 font-mono text-lg">LIFETIME PREMIUM ACCESS</p>
