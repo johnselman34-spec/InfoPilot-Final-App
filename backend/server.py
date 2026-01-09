@@ -2386,6 +2386,46 @@ async def add_reaction(result_id: str, data: ArticleReaction, user: dict = Depen
     return {"message": "Reaction added"}
 
 # ============================================
+# API ROUTES - SAFE BROWSING
+# ============================================
+
+class SafeBrowsingCheckRequest(BaseModel):
+    urls: List[str]
+
+@api_router.post("/safety/check")
+async def check_urls_safety(data: SafeBrowsingCheckRequest, user: dict = Depends(require_user)):
+    """
+    Check one or more URLs for malicious content using Google Safe Browsing API.
+    Returns safety status for each URL.
+    """
+    if not data.urls:
+        raise HTTPException(status_code=400, detail="No URLs provided")
+    
+    if len(data.urls) > 500:
+        raise HTTPException(status_code=400, detail="Maximum 500 URLs per request")
+    
+    result = await check_url_safety(data.urls)
+    return result
+
+@api_router.get("/safety/status")
+async def get_safety_status():
+    """Check if Safe Browsing API is configured and working"""
+    if not GOOGLE_SAFE_BROWSING_API_KEY:
+        return {
+            "enabled": False,
+            "message": "Safe Browsing API key not configured"
+        }
+    
+    # Test with a known safe URL
+    test_result = await check_url_safety(["https://www.google.com"])
+    
+    return {
+        "enabled": True,
+        "working": test_result.get("checked", False),
+        "message": "Safe Browsing API is configured" if test_result.get("checked") else f"API error: {test_result.get('error', 'Unknown')}"
+    }
+
+# ============================================
 # API ROUTES - ADMIN
 # ============================================
 
