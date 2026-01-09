@@ -1246,9 +1246,10 @@ const UltimateSearchPage = () => {
       toast.success(`Deleted ${resultsToDelete.length} results`);
       setResultsToDelete([]);
       setShowDeleteModal(false);
-      handleSearch(); // Refresh results
+      handleViewResults(); // Refresh results
       fetchSessions();
       fetchCategories();
+      fetchTreeCategories();
     } catch (error) {
       toast.error("Failed to delete results");
     }
@@ -1261,7 +1262,8 @@ const UltimateSearchPage = () => {
       toast.success("Session deleted");
       fetchSessions();
       fetchCategories();
-      handleSearch();
+      fetchTreeCategories();
+      handleViewResults();
     } catch (error) {
       toast.error("Failed to delete session");
     }
