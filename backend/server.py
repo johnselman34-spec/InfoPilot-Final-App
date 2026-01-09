@@ -73,6 +73,91 @@ logger = logging.getLogger(__name__)
 # Google Maps API Key
 GOOGLE_MAPS_API_KEY = os.environ.get('GOOGLE_MAPS_API_KEY', '')
 
+# Google Safe Browsing API Key
+GOOGLE_SAFE_BROWSING_API_KEY = os.environ.get('GOOGLE_SAFE_BROWSING_API_KEY', '')
+
+# ============================================
+# SAFE BROWSING URL CHECKER
+# ============================================
+
+async def check_url_safety(urls: List[str]) -> Dict[str, Any]:
+    """
+    Check URLs against Google Safe Browsing API for threats.
+    Returns a dict with safe/unsafe status for each URL.
+    """
+    if not GOOGLE_SAFE_BROWSING_API_KEY:
+        logger.warning("Safe Browsing API key not configured, skipping safety check")
+        return {"checked": False, "results": {}}
+    
+    if not urls:
+        return {"checked": True, "results": {}}
+    
+    try:
+        api_url = f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={GOOGLE_SAFE_BROWSING_API_KEY}"
+        
+        body = {
+            "client": {
+                "clientId": "infopilot-app",
+                "clientVersion": "2.0.0"
+            },
+            "threatInfo": {
+                "threatTypes": [
+                    "MALWARE",
+                    "SOCIAL_ENGINEERING",
+                    "UNWANTED_SOFTWARE",
+                    "POTENTIALLY_HARMFUL_APPLICATION"
+                ],
+                "platformTypes": ["ANY_PLATFORM"],
+                "threatEntryTypes": ["URL"],
+                "threatEntries": [{"url": u} for u in urls[:500]]  # API limit
+            }
+        }
+        
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                api_url,
+                json=body,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"Safe Browsing API error: {response.status_code} - {response.text}")
+                return {"checked": False, "error": f"API error: {response.status_code}"}
+            
+            data = response.json()
+            matches = data.get("matches", [])
+            
+            # Build results dict
+            results = {}
+            for url in urls:
+                results[url] = {
+                    "safe": True,
+                    "threats": []
+                }
+            
+            # Mark unsafe URLs
+            for match in matches:
+                threat_url = match.get("threat", {}).get("url", "")
+                threat_type = match.get("threatType", "UNKNOWN")
+                if threat_url in results:
+                    results[threat_url]["safe"] = False
+                    results[threat_url]["threats"].append(threat_type)
+            
+            unsafe_count = sum(1 for r in results.values() if not r["safe"])
+            logger.info(f"Safe Browsing check: {len(urls)} URLs, {unsafe_count} unsafe")
+            
+            return {
+                "checked": True,
+                "total": len(urls),
+                "safe_count": len(urls) - unsafe_count,
+                "unsafe_count": unsafe_count,
+                "results": results
+            }
+            
+    except Exception as e:
+        logger.error(f"Safe Browsing API error: {str(e)}")
+        return {"checked": False, "error": str(e)}
+
 # ============================================
 # LOCATION EXTRACTION
 # ============================================
