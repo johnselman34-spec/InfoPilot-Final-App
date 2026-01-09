@@ -1,17 +1,18 @@
-import React, { useState, useEffect, createContext, useContext, useCallback } from "react";
+import React, { useState, useEffect, createContext, useContext, useCallback, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Toaster, toast } from "sonner";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from "@react-google-maps/api";
 import {
   Search, Globe, FolderTree, BarChart3, Settings, LogOut, User, Plus, Trash2,
   Eye, EyeOff, ChevronDown, ChevronRight, Filter, Heart, ThumbsUp, Smile,
   Frown, AlertTriangle, Flag, Award, Home, Users, BookOpen, Menu, X, Loader2,
   ShoppingCart, CreditCard, Star, ExternalLink, Plane, Shield, Radar, Target,
   Crosshair, Navigation, Zap, Radio, Cpu, Book, Edit3, Copy, Check, Gift,
-  Sparkles, Crown, Lock, Unlock, ArrowRight, DollarSign, Clock, Calendar
+  Sparkles, Crown, Lock, Unlock, ArrowRight, DollarSign, Clock, Calendar, MapPin
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -21,6 +22,7 @@ import "@/App.css";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
 // Google OAuth Client ID
 const GOOGLE_CLIENT_ID = "553762726406-2686s7hi3g38u18bj7s4s1pi2t3ppdsm.apps.googleusercontent.com";
