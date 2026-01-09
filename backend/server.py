@@ -1200,6 +1200,87 @@ async def get_categories_with_counts(user: dict = Depends(require_user)):
     
     return {"categories": categories}
 
+@api_router.get("/categories/tree")
+async def get_categories_tree(user: dict = Depends(require_user)):
+    """Get categories in hierarchical tree structure with result counts"""
+    categories = await db.categories.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
+    
+    # Get counts for each category
+    for cat in categories:
+        count = await db.search_results.count_documents({
+            "user_id": user["id"],
+            "categories": cat["id"]
+        })
+        cat["result_count"] = count
+        cat["children"] = []
+    
+    # Build tree structure
+    category_map = {cat["id"]: cat for cat in categories}
+    root_categories = []
+    
+    for cat in categories:
+        parent_id = cat.get("parent_id")
+        if parent_id and parent_id in category_map:
+            category_map[parent_id]["children"].append(cat)
+        else:
+            root_categories.append(cat)
+    
+    # Sort children by name at each level
+    def sort_children(cats):
+        cats.sort(key=lambda x: x["name"])
+        for cat in cats:
+            if cat["children"]:
+                sort_children(cat["children"])
+    
+    sort_children(root_categories)
+    
+    return {"categories": root_categories}
+
+@api_router.post("/categories/{parent_id}/subcategory")
+async def create_subcategory(
+    parent_id: str,
+    data: CategoryCreate,
+    user: dict = Depends(require_user)
+):
+    """Create a subcategory under a parent category"""
+    # Verify parent exists and belongs to user
+    parent = await db.categories.find_one({"id": parent_id, "user_id": user["id"]})
+    if not parent:
+        raise HTTPException(status_code=404, detail="Parent category not found")
+    
+    # Check max depth
+    settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
+    settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
+    
+    parent_level = parent.get("level", 0)
+    if parent_level >= settings.max_category_levels:
+        raise HTTPException(status_code=400, detail=f"Maximum category depth ({settings.max_category_levels}) reached")
+    
+    # Validate protocol
+    is_valid, message = InfoPilot2Parser.validate_protocol(data.protocol.protocol_string)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=f"Invalid protocol: {message}")
+    
+    # Create subcategory
+    category_id = str(uuid.uuid4())
+    category = {
+        "id": category_id,
+        "user_id": user["id"],
+        "name": data.name,
+        "protocol_string": data.protocol.protocol_string,
+        "parent_id": parent_id,
+        "is_public": data.is_public if data.is_public is not None else True,
+        "level": parent_level + 1,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.categories.insert_one(category)
+    
+    return {
+        **{k: v for k, v in category.items() if k != "_id"},
+        "created_at": category["created_at"]
+    }
+
 @api_router.get("/categories/{category_id}", response_model=CategoryResponse)
 async def get_category(category_id: str, user: dict = Depends(require_user)):
     category = await db.categories.find_one({"id": category_id})
