@@ -1230,6 +1230,155 @@ const AddSubcategoryModal = ({ parentCategory, onClose, onSuccess }) => {
   );
 };
 
+// Page Name Editor Modal
+const PageNameEditorModal = ({ currentName, suggestions, onSave, onClose }) => {
+  const [name, setName] = useState(currentName);
+  const [saving, setSaving] = useState(false);
+  
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave(name);
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      <FuturisticFrame title="✨ CUSTOMIZE YOUR PAGE NAME" color="pink" className="bg-slate-900 border border-pink-500/30 rounded-lg max-w-lg w-full">
+        <div className="space-y-4">
+          <p className="text-purple-300/70 font-mono text-sm">Give your Ultimate Search page a unique, creative name!</p>
+          <div>
+            <label className="block text-xs font-mono text-purple-400 mb-1">PAGE NAME</label>
+            <input 
+              type="text" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              maxLength={100}
+              className="w-full px-4 py-3 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500" 
+            />
+            <p className="text-purple-400/50 text-xs font-mono mt-1">{name.length}/100 characters</p>
+          </div>
+          
+          {suggestions && suggestions.length > 0 && (
+            <div>
+              <label className="block text-xs font-mono text-purple-400 mb-2">💡 SUGGESTIONS (click to use)</label>
+              <div className="space-y-2">
+                {suggestions.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setName(suggestion)}
+                    className="w-full text-left px-3 py-2 bg-slate-950 border border-purple-500/20 rounded text-purple-300 font-mono text-sm hover:border-pink-500 hover:bg-pink-500/10 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          <div className="flex gap-4 pt-2">
+            <button onClick={onClose} className="flex-1 px-4 py-2 border border-purple-500/30 text-purple-300 font-mono rounded hover:bg-purple-500/10">CANCEL</button>
+            <button onClick={handleSave} disabled={saving || !name.trim()} className="flex-1 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50">
+              {saving ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "SAVE"}
+            </button>
+          </div>
+        </div>
+      </FuturisticFrame>
+    </div>
+  );
+};
+
+// Photo Upload Component
+const PhotoGallery = ({ photos, onUpload, onDelete, maxPhotos = 26 }) => {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = React.useRef(null);
+  
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check file size (15MB max)
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Photo must be less than 15MB");
+      return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+    
+    setUploading(true);
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        await onUpload(base64, file.name);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast.error("Failed to upload photo");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+  
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-purple-400/70 font-mono text-sm">
+          {photos.length}/{maxPhotos} photos uploaded
+        </p>
+        {photos.length < maxPhotos && (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="px-4 py-2 bg-purple-500/20 border border-purple-500/30 text-purple-400 font-mono text-sm rounded hover:bg-purple-500/30 flex items-center gap-2 disabled:opacity-50"
+          >
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            ADD PHOTO
+          </button>
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </div>
+      
+      {photos.length > 0 ? (
+        <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+          {photos.map((photo) => (
+            <div key={photo.id} className="relative group aspect-square">
+              <div className="w-full h-full bg-slate-800 rounded border border-purple-500/20 flex items-center justify-center">
+                <span className="text-purple-400/50 text-xs font-mono">{photo.name?.substring(0, 8)}...</span>
+              </div>
+              <button
+                onClick={() => onDelete(photo.id)}
+                className="absolute top-1 right-1 p-1 bg-red-500/80 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8 bg-slate-950 rounded border border-purple-500/20">
+          <p className="text-purple-400/50 font-mono text-sm">No photos yet. Add up to 26 photos (max 15MB each)</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Ultimate Search Page - COMPREHENSIVE with AI Search, Document Types, AND/OR/AND Radio Buttons
 const UltimateSearchPage = () => {
   const { user } = useAuth();
