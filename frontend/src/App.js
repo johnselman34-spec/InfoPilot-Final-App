@@ -828,9 +828,6 @@ function MapPage() {
                 {markers.slice(0, 20).map((marker, idx) => (
                   <div key={marker.id || idx} className="marker-card" onClick={() => {
                     setSelectedMarker(marker);
-                    if (marker.latitude && marker.longitude && mapRef.current) {
-                      // Zoom to marker
-                    }
                   }}>
                     <div className="marker-icon" style={{background: marker.latitude ? getCategoryColor(marker.categories?.[0]) : '#ccc'}}>
                       <Icons.Location />
