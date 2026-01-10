@@ -6027,6 +6027,7 @@ const AdminPage = () => {
         <div className="flex gap-2 mb-6 overflow-x-auto">
           {[
             { id: "dashboard", label: "Dashboard", icon: Shield },
+            { id: "database", label: "Database Limits", icon: BarChart3 },
             { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
             { id: "privacy", label: "Privacy Policy", icon: Lock },
             { id: "terms", label: "Terms of Service", icon: FileText }
