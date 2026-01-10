@@ -2199,6 +2199,9 @@ const UltimateSearchPage = () => {
           )}
         </FuturisticFrame>
         
+        {/* Updates Section - Facebook-like Posts */}
+        <UpdatesSection />
+        
         {/* Interactive Map with Category-Colored Dots */}
         <FuturisticFrame title="🗺️ LOCATION MAP - Click dots to view articles" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
           <CategoryMap selectedCategories={selectedCategories} />
