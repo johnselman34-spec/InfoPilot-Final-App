@@ -112,6 +112,9 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - Google Maps API Key: `AIzaSyCqxRaGx3E2taKtxNlX-TUwrYXHP8G5LR4`
 - Stripe: TEST keys configured
 - Emergent LLM Key: Configured
+- Shopify API Key: `1ef463a176a1549de87d5a8b377a1202`
+- Shopify Store: `top-pilot-enterprises-inc.myshopify.com`
+- Shopify Product URL: `https://top-pilot-enterprises-inc.myshopify.com/products/infopilot-explorer-subscriptions`
 
 ## Test Credentials
 - Admin User: `john@infojet.com` / `password123`
