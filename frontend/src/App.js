@@ -1655,6 +1655,7 @@ const CategoriesPage = () => {
   const [newCategory, setNewCategory] = useState({ name: "", protocol: "", parentId: null, isPublic: true });
   const [creating, setCreating] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [viewRecsCategory, setViewRecsCategory] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
