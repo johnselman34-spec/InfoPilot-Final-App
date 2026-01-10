@@ -5220,6 +5220,222 @@ async def delete_results_batch(result_ids: List[str], user: dict = Depends(requi
     return {"message": f"Deleted {result.deleted_count} results"}
 
 # ============================================
+# WEBSOCKET ENDPOINTS
+# ============================================
+
+@app.websocket("/ws/messages/{token}")
+async def websocket_messages(websocket: WebSocket, token: str):
+    """WebSocket endpoint for real-time messaging"""
+    user = None
+    try:
+        # Verify token
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        user_id = payload.get("sub")
+        if not user_id:
+            await websocket.close(code=4001, reason="Invalid token")
+            return
+        
+        user = await db.users.find_one({"id": user_id})
+        if not user:
+            await websocket.close(code=4001, reason="User not found")
+            return
+        
+        # Connect
+        await ws_manager.connect(websocket, user_id)
+        
+        # Send connection confirmation
+        await websocket.send_json({
+            "type": "connected",
+            "user_id": user_id,
+            "message": "WebSocket connected successfully"
+        })
+        
+        # Keep connection alive and handle incoming messages
+        while True:
+            try:
+                data = await websocket.receive_json()
+                
+                # Handle ping/pong for keepalive
+                if data.get("type") == "ping":
+                    await websocket.send_json({"type": "pong"})
+                
+                # Handle typing indicator
+                elif data.get("type") == "typing":
+                    recipient_id = data.get("recipient_id")
+                    if recipient_id:
+                        await ws_manager.send_personal_message({
+                            "type": "typing",
+                            "sender_id": user_id,
+                            "sender_username": user.get("username", user.get("callsign", "Unknown"))
+                        }, recipient_id)
+                
+                # Handle message read receipt
+                elif data.get("type") == "read_receipt":
+                    sender_id = data.get("sender_id")
+                    if sender_id:
+                        await ws_manager.send_personal_message({
+                            "type": "read_receipt",
+                            "reader_id": user_id,
+                            "reader_username": user.get("username", user.get("callsign", "Unknown"))
+                        }, sender_id)
+                        
+            except Exception as e:
+                logger.error(f"WebSocket receive error: {e}")
+                break
+                
+    except jwt.ExpiredSignatureError:
+        await websocket.close(code=4001, reason="Token expired")
+    except jwt.InvalidTokenError:
+        await websocket.close(code=4001, reason="Invalid token")
+    except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected for user {user['id'] if user else 'unknown'}")
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+    finally:
+        if user:
+            ws_manager.disconnect(websocket, user["id"])
+
+@app.get("/ws/online-status/{user_id}")
+async def get_online_status(user_id: str):
+    """Check if a user is online (has active WebSocket connections)"""
+    return {"user_id": user_id, "online": ws_manager.is_user_online(user_id)}
+
+# ============================================
+# PAYPAL IPN ENDPOINT
+# ============================================
+
+@app.post("/api/paypal/ipn")
+async def paypal_ipn(request: Request):
+    """
+    PayPal Instant Payment Notification (IPN) endpoint.
+    This is called by PayPal when a payment is made.
+    """
+    try:
+        # Get the raw body
+        body = await request.body()
+        body_str = body.decode('utf-8')
+        logger.info(f"PayPal IPN received: {body_str[:500]}")
+        
+        # Parse the IPN message
+        from urllib.parse import parse_qs
+        ipn_data = parse_qs(body_str)
+        
+        # Flatten the dict (parse_qs returns lists)
+        ipn_dict = {k: v[0] if len(v) == 1 else v for k, v in ipn_data.items()}
+        
+        # Verify with PayPal (send back to PayPal with cmd=_notify-validate)
+        verify_url = "https://ipnpb.sandbox.paypal.com/cgi-bin/webscr"  # Use sandbox for testing
+        # For production: verify_url = "https://ipnpb.paypal.com/cgi-bin/webscr"
+        
+        verify_data = "cmd=_notify-validate&" + body_str
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                verify_url,
+                content=verify_data,
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            verification = response.text
+        
+        logger.info(f"PayPal IPN verification response: {verification}")
+        
+        if verification != "VERIFIED":
+            logger.warning(f"PayPal IPN verification failed: {verification}")
+            # Still process for testing, but log the warning
+        
+        # Extract payment info
+        payment_status = ipn_dict.get("payment_status", "")
+        payer_email = ipn_dict.get("payer_email", "")
+        txn_id = ipn_dict.get("txn_id", "")
+        payment_amount = ipn_dict.get("mc_gross", "0")
+        custom_data = ipn_dict.get("custom", "")  # We can pass user_id in custom field
+        
+        logger.info(f"PayPal IPN: status={payment_status}, email={payer_email}, amount={payment_amount}, txn={txn_id}")
+        
+        # Only process completed payments
+        if payment_status.lower() == "completed":
+            # Try to find user by email or custom data
+            user = None
+            
+            # First try custom data (user_id)
+            if custom_data:
+                user = await db.users.find_one({"id": custom_data})
+            
+            # Then try payer email
+            if not user and payer_email:
+                user = await db.users.find_one({"email": payer_email.lower()})
+            
+            if user:
+                # Calculate subscription end date (1 year from now)
+                subscription_until = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
+                
+                # Update user subscription
+                await db.users.update_one(
+                    {"id": user["id"]},
+                    {"$set": {
+                        "subscription_until": subscription_until,
+                        "subscription_status": "active",
+                        "last_payment_txn": txn_id,
+                        "last_payment_amount": payment_amount,
+                        "last_payment_date": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                
+                # Record subscription in history
+                subscription_record = {
+                    "id": str(uuid.uuid4()),
+                    "user_id": user["id"],
+                    "txn_id": txn_id,
+                    "amount": float(payment_amount),
+                    "payer_email": payer_email,
+                    "status": "completed",
+                    "subscription_until": subscription_until,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.subscriptions.insert_one(subscription_record)
+                
+                logger.info(f"Subscription activated for user {user['id']} ({user.get('email')}) until {subscription_until}")
+                
+                # Send confirmation email
+                email_html = f"""
+                <html>
+                <body style="font-family: Arial, sans-serif; background-color: #1a1a2e; color: #e0e0ff; padding: 20px;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: #0f0f1a; border: 1px solid #8b5cf6; border-radius: 8px; padding: 20px;">
+                        <h2 style="color: #ec4899; margin-bottom: 20px;">🎉 Subscription Activated!</h2>
+                        <p style="color: #c4b5fd;">Hello {user.get('username', 'Pilot')},</p>
+                        <p style="color: #c4b5fd;">Thank you for subscribing to InfoPilot Explorer!</p>
+                        
+                        <div style="background-color: #1f1f35; border-left: 4px solid #22c55e; padding: 15px; margin: 15px 0;">
+                            <p style="color: #22c55e; margin: 0; font-weight: bold;">Payment Confirmed</p>
+                            <p style="color: #c4b5fd; margin: 5px 0 0 0;">Amount: ${payment_amount}</p>
+                            <p style="color: #c4b5fd; margin: 5px 0 0 0;">Transaction ID: {txn_id}</p>
+                            <p style="color: #c4b5fd; margin: 5px 0 0 0;">Valid until: {subscription_until[:10]}</p>
+                        </div>
+                        
+                        <p style="color: #c4b5fd;">Enjoy full access to all InfoPilot Explorer features!</p>
+                        
+                        <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">— InfoPilot Explorer Team</p>
+                    </div>
+                </body>
+                </html>
+                """
+                asyncio.create_task(send_notification_email(
+                    user["email"],
+                    "🎉 InfoPilot Explorer Subscription Activated!",
+                    email_html
+                ))
+            else:
+                logger.warning(f"PayPal IPN: Could not find user for email {payer_email} or custom {custom_data}")
+        
+        # Always return 200 to acknowledge receipt
+        return {"status": "received"}
+        
+    except Exception as e:
+        logger.error(f"PayPal IPN error: {e}")
+        # Still return 200 to prevent PayPal from retrying
+        return {"status": "error", "detail": str(e)}
+
+# ============================================
 # SETUP & MIDDLEWARE
 # ============================================
 
