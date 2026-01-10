@@ -46,6 +46,13 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - [x] Subscription status tracking
 - [x] Admin panel for subscription settings
 
+#### Statistics Page (NEW - Enhanced)
+- [x] Platform Overview (Total Pilots, Public Protocols, Total Copies, Marketplace Sales)
+- [x] **🏆 Popular Protocols by Clipboard Copies** - Leaderboard sorted by copy count
+- [x] Top Contributors - Users with most public protocols
+- [x] Your Data - Personal statistics with charts (Pie chart for article types, Bar chart for domains)
+- [x] Protocol copy tracking via POST /api/categories/{id}/copy
+
 #### Protocol Marketplace (NEW)
 - [x] Browse protocols for sale
 - [x] My Purchases - view purchased protocols
@@ -147,9 +154,10 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 
 ## Test History
 - Iteration 11: 42/42 tests passed - Pre-PayPal integration verification
-- **Iteration 12: 17/17 tests passed - Marketplace and PayPal integration (100%)**
+- Iteration 12: 17/17 tests passed - Marketplace and PayPal integration (100%)
+- **Iteration 13: 14/14 tests passed - Statistics Page, Popular Protocols, Copy Tracking (100%)**
 
 ## Last Updated
 - Date: January 10, 2026
-- Session: Implemented Protocol Marketplace, PayPal Hosted Button, Monetization Options
+- Session: Implemented Statistics Page with Popular Protocols leaderboard, Protocol Copy Tracking
 - All features tested and working
