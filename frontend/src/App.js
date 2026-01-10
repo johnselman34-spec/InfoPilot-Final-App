@@ -3917,28 +3917,6 @@ const SubscribePage = () => {
                 </div>
               </div>
             )}
-                  <div>
-                    <label className="block text-purple-400/60 font-mono text-xs mb-1">PayPal Transaction ID (optional)</label>
-                    <input
-                      type="text"
-                      value={transactionId}
-                      onChange={(e) => setTransactionId(e.target.value)}
-                      placeholder="From your PayPal receipt"
-                      className="w-full px-3 py-2 bg-slate-900 border border-purple-500/30 rounded text-purple-300 font-mono text-sm focus:border-green-500 focus:outline-none"
-                    />
-                  </div>
-                  <button
-                    onClick={handleRecordPayment}
-                    disabled={recording}
-                    className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
-                    data-testid="record-payment-btn"
-                  >
-                    {recording ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
-                    ACTIVATE MY SUBSCRIPTION (${customAmount})
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </FuturisticFrame>
 
