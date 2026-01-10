@@ -4451,6 +4451,15 @@ async def send_message(data: MessageCreate, user: dict = Depends(require_user)):
             email_html
         ))
     
+    # Broadcast message via WebSocket in real-time
+    ws_message = {
+        "type": "new_message",
+        "message": {k: v for k, v in message.items() if k != "_id"},
+        "conversation_id": conversation_id,
+        "sender_username": user["username"]
+    }
+    await ws_manager.broadcast_to_conversation(ws_message, [user["id"], data.recipient_id])
+    
     return {"message": "Message sent", "data": {k: v for k, v in message.items() if k != "_id"}}
 
 @api_router.get("/messages/unread-count")
