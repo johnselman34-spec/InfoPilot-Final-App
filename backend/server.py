@@ -2075,6 +2075,51 @@ async def submit_recommendation(category_id: str, data: ProtocolRecommendationCr
     }
     
     await db.protocol_recommendations.insert_one(recommendation)
+    
+    # Send email notification to the protocol owner
+    owner = await db.users.find_one({"id": category["user_id"]})
+    if owner and owner.get("email"):
+        email_html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; background-color: #1a1a2e; color: #e0e0ff; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #0f0f1a; border: 1px solid #8b5cf6; border-radius: 8px; padding: 20px;">
+                <h2 style="color: #ec4899; margin-bottom: 20px;">🔔 New Protocol Recommendation</h2>
+                <p style="color: #c4b5fd;">Hello {owner.get('username', 'Pilot')},</p>
+                <p style="color: #c4b5fd;">You have received a new recommendation for your protocol:</p>
+                
+                <div style="background-color: #1f1f35; border-left: 4px solid #8b5cf6; padding: 15px; margin: 15px 0;">
+                    <p style="color: #ec4899; font-weight: bold; margin: 0 0 10px 0;">Category: {category["name"]}</p>
+                    <p style="color: #c4b5fd; margin: 0;">From: {user["username"]}</p>
+                </div>
+                
+                <div style="margin: 15px 0;">
+                    <p style="color: #8b5cf6; font-weight: bold;">Original Protocol:</p>
+                    <code style="background-color: #1f1f35; color: #c4b5fd; padding: 10px; display: block; border-radius: 4px;">{data.original_protocol}</code>
+                </div>
+                
+                <div style="margin: 15px 0;">
+                    <p style="color: #ec4899; font-weight: bold;">Suggested Change:</p>
+                    <code style="background-color: #1f1f35; color: #ec4899; padding: 10px; display: block; border-radius: 4px;">{data.suggested_protocol}</code>
+                </div>
+                
+                <div style="margin: 15px 0;">
+                    <p style="color: #8b5cf6; font-weight: bold;">Reason:</p>
+                    <p style="color: #c4b5fd; background-color: #1f1f35; padding: 10px; border-radius: 4px;">{data.reason}</p>
+                </div>
+                
+                <p style="color: #c4b5fd; margin-top: 20px;">Log in to InfoPilot Explorer to review and respond to this recommendation.</p>
+                
+                <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">— InfoPilot Explorer Team</p>
+            </div>
+        </body>
+        </html>
+        """
+        asyncio.create_task(send_notification_email(
+            owner["email"],
+            f"📝 New Protocol Recommendation for '{category['name']}'",
+            email_html
+        ))
+    
     return {"message": "Recommendation submitted", "recommendation": {k: v for k, v in recommendation.items() if k != "_id"}}
 
 @api_router.get("/categories/{category_id}/recommendations")
