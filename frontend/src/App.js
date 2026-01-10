@@ -4200,9 +4200,19 @@ const SubscribePage = () => {
 
             {/* PayPal Buttons - Hide if already recording */}
             {!showRecordPayment && (
-              <div className="space-y-3 pt-4">
+              <div className="space-y-4 pt-4">
                 <p className="text-center text-purple-400 font-mono text-sm mb-2">Pay securely with PayPal:</p>
                 
+                {/* PayPal Hosted Button Container */}
+                <div className="bg-white/5 rounded-lg p-4 border border-purple-500/20">
+                  <div id="paypal-container-765S46VPPEP5C" className="min-h-[45px]"></div>
+                </div>
+                
+                {/* Note about PayPal button */}
+                <p className="text-center text-purple-400/40 font-mono text-xs">
+                  If the PayPal button doesn't load, use the link below:
+                </p>
+
                 <button
                   onClick={() => handlePayPalClick(config?.paypal_link_1 || "https://www.paypal.com/ncp/payment/765S46VPPEP5C")}
                   className="w-full px-6 py-4 bg-[#0070ba] hover:bg-[#003087] text-white font-mono rounded-lg transition-colors flex items-center justify-center gap-3"
@@ -4212,15 +4222,6 @@ const SubscribePage = () => {
                     <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 6.082-8.558 6.082H9.838l-1.363 8.642h2.464c.456 0 .843-.32.915-.77l.038-.19.735-4.66.047-.256c.072-.45.46-.77.915-.77h.576c3.727 0 6.645-1.514 7.499-5.893.32-1.634.193-3.002-.442-3.898z"/>
                   </svg>
                   PAY ${customAmount} WITH PAYPAL
-                </button>
-
-                <button
-                  onClick={() => handlePayPalClick(config?.paypal_link_2 || "https://www.paypal.com/ncp/payment/SX379AAKMXM8A")}
-                  className="w-full px-6 py-3 bg-slate-950 border border-[#0070ba] text-[#0070ba] hover:bg-[#0070ba]/10 font-mono rounded-lg transition-colors flex items-center justify-center gap-3"
-                  data-testid="paypal-btn-2"
-                >
-                  <CreditCard className="w-5 h-5" />
-                  ALTERNATIVE PAYMENT LINK
                 </button>
                 
                 {/* Already paid button */}
