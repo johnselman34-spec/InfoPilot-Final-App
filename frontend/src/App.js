@@ -3298,6 +3298,7 @@ const PhotoGallery = ({ photos, onUpload, onDelete, maxPhotos = 26 }) => {
 const UltimateSearchPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [categories, setCategories] = useState([]);
   const [treeCategories, setTreeCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -3350,6 +3351,18 @@ const UltimateSearchPage = () => {
       setSuggestChangeCategory(category);
     }
   };
+  
+  // Check for URL query params to auto-filter on load
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const filterId = params.get('filter');
+    const filterName = params.get('name');
+    if (filterId && filterName) {
+      handleCategoryFilter(filterId, decodeURIComponent(filterName));
+      // Clear the URL params after applying filter
+      navigate('/ultimate-search', { replace: true });
+    }
+  }, [location.search]);
   
   useEffect(() => {
     fetchCategories();
