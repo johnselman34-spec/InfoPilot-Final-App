@@ -1,21 +1,20 @@
 # InfoPilot Explorer - Product Requirements Document
 
 ## Original Problem Statement
-InfoPilot Explorer is a sophisticated information exchange social network with a custom search language and subscription model. The application features:
+InfoPilot Explorer is a sophisticated information exchange social network with a custom search language. The application is now **COMPLETELY FREE** with monetization through book promotion. Features:
 - Custom registration and Google OAuth authentication
-- Shopify payment integration with a "Welcome Sale" promotion ($0.75 lifetime)
-- Stripe payment as secondary option
 - AI-powered intelligent search using Emergent LLM
 - Hierarchical categories with custom InfoPilot 2.0 Protocol syntax
 - Google Maps integration for location visualization
 - Google Safe Browsing API for URL safety checks
+- **Facebook-style social features** (Groups, Pages, Updates, Reactions, Comments)
 - Book promotion for "Letters to Evelyn" by John Selman
 - Ultimate Search Page with customization features
 
 ## User Personas
 - **Information Researchers**: Users who need to collect, categorize, and analyze web content
 - **Content Curators**: Users building knowledge bases across multiple topics
-- **Premium Subscribers**: Users with full access to unlimited searches and categories
+- **Social Networkers**: Users who want to share and engage with content in groups and pages
 
 ## Core Features
 
@@ -27,11 +26,19 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - [x] JWT-based session management
 - [x] Admin role support
 
-#### Subscription & Payments
+#### App Access
 - [x] **APP IS NOW COMPLETELY FREE** - No subscription required
 - [x] All users get full access to all features
 - [x] Book promotion replaces subscription prompts throughout the app
-- [x] Shopify/Stripe payment code removed from UI
+- [x] Admin (john_selman) added as first friend for new users
+
+#### Social Features (NEW - Facebook-like)
+- [x] **Groups**: Create/join groups (public/private/secret), post content
+- [x] **Pages**: Create/follow pages with categories, post as admin
+- [x] **Updates**: Post updates on Ultimate Search page
+- [x] **Reactions**: Facebook-style emoji picker (👍 Like, ❤️ Love, 😂 Haha, 😮 Wow, 😢 Sad, 😠 Angry)
+- [x] **Comments**: Nested replies on posts, updates, and search results
+- [x] **Friends**: View and manage friend connections
 
 #### Ultimate Search Page
 - [x] AI-powered intelligent search (Emergent LLM)
@@ -42,11 +49,13 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - [x] Session management with delete capability
 - [x] Page customization (rename page, photo gallery up to 26 photos)
 - [x] Google Maps with category-colored location markers
+- [x] **Updates section** with reactions and comments
+- [x] **Reactions/Comments on search results**
 
 #### Security
 - [x] Google Safe Browsing API integration
 - [x] URL safety checks before categorization
-- [x] Blocked words filtering
+- [x] Blocked words filtering (whole word matching only)
 - [x] Content moderation
 
 #### Book Promotion
@@ -64,41 +73,48 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 
 #### P1 - High Priority
 - [ ] Google OAuth actual login flow verification (button present, needs user testing)
-- [ ] Search & Collate with Safe Browsing blocking unsafe URLs (implemented, needs end-to-end test)
+- [ ] Google Maps marker interaction enhancement
 
 #### P2 - Medium Priority
-- [ ] Admin Panel enhancements for new settings
-- [ ] Statistics page with actual analytics
+- [ ] Admin Panel enhancements for managing social features
+- [ ] Statistics page with social analytics
+- [ ] Private messaging between friends
 
 #### P3 - Future
 - [ ] Native mobile apps (Android/iOS)
 - [ ] Email newsletter system
-- [ ] Social networking features (friend requests, messaging)
 - [ ] Global Research Database page
+- [ ] Group/Page moderation tools
 
 ## Technical Architecture
 
 ### Stack
-- **Frontend**: React, TailwindCSS, Axios
+- **Frontend**: React, TailwindCSS, Axios, Lucide React
 - **Backend**: FastAPI, Motor (MongoDB async driver), Pydantic
 - **Database**: MongoDB
 - **Authentication**: JWT, Google OAuth
-- **Payments**: Stripe
 - **APIs**: Google Custom Search, Google Maps, Google Safe Browsing, Emergent LLM
 
 ### Key Files
-- `/app/frontend/src/App.js` - Monolithic React application (needs refactoring)
-- `/app/backend/server.py` - Monolithic FastAPI backend (needs refactoring)
+- `/app/frontend/src/App.js` - Monolithic React application (~3500 lines, needs refactoring)
+- `/app/backend/server.py` - Monolithic FastAPI backend (~3700 lines, needs refactoring)
 - `/app/backend/.env` - Backend environment variables
 - `/app/frontend/.env` - Frontend environment variables
 
 ### Database Collections
-- `users` - User accounts and subscription status
+- `users` - User accounts
 - `categories` - User-created search categories with protocols
 - `search_results` - Collated search results with locations
 - `user_page_settings` - Ultimate Search page customization
 - `user_photos` - Uploaded photos for page customization
-- `payments` - Payment transaction history
+- `groups` - Social groups
+- `group_posts` - Posts in groups
+- `pages` - Social pages
+- `page_posts` - Posts on pages
+- `page_followers` - Page follower relationships
+- `updates` - User updates on Ultimate Search page
+- `comments` - Comments on posts/updates/search results
+- `friends` - Friend relationships
 - `admin_settings` - Application configuration
 
 ## API Keys & Credentials
@@ -108,23 +124,20 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - Google Search API Key: `AIzaSyCoAXxG2ye7azGmqmAcbSY33-FQpt5kQCo`
 - Google Safe Browsing API Key: `AIzaSyCoAXxG2ye7azGmqmAcbSY33-FQpt5kQCo`
 - Google Maps API Key: `AIzaSyCqxRaGx3E2taKtxNlX-TUwrYXHP8G5LR4`
-- Stripe: TEST keys configured
 - Emergent LLM Key: Configured
-- Shopify API Key: `1ef463a176a1549de87d5a8b377a1202`
-- Shopify Store: `top-pilot-enterprises-inc.myshopify.com`
-- Shopify Product URL: `https://top-pilot-enterprises-inc.myshopify.com/products/infopilot-explorer-subscriptions`
 
 ## Test Credentials
 - Admin User: `john@infojet.com` / `password123`
 
 ## Last Updated
 - Date: January 10, 2026
-- Session: Made app completely FREE, removed subscription requirements, enhanced book promotion
-- Test Status: All features working, book promotion prominent throughout app
+- Session: Implemented Facebook-style social features (Groups, Pages, Updates, Reactions, Comments)
+- Test Status: All 22 tests passed (100%)
 
 ## Test History
 - Iteration 1: 18/18 tests passed - Initial feature verification
 - Iteration 2: 26/26 tests passed - Extended edge case testing  
 - Iteration 3: 26/26 tests passed - Thorough re-test of all features
 - Iteration 4: 28/28 tests passed - Full painstaking test after Shopify integration
-- Final: App converted to free model with book monetization
+- Iteration 5-6: App converted to free model with book monetization
+- **Iteration 7: 22/22 tests passed - Facebook-style social features (Groups, Pages, Reactions, Comments, Updates)**
