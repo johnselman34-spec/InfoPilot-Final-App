@@ -28,8 +28,9 @@ const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 // Google OAuth Client ID
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
-// Stripe Publishable Key (will be fetched from backend)
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+// Stripe Publishable Key - Only initialize if key exists (app is now FREE, Stripe optional)
+const stripeKey = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 // All Images - Including new book images
 const IMAGES = {
