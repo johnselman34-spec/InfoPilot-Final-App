@@ -2301,14 +2301,31 @@ const SubscribePage = () => {
   const [clientSecret, setClientSecret] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saleInfo, setSaleInfo] = useState(null);
+  const [shopifyConfig, setShopifyConfig] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('shopify'); // 'shopify' or 'stripe'
   const navigate = useNavigate();
   
   useEffect(() => {
-    // Fetch sale info
+    // Fetch sale info and Shopify config
     axios.get(`${API}/subscription/info`).then(res => setSaleInfo(res.data)).catch(() => {});
+    axios.get(`${API}/shopify/config`).then(res => setShopifyConfig(res.data)).catch(() => {});
   }, []);
   
-  const initializePayment = async () => {
+  const handleShopifyCheckout = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/shopify/checkout-url`);
+      // Open Shopify checkout in new tab
+      window.open(res.data.checkout_url, '_blank');
+      toast.success("Redirecting to Shopify checkout...");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to get checkout URL");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const initializeStripePayment = async () => {
     setLoading(true);
     try {
       const res = await axios.post(`${API}/payments/create-intent`, { item_type: "subscription" });
