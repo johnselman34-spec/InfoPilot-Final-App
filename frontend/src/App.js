@@ -6598,9 +6598,7 @@ const PageDetailPage = () => {
   const [posting, setPosting] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => { if (pageId) fetchPage(); }, [pageId]);
-
-  const fetchPage = async () => {
+  const fetchPage = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/pages/${pageId}`);
       setPage(res.data.page);
@@ -6612,7 +6610,9 @@ const PageDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pageId, navigate]);
+
+  useEffect(() => { if (pageId) fetchPage(); }, [pageId, fetchPage]);
 
   const handlePost = async (e) => {
     e.preventDefault();
