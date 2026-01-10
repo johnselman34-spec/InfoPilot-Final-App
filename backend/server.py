@@ -1304,6 +1304,155 @@ async def get_payment_history(user: dict = Depends(require_user)):
     return payments
 
 # ============================================
+# API ROUTES - SHOPIFY INTEGRATION
+# ============================================
+
+import hmac
+import hashlib
+import base64
+
+def verify_shopify_webhook(data: bytes, hmac_header: str) -> bool:
+    """Verify Shopify webhook signature"""
+    if not SHOPIFY_API_SECRET:
+        return False
+    computed_hmac = base64.b64encode(
+        hmac.new(SHOPIFY_API_SECRET.encode('utf-8'), data, hashlib.sha256).digest()
+    ).decode('utf-8')
+    return hmac.compare_digest(computed_hmac, hmac_header)
+
+def verify_shopify_proxy_signature(params: dict) -> bool:
+    """Verify Shopify App Proxy request signature"""
+    if not SHOPIFY_API_SECRET:
+        return False
+    signature = params.pop('signature', None)
+    if not signature:
+        return False
+    sorted_params = ''.join([f"{key}={value}" for key, value in sorted(params.items())])
+    computed_signature = hmac.new(
+        SHOPIFY_API_SECRET.encode('utf-8'),
+        sorted_params.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(computed_signature, signature)
+
+@api_router.get("/shopify/config")
+async def get_shopify_config():
+    """Get Shopify configuration for frontend"""
+    return {
+        "store_domain": SHOPIFY_STORE_DOMAIN,
+        "product_url": SHOPIFY_PRODUCT_URL,
+        "product_id": SHOPIFY_PRODUCT_ID,
+        "checkout_enabled": bool(SHOPIFY_API_KEY and SHOPIFY_STORE_DOMAIN)
+    }
+
+@api_router.get("/shopify/checkout-url")
+async def get_shopify_checkout_url(user: dict = Depends(require_user)):
+    """Generate Shopify checkout URL for the subscription product"""
+    if not SHOPIFY_PRODUCT_URL:
+        raise HTTPException(status_code=500, detail="Shopify not configured")
+    
+    # Add user tracking parameter
+    checkout_url = f"{SHOPIFY_PRODUCT_URL}?utm_source=infopilot&user_id={user['id']}"
+    
+    return {
+        "checkout_url": checkout_url,
+        "product_url": SHOPIFY_PRODUCT_URL,
+        "store_domain": SHOPIFY_STORE_DOMAIN
+    }
+
+@api_router.post("/shopify/webhooks/orders-paid")
+async def shopify_order_paid_webhook(request: Request):
+    """
+    Handle Shopify order paid webhook to grant premium access
+    Configure this webhook URL in Shopify: /api/shopify/webhooks/orders-paid
+    Topic: orders/paid
+    """
+    body = await request.body()
+    hmac_header = request.headers.get('X-Shopify-Hmac-Sha256', '')
+    
+    if not verify_shopify_webhook(body, hmac_header):
+        logger.warning("Invalid Shopify webhook signature")
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
+    
+    try:
+        data = await request.json()
+        order_id = data.get('id')
+        email = data.get('email', '').lower()
+        customer = data.get('customer', {})
+        customer_email = customer.get('email', '').lower() if customer else ''
+        
+        # Find user by email
+        user_email = email or customer_email
+        if user_email:
+            user = await db.users.find_one({"email": user_email})
+            if user:
+                # Grant premium access
+                await db.users.update_one(
+                    {"email": user_email},
+                    {"$set": {
+                        "is_paid": True,
+                        "subscription_type": "lifetime",
+                        "subscription_source": "shopify",
+                        "shopify_order_id": str(order_id),
+                        "subscription_date": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                
+                # Record payment
+                await db.payments.insert_one({
+                    "id": str(uuid.uuid4()),
+                    "user_id": user["id"],
+                    "user_email": user_email,
+                    "amount": data.get('total_price', 0),
+                    "currency": data.get('currency', 'USD'),
+                    "transaction_id": f"SHOPIFY_{order_id}",
+                    "shopify_order_id": str(order_id),
+                    "payment_method": "shopify",
+                    "item_type": "subscription",
+                    "status": "completed",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                })
+                
+                logger.info(f"Granted premium access via Shopify to: {user_email}")
+            else:
+                logger.warning(f"Shopify order for unknown user: {user_email}")
+        
+        return {"status": "received"}
+    except Exception as e:
+        logger.error(f"Error processing Shopify webhook: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.all("/shopify/{path:path}")
+async def shopify_app_proxy(path: str, request: Request):
+    """
+    Handle Shopify App Proxy requests
+    These come from: https://your-store.myshopify.com/apps/infopilot/*
+    """
+    # Get query parameters
+    params = dict(request.query_params)
+    
+    # For proxy requests, we could verify signature (optional for public content)
+    # verify_shopify_proxy_signature(params.copy())
+    
+    # Handle different proxy paths
+    if path == "status" or path == "":
+        return {
+            "app": "InfoPilot Explorer",
+            "status": "active",
+            "version": "2.0.0"
+        }
+    elif path == "verify-subscription":
+        # Check if customer has premium access
+        customer_email = params.get('customer_email', '').lower()
+        if customer_email:
+            user = await db.users.find_one({"email": customer_email})
+            if user and user.get('is_paid'):
+                return {"has_subscription": True, "type": "lifetime"}
+        return {"has_subscription": False}
+    else:
+        return {"error": "Unknown proxy path", "path": path}
+
+# ============================================
 # API ROUTES - BOOK INFO
 # ============================================
 
