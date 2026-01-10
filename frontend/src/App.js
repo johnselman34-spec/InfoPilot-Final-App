@@ -419,9 +419,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { path: "/infopilot", icon: Radar, label: "INFOPILOT SEARCH" },
     { path: "/ultimate-search", icon: Target, label: "ULTIMATE SEARCH" },
     { path: "/categories", icon: FolderTree, label: "CATEGORIES" },
+    { path: "/friends", icon: Users, label: "FRIENDS" },
+    { path: "/groups", icon: Users, label: "GROUPS" },
+    { path: "/pages", icon: FileText, label: "PAGES" },
     { path: "/statistics", icon: BarChart3, label: "INTEL STATS" },
     { path: "/global-database", icon: Globe, label: "GLOBAL DATABASE" },
-    { path: "/book", icon: Book, label: "📚 LETTERS TO EVELYN", highlight: true },
     { path: "/book", icon: Book, label: "📚 GET THE BOOK", highlight: true },
   ];
 
