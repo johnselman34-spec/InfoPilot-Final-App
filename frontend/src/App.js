@@ -3792,7 +3792,10 @@ const StatisticsPage = () => {
   const [stats, setStats] = useState(null);
   const [globalStats, setGlobalStats] = useState(null);
   const [popularProtocols, setPopularProtocols] = useState([]);
+  const [badges, setBadges] = useState(null);
+  const [badgeLeaderboard, setBadgeLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -3802,14 +3805,18 @@ const StatisticsPage = () => {
   const fetchAllStats = async () => {
     setLoading(true);
     try {
-      const [userStats, global, popular] = await Promise.all([
+      const [userStats, global, popular, myBadges, leaderboard] = await Promise.all([
         axios.get(`${API}/statistics`),
         axios.get(`${API}/statistics/global`),
-        axios.get(`${API}/statistics/popular-protocols?limit=10`)
+        axios.get(`${API}/statistics/popular-protocols?limit=10`),
+        axios.get(`${API}/badges/my-badges`),
+        axios.get(`${API}/badges/leaderboard`)
       ]);
       setStats(userStats.data);
       setGlobalStats(global.data);
       setPopularProtocols(popular.data.popular_protocols || []);
+      setBadges(myBadges.data);
+      setBadgeLeaderboard(leaderboard.data.leaderboard || []);
     } catch (error) {
       console.error("Failed to load statistics");
     } finally {
@@ -3822,9 +3829,8 @@ const StatisticsPage = () => {
       await axios.post(`${API}/categories/${protocol.id}/copy`);
       navigator.clipboard.writeText(protocol.protocol_string);
       toast.success("Protocol copied to clipboard!");
-      // Refresh popular protocols to update counts
-      const res = await axios.get(`${API}/statistics/popular-protocols?limit=10`);
-      setPopularProtocols(res.data.popular_protocols || []);
+      // Refresh stats to update counts and badges
+      fetchAllStats();
     } catch (error) {
       // Still copy even if tracking fails
       navigator.clipboard.writeText(protocol.protocol_string);
