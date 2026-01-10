@@ -2303,6 +2303,9 @@ const SubscribePage = () => {
   const [saleInfo, setSaleInfo] = useState(null);
   const [shopifyConfig, setShopifyConfig] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('shopify'); // 'shopify' or 'stripe'
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [verifying, setVerifying] = useState(false);
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -2318,10 +2321,39 @@ const SubscribePage = () => {
       // Open Shopify checkout in new tab
       window.open(res.data.checkout_url, '_blank');
       toast.success("Redirecting to Shopify checkout...");
+      // Show verification form after a short delay
+      setTimeout(() => {
+        setShowVerification(true);
+        setVerificationEmail(user?.email || '');
+      }, 2000);
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to get checkout URL");
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const handleVerifyPurchase = async () => {
+    if (!verificationEmail.trim()) {
+      toast.error("Please enter your email");
+      return;
+    }
+    setVerifying(true);
+    try {
+      const res = await axios.post(`${API}/shopify/verify-purchase`, { 
+        email: verificationEmail.trim().toLowerCase() 
+      });
+      if (res.data.verified) {
+        toast.success("🎉 Purchase verified! Premium access granted!");
+        await refreshUser();
+        setTimeout(() => navigate("/"), 2000);
+      } else {
+        toast.error(res.data.message || "Could not verify purchase. Please try again or contact support.");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Verification failed. Please try again.");
+    } finally {
+      setVerifying(false);
     }
   };
   
