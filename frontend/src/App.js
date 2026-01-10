@@ -1177,7 +1177,7 @@ const MessagesPage = () => {
     if (!token) return;
     
     // Construct WebSocket URL from API URL
-    // API is like https://explorer-app-3.preview.emergentagent.com/api
+    // API is like https://social-explorer-14.preview.emergentagent.com/api
     // WebSocket should be wss://xxx.preview.emergentagent.com/ws/messages/{token}
     let wsUrl;
     try {

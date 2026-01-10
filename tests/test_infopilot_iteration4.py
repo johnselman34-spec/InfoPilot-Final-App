@@ -8,7 +8,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://explorer-app-3.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://social-explorer-14.preview.emergentagent.com')
 
 # Test credentials
 TEST_EMAIL = "john@infojet.com"
