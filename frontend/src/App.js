@@ -4700,7 +4700,7 @@ const AdminPage = () => {
           <FuturisticFrame title="SYSTEM STATUS" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
             <div className="space-y-4">
               <p className="text-purple-300 font-mono">Admin dashboard for InfoPilot Explorer system management.</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                 <div className="bg-slate-950 p-4 rounded border border-green-500/30">
                   <p className="text-green-400 font-mono text-sm">SYSTEM STATUS</p>
                   <p className="text-green-300 font-mono text-2xl mt-2">OPERATIONAL</p>
@@ -4709,6 +4709,14 @@ const AdminPage = () => {
                   <p className="text-purple-400 font-mono text-sm">APP VERSION</p>
                   <p className="text-purple-300 font-mono text-2xl mt-2">2.0.0</p>
                 </div>
+                <div className="bg-slate-950 p-4 rounded border border-pink-500/30">
+                  <p className="text-pink-400 font-mono text-sm">TOTAL SUBSCRIBERS</p>
+                  <p className="text-pink-300 font-mono text-2xl mt-2">{subscriptions.active_count}</p>
+                </div>
+                <div className="bg-slate-950 p-4 rounded border border-yellow-500/30">
+                  <p className="text-yellow-400 font-mono text-sm">TOTAL REVENUE</p>
+                  <p className="text-yellow-300 font-mono text-2xl mt-2">${subscriptions.total_revenue}</p>
+                </div>
               </div>
               <div className="mt-4 p-4 bg-slate-950 rounded border border-pink-500/20">
                 <p className="text-pink-400 font-mono text-sm mb-2">QUICK LINKS</p>
@@ -4716,10 +4724,123 @@ const AdminPage = () => {
                   <a href="/privacy-policy" target="_blank" className="text-purple-400 hover:text-pink-400 font-mono text-sm underline">Privacy Policy</a>
                   <span className="text-purple-400/40">|</span>
                   <a href="/terms-of-service" target="_blank" className="text-purple-400 hover:text-pink-400 font-mono text-sm underline">Terms of Service</a>
+                  <span className="text-purple-400/40">|</span>
+                  <a href="/subscribe" target="_blank" className="text-purple-400 hover:text-pink-400 font-mono text-sm underline">Subscribe Page</a>
                 </div>
               </div>
             </div>
           </FuturisticFrame>
+        )}
+
+        {/* Subscriptions Tab */}
+        {activeTab === "subscriptions" && (
+          <div className="space-y-6">
+            {/* Subscription Config */}
+            <FuturisticFrame title="💳 SUBSCRIPTION SETTINGS" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-purple-400 font-mono text-sm mb-2">Regular Price ($/year)</label>
+                  <input
+                    type="number"
+                    value={subscriptionConfig.regular_price}
+                    onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, regular_price: parseFloat(e.target.value) || 0 }))}
+                    step="0.01"
+                    className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-purple-400 font-mono text-sm mb-2">Promo End Date</label>
+                  <input
+                    type="date"
+                    value={subscriptionConfig.promo_end_date}
+                    onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, promo_end_date: e.target.value }))}
+                    className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-purple-400 font-mono text-sm mb-2">PayPal Link 1</label>
+                  <input
+                    type="url"
+                    value={subscriptionConfig.paypal_link_1}
+                    onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, paypal_link_1: e.target.value }))}
+                    placeholder="https://www.paypal.com/ncp/payment/..."
+                    className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-purple-400 font-mono text-sm mb-2">PayPal Link 2 (Alternative)</label>
+                  <input
+                    type="url"
+                    value={subscriptionConfig.paypal_link_2}
+                    onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, paypal_link_2: e.target.value }))}
+                    placeholder="https://www.paypal.com/ncp/payment/..."
+                    className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                  />
+                </div>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={saveSubscriptionConfig}
+                  disabled={saving}
+                  className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  SAVE SETTINGS
+                </button>
+              </div>
+            </FuturisticFrame>
+
+            {/* Subscription Stats */}
+            <FuturisticFrame title="📊 SUBSCRIPTION STATS" color="green" className="bg-slate-900/80 border border-green-500/30 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="bg-slate-950 p-4 rounded border border-green-500/20 text-center">
+                  <p className="text-green-400 font-mono text-sm">ACTIVE SUBSCRIBERS</p>
+                  <p className="text-green-300 font-mono text-3xl font-bold mt-2">{subscriptions.active_count}</p>
+                </div>
+                <div className="bg-slate-950 p-4 rounded border border-purple-500/20 text-center">
+                  <p className="text-purple-400 font-mono text-sm">TOTAL SUBSCRIPTIONS</p>
+                  <p className="text-purple-300 font-mono text-3xl font-bold mt-2">{subscriptions.total_count}</p>
+                </div>
+                <div className="bg-slate-950 p-4 rounded border border-yellow-500/20 text-center">
+                  <p className="text-yellow-400 font-mono text-sm">TOTAL REVENUE</p>
+                  <p className="text-yellow-300 font-mono text-3xl font-bold mt-2">${subscriptions.total_revenue}</p>
+                </div>
+              </div>
+
+              {/* Recent Subscriptions */}
+              {subscriptions.subscriptions?.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-purple-400 font-mono text-sm mb-2">RECENT SUBSCRIPTIONS</p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm font-mono">
+                      <thead>
+                        <tr className="text-purple-400/60 border-b border-purple-500/20">
+                          <th className="text-left py-2 px-2">User</th>
+                          <th className="text-left py-2 px-2">Amount</th>
+                          <th className="text-left py-2 px-2">Date</th>
+                          <th className="text-left py-2 px-2">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {subscriptions.subscriptions.slice(0, 10).map(sub => (
+                          <tr key={sub.id} className="border-b border-purple-500/10 text-purple-300">
+                            <td className="py-2 px-2">{sub.username}</td>
+                            <td className="py-2 px-2 text-green-400">${sub.amount_paid?.toFixed(2)}</td>
+                            <td className="py-2 px-2 text-purple-400/60">{new Date(sub.started_at).toLocaleDateString()}</td>
+                            <td className="py-2 px-2">
+                              <span className={`px-2 py-0.5 rounded text-xs ${sub.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                                {sub.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </FuturisticFrame>
+          </div>
         )}
 
         {/* Privacy Policy Tab */}
