@@ -375,6 +375,25 @@ class CategoryResponse(BaseModel):
     level: int = 0
     created_at: datetime
 
+# Protocol Recommendation Models
+class ProtocolRecommendationCreate(BaseModel):
+    original_protocol: str
+    suggested_protocol: str
+    reason: str = Field(..., min_length=1, max_length=1000)
+
+class ProtocolRecommendationResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    category_id: str
+    category_name: str
+    user_id: str
+    username: str
+    original_protocol: str
+    suggested_protocol: str
+    reason: str
+    status: str  # pending, accepted, rejected
+    created_at: str
+
 class ArticleReaction(BaseModel):
     reaction_type: str
 
