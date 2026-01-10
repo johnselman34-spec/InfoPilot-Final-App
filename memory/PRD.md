@@ -118,6 +118,9 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - `updates` - User updates on Ultimate Search page
 - `comments` - Comments on posts/updates/search results
 - `friends` - Friend relationships
+- `protocol_recommendations` - Suggested changes to public protocols
+- `messages` - Private messages between users
+- `conversations` - Message conversation metadata
 - `admin_settings` - Application configuration
 
 ## API Keys & Credentials
