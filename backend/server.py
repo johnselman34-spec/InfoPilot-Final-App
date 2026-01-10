@@ -3611,6 +3611,202 @@ async def create_page_post(page_id: str, data: GroupPostCreate, user: dict = Dep
     return {"message": "Post created", "post": {k: v for k, v in post.items() if k != "_id"}}
 
 # ============================================
+# API ROUTES - PRIVATE MESSAGING
+# ============================================
+
+MAX_IMAGE_SIZE = 8 * 1024 * 1024  # 8MB limit
+
+def get_conversation_id(user1_id: str, user2_id: str) -> str:
+    """Generate consistent conversation ID for two users"""
+    sorted_ids = sorted([user1_id, user2_id])
+    return f"conv_{sorted_ids[0]}_{sorted_ids[1]}"
+
+@api_router.get("/messages/conversations")
+async def get_conversations(user: dict = Depends(require_user)):
+    """Get all conversations for the current user"""
+    conversations = await db.conversations.find(
+        {"participants": user["id"]},
+        {"_id": 0}
+    ).sort("last_message_at", -1).to_list(100)
+    
+    # Count unread messages for each conversation
+    for conv in conversations:
+        unread = await db.messages.count_documents({
+            "conversation_id": conv["id"],
+            "recipient_id": user["id"],
+            "read": False
+        })
+        conv["unread_count"] = unread
+    
+    return {"conversations": conversations}
+
+@api_router.get("/messages/conversation/{other_user_id}")
+async def get_conversation_messages(other_user_id: str, page: int = 1, limit: int = 50, user: dict = Depends(require_user)):
+    """Get messages in a conversation with another user"""
+    conversation_id = get_conversation_id(user["id"], other_user_id)
+    
+    skip = (page - 1) * limit
+    messages = await db.messages.find(
+        {"conversation_id": conversation_id},
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    # Mark messages as read
+    await db.messages.update_many(
+        {"conversation_id": conversation_id, "recipient_id": user["id"], "read": False},
+        {"$set": {"read": True}}
+    )
+    
+    # Get other user info
+    other_user = await db.users.find_one({"id": other_user_id}, {"_id": 0, "id": 1, "username": 1})
+    
+    return {
+        "messages": list(reversed(messages)),
+        "other_user": other_user,
+        "conversation_id": conversation_id
+    }
+
+@api_router.post("/messages/send")
+async def send_message(data: MessageCreate, user: dict = Depends(require_user)):
+    """Send a message to another user"""
+    # Verify recipient exists
+    recipient = await db.users.find_one({"id": data.recipient_id})
+    if not recipient:
+        raise HTTPException(status_code=404, detail="Recipient not found")
+    
+    # Can't message yourself
+    if data.recipient_id == user["id"]:
+        raise HTTPException(status_code=400, detail="Cannot send message to yourself")
+    
+    # Check image size if provided
+    if data.image_url:
+        # If it's base64, check size
+        if data.image_url.startswith("data:"):
+            # Extract base64 part
+            try:
+                base64_data = data.image_url.split(",")[1] if "," in data.image_url else data.image_url
+                image_size = len(base64.b64decode(base64_data))
+                if image_size > MAX_IMAGE_SIZE:
+                    raise HTTPException(status_code=400, detail=f"Image size exceeds {MAX_IMAGE_SIZE // (1024*1024)}MB limit")
+            except Exception as e:
+                if "exceeds" in str(e):
+                    raise e
+                raise HTTPException(status_code=400, detail="Invalid image data")
+    
+    conversation_id = get_conversation_id(user["id"], data.recipient_id)
+    
+    message = {
+        "id": str(uuid.uuid4()),
+        "conversation_id": conversation_id,
+        "sender_id": user["id"],
+        "sender_username": user["username"],
+        "recipient_id": data.recipient_id,
+        "recipient_username": recipient["username"],
+        "content": data.content,
+        "image_url": data.image_url,
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.messages.insert_one(message)
+    
+    # Update or create conversation
+    conversation = await db.conversations.find_one({"id": conversation_id})
+    if not conversation:
+        conversation = {
+            "id": conversation_id,
+            "participants": [user["id"], data.recipient_id],
+            "participant_usernames": {
+                user["id"]: user["username"],
+                data.recipient_id: recipient["username"]
+            },
+            "last_message": data.content[:100] + ("..." if len(data.content) > 100 else ""),
+            "last_message_at": message["created_at"],
+            "created_at": message["created_at"]
+        }
+        await db.conversations.insert_one(conversation)
+    else:
+        await db.conversations.update_one(
+            {"id": conversation_id},
+            {"$set": {
+                "last_message": data.content[:100] + ("..." if len(data.content) > 100 else ""),
+                "last_message_at": message["created_at"]
+            }}
+        )
+    
+    # Send email notification to recipient
+    if recipient.get("email"):
+        email_html = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; background-color: #1a1a2e; color: #e0e0ff; padding: 20px;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #0f0f1a; border: 1px solid #8b5cf6; border-radius: 8px; padding: 20px;">
+                <h2 style="color: #ec4899; margin-bottom: 20px;">💬 New Message from {user["username"]}</h2>
+                <p style="color: #c4b5fd;">Hello {recipient.get('username', 'Pilot')},</p>
+                <p style="color: #c4b5fd;">You have received a new message on InfoPilot Explorer:</p>
+                
+                <div style="background-color: #1f1f35; border-left: 4px solid #ec4899; padding: 15px; margin: 15px 0;">
+                    <p style="color: #c4b5fd; margin: 0;">{data.content[:200]}{"..." if len(data.content) > 200 else ""}</p>
+                </div>
+                
+                {"<p style='color: #8b5cf6;'>📷 This message includes an image attachment.</p>" if data.image_url else ""}
+                
+                <p style="color: #c4b5fd; margin-top: 20px;">Log in to InfoPilot Explorer to view and reply.</p>
+                
+                <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">— InfoPilot Explorer Team</p>
+            </div>
+        </body>
+        </html>
+        """
+        asyncio.create_task(send_notification_email(
+            recipient["email"],
+            f"💬 New message from {user['username']}",
+            email_html
+        ))
+    
+    return {"message": "Message sent", "data": {k: v for k, v in message.items() if k != "_id"}}
+
+@api_router.get("/messages/unread-count")
+async def get_unread_count(user: dict = Depends(require_user)):
+    """Get total unread message count"""
+    count = await db.messages.count_documents({
+        "recipient_id": user["id"],
+        "read": False
+    })
+    return {"unread_count": count}
+
+@api_router.put("/messages/mark-read/{conversation_id}")
+async def mark_conversation_read(conversation_id: str, user: dict = Depends(require_user)):
+    """Mark all messages in a conversation as read"""
+    result = await db.messages.update_many(
+        {"conversation_id": conversation_id, "recipient_id": user["id"], "read": False},
+        {"$set": {"read": True}}
+    )
+    return {"message": "Messages marked as read", "count": result.modified_count}
+
+@api_router.delete("/messages/{message_id}")
+async def delete_message(message_id: str, user: dict = Depends(require_user)):
+    """Delete a message (sender only)"""
+    message = await db.messages.find_one({"id": message_id})
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    if message["sender_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="Can only delete your own messages")
+    
+    await db.messages.delete_one({"id": message_id})
+    return {"message": "Message deleted"}
+
+@api_router.get("/users/search")
+async def search_users(q: str = Query(..., min_length=1), user: dict = Depends(require_user)):
+    """Search for users by username"""
+    users = await db.users.find(
+        {"username": {"$regex": q, "$options": "i"}, "id": {"$ne": user["id"]}},
+        {"_id": 0, "id": 1, "username": 1, "email": 1}
+    ).limit(20).to_list(20)
+    
+    return {"users": users}
+
+# ============================================
 # API ROUTES - REACTIONS & COMMENTS (Facebook-style)
 # ============================================
 
