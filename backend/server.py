@@ -5141,6 +5141,371 @@ async def update_terms_of_service(content: str = Query(...), user: dict = Depend
     return {"message": "Terms of service updated"}
 
 # ============================================
+# API ROUTES - EMAIL DIGEST MANAGEMENT
+# ============================================
+
+@api_router.get("/admin/email-digest/config")
+async def get_email_digest_config(user: dict = Depends(require_admin)):
+    """Get email digest configuration"""
+    config = await db.admin_settings.find_one({"type": "email_digest_config"}, {"_id": 0})
+    if not config:
+        config = {
+            "enabled": False,
+            "day_of_week": "monday",
+            "hour": 9,
+            "include_trending": True,
+            "include_marketplace": True,
+            "include_notifications": True,
+            "last_sent": None,
+            "total_sent": 0
+        }
+    return config
+
+@api_router.put("/admin/email-digest/config")
+async def update_email_digest_config(
+    enabled: bool = Query(None),
+    day_of_week: str = Query(None),
+    hour: int = Query(None, ge=0, le=23),
+    include_trending: bool = Query(None),
+    include_marketplace: bool = Query(None),
+    include_notifications: bool = Query(None),
+    user: dict = Depends(require_admin)
+):
+    """Update email digest configuration"""
+    update_data = {}
+    if enabled is not None:
+        update_data["enabled"] = enabled
+    if day_of_week is not None:
+        update_data["day_of_week"] = day_of_week
+    if hour is not None:
+        update_data["hour"] = hour
+    if include_trending is not None:
+        update_data["include_trending"] = include_trending
+    if include_marketplace is not None:
+        update_data["include_marketplace"] = include_marketplace
+    if include_notifications is not None:
+        update_data["include_notifications"] = include_notifications
+    
+    if update_data:
+        update_data["type"] = "email_digest_config"
+        await db.admin_settings.update_one(
+            {"type": "email_digest_config"},
+            {"$set": update_data},
+            upsert=True
+        )
+    
+    return {"message": "Email digest configuration updated"}
+
+@api_router.post("/admin/email-digest/preview")
+async def preview_email_digest(user: dict = Depends(require_admin)):
+    """Preview weekly digest email for admin"""
+    # Import here to avoid circular imports
+    from services.email_digest import generate_weekly_digest_content, create_digest_html
+    
+    digest_data = await generate_weekly_digest_content(db, user)
+    html = create_digest_html(digest_data)
+    
+    return {
+        "preview_data": digest_data,
+        "html": html
+    }
+
+@api_router.post("/admin/email-digest/send-now")
+async def send_digests_now(user: dict = Depends(require_admin)):
+    """Manually trigger sending weekly digests to all users"""
+    from services.email_digest import process_weekly_digests
+    
+    result = await process_weekly_digests(db)
+    
+    # Update last sent time
+    await db.admin_settings.update_one(
+        {"type": "email_digest_config"},
+        {"$set": {
+            "last_sent": datetime.now(timezone.utc).isoformat(),
+            "$inc": {"total_sent": result["sent"]}
+        }},
+        upsert=True
+    )
+    
+    return {
+        "message": f"Digest processing complete",
+        "results": result
+    }
+
+@api_router.put("/user/email-preferences")
+async def update_email_preferences(
+    digest_enabled: bool = Query(...),
+    user: dict = Depends(require_user)
+):
+    """Update user's email preferences"""
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"digest_enabled": digest_enabled}}
+    )
+    return {"message": "Email preferences updated", "digest_enabled": digest_enabled}
+
+@api_router.get("/user/email-preferences")
+async def get_email_preferences(user: dict = Depends(require_user)):
+    """Get user's email preferences"""
+    user_data = await db.users.find_one({"id": user["id"]}, {"_id": 0, "digest_enabled": 1})
+    return {"digest_enabled": user_data.get("digest_enabled", True)}
+
+# ============================================
+# API ROUTES - SOCIAL MODERATION (ADMIN)
+# ============================================
+
+@api_router.get("/admin/moderation/dashboard")
+async def get_moderation_dashboard(user: dict = Depends(require_admin)):
+    """Get moderation dashboard statistics"""
+    # Count various content types
+    total_groups = await db.groups.count_documents({})
+    total_pages = await db.pages.count_documents({})
+    total_posts = await db.group_posts.count_documents({}) + await db.page_posts.count_documents({})
+    total_comments = await db.comments.count_documents({})
+    total_messages = await db.messages.count_documents({})
+    
+    # Count reported content
+    reported_content = await db.reports.count_documents({"status": "pending"})
+    
+    # Get recent activity
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    new_groups = await db.groups.count_documents({"created_at": {"$gte": week_ago}})
+    new_pages = await db.pages.count_documents({"created_at": {"$gte": week_ago}})
+    new_users = await db.users.count_documents({"created_at": {"$gte": week_ago}})
+    
+    return {
+        "content_stats": {
+            "groups": total_groups,
+            "pages": total_pages,
+            "posts": total_posts,
+            "comments": total_comments,
+            "messages": total_messages
+        },
+        "reported_content": reported_content,
+        "weekly_growth": {
+            "new_groups": new_groups,
+            "new_pages": new_pages,
+            "new_users": new_users
+        }
+    }
+
+@api_router.get("/admin/moderation/groups")
+async def get_all_groups_admin(
+    page: int = 1,
+    search: str = None,
+    user: dict = Depends(require_admin)
+):
+    """Get all groups for moderation"""
+    query = {}
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}}
+        ]
+    
+    per_page = 20
+    skip = (page - 1) * per_page
+    
+    total = await db.groups.count_documents(query)
+    groups = await db.groups.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(per_page).to_list(per_page)
+    
+    return {
+        "groups": groups,
+        "total": total,
+        "page": page,
+        "total_pages": (total + per_page - 1) // per_page
+    }
+
+@api_router.delete("/admin/moderation/groups/{group_id}")
+async def delete_group_admin(group_id: str, user: dict = Depends(require_admin)):
+    """Delete a group (admin moderation)"""
+    group = await db.groups.find_one({"id": group_id})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Delete group and all related content
+    await db.groups.delete_one({"id": group_id})
+    await db.group_members.delete_many({"group_id": group_id})
+    await db.group_posts.delete_many({"group_id": group_id})
+    
+    return {"message": f"Group '{group.get('name', 'Unknown')}' and all content deleted"}
+
+@api_router.get("/admin/moderation/pages")
+async def get_all_pages_admin(
+    page: int = 1,
+    search: str = None,
+    user: dict = Depends(require_admin)
+):
+    """Get all pages for moderation"""
+    query = {}
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}}
+        ]
+    
+    per_page = 20
+    skip = (page - 1) * per_page
+    
+    total = await db.pages.count_documents(query)
+    pages = await db.pages.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(per_page).to_list(per_page)
+    
+    return {
+        "pages": pages,
+        "total": total,
+        "page": page,
+        "total_pages": (total + per_page - 1) // per_page
+    }
+
+@api_router.delete("/admin/moderation/pages/{page_id}")
+async def delete_page_admin(page_id: str, user: dict = Depends(require_admin)):
+    """Delete a page (admin moderation)"""
+    page = await db.pages.find_one({"id": page_id})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    # Delete page and all related content
+    await db.pages.delete_one({"id": page_id})
+    await db.page_followers.delete_many({"page_id": page_id})
+    await db.page_posts.delete_many({"page_id": page_id})
+    
+    return {"message": f"Page '{page.get('name', 'Unknown')}' and all content deleted"}
+
+@api_router.post("/admin/moderation/users/{user_id}/ban")
+async def ban_user(user_id: str, reason: str = Query(...), user: dict = Depends(require_admin)):
+    """Ban a user"""
+    target_user = await db.users.find_one({"id": user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if target_user.get("is_admin"):
+        raise HTTPException(status_code=400, detail="Cannot ban admin users")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {
+            "is_banned": True,
+            "ban_reason": reason,
+            "banned_at": datetime.now(timezone.utc).isoformat(),
+            "banned_by": user["id"]
+        }}
+    )
+    
+    return {"message": f"User '{target_user.get('username', 'Unknown')}' has been banned"}
+
+@api_router.post("/admin/moderation/users/{user_id}/unban")
+async def unban_user(user_id: str, user: dict = Depends(require_admin)):
+    """Unban a user"""
+    target_user = await db.users.find_one({"id": user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"is_banned": False}, "$unset": {"ban_reason": "", "banned_at": "", "banned_by": ""}}
+    )
+    
+    return {"message": f"User '{target_user.get('username', 'Unknown')}' has been unbanned"}
+
+@api_router.get("/admin/moderation/users")
+async def get_users_for_moderation(
+    page: int = 1,
+    search: str = None,
+    banned_only: bool = False,
+    user: dict = Depends(require_admin)
+):
+    """Get users for moderation"""
+    query = {}
+    if search:
+        query["$or"] = [
+            {"username": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}}
+        ]
+    if banned_only:
+        query["is_banned"] = True
+    
+    per_page = 20
+    skip = (page - 1) * per_page
+    
+    total = await db.users.count_documents(query)
+    users = await db.users.find(
+        query,
+        {"_id": 0, "password_hash": 0}
+    ).sort("created_at", -1).skip(skip).limit(per_page).to_list(per_page)
+    
+    return {
+        "users": users,
+        "total": total,
+        "page": page,
+        "total_pages": (total + per_page - 1) // per_page
+    }
+
+@api_router.post("/report")
+async def report_content(
+    content_type: str = Query(...),  # user, group, page, post, comment
+    content_id: str = Query(...),
+    reason: str = Query(...),
+    user: dict = Depends(require_user)
+):
+    """Report content for moderation"""
+    report = {
+        "id": str(uuid.uuid4()),
+        "content_type": content_type,
+        "content_id": content_id,
+        "reason": reason,
+        "reported_by": user["id"],
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.reports.insert_one(report)
+    return {"message": "Report submitted successfully", "report_id": report["id"]}
+
+@api_router.get("/admin/moderation/reports")
+async def get_reports(
+    status: str = "pending",
+    page: int = 1,
+    user: dict = Depends(require_admin)
+):
+    """Get reported content"""
+    per_page = 20
+    skip = (page - 1) * per_page
+    
+    query = {"status": status} if status else {}
+    total = await db.reports.count_documents(query)
+    reports = await db.reports.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(per_page).to_list(per_page)
+    
+    return {
+        "reports": reports,
+        "total": total,
+        "page": page,
+        "total_pages": (total + per_page - 1) // per_page
+    }
+
+@api_router.put("/admin/moderation/reports/{report_id}")
+async def update_report_status(
+    report_id: str,
+    status: str = Query(...),  # pending, resolved, dismissed
+    action_taken: str = Query(None),
+    user: dict = Depends(require_admin)
+):
+    """Update report status"""
+    result = await db.reports.update_one(
+        {"id": report_id},
+        {"$set": {
+            "status": status,
+            "action_taken": action_taken,
+            "resolved_by": user["id"],
+            "resolved_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    return {"message": "Report status updated"}
+
+# ============================================
 # API ROUTES - PRIVATE MESSAGING
 # ============================================
 
