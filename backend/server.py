@@ -4533,6 +4533,81 @@ async def get_database_limits(user: dict = Depends(require_user)):
         "top_users_by_results": user_stats
     }
 
+@api_router.get("/admin/search-pages-config")
+async def get_search_pages_config(user: dict = Depends(require_user)):
+    """Get search pages configuration (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
+    settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
+    
+    return {
+        "unpaid_user_search_pages": settings.unpaid_user_search_pages,
+        "paid_user_search_pages": settings.paid_user_search_pages,
+        "results_per_page": settings.results_per_page,
+        "is_app_free": settings.is_app_free,
+        "unpaid_max_results": settings.get_max_results_for_user(False),
+        "paid_max_results": settings.get_max_results_for_user(True)
+    }
+
+@api_router.put("/admin/search-pages-config")
+async def update_search_pages_config(
+    unpaid_user_search_pages: int = Query(None, ge=1, le=99, description="Pages for unpaid users (1-99). >40 = free app"),
+    paid_user_search_pages: int = Query(None, ge=1, le=99, description="Pages for paid users (1-99)"),
+    results_per_page: int = Query(None, ge=10, le=50, description="Results per page (10-50)"),
+    user: dict = Depends(require_user)
+):
+    """Update search pages configuration (admin only). If unpaid_user_search_pages > 40, app is free."""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    update_data = {}
+    if unpaid_user_search_pages is not None:
+        update_data["unpaid_user_search_pages"] = unpaid_user_search_pages
+    if paid_user_search_pages is not None:
+        update_data["paid_user_search_pages"] = paid_user_search_pages
+    if results_per_page is not None:
+        update_data["results_per_page"] = results_per_page
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No settings to update")
+    
+    await db.admin_settings.update_one(
+        {"id": "admin_settings"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    # Fetch updated settings
+    settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
+    settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
+    
+    is_free_msg = " (App is FREE - unpaid users get >40 pages)" if settings.is_app_free else ""
+    
+    return {
+        "message": f"Search pages configuration updated{is_free_msg}",
+        "unpaid_user_search_pages": settings.unpaid_user_search_pages,
+        "paid_user_search_pages": settings.paid_user_search_pages,
+        "results_per_page": settings.results_per_page,
+        "is_app_free": settings.is_app_free,
+        "unpaid_max_results": settings.get_max_results_for_user(False),
+        "paid_max_results": settings.get_max_results_for_user(True)
+    }
+
+@api_router.get("/app-status")
+async def get_app_status():
+    """Get public app status (free vs paid) - no auth required"""
+    settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
+    settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
+    
+    return {
+        "is_app_free": settings.is_app_free,
+        "unpaid_user_pages": settings.unpaid_user_search_pages,
+        "paid_user_pages": settings.paid_user_search_pages,
+        "free_threshold": 40
+    }
+
 @api_router.get("/admin/subscriptions")
 async def get_all_subscriptions(user: dict = Depends(require_user)):
     """Get all subscriptions (admin only)"""
