@@ -3289,6 +3289,13 @@ const UltimateSearchPage = () => {
   const [showAddSubcategory, setShowAddSubcategory] = useState(null);
   const [isPreviewResults, setIsPreviewResults] = useState(false);
   
+  // Database stats state
+  const [dbStats, setDbStats] = useState({ current_count: 0, max_allowed: 4000, remaining: 4000, percentage_used: 0 });
+  
+  // Category filter state (for clickable categories)
+  const [filterByCategoryId, setFilterByCategoryId] = useState(null);
+  const [filterByCategoryName, setFilterByCategoryName] = useState(null);
+  
   // Page customization state
   const [pageSettings, setPageSettings] = useState({ page_name: "My Ultimate Search", photos: [], show_name_suggestion: true, name_suggestions: [] });
   const [showNameEditor, setShowNameEditor] = useState(false);
@@ -3320,7 +3327,80 @@ const UltimateSearchPage = () => {
     fetchSessions();
     fetchPageSettings();
     fetchPhotos();
+    fetchDbStats();
   }, []);
+  
+  const fetchDbStats = async () => {
+    try {
+      const res = await axios.get(`${API}/ultimate-search/user-stats`);
+      setDbStats(res.data);
+    } catch (error) {
+      console.error("Failed to fetch db stats");
+    }
+  };
+  
+  const handleClearAllResults = async () => {
+    if (!window.confirm(`Are you sure you want to clear ALL ${dbStats.current_count} results from your database? This cannot be undone.`)) return;
+    try {
+      const res = await axios.delete(`${API}/ultimate-search/clear-all`);
+      toast.success(res.data.message);
+      fetchDbStats();
+      fetchSessions();
+      fetchCategories();
+      fetchTreeCategories();
+      setResults([]);
+      setTotalResults(0);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to clear results");
+    }
+  };
+  
+  const handleClearCategoryResults = async (categoryId, categoryName) => {
+    if (!window.confirm(`Clear all results from "${categoryName}" and its subcategories?`)) return;
+    try {
+      const res = await axios.delete(`${API}/ultimate-search/category/${categoryId}/clear`);
+      toast.success(res.data.message);
+      fetchDbStats();
+      fetchSessions();
+      fetchCategories();
+      fetchTreeCategories();
+      handleViewResults();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to clear category results");
+    }
+  };
+  
+  // Handle hashtag click - triggers new search
+  const handleHashtagSearch = (hashtag) => {
+    const searchTerm = hashtag.replace('#', '');
+    setKeyword(searchTerm);
+    toast.info(`Searching for: ${searchTerm}`);
+  };
+  
+  // Handle category click - filters results by category
+  const handleCategoryFilter = async (categoryId, categoryName) => {
+    setFilterByCategoryId(categoryId);
+    setFilterByCategoryName(categoryName);
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/ultimate-search/category/${categoryId}/results?page=1`);
+      setResults(res.data.results || []);
+      setTotalResults(res.data.total || 0);
+      setTotalPages(res.data.total_pages || 1);
+      setCurrentPage(1);
+      toast.success(`Showing ${res.data.total} results for "${categoryName}"`);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to filter by category");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Clear category filter
+  const clearCategoryFilter = () => {
+    setFilterByCategoryId(null);
+    setFilterByCategoryName(null);
+  };
   
   const fetchPageSettings = async () => {
     try {
