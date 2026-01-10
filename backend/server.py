@@ -3847,6 +3847,285 @@ async def get_global_database(
     }
 
 # ============================================
+# WORLDWIDE INFORMATION RESEARCH DATABASE
+# ============================================
+
+# Pydantic models for research resources
+class ResearchResourceCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=500)
+    description: str = Field(..., max_length=2000)
+    url: str
+    category: str  # Science, Technology, History, Arts, Business, Education, Government, Health, etc.
+    tags: List[str] = []
+    location: Optional[str] = None  # Country or region
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    featured: bool = False
+
+class ResearchResourceUpdate(BaseModel):
+    title: Optional[str] = Field(None, max_length=500)
+    description: Optional[str] = Field(None, max_length=2000)
+    url: Optional[str] = None
+    category: Optional[str] = None
+    tags: Optional[List[str]] = None
+    location: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    featured: Optional[bool] = None
+
+# Research resource categories
+RESEARCH_CATEGORIES = [
+    "Science", "Technology", "History", "Arts & Culture", "Business & Finance",
+    "Education", "Government", "Health & Medicine", "Environment", "Law & Legal",
+    "Engineering", "Mathematics", "Philosophy", "Psychology", "Sociology",
+    "Economics", "Political Science", "Literature", "Music", "Architecture"
+]
+
+@api_router.get("/research-database/resources")
+async def get_research_resources(
+    page: int = 1,
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    featured_only: bool = False,
+    user: dict = Depends(require_user)
+):
+    """Get curated research resources with filtering"""
+    query = {}
+    
+    if category:
+        query["category"] = category
+    if featured_only:
+        query["featured"] = True
+    if search:
+        query["$or"] = [
+            {"title": {"$regex": search, "$options": "i"}},
+            {"description": {"$regex": search, "$options": "i"}},
+            {"tags": {"$regex": search, "$options": "i"}}
+        ]
+    
+    per_page = 20
+    skip = (page - 1) * per_page
+    
+    total = await db.research_resources.count_documents(query)
+    resources = await db.research_resources.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(per_page).to_list(per_page)
+    
+    return {
+        "resources": resources,
+        "total": total,
+        "page": page,
+        "total_pages": (total + per_page - 1) // per_page,
+        "categories": RESEARCH_CATEGORIES
+    }
+
+@api_router.post("/research-database/resources")
+async def create_research_resource(
+    data: ResearchResourceCreate,
+    user: dict = Depends(require_admin)
+):
+    """Create a new research resource (admin only)"""
+    resource = {
+        "id": str(uuid.uuid4()),
+        "title": data.title,
+        "description": data.description,
+        "url": data.url,
+        "category": data.category,
+        "tags": data.tags,
+        "location": data.location,
+        "lat": data.lat,
+        "lng": data.lng,
+        "featured": data.featured,
+        "created_by": user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "views": 0
+    }
+    
+    await db.research_resources.insert_one(resource)
+    resource.pop("_id", None)
+    return resource
+
+@api_router.put("/research-database/resources/{resource_id}")
+async def update_research_resource(
+    resource_id: str,
+    data: ResearchResourceUpdate,
+    user: dict = Depends(require_admin)
+):
+    """Update a research resource (admin only)"""
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No update data provided")
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.research_resources.update_one(
+        {"id": resource_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    
+    resource = await db.research_resources.find_one({"id": resource_id}, {"_id": 0})
+    return resource
+
+@api_router.delete("/research-database/resources/{resource_id}")
+async def delete_research_resource(
+    resource_id: str,
+    user: dict = Depends(require_admin)
+):
+    """Delete a research resource (admin only)"""
+    result = await db.research_resources.delete_one({"id": resource_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Resource not found")
+    return {"success": True, "message": "Resource deleted"}
+
+@api_router.post("/research-database/resources/{resource_id}/view")
+async def increment_resource_view(
+    resource_id: str,
+    user: dict = Depends(require_user)
+):
+    """Increment view count for a resource"""
+    await db.research_resources.update_one(
+        {"id": resource_id},
+        {"$inc": {"views": 1}}
+    )
+    return {"success": True}
+
+@api_router.get("/research-database/trending")
+async def get_trending_topics(user: dict = Depends(require_user)):
+    """Get trending topics/hashtags from all public search results"""
+    # Aggregate hashtags from all search results
+    pipeline = [
+        {"$match": {"hashtags": {"$exists": True, "$ne": []}}},
+        {"$unwind": "$hashtags"},
+        {"$group": {"_id": "$hashtags", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 20}
+    ]
+    
+    hashtags = await db.search_results.aggregate(pipeline).to_list(20)
+    
+    # Get trending categories
+    category_pipeline = [
+        {"$unwind": "$categories"},
+        {"$group": {"_id": "$categories", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]
+    
+    category_counts = await db.search_results.aggregate(category_pipeline).to_list(10)
+    
+    # Get category names
+    category_ids = [c["_id"] for c in category_counts]
+    categories = await db.categories.find({"id": {"$in": category_ids}}, {"_id": 0, "id": 1, "name": 1}).to_list(10)
+    category_map = {c["id"]: c["name"] for c in categories}
+    
+    trending_categories = [
+        {"id": c["_id"], "name": category_map.get(c["_id"], "Unknown"), "count": c["count"]}
+        for c in category_counts if c["_id"] in category_map
+    ]
+    
+    return {
+        "trending_hashtags": [{"tag": h["_id"], "count": h["count"]} for h in hashtags],
+        "trending_categories": trending_categories
+    }
+
+@api_router.get("/research-database/contributors")
+async def get_top_contributors(user: dict = Depends(require_user)):
+    """Get top contributors based on public protocols and copies"""
+    # Get users with most public protocols
+    pipeline = [
+        {"$match": {"is_public": True}},
+        {"$group": {
+            "_id": "$user_id",
+            "protocol_count": {"$sum": 1},
+            "total_copies": {"$sum": "$copy_count"}
+        }},
+        {"$sort": {"total_copies": -1, "protocol_count": -1}},
+        {"$limit": 10}
+    ]
+    
+    contributors = await db.categories.aggregate(pipeline).to_list(10)
+    
+    # Get user details
+    user_ids = [c["_id"] for c in contributors]
+    users = await db.users.find({"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "username": 1, "profile_photo": 1}).to_list(10)
+    user_map = {u["id"]: u for u in users}
+    
+    result = []
+    for i, c in enumerate(contributors):
+        user_info = user_map.get(c["_id"], {})
+        result.append({
+            "rank": i + 1,
+            "user_id": c["_id"],
+            "username": user_info.get("username", "Unknown"),
+            "profile_photo": user_info.get("profile_photo"),
+            "protocol_count": c["protocol_count"],
+            "total_copies": c["total_copies"]
+        })
+    
+    return {"contributors": result}
+
+@api_router.get("/research-database/map-data")
+async def get_research_map_data(user: dict = Depends(require_user)):
+    """Get research resources with location data for map visualization"""
+    # Get resources with coordinates
+    resources = await db.research_resources.find(
+        {"lat": {"$exists": True, "$ne": None}, "lng": {"$exists": True, "$ne": None}},
+        {"_id": 0}
+    ).to_list(500)
+    
+    # Also get location data from search results
+    search_locations = await db.search_results.find(
+        {"locations": {"$exists": True, "$ne": []}},
+        {"_id": 0, "title": 1, "url": 1, "locations": 1, "categories": 1}
+    ).limit(200).to_list(200)
+    
+    # Aggregate by location
+    location_counts = {}
+    for result in search_locations:
+        for loc in result.get("locations", []):
+            key = f"{loc.get('lat', 0)},{loc.get('lng', 0)}"
+            if key not in location_counts:
+                location_counts[key] = {
+                    "name": loc.get("name", "Unknown"),
+                    "lat": loc.get("lat"),
+                    "lng": loc.get("lng"),
+                    "count": 0,
+                    "type": "research_hotspot"
+                }
+            location_counts[key]["count"] += 1
+    
+    return {
+        "resources": resources,
+        "research_hotspots": list(location_counts.values()),
+        "total_resources": len(resources),
+        "total_hotspots": len(location_counts)
+    }
+
+@api_router.get("/research-database/stats")
+async def get_research_database_stats(user: dict = Depends(require_user)):
+    """Get overall statistics for the research database"""
+    total_resources = await db.research_resources.count_documents({})
+    total_results = await db.search_results.count_documents({})
+    total_public_protocols = await db.categories.count_documents({"is_public": True})
+    total_users = await db.users.count_documents({})
+    
+    # Category distribution
+    category_pipeline = [
+        {"$group": {"_id": "$category", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]
+    category_dist = await db.research_resources.aggregate(category_pipeline).to_list(20)
+    
+    return {
+        "total_resources": total_resources,
+        "total_results": total_results,
+        "total_public_protocols": total_public_protocols,
+        "total_users": total_users,
+        "category_distribution": [{"category": c["_id"], "count": c["count"]} for c in category_dist if c["_id"]]
+    }
+
+# ============================================
 # API ROUTES - SOCIAL FEATURES (FRIENDS)
 # ============================================
 
