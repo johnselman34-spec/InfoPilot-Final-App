@@ -4561,10 +4561,22 @@ const AdminPage = () => {
   const [termsOfService, setTermsOfService] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
+  // Subscription management state
+  const [subscriptionConfig, setSubscriptionConfig] = useState({
+    regular_price: 4.62,
+    min_price: 0.01,
+    promo_end_date: "2026-03-02",
+    paypal_link_1: "",
+    paypal_link_2: ""
+  });
+  const [subscriptions, setSubscriptions] = useState({ subscriptions: [], total_count: 0, active_count: 0, total_revenue: 0 });
 
   useEffect(() => {
     if (user?.is_admin) {
       fetchLegalPages();
+      fetchSubscriptionConfig();
+      fetchSubscriptions();
     }
   }, [user]);
 
@@ -4580,6 +4592,50 @@ const AdminPage = () => {
       console.error("Failed to fetch legal pages");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSubscriptionConfig = async () => {
+    try {
+      const res = await axios.get(`${API}/subscription/config`);
+      setSubscriptionConfig(prev => ({
+        ...prev,
+        regular_price: res.data.regular_price || 4.62,
+        min_price: res.data.min_price || 0.01,
+        promo_end_date: res.data.promo_end_date?.split("T")[0] || "2026-03-02",
+        paypal_link_1: res.data.paypal_link_1 || "",
+        paypal_link_2: res.data.paypal_link_2 || ""
+      }));
+    } catch (error) {
+      console.error("Failed to fetch subscription config");
+    }
+  };
+
+  const fetchSubscriptions = async () => {
+    try {
+      const res = await axios.get(`${API}/admin/subscriptions`);
+      setSubscriptions(res.data);
+    } catch (error) {
+      console.error("Failed to fetch subscriptions");
+    }
+  };
+
+  const saveSubscriptionConfig = async () => {
+    setSaving(true);
+    try {
+      const params = new URLSearchParams();
+      params.append("regular_price", subscriptionConfig.regular_price);
+      params.append("min_price", subscriptionConfig.min_price);
+      params.append("promo_end_date", subscriptionConfig.promo_end_date);
+      if (subscriptionConfig.paypal_link_1) params.append("paypal_link_1", subscriptionConfig.paypal_link_1);
+      if (subscriptionConfig.paypal_link_2) params.append("paypal_link_2", subscriptionConfig.paypal_link_2);
+      
+      await axios.put(`${API}/admin/subscription/config?${params.toString()}`);
+      toast.success("Subscription settings updated!");
+    } catch (error) {
+      toast.error("Failed to save subscription settings");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -4620,6 +4676,7 @@ const AdminPage = () => {
         <div className="flex gap-2 mb-6 overflow-x-auto">
           {[
             { id: "dashboard", label: "Dashboard", icon: Shield },
+            { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
             { id: "privacy", label: "Privacy Policy", icon: Lock },
             { id: "terms", label: "Terms of Service", icon: FileText }
           ].map(tab => (
