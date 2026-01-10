@@ -1412,6 +1412,432 @@ async def ban_word(word: str = Body(...), user = Depends(get_current_user)):
     )
     return {"message": "Word banned"}
 
+# ============== GROUPS & PAGES ==============
+
+class GroupCreate(BaseModel):
+    name: str
+    description: Optional[str] = ""
+    is_public: bool = True
+    cover_image: Optional[str] = None
+    profile_image: Optional[str] = None
+
+class PageCreate(BaseModel):
+    name: str
+    description: Optional[str] = ""
+    category: Optional[str] = None
+    cover_image: Optional[str] = None
+    profile_image: Optional[str] = None
+
+class PostCreate(BaseModel):
+    content: str
+    images: Optional[List[str]] = []
+    group_id: Optional[str] = None
+    page_id: Optional[str] = None
+
+class CommentCreate(BaseModel):
+    content: str
+    post_id: Optional[str] = None
+    search_result_id: Optional[str] = None
+
+# Groups
+@api_router.post("/groups")
+async def create_group(group: GroupCreate, user = Depends(get_current_user)):
+    if contains_blocked_content(group.name) or contains_blocked_content(group.description):
+        raise HTTPException(status_code=400, detail="Content contains blocked words")
+    
+    group_doc = {
+        "id": str(uuid.uuid4()),
+        "name": group.name,
+        "description": group.description,
+        "is_public": group.is_public,
+        "cover_image": group.cover_image,
+        "profile_image": group.profile_image,
+        "creator_id": str(user["_id"]),
+        "admin_ids": [str(user["_id"])],
+        "member_ids": [str(user["_id"])],
+        "created_at": datetime.utcnow(),
+        "member_count": 1
+    }
+    
+    await db.groups.insert_one(group_doc)
+    return group_doc
+
+@api_router.get("/groups")
+async def get_groups(user = Depends(get_current_user)):
+    # Get public groups and groups user is member of
+    groups = await db.groups.find({
+        "$or": [
+            {"is_public": True},
+            {"member_ids": str(user["_id"])}
+        ]
+    }).to_list(100)
+    
+    for g in groups:
+        g.pop("_id", None)
+        g["is_member"] = str(user["_id"]) in g.get("member_ids", [])
+        g["is_admin"] = str(user["_id"]) in g.get("admin_ids", [])
+    
+    return groups
+
+@api_router.get("/groups/{group_id}")
+async def get_group(group_id: str, user = Depends(get_current_user)):
+    group = await db.groups.find_one({"id": group_id})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    group.pop("_id", None)
+    group["is_member"] = str(user["_id"]) in group.get("member_ids", [])
+    group["is_admin"] = str(user["_id"]) in group.get("admin_ids", [])
+    
+    return group
+
+@api_router.post("/groups/{group_id}/join")
+async def join_group(group_id: str, user = Depends(get_current_user)):
+    group = await db.groups.find_one({"id": group_id})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    user_id = str(user["_id"])
+    if user_id in group.get("member_ids", []):
+        raise HTTPException(status_code=400, detail="Already a member")
+    
+    await db.groups.update_one(
+        {"id": group_id},
+        {
+            "$push": {"member_ids": user_id},
+            "$inc": {"member_count": 1}
+        }
+    )
+    
+    return {"message": "Joined group successfully"}
+
+@api_router.post("/groups/{group_id}/leave")
+async def leave_group(group_id: str, user = Depends(get_current_user)):
+    group = await db.groups.find_one({"id": group_id})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    user_id = str(user["_id"])
+    if user_id not in group.get("member_ids", []):
+        raise HTTPException(status_code=400, detail="Not a member")
+    
+    if user_id == group.get("creator_id"):
+        raise HTTPException(status_code=400, detail="Creator cannot leave the group")
+    
+    await db.groups.update_one(
+        {"id": group_id},
+        {
+            "$pull": {"member_ids": user_id, "admin_ids": user_id},
+            "$inc": {"member_count": -1}
+        }
+    )
+    
+    return {"message": "Left group successfully"}
+
+# Pages
+@api_router.post("/pages")
+async def create_page(page: PageCreate, user = Depends(get_current_user)):
+    if contains_blocked_content(page.name) or contains_blocked_content(page.description):
+        raise HTTPException(status_code=400, detail="Content contains blocked words")
+    
+    page_doc = {
+        "id": str(uuid.uuid4()),
+        "name": page.name,
+        "description": page.description,
+        "category": page.category,
+        "cover_image": page.cover_image,
+        "profile_image": page.profile_image,
+        "creator_id": str(user["_id"]),
+        "admin_ids": [str(user["_id"])],
+        "follower_ids": [str(user["_id"])],
+        "created_at": datetime.utcnow(),
+        "follower_count": 1,
+        "like_count": 0
+    }
+    
+    await db.pages.insert_one(page_doc)
+    return page_doc
+
+@api_router.get("/pages")
+async def get_pages(user = Depends(get_current_user)):
+    pages = await db.pages.find().to_list(100)
+    
+    for p in pages:
+        p.pop("_id", None)
+        p["is_following"] = str(user["_id"]) in p.get("follower_ids", [])
+        p["is_admin"] = str(user["_id"]) in p.get("admin_ids", [])
+    
+    return pages
+
+@api_router.get("/pages/{page_id}")
+async def get_page(page_id: str, user = Depends(get_current_user)):
+    page = await db.pages.find_one({"id": page_id})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    page.pop("_id", None)
+    page["is_following"] = str(user["_id"]) in page.get("follower_ids", [])
+    page["is_admin"] = str(user["_id"]) in page.get("admin_ids", [])
+    
+    return page
+
+@api_router.post("/pages/{page_id}/follow")
+async def follow_page(page_id: str, user = Depends(get_current_user)):
+    page = await db.pages.find_one({"id": page_id})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    user_id = str(user["_id"])
+    if user_id in page.get("follower_ids", []):
+        # Unfollow
+        await db.pages.update_one(
+            {"id": page_id},
+            {
+                "$pull": {"follower_ids": user_id},
+                "$inc": {"follower_count": -1}
+            }
+        )
+        return {"message": "Unfollowed page", "following": False}
+    else:
+        # Follow
+        await db.pages.update_one(
+            {"id": page_id},
+            {
+                "$push": {"follower_ids": user_id},
+                "$inc": {"follower_count": 1}
+            }
+        )
+        return {"message": "Following page", "following": True}
+
+# Posts
+@api_router.post("/posts")
+async def create_post(post: PostCreate, user = Depends(get_current_user)):
+    if contains_blocked_content(post.content):
+        raise HTTPException(status_code=400, detail="Content contains blocked words")
+    
+    post_doc = {
+        "id": str(uuid.uuid4()),
+        "content": post.content,
+        "images": post.images or [],
+        "author_id": str(user["_id"]),
+        "author_username": user.get("username"),
+        "group_id": post.group_id,
+        "page_id": post.page_id,
+        "created_at": datetime.utcnow(),
+        "reactions": {
+            "Like": [],
+            "Love": [],
+            "Funny": [],
+            "Sad": [],
+            "Caution": [],
+            "Spam": [],
+            "Best": []
+        },
+        "comment_count": 0
+    }
+    
+    await db.posts.insert_one(post_doc)
+    return post_doc
+
+@api_router.get("/posts")
+async def get_posts(
+    group_id: Optional[str] = None,
+    page_id: Optional[str] = None,
+    user_id: Optional[str] = None,
+    user = Depends(get_current_user)
+):
+    query = {}
+    if group_id:
+        query["group_id"] = group_id
+    if page_id:
+        query["page_id"] = page_id
+    if user_id:
+        query["author_id"] = user_id
+    
+    posts = await db.posts.find(query).sort("created_at", -1).to_list(50)
+    
+    for p in posts:
+        p.pop("_id", None)
+        # Get author info
+        author = await db.users.find_one({"_id": ObjectId(p["author_id"])})
+        if author:
+            p["author_username"] = author.get("username")
+    
+    return posts
+
+@api_router.get("/feed")
+async def get_feed(user = Depends(get_current_user)):
+    """Get personalized feed - posts from friends, followed pages, and joined groups"""
+    user_id = str(user["_id"])
+    
+    # Get user's friends
+    friends = await db.friendships.find({
+        "$or": [
+            {"user_id": user_id, "status": "accepted"},
+            {"friend_id": user_id, "status": "accepted"}
+        ]
+    }).to_list(100)
+    
+    friend_ids = []
+    for f in friends:
+        if f["user_id"] == user_id:
+            friend_ids.append(f["friend_id"])
+        else:
+            friend_ids.append(f["user_id"])
+    
+    # Get joined groups
+    groups = await db.groups.find({"member_ids": user_id}).to_list(100)
+    group_ids = [g["id"] for g in groups]
+    
+    # Get followed pages
+    pages = await db.pages.find({"follower_ids": user_id}).to_list(100)
+    page_ids = [p["id"] for p in pages]
+    
+    # Get posts from all sources
+    posts = await db.posts.find({
+        "$or": [
+            {"author_id": {"$in": friend_ids}},
+            {"author_id": user_id},
+            {"group_id": {"$in": group_ids}},
+            {"page_id": {"$in": page_ids}}
+        ]
+    }).sort("created_at", -1).to_list(50)
+    
+    for p in posts:
+        p.pop("_id", None)
+        author = await db.users.find_one({"_id": ObjectId(p["author_id"])})
+        if author:
+            p["author_username"] = author.get("username")
+    
+    return posts
+
+@api_router.post("/posts/{post_id}/react")
+async def react_to_post(post_id: str, reaction_type: str = Body(..., embed=True), user = Depends(get_current_user)):
+    valid_reactions = ["Like", "Love", "Funny", "Sad", "Caution", "Spam", "Best"]
+    if reaction_type not in valid_reactions:
+        raise HTTPException(status_code=400, detail=f"Invalid reaction type. Must be one of: {valid_reactions}")
+    
+    post = await db.posts.find_one({"id": post_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    user_id = str(user["_id"])
+    reactions = post.get("reactions", {})
+    
+    # Toggle reaction
+    if user_id in reactions.get(reaction_type, []):
+        await db.posts.update_one(
+            {"id": post_id},
+            {"$pull": {f"reactions.{reaction_type}": user_id}}
+        )
+        return {"message": "Reaction removed", "added": False}
+    else:
+        # Remove from other reactions first
+        for r_type in valid_reactions:
+            await db.posts.update_one(
+                {"id": post_id},
+                {"$pull": {f"reactions.{r_type}": user_id}}
+            )
+        # Add new reaction
+        await db.posts.update_one(
+            {"id": post_id},
+            {"$push": {f"reactions.{reaction_type}": user_id}}
+        )
+        return {"message": "Reaction added", "added": True}
+
+# Comments
+@api_router.post("/comments")
+async def create_comment(comment: CommentCreate, user = Depends(get_current_user)):
+    if contains_blocked_content(comment.content):
+        raise HTTPException(status_code=400, detail="Content contains blocked words")
+    
+    comment_doc = {
+        "id": str(uuid.uuid4()),
+        "content": comment.content,
+        "author_id": str(user["_id"]),
+        "author_username": user.get("username"),
+        "post_id": comment.post_id,
+        "search_result_id": comment.search_result_id,
+        "created_at": datetime.utcnow(),
+        "reactions": {
+            "Like": [],
+            "Love": [],
+            "Funny": [],
+            "Sad": [],
+            "Caution": [],
+            "Spam": [],
+            "Best": []
+        }
+    }
+    
+    await db.comments.insert_one(comment_doc)
+    
+    # Update comment count on post
+    if comment.post_id:
+        await db.posts.update_one(
+            {"id": comment.post_id},
+            {"$inc": {"comment_count": 1}}
+        )
+    
+    # Update comment count on search result
+    if comment.search_result_id:
+        await db.search_results.update_one(
+            {"id": comment.search_result_id},
+            {"$inc": {"comment_count": 1}}
+        )
+    
+    return comment_doc
+
+@api_router.get("/comments")
+async def get_comments(
+    post_id: Optional[str] = None,
+    search_result_id: Optional[str] = None,
+    user = Depends(get_current_user)
+):
+    query = {}
+    if post_id:
+        query["post_id"] = post_id
+    if search_result_id:
+        query["search_result_id"] = search_result_id
+    
+    comments = await db.comments.find(query).sort("created_at", 1).to_list(100)
+    
+    for c in comments:
+        c.pop("_id", None)
+    
+    return comments
+
+@api_router.post("/comments/{comment_id}/react")
+async def react_to_comment(comment_id: str, reaction_type: str = Body(..., embed=True), user = Depends(get_current_user)):
+    valid_reactions = ["Like", "Love", "Funny", "Sad", "Caution", "Spam", "Best"]
+    if reaction_type not in valid_reactions:
+        raise HTTPException(status_code=400, detail=f"Invalid reaction type")
+    
+    comment = await db.comments.find_one({"id": comment_id})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    user_id = str(user["_id"])
+    reactions = comment.get("reactions", {})
+    
+    if user_id in reactions.get(reaction_type, []):
+        await db.comments.update_one(
+            {"id": comment_id},
+            {"$pull": {f"reactions.{reaction_type}": user_id}}
+        )
+        return {"message": "Reaction removed", "added": False}
+    else:
+        for r_type in valid_reactions:
+            await db.comments.update_one(
+                {"id": comment_id},
+                {"$pull": {f"reactions.{r_type}": user_id}}
+            )
+        await db.comments.update_one(
+            {"id": comment_id},
+            {"$push": {f"reactions.{reaction_type}": user_id}}
+        )
+        return {"message": "Reaction added", "added": True}
+
 @api_router.post("/admin/init", response_model=dict)
 async def init_admin_settings():
     """Initialize default admin settings"""
