@@ -2785,7 +2785,7 @@ async def startup():
     if not await db.admin_settings.find_one({"id": "admin_settings"}):
         await db.admin_settings.insert_one(AdminSettings().model_dump())
     
-    logger.info("InfoPilot API v2.0 - Tactical Systems Online")
+    logger.info("InfoPilot Explorer API v2.0 - Tactical Systems Online")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
