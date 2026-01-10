@@ -2262,7 +2262,16 @@ const CategoriesPage = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-pink-400 font-mono font-bold">{cat.name}</h3>
                     <p className="text-purple-300/60 text-xs font-mono mt-1 break-all">{cat.protocol_string}</p>
-                    <span className={`inline-block mt-2 px-2 py-0.5 text-xs rounded font-mono ${cat.is_public ? "bg-purple-500/20 text-purple-400" : "bg-pink-500/20 text-pink-400"}`}>{cat.is_public ? "PUBLIC" : "PRIVATE"}</span>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`inline-block px-2 py-0.5 text-xs rounded font-mono ${cat.is_public ? "bg-purple-500/20 text-purple-400" : "bg-pink-500/20 text-pink-400"}`}>
+                        {cat.is_public ? "PUBLIC" : "PRIVATE"}
+                      </span>
+                      {cat.for_sale && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded font-mono bg-yellow-500/20 text-yellow-400">
+                          <DollarSign className="w-3 h-3" /> FOR SALE ${cat.price?.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
                     <RecommendationBadge 
@@ -2270,6 +2279,16 @@ const CategoriesPage = () => {
                       isOwner={true} 
                       onClick={() => setViewRecsCategory(cat)} 
                     />
+                    {/* Quick sell toggle for private protocols */}
+                    {!cat.is_public && (
+                      <button 
+                        onClick={() => handleToggleSale(cat)} 
+                        className={`p-2 rounded hover:bg-yellow-500/10 ${cat.for_sale ? 'text-yellow-400' : 'text-purple-400/60 hover:text-yellow-400'}`} 
+                        title={cat.for_sale ? "Remove from sale" : "List for sale"}
+                      >
+                        <DollarSign className="w-4 h-4" />
+                      </button>
+                    )}
                     <button onClick={() => handleEdit(cat)} className="p-2 text-purple-400/60 hover:text-pink-400 rounded hover:bg-pink-500/10" title="Edit"><Edit3 className="w-4 h-4" /></button>
                     <button onClick={() => handleDelete(cat.id)} className="p-2 text-red-400/60 hover:text-red-400 rounded hover:bg-red-500/10" title="Delete"><Trash2 className="w-4 h-4" /></button>
                   </div>
