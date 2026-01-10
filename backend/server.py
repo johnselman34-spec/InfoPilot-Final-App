@@ -4767,6 +4767,130 @@ async def get_statistics(user: dict = Depends(require_user)):
         "total_categories": await db.categories.count_documents({"user_id": user_id})
     }
 
+@api_router.get("/statistics/popular-protocols")
+async def get_popular_protocols(
+    limit: int = Query(10, ge=1, le=50),
+    user: dict = Depends(require_user)
+):
+    """Get most popular protocols by clipboard copy count"""
+    # Get protocols sorted by copy_count
+    pipeline = [
+        {"$match": {"is_public": True, "copy_count": {"$gt": 0}}},
+        {"$sort": {"copy_count": -1}},
+        {"$limit": limit}
+    ]
+    popular = await db.categories.aggregate(pipeline).to_list(limit)
+    
+    # Get owner usernames
+    result = []
+    for proto in popular:
+        owner = await db.users.find_one({"id": proto["user_id"]})
+        owner_name = owner.get("callsign", owner.get("email", "Unknown")) if owner else "Unknown"
+        result.append({
+            "id": proto["id"],
+            "name": proto["name"],
+            "protocol_string": proto["protocol_string"],
+            "owner_username": owner_name,
+            "copy_count": proto.get("copy_count", 0),
+            "is_public": proto.get("is_public", True),
+            "for_sale": proto.get("for_sale", False),
+            "price": proto.get("price")
+        })
+    
+    return {"popular_protocols": result}
+
+@api_router.get("/statistics/global")
+async def get_global_statistics(user: dict = Depends(require_user)):
+    """Get global statistics for the platform"""
+    # Total users
+    total_users = await db.users.count_documents({})
+    
+    # Total public categories
+    total_public_categories = await db.categories.count_documents({"is_public": True})
+    
+    # Total protocols for sale
+    total_for_sale = await db.categories.count_documents({"for_sale": True})
+    
+    # Total protocol purchases
+    total_purchases = await db.protocol_purchases.count_documents({"status": "completed"})
+    
+    # Total clipboard copies (sum of all copy_counts)
+    copy_pipeline = [
+        {"$group": {"_id": None, "total": {"$sum": "$copy_count"}}}
+    ]
+    copy_result = await db.categories.aggregate(copy_pipeline).to_list(1)
+    total_copies = copy_result[0]["total"] if copy_result else 0
+    
+    # Top contributors (users with most public protocols)
+    contributor_pipeline = [
+        {"$match": {"is_public": True}},
+        {"$group": {"_id": "$user_id", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 5}
+    ]
+    top_contributors = await db.categories.aggregate(contributor_pipeline).to_list(5)
+    
+    # Get usernames for contributors
+    for contrib in top_contributors:
+        user_doc = await db.users.find_one({"id": contrib["_id"]})
+        contrib["username"] = user_doc.get("callsign", user_doc.get("email", "Unknown")) if user_doc else "Unknown"
+    
+    # Recent activity (last 7 days categories created)
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    recent_categories = await db.categories.count_documents({
+        "created_at": {"$gte": week_ago}
+    })
+    
+    return {
+        "total_users": total_users,
+        "total_public_categories": total_public_categories,
+        "total_protocols_for_sale": total_for_sale,
+        "total_protocol_purchases": total_purchases,
+        "total_clipboard_copies": total_copies,
+        "top_contributors": top_contributors,
+        "recent_categories_7d": recent_categories
+    }
+
+@api_router.post("/categories/{category_id}/copy")
+async def track_protocol_copy(category_id: str, user: dict = Depends(require_user)):
+    """Track when a protocol is copied to clipboard"""
+    # Find the category
+    category = await db.categories.find_one({"id": category_id})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    # Check access - must be public, owner, or purchased
+    can_copy = (
+        category.get("is_public", True) or
+        category["user_id"] == user["id"]
+    )
+    
+    # Check if purchased (for private for-sale protocols)
+    if not can_copy and category.get("for_sale"):
+        purchase = await db.protocol_purchases.find_one({
+            "buyer_id": user["id"],
+            "category_id": category_id,
+            "status": "completed"
+        })
+        can_copy = purchase is not None
+    
+    if not can_copy:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Increment copy count
+    await db.categories.update_one(
+        {"id": category_id},
+        {"$inc": {"copy_count": 1}}
+    )
+    
+    # Get updated count
+    updated = await db.categories.find_one({"id": category_id})
+    
+    return {
+        "message": "Copy tracked",
+        "copy_count": updated.get("copy_count", 1)
+    }
+
 # ============================================
 # API ROUTES - USER SEARCH RESULTS MANAGEMENT
 # ============================================
