@@ -1870,7 +1870,16 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const menuItems = [
+  // Build menu items - Admin Control at TOP if user is admin
+  const menuItems = [];
+  
+  // Add Admin Control FIRST if user is admin
+  if (user?.is_admin || user?.role === 'admin') {
+    menuItems.push({ path: "/admin", icon: Shield, label: "⚙️ ADMIN CONTROL", highlight: true, isAdmin: true });
+  }
+  
+  // Add all other menu items
+  menuItems.push(
     { path: "/", icon: Home, label: "COMMAND CENTER" },
     { path: "/infopilot", icon: Radar, label: "INFOPILOT SEARCH" },
     { path: "/ultimate-search", icon: Target, label: "ULTIMATE SEARCH" },
@@ -1883,12 +1892,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { path: "/statistics", icon: BarChart3, label: "INTEL STATS" },
     { path: "/global-database", icon: Globe, label: "GLOBAL DATABASE" },
     { path: "/book", icon: Book, label: "📚 GET THE BOOK", highlight: true },
-  ];
-
-  // Always add admin link for admin users - check both is_admin and role
-  if (user?.is_admin || user?.role === 'admin') {
-    menuItems.push({ path: "/admin", icon: Shield, label: "⚙️ ADMIN CONTROL", highlight: true });
-  }
+  );
 
   // Debug logging
   console.log("Sidebar user:", user?.username, "is_admin:", user?.is_admin, "role:", user?.role);
