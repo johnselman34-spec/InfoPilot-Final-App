@@ -16,6 +16,7 @@ import secrets
 import httpx
 from bson import ObjectId
 import urllib.parse
+from serpapi import GoogleSearch
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
