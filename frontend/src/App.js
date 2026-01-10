@@ -6723,9 +6723,11 @@ const AdminPage = () => {
         <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider mb-6">ADMIN CONTROL</h1>
         
         {/* Admin Tabs */}
-        <div className="flex gap-2 mb-6 overflow-x-auto">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           {[
             { id: "dashboard", label: "Dashboard", icon: Shield },
+            { id: "moderation", label: "Moderation", icon: Users },
+            { id: "email-digest", label: "Email Digest", icon: Mail },
             { id: "search-pages", label: "Search Pages", icon: Search },
             { id: "database", label: "Database Limits", icon: BarChart3 },
             { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
