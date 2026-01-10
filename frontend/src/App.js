@@ -2370,9 +2370,19 @@ const MarketplacePage = () => {
     }
   };
 
-  const copyProtocol = (protocol) => {
-    navigator.clipboard.writeText(protocol);
-    toast.success("Protocol copied to clipboard!");
+  const copyProtocol = async (protocolString, categoryId = null) => {
+    try {
+      // Track the copy if we have a category ID
+      if (categoryId) {
+        await axios.post(`${API}/categories/${categoryId}/copy`);
+      }
+      navigator.clipboard.writeText(protocolString);
+      toast.success("Protocol copied to clipboard!");
+    } catch (error) {
+      // Still copy even if tracking fails
+      navigator.clipboard.writeText(protocolString);
+      toast.success("Protocol copied!");
+    }
   };
 
   return (
