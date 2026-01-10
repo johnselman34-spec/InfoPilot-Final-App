@@ -2307,15 +2307,15 @@ const CategoriesPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => { fetchCategories(); }, []);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/categories`);
       setCategories(res.data.filter(c => c.user_id === user?.id));
     } catch (error) { toast.error("FAILED TO LOAD CATEGORIES"); }
     finally { setLoading(false); }
-  };
+  }, [user?.id]);
+
+  useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
