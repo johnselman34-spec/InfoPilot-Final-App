@@ -1885,9 +1885,13 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { path: "/book", icon: Book, label: "📚 GET THE BOOK", highlight: true },
   ];
 
-  if (user?.is_admin) {
-    menuItems.push({ path: "/admin", icon: Shield, label: "ADMIN CONTROL" });
+  // Always add admin link for admin users - check both is_admin and role
+  if (user?.is_admin || user?.role === 'admin') {
+    menuItems.push({ path: "/admin", icon: Shield, label: "⚙️ ADMIN CONTROL", highlight: true });
   }
+
+  // Debug logging
+  console.log("Sidebar user:", user?.username, "is_admin:", user?.is_admin, "role:", user?.role);
 
   return (
     <>
