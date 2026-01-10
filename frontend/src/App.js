@@ -2603,6 +2603,22 @@ const UltimateSearchPage = () => {
                               <span key={idx} className="px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs rounded font-mono">{name}</span>
                             ))}
                           </div>
+                          {/* Reactions & Comments for Search Results */}
+                          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-purple-500/20">
+                            <ReactionButton
+                              postType="search_result"
+                              postId={result.id}
+                              reactions={result.reactions || {}}
+                              reactionCounts={result.reaction_counts || {}}
+                              userReaction={null}
+                              onUpdate={() => {}}
+                            />
+                            <CommentsSection
+                              postType="search_result"
+                              postId={result.id}
+                              initialCount={result.comment_count || 0}
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
