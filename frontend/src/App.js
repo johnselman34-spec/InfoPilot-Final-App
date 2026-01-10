@@ -6786,6 +6786,16 @@ const AdminPage = () => {
           </FuturisticFrame>
         )}
 
+        {/* Moderation Tab */}
+        {activeTab === "moderation" && (
+          <ModerationPanel />
+        )}
+
+        {/* Email Digest Tab */}
+        {activeTab === "email-digest" && (
+          <EmailDigestPanel />
+        )}
+
         {/* Search Pages Config Tab */}
         {activeTab === "search-pages" && (
           <div className="space-y-6">
