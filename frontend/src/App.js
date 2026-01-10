@@ -2740,6 +2740,8 @@ const UltimateSearchPage = () => {
                         category={cat} 
                         selectedCategories={selectedCategories}
                         onToggle={toggleCategory}
+                        currentUserId={user?.id}
+                        onSuggestChange={handleSuggestChangeClick}
                       />
                       {/* Add subcategory button for root categories */}
                       <button
