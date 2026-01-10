@@ -189,12 +189,12 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - `/app/backend/services/` - Business logic (email, websocket, protocol parser)
 - `/app/backend/routes/` - Route handlers (auth module)
 
-**Frontend:**
-- `/app/frontend/src/utils/` - Constants, API configuration
-- `/app/frontend/src/services/` - API service layer
-- `/app/frontend/src/contexts/` - Auth context
-- `/app/frontend/src/components/layout/` - Layout, Sidebar
-- `/app/frontend/src/components/common/` - Reusable components
+**Frontend (Extracted Jan 10, 2026):**
+- `/app/frontend/src/contexts/AuthContext.jsx` - Authentication context provider
+- `/app/frontend/src/components/layout/Layout.jsx` - Main layout wrapper
+- `/app/frontend/src/components/layout/Sidebar.jsx` - Navigation sidebar
+- `/app/frontend/src/components/common/FuturisticFrame.jsx` - Reusable UI frame component
+- `/app/frontend/src/utils/constants.js` - API config, images, book info, pricing
 
 ### Database Collections
 - `users` - User accounts
