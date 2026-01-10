@@ -1538,7 +1538,7 @@ const MessagesPage = () => {
                   <input
                     type="text"
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
+                    onChange={handleMessageInput}
                     placeholder="Type a message..."
                     className="flex-1 px-4 py-3 bg-slate-950 border border-purple-500/30 rounded-lg text-purple-300 font-mono focus:border-pink-500 focus:outline-none"
                     data-testid="message-input"
@@ -1552,6 +1552,19 @@ const MessagesPage = () => {
                     {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                   </button>
                 </form>
+                
+                {/* Typing Indicator */}
+                {isTyping && (
+                  <div className="px-4 py-2 text-purple-400/60 font-mono text-sm animate-pulse">
+                    {isTyping} is typing...
+                  </div>
+                )}
+                
+                {/* WebSocket Connection Status */}
+                <div className={`px-4 py-1 text-xs font-mono flex items-center gap-2 ${wsConnected ? 'text-green-400/60' : 'text-yellow-400/60'}`}>
+                  <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-400' : 'bg-yellow-400 animate-pulse'}`}></span>
+                  {wsConnected ? 'Real-time connected' : 'Connecting...'}
+                </div>
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center">
