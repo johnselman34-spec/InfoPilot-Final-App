@@ -3808,13 +3808,166 @@ const UltimateSearchPage = () => {
                 ✨ Customize your page name!
               </button>
             )}
+            {/* User Settings Button - Only visible to owner */}
+            {isOwner && (
+              <button
+                onClick={() => setShowUserSettings(true)}
+                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-mono text-sm rounded-lg hover:opacity-90 flex items-center gap-2 shadow-lg shadow-purple-500/30"
+                data-testid="user-settings-btn"
+              >
+                <Settings className="w-4 h-4" />
+                MY SETTINGS
+              </button>
+            )}
             {isOwner && (
               <span className="px-3 py-1 bg-pink-500/20 text-pink-400 font-mono text-sm rounded border border-pink-500/50">
-                OWNER MODE: Search & Collate
+                OWNER MODE
               </span>
             )}
           </div>
         </div>
+        
+        {/* User Settings Panel Modal */}
+        {showUserSettings && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-gradient-to-br from-slate-900 via-purple-900/50 to-slate-900 border border-purple-500/50 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6 border-b border-purple-500/30 flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono flex items-center gap-3">
+                  <Settings className="w-6 h-6 text-pink-400" />
+                  USER SETTINGS
+                </h3>
+                <button onClick={() => setShowUserSettings(false)} className="text-purple-400 hover:text-white">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              <div className="p-6 space-y-6">
+                {/* Page Name Section */}
+                <div className="bg-slate-950/50 rounded-lg p-4 border border-purple-500/30">
+                  <h4 className="text-lg font-bold text-pink-400 font-mono mb-3 flex items-center gap-2">
+                    <Edit3 className="w-5 h-5" />
+                    PAGE CUSTOMIZATION
+                  </h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-purple-400 font-mono text-sm mb-2">Your Ultimate Search Page Name</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={pageSettings.page_name}
+                          onChange={(e) => setPageSettings(prev => ({ ...prev, page_name: e.target.value }))}
+                          className="flex-1 bg-slate-900 border border-purple-500/50 rounded-lg px-4 py-3 text-purple-200 font-mono focus:border-pink-500 focus:outline-none"
+                          placeholder="Enter your custom page name"
+                        />
+                        <button
+                          onClick={async () => {
+                            const success = await handleUpdatePageName(pageSettings.page_name);
+                            if (success) setShowUserSettings(false);
+                          }}
+                          className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded-lg hover:opacity-90"
+                        >
+                          SAVE
+                        </button>
+                      </div>
+                      <p className="text-purple-400/60 font-mono text-xs mt-2">This name will be displayed at the top of your Ultimate Search page</p>
+                    </div>
+                    
+                    {/* Name Suggestions */}
+                    {pageSettings.name_suggestions?.length > 0 && (
+                      <div>
+                        <label className="block text-purple-400 font-mono text-sm mb-2">Suggestions</label>
+                        <div className="flex flex-wrap gap-2">
+                          {pageSettings.name_suggestions.map((suggestion, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setPageSettings(prev => ({ ...prev, page_name: suggestion }))}
+                              className="px-3 py-1 bg-purple-500/20 text-purple-300 font-mono text-sm rounded hover:bg-purple-500/30"
+                            >
+                              {suggestion}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Photo Gallery Section */}
+                <div className="bg-slate-950/50 rounded-lg p-4 border border-blue-500/30">
+                  <h4 className="text-lg font-bold text-blue-400 font-mono mb-3 flex items-center gap-2">
+                    <Image className="w-5 h-5" />
+                    PHOTO GALLERY
+                  </h4>
+                  <p className="text-purple-400/70 font-mono text-sm mb-3">Upload up to 26 photos to personalize your search page</p>
+                  <div className="flex items-center gap-4">
+                    <span className="text-purple-300 font-mono">{photos.length} / 26 photos</span>
+                    <button
+                      onClick={() => { setShowUserSettings(false); setShowPhotoGallery(true); }}
+                      className="px-4 py-2 bg-blue-600 text-white font-mono text-sm rounded-lg hover:bg-blue-500 flex items-center gap-2"
+                    >
+                      <Image className="w-4 h-4" />
+                      MANAGE PHOTOS
+                    </button>
+                  </div>
+                </div>
+                
+                {/* Database Stats Section */}
+                <div className="bg-slate-950/50 rounded-lg p-4 border border-green-500/30">
+                  <h4 className="text-lg font-bold text-green-400 font-mono mb-3 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" />
+                    DATABASE USAGE
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-purple-300 font-mono">Results Stored</span>
+                      <span className="text-green-400 font-mono font-bold">{dbStats.current_count?.toLocaleString()} / {dbStats.max_allowed?.toLocaleString()}</span>
+                    </div>
+                    <div className="w-full bg-slate-800 rounded-full h-3">
+                      <div 
+                        className={`h-3 rounded-full ${dbStats.percentage_used > 80 ? 'bg-red-500' : dbStats.percentage_used > 50 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                        style={{ width: `${Math.min(dbStats.percentage_used || 0, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-purple-400/60 font-mono text-xs">{dbStats.remaining?.toLocaleString()} results remaining</p>
+                    {dbStats.current_count > 0 && (
+                      <button
+                        onClick={() => { setShowUserSettings(false); handleClearAllResults(); }}
+                        className="px-4 py-2 bg-red-600/20 text-red-400 border border-red-500/50 font-mono text-sm rounded-lg hover:bg-red-600/30 flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        CLEAR ALL RESULTS
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Email Preferences */}
+                <div className="bg-slate-950/50 rounded-lg p-4 border border-yellow-500/30">
+                  <h4 className="text-lg font-bold text-yellow-400 font-mono mb-3 flex items-center gap-2">
+                    <Mail className="w-5 h-5" />
+                    EMAIL PREFERENCES
+                  </h4>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={emailDigestEnabled}
+                      onChange={async (e) => {
+                        try {
+                          await axios.put(`${API}/user/email-preferences?digest_enabled=${e.target.checked}`);
+                          setEmailDigestEnabled(e.target.checked);
+                          toast.success(`Weekly digest ${e.target.checked ? 'enabled' : 'disabled'}`);
+                        } catch (error) {
+                          toast.error("Failed to update preference");
+                        }
+                      }}
+                      className="w-5 h-5 rounded border-purple-500"
+                    />
+                    <span className="text-purple-200 font-mono">Receive weekly email digest with trending topics and updates</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} compact />
         
