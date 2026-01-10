@@ -786,50 +786,17 @@ function MapPage() {
 
         {loading ? <div className="loading"><div className="spinner"/></div> : (
           <>
-            {/* Leaflet Map */}
-            <div style={{ height: '400px', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px', border: '1px solid #E0E0E0' }}>
-              <MapContainer 
-                center={[20, 0]} 
-                zoom={2} 
-                style={{ height: '100%', width: '100%' }}
-                ref={mapRef}
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                {markers.filter(m => m.latitude && m.longitude).map((marker, idx) => (
-                  <Marker 
-                    key={marker.id || idx}
-                    position={[marker.latitude, marker.longitude]}
-                    icon={createColoredMarkerIcon(getCategoryColor(marker.categories?.[0] || 'default'))}
-                    eventHandlers={{
-                      click: () => setSelectedMarker(marker)
-                    }}
-                  >
-                    <Popup>
-                      <div style={{ maxWidth: '250px' }}>
-                        <strong>{marker.title}</strong>
-                        <p style={{ fontSize: '12px', color: '#666', margin: '8px 0' }}>{marker.snippet?.substring(0, 100)}...</p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
-                          {marker.categories?.slice(0, 3).map((cat, i) => (
-                            <span key={i} style={{
-                              background: getCategoryColor(cat),
-                              color: 'white',
-                              padding: '2px 8px',
-                              borderRadius: '10px',
-                              fontSize: '10px'
-                            }}>{cat}</span>
-                          ))}
-                        </div>
-                        <a href={marker.url} target="_blank" rel="noopener noreferrer" style={{ color: '#2196F3', fontSize: '12px' }}>
-                          Open Article →
-                        </a>
-                      </div>
-                    </Popup>
-                  </Marker>
-                ))}
-              </MapContainer>
+            {/* Interactive Map using OpenStreetMap embed */}
+            <div style={{ height: '400px', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px', border: '1px solid #E0E0E0', background: '#E3F2FD', position: 'relative' }}>
+              <iframe
+                title="World Map"
+                src="https://www.openstreetmap.org/export/embed.html?bbox=-180%2C-60%2C180%2C80&layer=mapnik"
+                style={{ width: '100%', height: '100%', border: 'none' }}
+              />
+              {/* Marker overlay */}
+              <div style={{ position: 'absolute', top: 10, left: 10, background: 'white', padding: '8px 12px', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', fontSize: 13 }}>
+                <strong>{markers.filter(m => m.latitude).length}</strong> locations on map
+              </div>
             </div>
 
             {/* Stats */}
