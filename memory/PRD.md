@@ -143,10 +143,24 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - **Payments**: PayPal Hosted Buttons (SDK)
 
 ### Key Files
-- `/app/frontend/src/App.js` - Monolithic React application (~6000 lines, needs refactoring)
-- `/app/backend/server.py` - Monolithic FastAPI backend (~5000 lines, needs refactoring)
+- `/app/frontend/src/App.js` - Monolithic React application (~6800 lines, refactoring in progress)
+- `/app/backend/server.py` - Monolithic FastAPI backend (~6000 lines, refactoring in progress)
 - `/app/backend/.env` - Backend environment variables
 - `/app/frontend/.env` - Frontend environment variables
+
+### New Modular Structure (Created Jan 10, 2026)
+**Backend:**
+- `/app/backend/utils/` - Database connection, config, auth helpers
+- `/app/backend/models/` - Pydantic schemas
+- `/app/backend/services/` - Business logic (email, websocket, protocol parser)
+- `/app/backend/routes/` - Route handlers (auth module)
+
+**Frontend:**
+- `/app/frontend/src/utils/` - Constants, API configuration
+- `/app/frontend/src/services/` - API service layer
+- `/app/frontend/src/contexts/` - Auth context
+- `/app/frontend/src/components/layout/` - Layout, Sidebar
+- `/app/frontend/src/components/common/` - Reusable components
 
 ### Database Collections
 - `users` - User accounts
