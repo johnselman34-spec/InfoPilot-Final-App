@@ -1,20 +1,34 @@
 # InfoPilot Explorer - Product Requirements Document
 
 ## Original Problem Statement
-InfoPilot Explorer is a sophisticated information exchange social network with a custom search language. The application is now **COMPLETELY FREE** with monetization through book promotion. Features:
+InfoPilot Explorer is a sophisticated information exchange social network with a custom search language. The application features:
 - Custom registration and Google OAuth authentication
 - AI-powered intelligent search using Emergent LLM
 - Hierarchical categories with custom InfoPilot 2.0 Protocol syntax
 - Google Maps integration for location visualization
 - Google Safe Browsing API for URL safety checks
 - **Facebook-style social features** (Groups, Pages, Updates, Reactions, Comments)
+- **Protocol Marketplace** - Users can sell private protocols ($0.75-$2.99)
+- **PayPal "Pay What You Want" Subscription** model
 - Book promotion for "Letters to Evelyn" by John Selman
-- Ultimate Search Page with customization features
 
 ## User Personas
 - **Information Researchers**: Users who need to collect, categorize, and analyze web content
 - **Content Curators**: Users building knowledge bases across multiple topics
 - **Social Networkers**: Users who want to share and engage with content in groups and pages
+- **Protocol Sellers**: Users who create valuable search protocols and monetize them
+
+## Monetization Strategy
+### Subscription Model
+- **"Pay What You Want"** yearly subscription via PayPal (until March 2nd, 2026)
+- PayPal Hosted Button ID: `765S46VPPEP5C`
+- After promo period: Fixed $4.62/year
+- PayPal SDK integrated with Venmo support
+
+### Protocol Marketplace
+- Private protocols can be listed for sale ($0.75 - $2.99)
+- Buyers get access to view and copy the protocol
+- Sellers track their sales and revenue in "My Sales" tab
 
 ## Core Features
 
@@ -22,66 +36,62 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 
 #### Authentication
 - [x] Email/password registration and login
-- [x] Google OAuth integration (Client ID: 259303648252-gn1amf5qt9q82b0a7m2gr6cboskv912s)
+- [x] Google OAuth integration
 - [x] JWT-based session management
 - [x] Admin role support
 
-#### App Access
-- [x] **APP IS NOW COMPLETELY FREE** - No subscription required
-- [x] All users get full access to all features
-- [x] Book promotion replaces subscription prompts throughout the app
-- [x] Admin (john_selman) added as first friend for new users
+#### Subscription & Payments
+- [x] PayPal "Pay What You Want" subscription ($0.01 - $4.62+/year)
+- [x] PayPal Hosted Button embedded on subscribe page
+- [x] Subscription status tracking
+- [x] Admin panel for subscription settings
 
-#### Social Features (NEW - Facebook-like)
+#### Protocol Marketplace (NEW)
+- [x] Browse protocols for sale
+- [x] My Purchases - view purchased protocols
+- [x] My Sales - track revenue from sold protocols
+- [x] List private protocols for sale ($0.75 - $2.99)
+- [x] Quick toggle sale status from categories page
+
+#### Social Features
 - [x] **Groups**: Create/join groups (public/private/secret), post content
 - [x] **Pages**: Create/follow pages with categories, post as admin
 - [x] **Updates**: Post updates on Ultimate Search page
-- [x] **Reactions**: Facebook-style emoji picker (👍 Like, ❤️ Love, 😂 Haha, 😮 Wow, 😢 Sad, 😠 Angry)
+- [x] **Reactions**: Facebook-style emoji picker
 - [x] **Comments**: Nested replies on posts, updates, and search results
 - [x] **Friends**: View and manage friend connections
-- [x] **Protocol Recommendations**: Users can suggest changes to public protocols owned by others. Owners see recommendations via lightbulb badge and can Accept (apply change), Reject, or Delete
-- [x] **Private Messaging**: Direct messaging between users with text and images (up to 8MB). Features: conversation list, user search, unread indicators, real-time chat interface
-- [x] **Email Notifications**: SendGrid integration for protocol recommendation and new message notifications (requires SENDGRID_API_KEY configuration)
+- [x] **Protocol Recommendations**: Users can suggest changes to public protocols
+- [x] **Private Messaging**: Direct messaging with text and images (up to 8MB)
+- [x] **Email Notifications**: SendGrid integration (requires API key)
 
 #### Ultimate Search Page
 - [x] AI-powered intelligent search (Emergent LLM)
 - [x] Hierarchical category tree with expand/collapse
 - [x] AND/OR/AND search logic radio buttons
 - [x] Document type checkboxes filtering
-- [x] Search Only (preview) vs Search & Collate (save)
-- [x] Session management with delete capability
-- [x] Page customization (rename page, photo gallery up to 26 photos)
 - [x] Google Maps with category-colored location markers
-- [x] **Updates section** with reactions and comments
-- [x] **Reactions/Comments on search results**
+- [x] Updates section with reactions and comments
 
 #### Security
 - [x] Google Safe Browsing API integration
 - [x] URL safety checks before categorization
-- [x] Blocked words filtering (whole word matching only)
-- [x] Content moderation
-
-#### Book Promotion
-- [x] "Letters to Evelyn" by John Selman
-- [x] Genre: "A True Supernatural Thriller Comedy"
-- [x] 19 five-star reviews display
-- [x] Multiple purchase links (Amazon, Official Site, Readers' Favorite)
-- [x] Image gallery with book covers
+- [x] Blocked words filtering
 
 #### Admin Panel
-- [x] Settings management (results per page, blocked words, pricing)
-- [x] User management capabilities
+- [x] Settings management
+- [x] User management
+- [x] Subscription configuration (PayPal links, prices, promo dates)
+- [x] Legal documents editing (Privacy Policy, Terms of Service)
 
 ### Pending Features 🔄
 
 #### P1 - High Priority
-- [ ] Google OAuth actual login flow verification (button present, needs user testing)
-- [ ] Google Maps marker interaction enhancement
+- [ ] Real-time WebSocket messaging
+- [ ] Automated PayPal IPN for subscription verification
 
 #### P2 - Medium Priority
-- [ ] Admin Panel enhancements for managing social features
+- [ ] Admin Panel enhancements for social feature moderation
 - [ ] Statistics page with social analytics
-- [ ] Private messaging between friends
 
 #### P3 - Future
 - [ ] Native mobile apps (Android/iOS)
@@ -97,57 +107,49 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - **Database**: MongoDB
 - **Authentication**: JWT, Google OAuth
 - **APIs**: Google Custom Search, Google Maps, Google Safe Browsing, Emergent LLM
+- **Payments**: PayPal Hosted Buttons (SDK)
 
 ### Key Files
-- `/app/frontend/src/App.js` - Monolithic React application (~3500 lines, needs refactoring)
-- `/app/backend/server.py` - Monolithic FastAPI backend (~3700 lines, needs refactoring)
+- `/app/frontend/src/App.js` - Monolithic React application (~5000 lines, needs refactoring)
+- `/app/backend/server.py` - Monolithic FastAPI backend (~4000 lines, needs refactoring)
 - `/app/backend/.env` - Backend environment variables
 - `/app/frontend/.env` - Frontend environment variables
 
 ### Database Collections
 - `users` - User accounts
-- `categories` - User-created search categories with protocols
+- `categories` - User-created search categories with protocols (now with for_sale, price)
 - `search_results` - Collated search results with locations
-- `user_page_settings` - Ultimate Search page customization
-- `user_photos` - Uploaded photos for page customization
-- `groups` - Social groups
-- `group_posts` - Posts in groups
-- `pages` - Social pages
-- `page_posts` - Posts on pages
-- `page_followers` - Page follower relationships
-- `updates` - User updates on Ultimate Search page
-- `comments` - Comments on posts/updates/search results
-- `friends` - Friend relationships
+- `protocol_purchases` - Protocol purchase records
+- `subscriptions` - User subscriptions
+- `groups`, `group_posts`, `pages`, `page_posts`, `page_followers`
+- `updates`, `comments`, `friends`
 - `protocol_recommendations` - Suggested changes to public protocols
-- `messages` - Private messages between users
-- `conversations` - Message conversation metadata
-- `admin_settings` - Application configuration
+- `messages`, `conversations` - Private messaging
+- `admin_settings`, `legal_documents`
 
 ## API Keys & Credentials
 
 ### Configured
-- Google OAuth Client ID: `259303648252-gn1amf5qt9q82b0a7m2gr6cboskv912s.apps.googleusercontent.com`
-- Google Search API Key: `AIzaSyCoAXxG2ye7azGmqmAcbSY33-FQpt5kQCo`
-- Google Safe Browsing API Key: `AIzaSyCoAXxG2ye7azGmqmAcbSY33-FQpt5kQCo`
-- Google Maps API Key: `AIzaSyCqxRaGx3E2taKtxNlX-TUwrYXHP8G5LR4`
+- Google OAuth Client ID: Configured
+- Google Search API Key: Configured
+- Google Safe Browsing API Key: Configured
+- Google Maps API Key: Configured
 - Emergent LLM Key: Configured
+- PayPal Client ID: Configured
+- PayPal Hosted Button ID: `765S46VPPEP5C`
+
+### Required for Full Functionality
+- SendGrid API Key (for email notifications)
 
 ## Test Credentials
 - Admin User: `john@infojet.com` / `password123`
+- Test User: `testuser@example.com` / `password123`
+
+## Test History
+- Iteration 11: 42/42 tests passed - Pre-PayPal integration verification
+- **Iteration 12: 17/17 tests passed - Marketplace and PayPal integration (100%)**
 
 ## Last Updated
 - Date: January 10, 2026
-- Session: Implemented PayPal "Pay What You Want" subscriptions
-- Test Status: All 42 tests passed (100%)
-
-## Test History
-- Iteration 1: 18/18 tests passed - Initial feature verification
-- Iteration 2: 26/26 tests passed - Extended edge case testing  
-- Iteration 3: 26/26 tests passed - Thorough re-test of all features
-- Iteration 4: 28/28 tests passed - Full painstaking test after Shopify integration
-- Iteration 5-6: App converted to free model with book monetization
-- Iteration 7: 22/22 tests passed - Facebook-style social features (Groups, Pages, Reactions, Comments, Updates)
-- Iteration 8: 18/18 tests passed - Protocol Recommendations feature
-- Iteration 9: 20/20 tests passed - Private Messaging with image support (8MB limit) and Email Notifications
-- Iteration 10: 45/47 tests passed - Comprehensive end-to-end test
-- **Iteration 11: 42/42 tests passed - Pre-PayPal integration verification**
+- Session: Implemented Protocol Marketplace, PayPal Hosted Button, Monetization Options
+- All features tested and working
