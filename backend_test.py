@@ -311,6 +311,138 @@ class InfoPilotAPITester:
         
         return success
 
+    def test_social_features(self):
+        """Test social features - groups, pages, posts, comments"""
+        self.log("\n=== SOCIAL FEATURES TESTS ===")
+        
+        # Test create group
+        success, response = self.run_test(
+            "Create Group",
+            "POST",
+            "/groups",
+            200,
+            data={
+                "name": "Test Group",
+                "description": "A test group for API testing",
+                "is_public": True
+            }
+        )
+        
+        group_id = None
+        if success and 'id' in response:
+            group_id = response['id']
+            self.log(f"✅ Group created with ID: {group_id}")
+        
+        # Test get groups
+        success, response = self.run_test(
+            "Get Groups",
+            "GET",
+            "/groups",
+            200
+        )
+        
+        if success:
+            self.log(f"✅ Found {len(response)} groups")
+        
+        # Test create page
+        success, response = self.run_test(
+            "Create Page",
+            "POST",
+            "/pages",
+            200,
+            data={
+                "name": "Test Page",
+                "description": "A test page for API testing",
+                "category": "Technology"
+            }
+        )
+        
+        page_id = None
+        if success and 'id' in response:
+            page_id = response['id']
+            self.log(f"✅ Page created with ID: {page_id}")
+        
+        # Test get pages
+        success, response = self.run_test(
+            "Get Pages",
+            "GET",
+            "/pages",
+            200
+        )
+        
+        if success:
+            self.log(f"✅ Found {len(response)} pages")
+        
+        # Test create post
+        success, response = self.run_test(
+            "Create Post",
+            "POST",
+            "/posts",
+            200,
+            data={
+                "content": "This is a test post for API testing",
+                "images": []
+            }
+        )
+        
+        post_id = None
+        if success and 'id' in response:
+            post_id = response['id']
+            self.log(f"✅ Post created with ID: {post_id}")
+        
+        # Test get feed
+        success, response = self.run_test(
+            "Get Feed",
+            "GET",
+            "/feed",
+            200
+        )
+        
+        if success:
+            self.log(f"✅ Feed returned {len(response)} posts")
+        
+        # Test react to post
+        if post_id:
+            success, response = self.run_test(
+                "React to Post",
+                "POST",
+                f"/posts/{post_id}/react",
+                200,
+                data={"reaction_type": "Like"}
+            )
+        
+        # Test create comment
+        if post_id:
+            success, response = self.run_test(
+                "Create Comment",
+                "POST",
+                "/comments",
+                200,
+                data={
+                    "content": "This is a test comment",
+                    "post_id": post_id
+                }
+            )
+            
+            if success and 'id' in response:
+                comment_id = response['id']
+                self.log(f"✅ Comment created with ID: {comment_id}")
+        
+        # Test get comments
+        if post_id:
+            success, response = self.run_test(
+                "Get Comments",
+                "GET",
+                "/comments",
+                200,
+                params={"post_id": post_id}
+            )
+            
+            if success:
+                self.log(f"✅ Found {len(response)} comments for post")
+        
+        return success
+
     def test_cleanup(self):
         """Clean up test data"""
         self.log("\n=== CLEANUP ===")
