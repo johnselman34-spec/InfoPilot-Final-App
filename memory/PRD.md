@@ -45,6 +45,7 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - [x] PayPal Hosted Button embedded on subscribe page
 - [x] Subscription status tracking
 - [x] Admin panel for subscription settings
+- [x] **PayPal IPN (Instant Payment Notification)** - Automatic subscription activation
 
 #### Statistics Page (NEW - Enhanced)
 - [x] Platform Overview (Total Pilots, Public Protocols, Total Copies, Marketplace Sales)
