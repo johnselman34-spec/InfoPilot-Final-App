@@ -318,69 +318,128 @@ async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(
 # ============== WEB SEARCH SERVICE ==============
 
 class WebSearchService:
-    """Search the web using DuckDuckGo (no API key required)"""
+    """Search the web using SerpAPI (Google Search)"""
     
     @staticmethod
-    async def search(query: str, num_results: int = 20) -> List[Dict[str, Any]]:
-        """Perform web search and return results"""
+    async def search(query: str, num_results: int = 20, location: str = None) -> List[Dict[str, Any]]:
+        """Perform web search using SerpAPI and return results"""
         results = []
         
         try:
-            # Use DuckDuckGo HTML search
-            encoded_query = urllib.parse.quote(query)
-            url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
-            
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    url,
-                    headers={
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                    },
-                    timeout=15.0
-                )
+            if SERPAPI_KEY:
+                # Use SerpAPI for real Google search results
+                params = {
+                    "q": query,
+                    "hl": "en",
+                    "gl": "us",
+                    "google_domain": "google.com",
+                    "api_key": SERPAPI_KEY,
+                    "num": min(num_results, 100)
+                }
                 
-                if response.status_code == 200:
-                    html = response.text
+                if location:
+                    params["location"] = location
+                
+                search = GoogleSearch(params)
+                search_results = search.get_dict()
+                
+                # Process organic results
+                organic_results = search_results.get("organic_results", [])
+                for result in organic_results[:num_results]:
+                    url = result.get("link", "")
                     
-                    # Parse results using regex
-                    result_pattern = r'<a rel="nofollow" class="result__a" href="([^"]+)">([^<]+)</a>'
-                    snippet_pattern = r'<a class="result__snippet"[^>]*>([^<]+)</a>'
+                    # Extract root domain
+                    try:
+                        parsed = urllib.parse.urlparse(url)
+                        root_domain = parsed.netloc
+                    except:
+                        root_domain = ""
                     
-                    urls = re.findall(result_pattern, html)
-                    snippets = re.findall(snippet_pattern, html)
+                    # Extract location from local results if available
+                    latitude = None
+                    longitude = None
                     
-                    for i, (url, title) in enumerate(urls[:num_results]):
-                        # Decode URL
-                        if url.startswith("//duckduckgo.com/l/?uddg="):
-                            url = urllib.parse.unquote(url.split("uddg=")[1].split("&")[0])
-                        
-                        snippet = snippets[i] if i < len(snippets) else ""
-                        
-                        # Extract root domain
-                        try:
-                            parsed = urllib.parse.urlparse(url)
-                            root_domain = parsed.netloc
-                        except:
-                            root_domain = ""
-                        
+                    results.append({
+                        "url": url,
+                        "title": result.get("title", "").strip(),
+                        "snippet": result.get("snippet", "").strip(),
+                        "content": result.get("snippet", "").strip(),
+                        "root_domain": root_domain,
+                        "date": result.get("date"),
+                        "latitude": latitude,
+                        "longitude": longitude
+                    })
+                
+                # Also process local results with GPS coordinates
+                local_results = search_results.get("local_results", {}).get("places", [])
+                for place in local_results:
+                    gps = place.get("gps_coordinates", {})
+                    if gps:
                         results.append({
-                            "url": url,
-                            "title": title.strip(),
-                            "snippet": snippet.strip(),
-                            "content": snippet.strip(),
-                            "root_domain": root_domain
+                            "url": f"https://maps.google.com/?q={gps.get('latitude')},{gps.get('longitude')}",
+                            "title": place.get("title", ""),
+                            "snippet": place.get("description", "") or place.get("address", ""),
+                            "content": f"{place.get('title')} - {place.get('address', '')}",
+                            "root_domain": "maps.google.com",
+                            "latitude": gps.get("latitude"),
+                            "longitude": gps.get("longitude"),
+                            "rating": place.get("rating"),
+                            "reviews": place.get("reviews")
                         })
+                
+                # Get map coordinates if available
+                local_map = search_results.get("local_map", {})
+                map_gps = local_map.get("gps_coordinates", {})
+                if map_gps and not any(r.get("latitude") for r in results):
+                    # Add map center as context
+                    logger.info(f"Map center: {map_gps}")
+                
+            else:
+                # Fallback to DuckDuckGo if no SerpAPI key
+                encoded_query = urllib.parse.quote(query)
+                url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
+                
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(
+                        url,
+                        headers={
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                        },
+                        timeout=15.0
+                    )
+                    
+                    if response.status_code == 200:
+                        html = response.text
+                        result_pattern = r'<a rel="nofollow" class="result__a" href="([^"]+)">([^<]+)</a>'
+                        snippet_pattern = r'<a class="result__snippet"[^>]*>([^<]+)</a>'
+                        
+                        urls = re.findall(result_pattern, html)
+                        snippets = re.findall(snippet_pattern, html)
+                        
+                        for i, (url, title) in enumerate(urls[:num_results]):
+                            if url.startswith("//duckduckgo.com/l/?uddg="):
+                                url = urllib.parse.unquote(url.split("uddg=")[1].split("&")[0])
+                            
+                            snippet = snippets[i] if i < len(snippets) else ""
+                            
+                            try:
+                                parsed = urllib.parse.urlparse(url)
+                                root_domain = parsed.netloc
+                            except:
+                                root_domain = ""
+                            
+                            results.append({
+                                "url": url,
+                                "title": title.strip(),
+                                "snippet": snippet.strip(),
+                                "content": snippet.strip(),
+                                "root_domain": root_domain
+                            })
+                            
         except Exception as e:
             logger.error(f"Search error: {e}")
-            # Return mock results as fallback
-            for i in range(min(20, num_results)):
-                results.append({
-                    "url": f"https://example.com/result-{i+1}",
-                    "title": f"Search Result {i+1}: {query}",
-                    "snippet": f"This is a sample result for '{query}'. Contains relevant information about the topic.",
-                    "content": f"Sample content for search result {i+1} about {query}.",
-                    "root_domain": "example.com"
-                })
+            # Return empty results on error
+            pass
         
         return results
 
