@@ -1422,7 +1422,8 @@ async def shopify_order_paid_webhook(request: Request):
         logger.error(f"Error processing Shopify webhook: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@api_router.all("/shopify/{path:path}")
+@api_router.get("/shopify/{path:path}")
+@api_router.post("/shopify/{path:path}")
 async def shopify_app_proxy(path: str, request: Request):
     """
     Handle Shopify App Proxy requests
