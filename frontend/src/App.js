@@ -3689,9 +3689,17 @@ const UltimateSearchPage = () => {
   };
   
   const handleDeleteSession = async (timestamp) => {
-    if (!window.confirm(`Delete all results from session ${timestamp}?`)) return;
+    console.log("Delete session clicked for:", timestamp);
+    if (!window.confirm(`Delete all results from session ${timestamp}?`)) {
+      console.log("User cancelled deletion");
+      return;
+    }
+    console.log("User confirmed, attempting delete...");
     try {
-      const res = await axios.delete(`${API}/ultimate-search/session/${encodeURIComponent(timestamp)}`);
+      const url = `${API}/ultimate-search/session/${encodeURIComponent(timestamp)}`;
+      console.log("Calling DELETE:", url);
+      const res = await axios.delete(url);
+      console.log("Delete response:", res.data);
       toast.success(res.data.message || "Session deleted");
       fetchSessions();
       fetchCategories();
@@ -3699,7 +3707,8 @@ const UltimateSearchPage = () => {
       fetchDbStats();
       handleViewResults();
     } catch (error) {
-      console.error("Delete session error:", error.response?.data || error);
+      console.error("Delete session error:", error);
+      console.error("Error response:", error.response?.data);
       toast.error(error.response?.data?.detail || "Failed to delete session");
     }
   };
