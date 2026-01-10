@@ -3166,9 +3166,9 @@ async def create_group_post(group_id: str, data: GroupPostCreate, user: dict = D
         "username": user["username"],
         "content": data.content,
         "image_url": data.image_url,
-        "likes": [],
-        "like_count": 0,
-        "comments": [],
+        "reactions": {},
+        "reaction_counts": {},
+        "total_reactions": 0,
         "comment_count": 0,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
