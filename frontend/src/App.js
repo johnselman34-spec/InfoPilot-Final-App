@@ -2192,14 +2192,14 @@ const InfoPilotPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => { fetchCategories(); }, []);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/categories`);
       setCategories(res.data.filter(c => c.user_id === user?.id));
     } catch (error) { console.error("Failed to fetch categories"); }
-  };
+  }, [user?.id]);
+
+  useEffect(() => { fetchCategories(); }, [fetchCategories]);
 
   const handleCollate = async () => {
     if (!searchQuery.trim()) { toast.error("ENTER SEARCH PARAMETERS"); return; }
