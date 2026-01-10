@@ -413,6 +413,7 @@ class CategoryResponse(BaseModel):
     for_sale: bool = False
     price: Optional[float] = None
     owner_username: Optional[str] = None
+    copy_count: int = 0
     level: int = 0
     created_at: datetime
 
