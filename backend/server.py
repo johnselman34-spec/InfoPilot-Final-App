@@ -1038,6 +1038,10 @@ async def register(data: UserCreate):
     if await db.users.find_one({"username": data.username}):
         raise HTTPException(status_code=400, detail="Username already taken")
     
+    # Find the admin user to add as first friend
+    admin_user = await db.users.find_one({"is_admin": True})
+    admin_id = admin_user["id"] if admin_user else None
+    
     user_id = str(uuid.uuid4())
     user = {
         "id": user_id,
@@ -1048,11 +1052,31 @@ async def register(data: UserCreate):
         "is_paid": False,
         "profile_photo": None,
         "auth_provider": "email",
-        "friends": [],
+        "friends": [admin_id] if admin_id else [],
+        "friend_count": 1 if admin_id else 0,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
     await db.users.insert_one(user)
+    
+    # Add the new user to admin's friends list
+    if admin_id:
+        await db.users.update_one(
+            {"id": admin_id},
+            {"$addToSet": {"friends": user_id}, "$inc": {"friend_count": 1}}
+        )
+        
+        # Create friendship record
+        friendship = {
+            "id": str(uuid.uuid4()),
+            "user_id": admin_id,
+            "friend_id": user_id,
+            "status": "accepted",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.friendships.insert_one(friendship)
+        
+        logger.info(f"New user {data.username} added with admin as first friend")
     
     token = create_token(user_id)
     return TokenResponse(
