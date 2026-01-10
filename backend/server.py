@@ -2763,11 +2763,12 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
     search_terms = list(dict.fromkeys(search_terms))
     logger.info(f"Search terms extracted for filtering: {search_terms}")
     
-    # App is now free - all users get full access
-    if not user.get("is_paid") and not user.get("is_admin"):
-        # No restrictions - app is free
-        pass
-    max_results = min(data.max_results, 100)
+    # Determine max results based on user type and admin settings
+    is_paid_user = user.get("is_paid", False) or user.get("is_admin", False)
+    user_max_search_results = settings.get_max_results_for_user(is_paid_user)
+    max_results = min(data.max_results, user_max_search_results)
+    
+    logger.info(f"User {'paid' if is_paid_user else 'unpaid'}: max_results={max_results} (settings: unpaid={settings.unpaid_user_search_pages} pages, paid={settings.paid_user_search_pages} pages)")
     
     # Get user's own categories AND public categories from other users
     user_categories = await db.categories.find({
