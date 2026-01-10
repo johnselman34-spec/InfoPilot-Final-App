@@ -2734,12 +2734,7 @@ async def get_global_database(
     settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
     settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
     
-    if not user.get("is_paid") and not user.get("is_admin"):
-        if page > settings.free_user_pages:
-            raise HTTPException(
-                status_code=403,
-                detail="Upgrade to access more pages"
-            )
+    # App is now free - no restrictions
     
     public_categories = await db.categories.find({"is_public": True}).to_list(1000)
     public_category_ids = [c["id"] for c in public_categories]
