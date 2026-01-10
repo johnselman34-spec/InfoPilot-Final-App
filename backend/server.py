@@ -428,6 +428,32 @@ class ProtocolPurchase(BaseModel):
     status: str  # pending, completed
     created_at: str
 
+# Badge/Achievement Definitions
+BADGE_DEFINITIONS = {
+    "first_copy": {"name": "First Steps", "icon": "🎯", "description": "Your protocol was copied for the first time", "threshold": 1},
+    "rising_star": {"name": "Rising Star", "icon": "⭐", "description": "Protocol copied 10 times", "threshold": 10},
+    "popular": {"name": "Popular", "icon": "🔥", "description": "Protocol copied 25 times", "threshold": 25},
+    "trending": {"name": "Trending", "icon": "📈", "description": "Protocol copied 50 times", "threshold": 50},
+    "viral": {"name": "Viral", "icon": "🚀", "description": "Protocol copied 100 times", "threshold": 100},
+    "legendary": {"name": "Legendary", "icon": "🏆", "description": "Protocol copied 500 times", "threshold": 500},
+    "hall_of_fame": {"name": "Hall of Fame", "icon": "👑", "description": "Protocol copied 1000 times", "threshold": 1000},
+    
+    # Creator badges
+    "creator_novice": {"name": "Protocol Creator", "icon": "📝", "description": "Created your first protocol", "threshold": 1, "type": "creator"},
+    "creator_prolific": {"name": "Prolific Creator", "icon": "✍️", "description": "Created 10 protocols", "threshold": 10, "type": "creator"},
+    "creator_master": {"name": "Master Creator", "icon": "🎨", "description": "Created 25 protocols", "threshold": 25, "type": "creator"},
+    
+    # Marketplace badges
+    "first_sale": {"name": "First Sale", "icon": "💰", "description": "Made your first protocol sale", "threshold": 1, "type": "sales"},
+    "seller_bronze": {"name": "Bronze Seller", "icon": "🥉", "description": "Made 5 sales", "threshold": 5, "type": "sales"},
+    "seller_silver": {"name": "Silver Seller", "icon": "🥈", "description": "Made 10 sales", "threshold": 10, "type": "sales"},
+    "seller_gold": {"name": "Gold Seller", "icon": "🥇", "description": "Made 25 sales", "threshold": 25, "type": "sales"},
+    
+    # Collector badges
+    "collector_novice": {"name": "Collector", "icon": "🛒", "description": "Purchased your first protocol", "threshold": 1, "type": "purchases"},
+    "collector_avid": {"name": "Avid Collector", "icon": "📚", "description": "Purchased 10 protocols", "threshold": 10, "type": "purchases"},
+}
+
 # Protocol Recommendation Models
 class ProtocolRecommendationCreate(BaseModel):
     original_protocol: str
