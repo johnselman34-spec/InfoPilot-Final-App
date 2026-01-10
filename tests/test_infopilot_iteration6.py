@@ -549,11 +549,15 @@ class TestGlobalDatabase:
         })
         return response.json()["access_token"]
     
-    def test_public_categories_endpoint(self, auth_token):
-        """Test public categories endpoint"""
-        response = requests.get(f"{BASE_URL}/api/categories/public",
+    def test_global_database_endpoint(self, auth_token):
+        """Test global database endpoint"""
+        response = requests.get(f"{BASE_URL}/api/global-database",
             headers={"Authorization": f"Bearer {auth_token}"})
         assert response.status_code == 200
+        data = response.json()
+        assert "public_categories" in data
+        assert "results" in data
+        assert "total" in data
 
 
 class TestAdminPanel:
