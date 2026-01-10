@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "InfoPilot",
+    "slug": "infopilot",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "infopilot",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "owner": "top-pilot-enterprises",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.toppilotenterprises.infopilot"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#FFFFF0"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.toppilotenterprises.infopilot"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFF0"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "infopilot"
+      }
+    }
+  }
+}

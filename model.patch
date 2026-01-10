@@ -1,0 +1,102 @@
+diff --git a/backend/server.py b/backend/server.py
+index c1fb7d7..ccc097c 100644
+--- a/backend/server.py
++++ b/backend/server.py
+@@ -23,13 +23,13 @@ load_dotenv(ROOT_DIR / '.env')
+ # MongoDB connection
+ mongo_url = os.environ['MONGO_URL']
+ client = AsyncIOMotorClient(mongo_url)
+-db = client[os.environ.get('DB_NAME', 'infojet_db')]
++db = client[os.environ.get('DB_NAME', 'infopilot_db')]
+ 
+ # PayPal Configuration
+ PAYPAL_PAYMENT_LINK = "https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ"
+ 
+ # Create the main app
+-app = FastAPI(title="InfoJet API", version="1.0.0")
++app = FastAPI(title="InfoPilot API", version="1.0.0")
+ 
+ # Create a router with the /api prefix
+ api_router = APIRouter(prefix="/api")
+@@ -145,15 +145,15 @@ class PaymentVerification(BaseModel):
+     payment_id: str
+     user_id: str
+ 
+-# ============== PROTOCOL PARSER (InfoJet 2.0) ==============
++# ============== PROTOCOL PARSER (InfoPilot 2.0) ==============
+ 
+ class ProtocolParser:
+-    """Parse and evaluate InfoJet 2.0 Boolean protocols"""
++    """Parse and evaluate InfoPilot 2.0 Boolean protocols"""
+     
+     @staticmethod
+     def parse_protocol(protocol: str) -> Dict[str, Any]:
+         """
+-        Parse InfoJet 2.0 protocol format:
++        Parse InfoPilot 2.0 protocol format:
+         (word1 or word2) & (word3 or word4)+ & (word5)^
+         
+         + = include ALL words in group
+@@ -551,7 +551,7 @@ async def get_payment_link(user = Depends(get_current_user)):
+         "payment_url": PAYPAL_PAYMENT_LINK,
+         "price": 0.99,
+         "currency": "USD",
+-        "description": "InfoJet Premium Subscription"
++        "description": "InfoPilot Premium Subscription"
+     }
+ 
+ @api_router.post("/payment/verify")
+@@ -1378,7 +1378,7 @@ async def init_admin_settings():
+ 
+ @api_router.get("/")
+ async def root():
+-    return {"message": "InfoJet API v1.0", "status": "healthy"}
++    return {"message": "InfoPilot API v1.0", "status": "healthy"}
+ 
+ @api_router.get("/health")
+ async def health_check():
+@@ -1413,7 +1413,7 @@ async def startup():
+     # Init settings
+     await init_admin_settings()
+     
+-    logger.info("InfoJet API started successfully")
++    logger.info("InfoPilot API started successfully")
+ 
+ @app.on_event("shutdown")
+ async def shutdown_db_client():
+diff --git a/model.patch b/model.patch
+index 0282f00..e69de29 100644
+--- a/model.patch
++++ b/model.patch
+@@ -1,31 +0,0 @@
+-diff --git a/frontend/app/(tabs)/settings.tsx b/frontend/app/(tabs)/settings.tsx
+-index 579c6f0..b45d6a8 100644
+---- a/frontend/app/(tabs)/settings.tsx
+-+++ b/frontend/app/(tabs)/settings.tsx
+-@@ -68,7 +68,7 @@ export default function SettingsScreen() {
+-   const handleSubscribe = async () => {
+-     Alert.alert(
+-       'Subscribe to InfoPilot Premium',
+--      'Get full access to InfoJet for only $0.99!\n\n• Unlimited search result pages\n• Interactive world map\n• All premium features\n• Support development',
+-+      'Get full access to InfoPilot for only $0.99!\n\n• Unlimited search result pages\n• Interactive world map\n• All premium features\n• Support development',
+-       [
+-         { text: 'Maybe Later', style: 'cancel' },
+-         {
+-@@ -89,7 +89,7 @@ export default function SettingsScreen() {
+-                         try {
+-                           await api.post('/payment/activate', {});
+-                           await refreshUser();
+--                          Alert.alert('Success!', 'Welcome to InfoJet Premium!');
+-+                          Alert.alert('Success!', 'Welcome to InfoPilot Premium!');
+-                         } catch (error) {
+-                           Alert.alert('Error', 'Could not activate premium');
+-                         }
+-@@ -182,7 +182,7 @@ export default function SettingsScreen() {
+-               <View style={styles.premiumActiveText}>
+-                 <Text style={styles.premiumActiveTitle}>Premium Active</Text>
+-                 <Text style={styles.premiumActiveDesc}>
+--                  Thank you for supporting InfoJet!
+-+                  Thank you for supporting InfoPilot!
+-                 </Text>
+-               </View>
+-             </View>
