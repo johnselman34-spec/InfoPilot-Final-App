@@ -1630,6 +1630,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { path: "/infopilot", icon: Radar, label: "INFOPILOT SEARCH" },
     { path: "/ultimate-search", icon: Target, label: "ULTIMATE SEARCH" },
     { path: "/categories", icon: FolderTree, label: "CATEGORIES" },
+    { path: "/messages", icon: MessageCircle, label: "MESSAGES" },
     { path: "/friends", icon: Users, label: "FRIENDS" },
     { path: "/groups", icon: Users, label: "GROUPS" },
     { path: "/pages", icon: FileText, label: "PAGES" },
