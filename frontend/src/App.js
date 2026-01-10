@@ -4837,22 +4837,25 @@ const SubscribePage = () => {
               </div>
             )}
 
-            {/* Quick Amount Buttons */}
+            {/* Quick Amount Buttons - Uses admin-configured preset amounts */}
             {config?.is_promo_active && (
               <div className="flex flex-wrap justify-center gap-2">
-                {[0.75, 1.00, 2.00, 3.00, 4.62].map(amount => (
-                  <button
-                    key={amount}
-                    onClick={() => setCustomAmount(amount.toFixed(2))}
-                    className={`px-4 py-2 rounded font-mono text-sm transition-colors ${
-                      parseFloat(customAmount) === amount
-                        ? 'bg-pink-600 text-white'
-                        : 'bg-slate-950 text-purple-400 border border-purple-500/30 hover:border-pink-500'
-                    }`}
-                  >
-                    ${amount.toFixed(2)}
-                  </button>
-                ))}
+                {(config?.preset_amounts || "1.00, 2.00, 4.62, 10.00").split(",").map(amt => {
+                  const amount = parseFloat(amt.trim());
+                  return (
+                    <button
+                      key={amount}
+                      onClick={() => setCustomAmount(amount.toFixed(2))}
+                      className={`px-4 py-2 rounded font-mono text-sm transition-colors ${
+                        parseFloat(customAmount) === amount
+                          ? 'bg-pink-600 text-white'
+                          : 'bg-slate-950 text-purple-400 border border-purple-500/30 hover:border-pink-500'
+                      }`}
+                    >
+                      ${amount.toFixed(2)}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
