@@ -2031,7 +2031,7 @@ const CategoriesPage = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [newCategory, setNewCategory] = useState({ name: "", protocol: "", parentId: null, isPublic: true });
+  const [newCategory, setNewCategory] = useState({ name: "", protocol: "", parentId: null, isPublic: true, forSale: false, price: 0.75 });
   const [creating, setCreating] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [viewRecsCategory, setViewRecsCategory] = useState(null);
@@ -2052,29 +2052,63 @@ const CategoriesPage = () => {
     e.preventDefault();
     setCreating(true);
     try {
-      await axios.post(`${API}/categories`, { name: newCategory.name, protocol: { protocol_string: newCategory.protocol }, parent_id: newCategory.parentId || null, is_public: newCategory.isPublic });
+      await axios.post(`${API}/categories`, { 
+        name: newCategory.name, 
+        protocol: { protocol_string: newCategory.protocol }, 
+        parent_id: newCategory.parentId || null, 
+        is_public: newCategory.isPublic,
+        for_sale: !newCategory.isPublic && newCategory.forSale,
+        price: (!newCategory.isPublic && newCategory.forSale) ? newCategory.price : null
+      });
       toast.success("CATEGORY CREATED");
       setShowCreate(false);
-      setNewCategory({ name: "", protocol: "", parentId: null, isPublic: true });
+      setNewCategory({ name: "", protocol: "", parentId: null, isPublic: true, forSale: false, price: 0.75 });
       fetchCategories();
     } catch (error) { toast.error(error.response?.data?.detail || "CREATION FAILED"); }
     finally { setCreating(false); }
   };
 
-  const handleEdit = (cat) => { setEditingCategory({ id: cat.id, name: cat.name, protocol_string: cat.protocol_string, is_public: cat.is_public }); setShowEdit(true); };
+  const handleEdit = (cat) => { 
+    setEditingCategory({ 
+      id: cat.id, 
+      name: cat.name, 
+      protocol_string: cat.protocol_string, 
+      is_public: cat.is_public,
+      for_sale: cat.for_sale || false,
+      price: cat.price || 0.75
+    }); 
+    setShowEdit(true); 
+  };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!editingCategory) return;
     setUpdating(true);
     try {
-      await axios.put(`${API}/categories/${editingCategory.id}`, { name: editingCategory.name, protocol_string: editingCategory.protocol_string, is_public: editingCategory.is_public });
+      await axios.put(`${API}/categories/${editingCategory.id}`, { 
+        name: editingCategory.name, 
+        protocol_string: editingCategory.protocol_string, 
+        is_public: editingCategory.is_public,
+        for_sale: !editingCategory.is_public && editingCategory.for_sale,
+        price: (!editingCategory.is_public && editingCategory.for_sale) ? editingCategory.price : null
+      });
       toast.success("CATEGORY UPDATED");
       setShowEdit(false);
       setEditingCategory(null);
       fetchCategories();
     } catch (error) { toast.error(error.response?.data?.detail || "UPDATE FAILED"); }
     finally { setUpdating(false); }
+  };
+
+  const handleToggleSale = async (cat) => {
+    try {
+      const newForSale = !cat.for_sale;
+      await axios.put(`${API}/categories/${cat.id}/sale-settings?for_sale=${newForSale}&price=${cat.price || 0.75}`);
+      toast.success(newForSale ? "Protocol listed for sale!" : "Protocol removed from sale");
+      fetchCategories();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to update sale settings");
+    }
   };
 
   const handleDelete = async (id) => {
