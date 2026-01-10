@@ -1272,7 +1272,7 @@ const MessagesPage = () => {
         wsRef.current.close();
       }
     };
-  }, [token, selectedConversation, user?.id]);
+  }, [token, selectedConversation, user?.id, fetchConversations]);
 
   useEffect(() => {
     fetchConversations();
