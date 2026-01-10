@@ -991,20 +991,20 @@ const ViewRecommendationsModal = ({ category, onClose, onUpdate }) => {
 const RecommendationBadge = ({ categoryId, isOwner, onClick }) => {
   const [count, setCount] = useState({ total: 0, pending: 0 });
 
-  useEffect(() => {
-    if (isOwner) {
-      fetchCount();
-    }
-  }, [categoryId, isOwner]);
-
-  const fetchCount = async () => {
+  const fetchCount = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/categories/${categoryId}/recommendations/count`);
       setCount({ total: res.data.count, pending: res.data.pending });
     } catch (error) {
       console.error("Failed to fetch recommendation count");
     }
-  };
+  }, [categoryId]);
+
+  useEffect(() => {
+    if (isOwner) {
+      fetchCount();
+    }
+  }, [isOwner, fetchCount]);
 
   if (!isOwner || count.total === 0) return null;
 
