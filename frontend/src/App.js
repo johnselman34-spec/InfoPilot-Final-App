@@ -2530,7 +2530,14 @@ const CategoriesPage = () => {
               <div key={cat.id} className="bg-slate-900/80 p-4 rounded border border-purple-500/20 hover:border-pink-500/50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-pink-400 font-mono font-bold">{cat.name}</h3>
+                    <button
+                      onClick={() => navigate(`/ultimate-search?filter=${cat.id}&name=${encodeURIComponent(cat.name)}`)}
+                      className="text-pink-400 font-mono font-bold hover:text-cyan-400 hover:underline transition-colors text-left"
+                      title={`Click to view results in "${cat.name}"`}
+                      data-testid={`category-link-${cat.id}`}
+                    >
+                      {cat.name}
+                    </button>
                     <p className="text-purple-300/60 text-xs font-mono mt-1 break-all">{cat.protocol_string}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <span className={`inline-block px-2 py-0.5 text-xs rounded font-mono ${cat.is_public ? "bg-purple-500/20 text-purple-400" : "bg-pink-500/20 text-pink-400"}`}>
@@ -2541,6 +2548,9 @@ const CategoriesPage = () => {
                           <DollarSign className="w-3 h-3" /> FOR SALE ${cat.price?.toFixed(2)}
                         </span>
                       )}
+                      <span className="px-2 py-0.5 text-xs rounded font-mono bg-blue-500/20 text-blue-400">
+                        {cat.result_count || 0} results
+                      </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
