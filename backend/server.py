@@ -2705,6 +2705,11 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
     limit_reached = False
     
     for result in search_results:
+        # Check if we've reached the user's result limit
+        if len(collated_results) >= remaining_capacity:
+            limit_reached = True
+            break
+        
         # Skip unsafe URLs
         if result["url"] in unsafe_urls:
             blocked_unsafe_count += 1
@@ -2777,6 +2782,8 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
     response_message = f"Collated {len(collated_results)} results into categories"
     if blocked_unsafe_count > 0:
         response_message += f" ({blocked_unsafe_count} unsafe URLs blocked)"
+    if limit_reached:
+        response_message += f" (Database limit reached: {current_result_count + len(collated_results)}/{max_allowed})"
     
     return {
         "message": response_message,
@@ -2784,7 +2791,10 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
         "categorized_count": len(collated_results),
         "total_searched": len(search_results),
         "unsafe_blocked": blocked_unsafe_count,
-        "safety_checked": safety_check.get("checked", False)
+        "safety_checked": safety_check.get("checked", False),
+        "limit_reached": limit_reached,
+        "current_count": current_result_count + len(collated_results),
+        "max_allowed": max_allowed
     }
 
 @api_router.post("/search/search-only")
