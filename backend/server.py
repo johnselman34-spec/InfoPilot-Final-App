@@ -2086,6 +2086,163 @@ async def update_category_visibility(category_id: str, is_public: bool, user: di
     return {"message": "Visibility updated"}
 
 # ============================================
+# API ROUTES - PROTOCOL MARKETPLACE
+# ============================================
+
+@api_router.get("/marketplace/protocols")
+async def get_protocols_for_sale(user: dict = Depends(require_user)):
+    """Get all protocols listed for sale"""
+    # Get protocols marked for sale
+    protocols = await db.categories.find(
+        {"for_sale": True, "is_public": False}
+    ).to_list(100)
+    
+    result = []
+    for protocol in protocols:
+        # Get owner info
+        owner = await db.users.find_one({"id": protocol["user_id"]})
+        owner_name = owner.get("callsign", owner.get("email", "Unknown")) if owner else "Unknown"
+        
+        # Check if user already purchased this protocol
+        purchase = await db.protocol_purchases.find_one({
+            "buyer_id": user["id"],
+            "category_id": protocol["id"],
+            "status": "completed"
+        })
+        
+        result.append({
+            "id": protocol["id"],
+            "name": protocol["name"],
+            "owner_id": protocol["user_id"],
+            "owner_username": owner_name,
+            "price": protocol.get("price", 0.75),
+            "is_purchased": purchase is not None,
+            "created_at": protocol.get("created_at")
+        })
+    
+    return {"protocols": result}
+
+@api_router.post("/marketplace/protocols/{category_id}/purchase")
+async def purchase_protocol(category_id: str, user: dict = Depends(require_user)):
+    """Record a protocol purchase (after PayPal payment)"""
+    # Get the protocol
+    protocol = await db.categories.find_one({"id": category_id, "for_sale": True})
+    if not protocol:
+        raise HTTPException(status_code=404, detail="Protocol not found or not for sale")
+    
+    # Can't purchase own protocol
+    if protocol["user_id"] == user["id"]:
+        raise HTTPException(status_code=400, detail="Cannot purchase your own protocol")
+    
+    # Check if already purchased
+    existing = await db.protocol_purchases.find_one({
+        "buyer_id": user["id"],
+        "category_id": category_id,
+        "status": "completed"
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Already purchased this protocol")
+    
+    # Create purchase record
+    purchase = {
+        "id": str(uuid.uuid4()),
+        "buyer_id": user["id"],
+        "seller_id": protocol["user_id"],
+        "category_id": category_id,
+        "category_name": protocol["name"],
+        "amount": protocol.get("price", 0.75),
+        "status": "completed",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.protocol_purchases.insert_one(purchase)
+    
+    return {
+        "message": "Protocol purchased successfully!",
+        "purchase": purchase,
+        "protocol_string": protocol["protocol_string"]
+    }
+
+@api_router.get("/marketplace/my-purchases")
+async def get_my_purchases(user: dict = Depends(require_user)):
+    """Get user's purchased protocols"""
+    purchases = await db.protocol_purchases.find(
+        {"buyer_id": user["id"], "status": "completed"}
+    ).to_list(100)
+    
+    result = []
+    for purchase in purchases:
+        # Get full protocol info
+        protocol = await db.categories.find_one({"id": purchase["category_id"]})
+        if protocol:
+            owner = await db.users.find_one({"id": purchase["seller_id"]})
+            owner_name = owner.get("callsign", owner.get("email", "Unknown")) if owner else "Unknown"
+            result.append({
+                "id": purchase["id"],
+                "category_id": purchase["category_id"],
+                "category_name": purchase.get("category_name", protocol["name"]),
+                "protocol_string": protocol["protocol_string"],
+                "seller_username": owner_name,
+                "amount": purchase["amount"],
+                "purchased_at": purchase["created_at"]
+            })
+    
+    return {"purchases": result}
+
+@api_router.get("/marketplace/my-sales")
+async def get_my_sales(user: dict = Depends(require_user)):
+    """Get user's protocol sales"""
+    sales = await db.protocol_purchases.find(
+        {"seller_id": user["id"], "status": "completed"}
+    ).to_list(100)
+    
+    total_revenue = sum(s.get("amount", 0) for s in sales)
+    
+    result = []
+    for sale in sales:
+        buyer = await db.users.find_one({"id": sale["buyer_id"]})
+        buyer_name = buyer.get("callsign", buyer.get("email", "Unknown")) if buyer else "Unknown"
+        result.append({
+            "id": sale["id"],
+            "category_id": sale["category_id"],
+            "category_name": sale.get("category_name", "Unknown"),
+            "buyer_username": buyer_name,
+            "amount": sale["amount"],
+            "sold_at": sale["created_at"]
+        })
+    
+    return {"sales": result, "total_revenue": total_revenue}
+
+@api_router.put("/categories/{category_id}/sale-settings")
+async def update_sale_settings(
+    category_id: str,
+    for_sale: bool = Query(...),
+    price: float = Query(None, ge=0.75, le=2.99),
+    user: dict = Depends(require_user)
+):
+    """Update protocol sale settings"""
+    category = await db.categories.find_one({"id": category_id, "user_id": user["id"]})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    # Only private protocols can be sold
+    if category.get("is_public", True):
+        raise HTTPException(status_code=400, detail="Only private protocols can be sold")
+    
+    update_data = {"for_sale": for_sale}
+    if for_sale:
+        update_data["price"] = price if price else 0.75
+    else:
+        update_data["price"] = None
+    
+    await db.categories.update_one(
+        {"id": category_id},
+        {"$set": update_data}
+    )
+    
+    return {"message": f"Protocol {'listed for sale at ${:.2f}'.format(price or 0.75) if for_sale else 'removed from sale'}"}
+
+# ============================================
 # API ROUTES - PROTOCOL RECOMMENDATIONS
 # ============================================
 
