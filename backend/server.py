@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query, Request, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -21,6 +21,7 @@ import asyncio
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+import json
 
 # SendGrid for email notifications
 try:
