@@ -3552,8 +3552,8 @@ async def delete_comment(comment_id: str, user: dict = Depends(require_user)):
         "update": db.updates,
         "search_result": db.search_results
     }
-    collection = collection_map.get(comment["post_type"])
-    if collection:
+    if comment["post_type"] in collection_map:
+        collection = collection_map[comment["post_type"]]
         await collection.update_one(
             {"id": comment["post_id"]},
             {"$inc": {"comment_count": -1}}
