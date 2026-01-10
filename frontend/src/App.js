@@ -3838,36 +3838,85 @@ const SubscribePage = () => {
               </div>
             )}
 
-            {/* PayPal Buttons */}
-            <div className="space-y-3 pt-4">
-              <p className="text-center text-purple-400 font-mono text-sm mb-2">Pay securely with PayPal:</p>
-              
-              <button
-                onClick={() => handlePayPalClick(config?.paypal_link_1 || PAYPAL_PAYMENT_LINK_1)}
-                className="w-full px-6 py-4 bg-[#0070ba] hover:bg-[#003087] text-white font-mono rounded-lg transition-colors flex items-center justify-center gap-3"
-                data-testid="paypal-btn-1"
-              >
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 6.082-8.558 6.082H9.838l-1.363 8.642h2.464c.456 0 .843-.32.915-.77l.038-.19.735-4.66.047-.256c.072-.45.46-.77.915-.77h.576c3.727 0 6.645-1.514 7.499-5.893.32-1.634.193-3.002-.442-3.898z"/>
-                </svg>
-                PAY WITH PAYPAL
-              </button>
+            {/* PayPal Buttons - Hide if already recording */}
+            {!showRecordPayment && (
+              <div className="space-y-3 pt-4">
+                <p className="text-center text-purple-400 font-mono text-sm mb-2">Pay securely with PayPal:</p>
+                
+                <button
+                  onClick={() => handlePayPalClick(config?.paypal_link_1 || "https://www.paypal.com/ncp/payment/765S46VPPEP5C")}
+                  className="w-full px-6 py-4 bg-[#0070ba] hover:bg-[#003087] text-white font-mono rounded-lg transition-colors flex items-center justify-center gap-3"
+                  data-testid="paypal-btn-1"
+                >
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 6.082-8.558 6.082H9.838l-1.363 8.642h2.464c.456 0 .843-.32.915-.77l.038-.19.735-4.66.047-.256c.072-.45.46-.77.915-.77h.576c3.727 0 6.645-1.514 7.499-5.893.32-1.634.193-3.002-.442-3.898z"/>
+                  </svg>
+                  PAY ${customAmount} WITH PAYPAL
+                </button>
 
-              <button
-                onClick={() => handlePayPalClick(config?.paypal_link_2 || PAYPAL_PAYMENT_LINK_2)}
-                className="w-full px-6 py-3 bg-slate-950 border border-[#0070ba] text-[#0070ba] hover:bg-[#0070ba]/10 font-mono rounded-lg transition-colors flex items-center justify-center gap-3"
-                data-testid="paypal-btn-2"
-              >
-                <CreditCard className="w-5 h-5" />
-                ALTERNATIVE PAYMENT LINK
-              </button>
-            </div>
+                <button
+                  onClick={() => handlePayPalClick(config?.paypal_link_2 || "https://www.paypal.com/ncp/payment/SX379AAKMXM8A")}
+                  className="w-full px-6 py-3 bg-slate-950 border border-[#0070ba] text-[#0070ba] hover:bg-[#0070ba]/10 font-mono rounded-lg transition-colors flex items-center justify-center gap-3"
+                  data-testid="paypal-btn-2"
+                >
+                  <CreditCard className="w-5 h-5" />
+                  ALTERNATIVE PAYMENT LINK
+                </button>
+                
+                {/* Already paid button */}
+                <button
+                  onClick={() => setShowRecordPayment(true)}
+                  className="w-full px-4 py-2 text-purple-400/60 hover:text-purple-400 font-mono text-sm underline"
+                >
+                  I've already completed my PayPal payment →
+                </button>
+              </div>
+            )}
 
             {/* Record Payment Section */}
             {showRecordPayment && (
-              <div className="mt-6 p-4 bg-slate-950 border border-green-500/30 rounded-lg">
-                <h4 className="text-green-400 font-mono text-sm font-bold mb-3">AFTER PAYMENT, ACTIVATE YOUR SUBSCRIPTION:</h4>
+              <div className="mt-2 p-6 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-2 border-green-500/50 rounded-lg">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+                    <Check className="w-6 h-6 text-green-400" />
+                  </div>
+                  <div>
+                    <h4 className="text-green-400 font-mono font-bold">PAYMENT COMPLETE?</h4>
+                    <p className="text-purple-400/60 font-mono text-xs">Click below to activate your subscription</p>
+                  </div>
+                </div>
                 <div className="space-y-3">
+                  <div>
+                    <label className="block text-purple-400/60 font-mono text-xs mb-1">PayPal Transaction ID (optional - from receipt)</label>
+                    <input
+                      type="text"
+                      value={transactionId}
+                      onChange={(e) => setTransactionId(e.target.value)}
+                      placeholder="e.g., 1AB23456CD789012E"
+                      className="w-full px-3 py-2 bg-slate-900 border border-purple-500/30 rounded text-purple-300 font-mono text-sm focus:border-green-500 focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    onClick={handleRecordPayment}
+                    disabled={recording}
+                    className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-mono text-lg rounded-lg hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg shadow-green-500/30"
+                    data-testid="record-payment-btn"
+                  >
+                    {recording ? (
+                      <><Loader2 className="w-6 h-6 animate-spin" /> ACTIVATING...</>
+                    ) : (
+                      <><Crown className="w-6 h-6" /> ACTIVATE MY ${customAmount} SUBSCRIPTION</>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowRecordPayment(false)}
+                    className="w-full px-4 py-2 text-purple-400/40 hover:text-purple-400 font-mono text-sm"
+                  >
+                    ← Back to payment options
+                  </button>
+                </div>
+              </div>
+            )}
                   <div>
                     <label className="block text-purple-400/60 font-mono text-xs mb-1">PayPal Transaction ID (optional)</label>
                     <input
