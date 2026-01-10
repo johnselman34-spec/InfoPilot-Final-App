@@ -2279,8 +2279,21 @@ const UltimateSearchPage = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   
+  // Protocol Recommendations state
+  const [suggestChangeCategory, setSuggestChangeCategory] = useState(null);
+  const [viewRecsCategory, setViewRecsCategory] = useState(null);
+  
   // Determine if current user is the owner of their own Ultimate Search page
   const isOwner = true; // In this context, user always owns their own search page
+  
+  // Handle suggestion click (different behavior for owner vs non-owner)
+  const handleSuggestChangeClick = (category, isViewRecs = false) => {
+    if (isViewRecs) {
+      setViewRecsCategory(category);
+    } else {
+      setSuggestChangeCategory(category);
+    }
+  };
   
   useEffect(() => {
     fetchCategories();
