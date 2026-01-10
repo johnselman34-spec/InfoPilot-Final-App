@@ -24,7 +24,7 @@ from datetime import datetime
 from urllib.parse import quote
 
 # Use environment variable for BASE_URL
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://freesearch.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pay-explore.preview.emergentagent.com')
 
 # Test credentials
 ADMIN_EMAIL = "john@infojet.com"
