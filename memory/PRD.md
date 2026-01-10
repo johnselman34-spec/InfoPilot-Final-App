@@ -47,7 +47,7 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - [x] Admin panel for subscription settings
 - [x] **PayPal IPN (Instant Payment Notification)** - Automatic subscription activation
 
-#### Statistics Page (NEW - Enhanced)
+#### Statistics Page (Enhanced)
 - [x] Platform Overview (Total Pilots, Public Protocols, Total Copies, Marketplace Sales)
 - [x] **🏆 Popular Protocols by Clipboard Copies** - Leaderboard sorted by copy count
 - [x] Top Contributors - Users with most public protocols
@@ -60,7 +60,7 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
   - Collector badges: Collector, Avid Collector
 - [x] **Badge Leaderboard** - Rankings by badges earned
 
-#### Protocol Marketplace (NEW)
+#### Protocol Marketplace
 - [x] Browse protocols for sale
 - [x] My Purchases - view purchased protocols
 - [x] My Sales - track revenue from sold protocols
@@ -86,6 +86,17 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - [x] Document type checkboxes filtering
 - [x] Google Maps with category-colored location markers
 - [x] Updates section with reactions and comments
+- [x] **Automated Hashtags** - 4-6 clickable hashtags per search result (NEW)
+- [x] **Clickable Category Trees** - Click category name to filter results (NEW)
+- [x] **Database Stats Display** - Shows stored results, limit, remaining capacity (NEW)
+- [x] **Clear All Results** - Button to clear entire user database (NEW)
+- [x] **Clear Category Results** - Button to clear results from specific category (NEW)
+
+#### Database Management (NEW - January 10, 2026)
+- [x] **Admin-controllable Result Limit** - Default 4000 results per user (range 100-10,000)
+- [x] **User Stats Endpoint** - View current_count, max_allowed, remaining, percentage_used
+- [x] **Limit Enforcement** - Collation stops when user reaches limit
+- [x] **Admin Clear User Data** - Admin can clear any user's results or specific category
 
 #### Security
 - [x] Google Safe Browsing API integration
@@ -97,12 +108,17 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - [x] User management
 - [x] Subscription configuration (PayPal links, prices, promo dates)
 - [x] Legal documents editing (Privacy Policy, Terms of Service)
+- [x] **Database Limits Tab** - Control max results per user (NEW)
+- [x] **Top Users by Results** - View users with most stored results (NEW)
 
 ### Pending Features 🔄
 
+#### P0 - Critical
+- [ ] **Refactor Monoliths** - Break down `App.js` (~6000 lines) and `server.py` (~5000 lines) into modular architecture
+
 #### P1 - High Priority
-- [x] Real-time WebSocket messaging
-- [ ] Automated PayPal IPN for subscription verification
+- [ ] **Worldwide Information Research Database** page
+- [ ] Weekly email digest system (requires SendGrid key)
 
 #### P2 - Medium Priority
 - [ ] Admin Panel enhancements for social feature moderation
@@ -111,7 +127,6 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 #### P3 - Future
 - [ ] Native mobile apps (Android/iOS)
 - [ ] Email newsletter system
-- [ ] Global Research Database page
 - [ ] Group/Page moderation tools
 
 ## Technical Architecture
@@ -125,22 +140,33 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - **Payments**: PayPal Hosted Buttons (SDK)
 
 ### Key Files
-- `/app/frontend/src/App.js` - Monolithic React application (~5000 lines, needs refactoring)
-- `/app/backend/server.py` - Monolithic FastAPI backend (~4000 lines, needs refactoring)
+- `/app/frontend/src/App.js` - Monolithic React application (~6000 lines, needs refactoring)
+- `/app/backend/server.py` - Monolithic FastAPI backend (~5000 lines, needs refactoring)
 - `/app/backend/.env` - Backend environment variables
 - `/app/frontend/.env` - Frontend environment variables
 
 ### Database Collections
 - `users` - User accounts
 - `categories` - User-created search categories with protocols (now with for_sale, price)
-- `search_results` - Collated search results with locations
+- `search_results` - Collated search results with locations, **hashtags** (new field)
 - `protocol_purchases` - Protocol purchase records
 - `subscriptions` - User subscriptions
 - `groups`, `group_posts`, `pages`, `page_posts`, `page_followers`
 - `updates`, `comments`, `friends`
 - `protocol_recommendations` - Suggested changes to public protocols
 - `messages`, `conversations` - Private messaging
-- `admin_settings`, `legal_documents`
+- `admin_settings` - Includes **user_max_results_limit** (new field, default 4000)
+- `legal_documents`
+
+### New API Endpoints (January 10, 2026)
+- `GET /api/admin/database-limits` - Admin view database limits
+- `PUT /api/admin/database-limits` - Admin update database limits (100-10000)
+- `GET /api/ultimate-search/user-stats` - User view their result stats
+- `DELETE /api/ultimate-search/clear-all` - User clear all results
+- `DELETE /api/ultimate-search/category/{id}/clear` - User clear category results (includes subcategories)
+- `DELETE /api/admin/clear-user-results/{user_id}` - Admin clear any user's results
+- `DELETE /api/admin/clear-user-category/{user_id}/{category_id}` - Admin clear specific user's category
+- `GET /api/ultimate-search/category/{id}/results` - Get paginated results for a category
 
 ## API Keys & Credentials
 
@@ -164,11 +190,14 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - Iteration 11: 42/42 tests passed - Pre-PayPal integration verification
 - Iteration 12: 17/17 tests passed - Marketplace and PayPal integration (100%)
 - Iteration 13: 14/14 tests passed - Statistics Page, Popular Protocols, Copy Tracking (100%)
-- Iteration 14: Badges & Achievements system implemented and verified
-- Iteration 15: Badge notifications with book/subscription promotions implemented
-- **Iteration 16: Real-time WebSocket messaging and PayPal IPN implemented**
+- Iteration 14: 21/22 tests passed - 4 New Features (Hashtags, Database Limits, Data Management, Category Filter) (95.5%)
+- **Features verified**: Automated hashtags, admin-controllable database limit, clear all/category results, clickable category trees
 
 ## Last Updated
 - Date: January 10, 2026
-- Session: Added WebSocket real-time messaging with typing indicators, PayPal IPN for automatic subscriptions
-- All features tested and working
+- Session: Implemented 4 new features:
+  1. **Automated Hashtags** - 4-6 clickable hashtags per search result for related content discovery
+  2. **Admin-Controllable Database Limit** - Default 4000 results per user, configurable 100-10,000
+  3. **Data Management** - Users/admins can clear entire databases or specific categories
+  4. **Clickable Category Trees** - Click category names to filter results
+- All features tested and working (95.5% pass rate)
