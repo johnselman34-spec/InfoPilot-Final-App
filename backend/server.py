@@ -5014,6 +5014,61 @@ async def get_my_badges(user: dict = Depends(require_user)):
         "total_badges": len(all_badges)
     }
 
+@api_router.post("/badges/check-new")
+async def check_new_badges(user: dict = Depends(require_user)):
+    """Check if user has earned new badges since last check"""
+    user_id = user["id"]
+    
+    # Get user's previously seen badges
+    user_doc = await db.users.find_one({"id": user_id})
+    seen_badges = user_doc.get("seen_badges", []) if user_doc else []
+    
+    # Calculate current badges
+    copy_pipeline = [
+        {"$match": {"user_id": user_id}},
+        {"$group": {"_id": None, "total": {"$sum": "$copy_count"}}}
+    ]
+    copy_result = await db.categories.aggregate(copy_pipeline).to_list(1)
+    total_copies = copy_result[0]["total"] if copy_result else 0
+    
+    protocols_created = await db.categories.count_documents({"user_id": user_id})
+    sales_count = await db.protocol_purchases.count_documents({"seller_id": user_id, "status": "completed"})
+    purchases_count = await db.protocol_purchases.count_documents({"buyer_id": user_id, "status": "completed"})
+    
+    all_badges = calculate_badges(total_copies, protocols_created, sales_count, purchases_count)
+    earned_badges = [b for b in all_badges if b["earned"]]
+    
+    # Find newly earned badges
+    new_badges = [b for b in earned_badges if b["id"] not in seen_badges]
+    
+    # Update seen badges
+    if new_badges:
+        all_earned_ids = [b["id"] for b in earned_badges]
+        await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"seen_badges": all_earned_ids}}
+        )
+    
+    # Add promotional messages for badges
+    promotional_messages = [
+        "📚 Love InfoPilot? Check out 'Letters to Evelyn' by John Selman - a captivating novel!",
+        "🚀 Unlock premium features with a subscription - Pay What You Want!",
+        "📖 Get inspired! 'Letters to Evelyn' by John Selman - 19 Five-Star Reviews on Amazon!",
+        "💎 Support the platform - Subscribe today and help us grow!",
+        "✨ Did you know? Subscribers get exclusive access to advanced features!",
+    ]
+    
+    import random
+    promo = random.choice(promotional_messages) if new_badges else None
+    
+    return {
+        "new_badges": new_badges,
+        "has_new_badges": len(new_badges) > 0,
+        "promotional_message": promo,
+        "book_link": "https://www.amazon.com/Letters-Evelyn-John-Selman/dp/B0DNJHPH6P",
+        "subscribe_link": "/subscribe"
+    }
+
 @api_router.get("/badges/protocol/{category_id}")
 async def get_protocol_badges(category_id: str, user: dict = Depends(require_user)):
     """Get badges for a specific protocol"""
