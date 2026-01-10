@@ -226,52 +226,44 @@ const SaleCountdown = ({ endDate }) => {
   );
 };
 
-// MEGA Sales Banner - Welcome Sale
-const WelcomeSaleBanner = ({ onUpgrade, compact = false }) => {
+// Welcome Sale Banner - Now promotes the book instead
+const WelcomeSaleBanner = ({ onUpgrade, compact }) => {
   const { user } = useAuth();
-  const [saleInfo, setSaleInfo] = useState(null);
+  const navigate = useNavigate();
   
-  useEffect(() => {
-    axios.get(`${API}/subscription/info`).then(res => setSaleInfo(res.data)).catch(() => {});
-  }, []);
-  
-  if (user?.is_paid) return null;
+  // App is now free - promote the book instead
+  if (compact) {
+    return (
+      <div className="p-3 bg-gradient-to-r from-pink-900/30 to-purple-900/30 rounded-lg border border-pink-500/30 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <img src={IMAGES.bookCoverMain} alt="Letters to Evelyn" className="w-12 h-16 object-cover rounded shadow-lg" />
+          <div>
+            <p className="text-pink-400 font-mono text-sm font-bold">📚 NEW BOOK!</p>
+            <p className="text-purple-300 font-mono text-xs">Letters to Evelyn - $2.99</p>
+          </div>
+        </div>
+        <button onClick={() => navigate("/book")} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono text-sm rounded hover:scale-105 transition-transform">
+          GET BOOK
+        </button>
+      </div>
+    );
+  }
   
   return (
-    <div className={`bg-gradient-to-r from-red-900/30 via-pink-900/30 to-purple-900/30 border-2 border-pink-500 rounded-xl overflow-hidden ${compact ? 'p-4' : 'p-6'} relative`}>
-      {/* Animated glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 animate-pulse"></div>
-      
-      <div className="relative z-10">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Gift className="w-12 h-12 text-pink-400 animate-bounce" />
-              <Sparkles className="w-6 h-6 text-yellow-400 absolute -top-1 -right-1 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="bg-gradient-to-r from-pink-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">🎉 WELCOME SALE!</span>
-                <span className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono">$0.75</span>
-                <span className="text-purple-400/50 font-mono text-lg line-through">$4.62/yr</span>
-              </div>
-              <p className="text-pink-300 font-mono text-sm mt-1">LIFETIME PREMIUM ACCESS - ONE TIME PAYMENT!</p>
-              {!compact && saleInfo?.sale_end_date && (
-                <div className="mt-2">
-                  <SaleCountdown endDate={saleInfo.sale_end_date} />
-                </div>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={onUpgrade}
-            className="px-8 py-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform shadow-lg shadow-pink-500/30 flex items-center gap-2"
-          >
-            <Zap className="w-5 h-5" />
-            UPGRADE NOW
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
+    <div className="p-6 bg-gradient-to-r from-pink-900/40 via-purple-900/40 to-blue-900/40 rounded-xl border-2 border-pink-500/50">
+      <div className="flex items-center justify-center gap-3 mb-4">
+        <Book className="w-8 h-8 text-pink-400" />
+        <Sparkles className="w-6 h-6 text-yellow-400 animate-pulse" />
+      </div>
+      <div className="text-center">
+        <div className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-1 rounded-full text-sm font-bold inline-block mb-3">📖 FEATURED BOOK</div>
+        <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-2">LETTERS TO EVELYN</h3>
+        <p className="text-purple-300/80 font-mono text-sm mb-1">A True Supernatural Thriller Comedy</p>
+        <p className="text-pink-300 font-mono text-lg font-bold">Only $2.99</p>
+        <p className="text-yellow-400 font-mono text-xs mb-4">⭐⭐⭐⭐⭐ 19 Five-Star Reviews</p>
+        <button onClick={() => navigate("/book")} className="px-8 py-3 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform flex items-center justify-center gap-2 mx-auto">
+          <ShoppingCart className="w-5 h-5" /> VIEW BOOK
+        </button>
       </div>
     </div>
   );
