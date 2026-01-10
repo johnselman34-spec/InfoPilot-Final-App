@@ -3611,6 +3611,179 @@ async def create_page_post(page_id: str, data: GroupPostCreate, user: dict = Dep
     return {"message": "Post created", "post": {k: v for k, v in post.items() if k != "_id"}}
 
 # ============================================
+# API ROUTES - PAYPAL SUBSCRIPTIONS
+# ============================================
+
+# PayPal Payment Links
+PAYPAL_PAYMENT_LINK_1 = "https://www.paypal.com/ncp/payment/765S46VPPEP5C"
+PAYPAL_PAYMENT_LINK_2 = "https://www.paypal.com/ncp/payment/SX379AAKMXM8A"
+
+# Promotional pricing ends March 2nd, 2026
+PROMO_END_DATE = datetime(2026, 3, 2, 0, 0, 0, tzinfo=timezone.utc)
+REGULAR_PRICE = 4.62
+MIN_PRICE = 0.01  # Minimum payment during promo period
+
+@api_router.get("/subscription/config")
+async def get_subscription_config():
+    """Get subscription configuration (public)"""
+    now = datetime.now(timezone.utc)
+    is_promo_active = now < PROMO_END_DATE
+    
+    # Get admin-configured settings
+    settings = await db.admin_settings.find_one({"type": "subscription_config"}, {"_id": 0})
+    
+    if settings:
+        promo_end = settings.get("promo_end_date", PROMO_END_DATE.isoformat())
+        regular_price = settings.get("regular_price", REGULAR_PRICE)
+        min_price = settings.get("min_price", MIN_PRICE)
+        paypal_link_1 = settings.get("paypal_link_1", PAYPAL_PAYMENT_LINK_1)
+        paypal_link_2 = settings.get("paypal_link_2", PAYPAL_PAYMENT_LINK_2)
+    else:
+        promo_end = PROMO_END_DATE.isoformat()
+        regular_price = REGULAR_PRICE
+        min_price = MIN_PRICE
+        paypal_link_1 = PAYPAL_PAYMENT_LINK_1
+        paypal_link_2 = PAYPAL_PAYMENT_LINK_2
+    
+    return {
+        "is_promo_active": is_promo_active,
+        "promo_end_date": promo_end,
+        "regular_price": regular_price,
+        "min_price": min_price,
+        "paypal_link_1": paypal_link_1,
+        "paypal_link_2": paypal_link_2,
+        "message": "Pay what you want!" if is_promo_active else f"Annual subscription: ${regular_price}/year"
+    }
+
+@api_router.get("/subscription/status")
+async def get_subscription_status(user: dict = Depends(require_user)):
+    """Get user's subscription status"""
+    subscription = await db.subscriptions.find_one(
+        {"user_id": user["id"]},
+        {"_id": 0}
+    )
+    
+    if not subscription:
+        return {
+            "is_subscribed": False,
+            "subscription": None,
+            "message": "No active subscription"
+        }
+    
+    # Check if subscription is expired
+    expires_at = datetime.fromisoformat(subscription.get("expires_at", "2000-01-01T00:00:00+00:00").replace("Z", "+00:00"))
+    is_active = datetime.now(timezone.utc) < expires_at
+    
+    return {
+        "is_subscribed": is_active,
+        "subscription": subscription,
+        "message": "Subscription active" if is_active else "Subscription expired"
+    }
+
+@api_router.post("/subscription/record-payment")
+async def record_payment(
+    amount: float = Query(..., ge=0.01),
+    paypal_transaction_id: str = Query(None),
+    user: dict = Depends(require_user)
+):
+    """Record a PayPal payment and activate subscription"""
+    now = datetime.now(timezone.utc)
+    is_promo = now < PROMO_END_DATE
+    
+    # Get config
+    settings = await db.admin_settings.find_one({"type": "subscription_config"}, {"_id": 0})
+    regular_price = settings.get("regular_price", REGULAR_PRICE) if settings else REGULAR_PRICE
+    
+    # Validate amount after promo period
+    if not is_promo and amount < regular_price:
+        raise HTTPException(status_code=400, detail=f"Minimum payment is ${regular_price} after promotional period")
+    
+    # Calculate subscription duration (1 year)
+    expires_at = now + timedelta(days=365)
+    
+    subscription = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "username": user["username"],
+        "email": user.get("email", ""),
+        "amount_paid": amount,
+        "paypal_transaction_id": paypal_transaction_id,
+        "started_at": now.isoformat(),
+        "expires_at": expires_at.isoformat(),
+        "is_promo_rate": is_promo,
+        "status": "active"
+    }
+    
+    # Upsert subscription
+    await db.subscriptions.update_one(
+        {"user_id": user["id"]},
+        {"$set": subscription},
+        upsert=True
+    )
+    
+    # Update user's subscription status
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"is_subscribed": True, "subscription_expires": expires_at.isoformat()}}
+    )
+    
+    return {
+        "message": "Subscription activated! Thank you for your support!",
+        "subscription": subscription
+    }
+
+@api_router.put("/admin/subscription/config")
+async def update_subscription_config(
+    regular_price: float = Query(None),
+    min_price: float = Query(None),
+    promo_end_date: str = Query(None),
+    paypal_link_1: str = Query(None),
+    paypal_link_2: str = Query(None),
+    user: dict = Depends(require_user)
+):
+    """Update subscription configuration (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    update_data = {"type": "subscription_config"}
+    if regular_price is not None:
+        update_data["regular_price"] = regular_price
+    if min_price is not None:
+        update_data["min_price"] = min_price
+    if promo_end_date is not None:
+        update_data["promo_end_date"] = promo_end_date
+    if paypal_link_1 is not None:
+        update_data["paypal_link_1"] = paypal_link_1
+    if paypal_link_2 is not None:
+        update_data["paypal_link_2"] = paypal_link_2
+    
+    await db.admin_settings.update_one(
+        {"type": "subscription_config"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    return {"message": "Subscription configuration updated"}
+
+@api_router.get("/admin/subscriptions")
+async def get_all_subscriptions(user: dict = Depends(require_user)):
+    """Get all subscriptions (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    subscriptions = await db.subscriptions.find({}, {"_id": 0}).sort("started_at", -1).to_list(500)
+    
+    total_revenue = sum(s.get("amount_paid", 0) for s in subscriptions)
+    active_count = sum(1 for s in subscriptions if s.get("status") == "active")
+    
+    return {
+        "subscriptions": subscriptions,
+        "total_count": len(subscriptions),
+        "active_count": active_count,
+        "total_revenue": round(total_revenue, 2)
+    }
+
+# ============================================
 # API ROUTES - LEGAL PAGES (Privacy Policy & Terms of Service)
 # ============================================
 
