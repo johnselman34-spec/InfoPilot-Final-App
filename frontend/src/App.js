@@ -2135,16 +2135,51 @@ const CategoriesPage = () => {
         {/* Create Modal */}
         {showCreate && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <FuturisticFrame title="CREATE CATEGORY" color="pink" className="bg-slate-900 border border-pink-500/30 rounded-lg max-w-lg w-full">
+            <FuturisticFrame title="CREATE CATEGORY" color="pink" className="bg-slate-900 border border-pink-500/30 rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
               <form onSubmit={handleCreate} className="space-y-4">
                 <div><label className="block text-xs font-mono text-purple-400 mb-1">CATEGORY NAME</label><input type="text" value={newCategory.name} onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500" required /></div>
                 <div>
                   <label className="block text-xs font-mono text-purple-400 mb-1">INFOPILOT 2.0 PROTOCOL</label>
                   <textarea value={newCategory.protocol} onChange={(e) => setNewCategory({ ...newCategory, protocol: e.target.value })} placeholder="(word1 or word2) & (word3)+ & (excluded)^" className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono h-24 focus:border-pink-500" required />
-                  <p className="text-xs text-green-400/80 mt-1 font-mono">💡 Capitalization doesn't matter - "Science" = "science" = "SCIENCE"</p>
-                  <p className="text-xs text-purple-400/60 mt-1 font-mono">Syntax: (word1 or word2) & (required)+ & (excluded)^</p>
+                  <p className="text-xs text-green-400/80 mt-1 font-mono">Capitalization doesn't matter - "Science" = "science"</p>
                 </div>
-                <div className="flex items-center gap-2"><input type="checkbox" id="isPublic" checked={newCategory.isPublic} onChange={(e) => setNewCategory({ ...newCategory, isPublic: e.target.checked })} className="rounded bg-slate-950 border-purple-500/30" /><label htmlFor="isPublic" className="text-sm text-purple-300 font-mono">Make public</label></div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="isPublic" checked={newCategory.isPublic} onChange={(e) => setNewCategory({ ...newCategory, isPublic: e.target.checked, forSale: false })} className="rounded bg-slate-950 border-purple-500/30" />
+                  <label htmlFor="isPublic" className="text-sm text-purple-300 font-mono">Make public (anyone can view)</label>
+                </div>
+                
+                {/* Sell Options - Only for Private Protocols */}
+                {!newCategory.isPublic && (
+                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg space-y-3">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-yellow-400" />
+                      <span className="text-yellow-400 font-mono text-sm font-bold">MONETIZATION OPTIONS</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" id="forSale" checked={newCategory.forSale} onChange={(e) => setNewCategory({ ...newCategory, forSale: e.target.checked })} className="rounded bg-slate-950 border-yellow-500/30" />
+                      <label htmlFor="forSale" className="text-sm text-purple-300 font-mono">List for sale (users pay to view/copy)</label>
+                    </div>
+                    {newCategory.forSale && (
+                      <div>
+                        <label className="block text-xs font-mono text-yellow-400 mb-1">PRICE (USD)</label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-yellow-400 font-mono">$</span>
+                          <input 
+                            type="number" 
+                            value={newCategory.price} 
+                            onChange={(e) => setNewCategory({ ...newCategory, price: Math.max(0.75, Math.min(2.99, parseFloat(e.target.value) || 0.75)) })}
+                            min="0.75" 
+                            max="2.99" 
+                            step="0.01"
+                            className="w-24 px-3 py-2 bg-slate-950 border border-yellow-500/30 rounded text-yellow-400 font-mono focus:border-yellow-500" 
+                          />
+                        </div>
+                        <p className="text-xs text-purple-400/60 mt-1 font-mono">Price range: $0.75 - $2.99</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex gap-4">
                   <button type="button" onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2 border border-purple-500/30 text-purple-300 font-mono rounded hover:bg-purple-500/10">CANCEL</button>
                   <button type="submit" disabled={creating} className="flex-1 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50">{creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "CREATE"}</button>
@@ -2157,16 +2192,51 @@ const CategoriesPage = () => {
         {/* Edit Modal */}
         {showEdit && editingCategory && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <FuturisticFrame title="EDIT CATEGORY" color="blue" className="bg-slate-900 border border-blue-500/30 rounded-lg max-w-lg w-full">
+            <FuturisticFrame title="EDIT CATEGORY" color="blue" className="bg-slate-900 border border-blue-500/30 rounded-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
               <form onSubmit={handleUpdate} className="space-y-4">
                 <div><label className="block text-xs font-mono text-blue-400 mb-1">CATEGORY NAME</label><input type="text" value={editingCategory.name} onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono focus:border-blue-500" required /></div>
                 <div>
                   <label className="block text-xs font-mono text-blue-400 mb-1">INFOPILOT 2.0 PROTOCOL</label>
                   <textarea value={editingCategory.protocol_string} onChange={(e) => setEditingCategory({ ...editingCategory, protocol_string: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono h-32 focus:border-blue-500" required />
-                  <p className="text-xs text-green-400/80 mt-1 font-mono">💡 Capitalization doesn't matter - "Science" = "science" = "SCIENCE"</p>
-                  <p className="text-xs text-purple-400/60 mt-1 font-mono">Syntax: (word1 or word2) & (required)+ & (excluded)^</p>
+                  <p className="text-xs text-green-400/80 mt-1 font-mono">Capitalization doesn't matter - "Science" = "science"</p>
                 </div>
-                <div className="flex items-center gap-2"><input type="checkbox" id="editIsPublic" checked={editingCategory.is_public} onChange={(e) => setEditingCategory({ ...editingCategory, is_public: e.target.checked })} className="rounded bg-slate-950 border-blue-500/30" /><label htmlFor="editIsPublic" className="text-sm text-purple-300 font-mono">Make public</label></div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="editIsPublic" checked={editingCategory.is_public} onChange={(e) => setEditingCategory({ ...editingCategory, is_public: e.target.checked, for_sale: false })} className="rounded bg-slate-950 border-blue-500/30" />
+                  <label htmlFor="editIsPublic" className="text-sm text-purple-300 font-mono">Make public</label>
+                </div>
+                
+                {/* Sell Options - Only for Private Protocols */}
+                {!editingCategory.is_public && (
+                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg space-y-3">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-yellow-400" />
+                      <span className="text-yellow-400 font-mono text-sm font-bold">MONETIZATION OPTIONS</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" id="editForSale" checked={editingCategory.for_sale} onChange={(e) => setEditingCategory({ ...editingCategory, for_sale: e.target.checked })} className="rounded bg-slate-950 border-yellow-500/30" />
+                      <label htmlFor="editForSale" className="text-sm text-purple-300 font-mono">List for sale</label>
+                    </div>
+                    {editingCategory.for_sale && (
+                      <div>
+                        <label className="block text-xs font-mono text-yellow-400 mb-1">PRICE (USD)</label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-yellow-400 font-mono">$</span>
+                          <input 
+                            type="number" 
+                            value={editingCategory.price} 
+                            onChange={(e) => setEditingCategory({ ...editingCategory, price: Math.max(0.75, Math.min(2.99, parseFloat(e.target.value) || 0.75)) })}
+                            min="0.75" 
+                            max="2.99" 
+                            step="0.01"
+                            className="w-24 px-3 py-2 bg-slate-950 border border-yellow-500/30 rounded text-yellow-400 font-mono focus:border-yellow-500" 
+                          />
+                        </div>
+                        <p className="text-xs text-purple-400/60 mt-1 font-mono">Price range: $0.75 - $2.99</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="flex gap-4">
                   <button type="button" onClick={() => { setShowEdit(false); setEditingCategory(null); }} className="flex-1 px-4 py-2 border border-purple-500/30 text-purple-300 font-mono rounded hover:bg-purple-500/10">CANCEL</button>
                   <button type="submit" disabled={updating} className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50">{updating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "UPDATE"}</button>
