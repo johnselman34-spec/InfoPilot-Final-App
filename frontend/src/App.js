@@ -5888,14 +5888,42 @@ const AdminPage = () => {
     paypal_link_2: ""
   });
   const [subscriptions, setSubscriptions] = useState({ subscriptions: [], total_count: 0, active_count: 0, total_revenue: 0 });
+  
+  // Database limits state
+  const [dbLimits, setDbLimits] = useState({ user_max_results_limit: 4000, top_users_by_results: [] });
+  const [newDbLimit, setNewDbLimit] = useState(4000);
 
   useEffect(() => {
     if (user?.is_admin) {
       fetchLegalPages();
       fetchSubscriptionConfig();
       fetchSubscriptions();
+      fetchDbLimits();
     }
   }, [user]);
+  
+  const fetchDbLimits = async () => {
+    try {
+      const res = await axios.get(`${API}/admin/database-limits`);
+      setDbLimits(res.data);
+      setNewDbLimit(res.data.user_max_results_limit);
+    } catch (error) {
+      console.error("Failed to fetch database limits");
+    }
+  };
+  
+  const saveDbLimit = async () => {
+    setSaving(true);
+    try {
+      await axios.put(`${API}/admin/database-limits?user_max_results_limit=${newDbLimit}`);
+      toast.success(`Database limit updated to ${newDbLimit} results per user`);
+      fetchDbLimits();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to save database limit");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const fetchLegalPages = async () => {
     try {
