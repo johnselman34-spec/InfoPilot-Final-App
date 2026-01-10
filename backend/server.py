@@ -10,6 +10,7 @@ import jwt
 import bcrypt
 import httpx
 import stripe
+import base64
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional, Dict, Any
@@ -20,6 +21,14 @@ import asyncio
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+
+# SendGrid for email notifications
+try:
+    from sendgrid import SendGridAPIClient
+    from sendgrid.helpers.mail import Mail
+    SENDGRID_AVAILABLE = True
+except ImportError:
+    SENDGRID_AVAILABLE = False
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
