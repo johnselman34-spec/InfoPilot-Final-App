@@ -591,6 +591,134 @@ const PostCard = ({ post, postType, onUpdate }) => {
   );
 };
 
+// Updates Section Component (for Ultimate Search Page)
+const UpdatesSection = () => {
+  const { user } = useAuth();
+  const [updates, setUpdates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newUpdate, setNewUpdate] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [showUpdates, setShowUpdates] = useState(true);
+
+  useEffect(() => {
+    fetchUpdates();
+  }, []);
+
+  const fetchUpdates = async () => {
+    try {
+      const res = await axios.get(`${API}/updates`);
+      setUpdates(res.data.updates || []);
+    } catch (error) {
+      console.error("Failed to fetch updates");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePost = async (e) => {
+    e.preventDefault();
+    if (!newUpdate.trim()) return;
+    setPosting(true);
+    try {
+      await axios.post(`${API}/updates`, { content: newUpdate.trim() });
+      setNewUpdate("");
+      fetchUpdates();
+      toast.success("Update posted!");
+    } catch (error) {
+      toast.error("Failed to post update");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const handleDeleteUpdate = async (updateId) => {
+    if (!window.confirm("Delete this update?")) return;
+    try {
+      await axios.delete(`${API}/updates/${updateId}`);
+      toast.success("Update deleted");
+      fetchUpdates();
+    } catch (error) {
+      toast.error("Failed to delete update");
+    }
+  };
+
+  return (
+    <FuturisticFrame title="📝 YOUR UPDATES" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+      {/* Create Update Form */}
+      <form onSubmit={handlePost} className="mb-4">
+        <div className="flex gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <User className="w-5 h-5 text-pink-400" />
+          </div>
+          <div className="flex-1">
+            <textarea
+              value={newUpdate}
+              onChange={(e) => setNewUpdate(e.target.value)}
+              placeholder="What's on your mind? Share an update with your network..."
+              className="w-full px-4 py-3 bg-slate-950 border border-purple-500/30 rounded-lg text-purple-300 font-mono h-20 focus:border-pink-500 resize-none"
+              data-testid="update-input"
+            />
+            <div className="flex justify-end mt-2">
+              <button
+                type="submit"
+                disabled={posting || !newUpdate.trim()}
+                className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2"
+                data-testid="update-submit"
+              >
+                {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                POST UPDATE
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      {/* Updates List */}
+      <div className="border-t border-purple-500/20 pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <button
+            onClick={() => setShowUpdates(!showUpdates)}
+            className="text-purple-400 font-mono text-sm flex items-center gap-2 hover:text-pink-400"
+          >
+            {showUpdates ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            {updates.length} Update{updates.length !== 1 ? 's' : ''}
+          </button>
+        </div>
+
+        {showUpdates && (
+          loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-8 h-8 text-pink-400 animate-spin" />
+            </div>
+          ) : updates.length === 0 ? (
+            <div className="text-center py-8">
+              <MessageCircle className="w-12 h-12 text-purple-400/30 mx-auto mb-2" />
+              <p className="text-purple-400/60 font-mono text-sm">No updates yet. Share your first update!</p>
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {updates.map((update) => (
+                <div key={update.id} className="relative">
+                  <PostCard post={update} postType="update" onUpdate={fetchUpdates} />
+                  {update.user_id === user?.id && (
+                    <button
+                      onClick={() => handleDeleteUpdate(update.id)}
+                      className="absolute top-4 right-4 p-2 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 rounded"
+                      title="Delete update"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )
+        )}
+      </div>
+    </FuturisticFrame>
+  );
+};
+
 // Sale Countdown Timer
 const SaleCountdown = ({ endDate }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
