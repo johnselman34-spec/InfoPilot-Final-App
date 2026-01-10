@@ -3399,7 +3399,8 @@ const UltimateSearchPage = () => {
       // Clear the URL params after applying filter
       navigate('/ultimate-search', { replace: true });
     }
-  }, [location.search]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search, navigate]);
   
   useEffect(() => {
     fetchCategories();
