@@ -39,6 +39,7 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - [x] **Reactions**: Facebook-style emoji picker (👍 Like, ❤️ Love, 😂 Haha, 😮 Wow, 😢 Sad, 😠 Angry)
 - [x] **Comments**: Nested replies on posts, updates, and search results
 - [x] **Friends**: View and manage friend connections
+- [x] **Protocol Recommendations**: Users can suggest changes to public protocols owned by others. Owners see recommendations via lightbulb badge and can Accept (apply change), Reject, or Delete
 
 #### Ultimate Search Page
 - [x] AI-powered intelligent search (Emergent LLM)
