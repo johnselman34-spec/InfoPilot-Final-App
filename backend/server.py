@@ -2889,6 +2889,8 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
             collated_results.append(clean_result)
     
     response_message = f"Collated {len(collated_results)} results into categories"
+    if skipped_no_search_terms > 0:
+        response_message += f" ({skipped_no_search_terms} skipped - didn't contain search terms)"
     if blocked_unsafe_count > 0:
         response_message += f" ({blocked_unsafe_count} unsafe URLs blocked)"
     if limit_reached:
@@ -2900,6 +2902,8 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
         "categorized_count": len(collated_results),
         "total_searched": len(search_results),
         "unsafe_blocked": blocked_unsafe_count,
+        "skipped_no_search_terms": skipped_no_search_terms,
+        "search_terms_used": search_terms,
         "safety_checked": safety_check.get("checked", False),
         "limit_reached": limit_reached,
         "current_count": current_result_count + len(collated_results),
