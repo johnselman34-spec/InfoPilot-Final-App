@@ -13,7 +13,7 @@ import {
   ShoppingCart, CreditCard, Star, ExternalLink, Plane, Shield, Radar, Target,
   Crosshair, Navigation, Zap, Radio, Cpu, Book, Edit3, Copy, Check, Gift,
   Sparkles, Crown, Lock, Unlock, ArrowRight, DollarSign, Clock, Calendar, MapPin,
-  FileText, UserPlus, MessageCircle, Send, Image, Lightbulb
+  FileText, UserPlus, MessageCircle, Send, Image, Lightbulb, Mail, Save
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
