@@ -1152,7 +1152,7 @@ const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 
 // Messages Page Component
 const MessagesPage = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -1165,18 +1165,112 @@ const MessagesPage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [showNewConversation, setShowNewConversation] = useState(false);
+  const [isTyping, setIsTyping] = useState(null);
+  const [wsConnected, setWsConnected] = useState(false);
   const messagesEndRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
+  const wsRef = React.useRef(null);
+  const typingTimeoutRef = React.useRef(null);
+
+  // WebSocket connection
+  useEffect(() => {
+    if (!token) return;
+    
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = API.replace(/^https?:\/\//, '').replace('/api', '');
+    const wsUrl = `${wsProtocol}//${wsHost}/ws/messages/${token}`;
+    
+    const connectWebSocket = () => {
+      try {
+        wsRef.current = new WebSocket(wsUrl);
+        
+        wsRef.current.onopen = () => {
+          console.log('WebSocket connected');
+          setWsConnected(true);
+        };
+        
+        wsRef.current.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'new_message') {
+            // Add new message if in current conversation
+            if (selectedConversation && 
+                (data.message.sender_id === selectedConversation.other_user?.id || 
+                 data.message.recipient_id === selectedConversation.other_user?.id)) {
+              setMessages(prev => [...prev, data.message]);
+            }
+            // Refresh conversations list
+            fetchConversations();
+            // Show notification toast for new messages
+            if (data.message.sender_id !== user?.id) {
+              toast.success(`💬 New message from ${data.sender_username}`);
+            }
+          }
+          
+          if (data.type === 'typing' && selectedConversation?.other_user?.id === data.sender_id) {
+            setIsTyping(data.sender_username);
+            // Clear typing after 3 seconds
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(() => setIsTyping(null), 3000);
+          }
+          
+          if (data.type === 'read_receipt') {
+            // Could update message read status here
+          }
+        };
+        
+        wsRef.current.onclose = () => {
+          console.log('WebSocket disconnected');
+          setWsConnected(false);
+          // Reconnect after 5 seconds
+          setTimeout(connectWebSocket, 5000);
+        };
+        
+        wsRef.current.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+      } catch (error) {
+        console.error('WebSocket connection failed:', error);
+      }
+    };
+    
+    connectWebSocket();
+    
+    // Ping to keep connection alive
+    const pingInterval = setInterval(() => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, 30000);
+    
+    return () => {
+      clearInterval(pingInterval);
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [token, selectedConversation]);
 
   useEffect(() => {
     fetchConversations();
-    const interval = setInterval(fetchConversations, 10000); // Poll every 10s
+    // Fallback polling (less frequent when WS is connected)
+    const interval = setInterval(fetchConversations, wsConnected ? 30000 : 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [wsConnected]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Send typing indicator
+  const sendTypingIndicator = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN && selectedConversation?.other_user?.id) {
+      wsRef.current.send(JSON.stringify({
+        type: 'typing',
+        recipient_id: selectedConversation.other_user.id
+      }));
+    }
+  };
 
   const fetchConversations = async () => {
     try {
@@ -1209,7 +1303,7 @@ const MessagesPage = () => {
 
     setSending(true);
     try {
-      await axios.post(`${API}/messages/send`, {
+      const res = await axios.post(`${API}/messages/send`, {
         recipient_id: selectedConversation.other_user.id,
         content: newMessage.trim() || (imageData ? "📷 Image" : ""),
         image_url: imageData
@@ -1217,13 +1311,21 @@ const MessagesPage = () => {
       setNewMessage("");
       setImagePreview(null);
       setImageData(null);
-      fetchMessages(selectedConversation.other_user.id);
+      // Message will be added via WebSocket, but add immediately for responsiveness
+      if (res.data.data) {
+        setMessages(prev => [...prev, res.data.data]);
+      }
       fetchConversations();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to send message");
     } finally {
       setSending(false);
     }
+  };
+
+  const handleMessageInput = (e) => {
+    setNewMessage(e.target.value);
+    sendTypingIndicator();
   };
 
   const handleImageSelect = (e) => {
