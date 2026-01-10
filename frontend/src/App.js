@@ -2989,7 +2989,7 @@ const CategoryMap = ({ selectedCategories }) => {
 };
 
 // Recursive Category Tree Component with +/- expansion and Suggest Change
-const CategoryTreeItem = ({ category, selectedCategories, onToggle, level = 0, currentUserId, onSuggestChange }) => {
+const CategoryTreeItem = ({ category, selectedCategories, onToggle, level = 0, currentUserId, onSuggestChange, onCategoryClick, onClearCategory }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = category.children && category.children.length > 0;
   const isOwner = category.user_id === currentUserId;
@@ -3018,9 +3018,28 @@ const CategoryTreeItem = ({ category, selectedCategories, onToggle, level = 0, c
             onChange={() => onToggle(category.id)}
             className="w-4 h-4 rounded bg-slate-950 border-purple-500/30 text-pink-500 focus:ring-pink-500"
           />
-          <span className="text-purple-300 font-mono text-sm flex-1">{category.name}</span>
+          {/* Clickable category name */}
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCategoryClick && onCategoryClick(category.id, category.name); }}
+            className="text-purple-300 font-mono text-sm flex-1 text-left hover:text-cyan-400 hover:underline transition-colors"
+            title={`Click to filter by "${category.name}"`}
+            data-testid={`category-filter-${category.id}`}
+          >
+            {category.name}
+          </button>
           <span className="text-pink-400 font-mono text-xs">({category.result_count || 0})</span>
         </label>
+        {/* Clear category button for owners */}
+        {isOwner && (category.result_count || 0) > 0 && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onClearCategory && onClearCategory(category.id, category.name); }}
+            className="p-1 text-red-400/40 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+            title={`Clear all results from "${category.name}"`}
+            data-testid={`clear-category-${category.id}`}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
         {/* Suggest Change button for non-owners viewing public protocols */}
         {canSuggest && (
           <button
@@ -3052,6 +3071,8 @@ const CategoryTreeItem = ({ category, selectedCategories, onToggle, level = 0, c
               level={level + 1}
               currentUserId={currentUserId}
               onSuggestChange={onSuggestChange}
+              onCategoryClick={onCategoryClick}
+              onClearCategory={onClearCategory}
             />
           ))}
         </div>
