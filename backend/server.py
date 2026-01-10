@@ -5193,6 +5193,28 @@ async def update_email_digest_config(
             {"$set": update_data},
             upsert=True
         )
+        
+        # Reconfigure the scheduler if schedule changed
+        try:
+            from services.scheduler import setup_digest_scheduler, start_scheduler, get_scheduler
+            
+            # Get updated config
+            config = await db.admin_settings.find_one({"type": "email_digest_config"})
+            if config:
+                if config.get("enabled", False):
+                    setup_digest_scheduler(db, config.get("day_of_week", "monday"), config.get("hour", 9))
+                    start_scheduler()
+                    logger.info(f"Email digest scheduler reconfigured: {config.get('day_of_week')} at {config.get('hour')}:00 UTC")
+                else:
+                    # Remove the job if disabled
+                    sched = get_scheduler()
+                    try:
+                        sched.remove_job("weekly_digest")
+                        logger.info("Email digest scheduler job removed (disabled)")
+                    except:
+                        pass
+        except Exception as e:
+            logger.error(f"Failed to reconfigure scheduler: {str(e)}")
     
     return {"message": "Email digest configuration updated"}
 
