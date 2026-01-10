@@ -677,16 +677,14 @@ const HomePage = () => {
           <QuickActionCard title="VIEW INTEL" icon={BarChart3} onClick={() => navigate("/statistics")} color="blue" />
         </div>
 
-        {/* Another Subscription CTA */}
-        {!user?.is_paid && (
-          <div className="text-center p-6 bg-gradient-to-r from-pink-900/30 to-purple-900/30 rounded-lg border border-pink-500/30">
-            <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-2">Don't Miss Out!</h3>
-            <p className="text-purple-300 font-mono mb-4">Unlock unlimited searches, categories, and premium features for life.</p>
-            <button onClick={() => navigate("/subscribe")} className="px-8 py-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform">
-              GET LIFETIME ACCESS - ONLY $0.75
-            </button>
-          </div>
-        )}
+        {/* Book CTA - Replaced subscription CTA */}
+        <div className="text-center p-6 bg-gradient-to-r from-pink-900/30 to-purple-900/30 rounded-lg border border-pink-500/30">
+          <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-2">📚 Support the Developer!</h3>
+          <p className="text-purple-300 font-mono mb-4">Love InfoPilot Explorer? Check out my book "Letters to Evelyn" - A supernatural thriller comedy!</p>
+          <button onClick={() => navigate("/book")} className="px-8 py-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform flex items-center justify-center gap-2 mx-auto">
+            <Book className="w-5 h-5" /> VIEW BOOK - $2.99
+          </button>
+        </div>
       </div>
     </Layout>
   );
