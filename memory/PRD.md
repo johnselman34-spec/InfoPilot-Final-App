@@ -247,10 +247,22 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
      - Top Contributors tab: Leaderboard with rankings
      - Admin-only resource management (add/delete)
      - Book promotion for "Letters to Evelyn"
-  3. **Started Monolith Refactoring** - Created modular folder structure for backend and frontend
+     - **28 curated resources seeded** (NASA, MIT, WHO, CERN, arXiv, etc.)
+  3. **Built Weekly Email Digest System** - Admin panel with:
+     - Enable/disable toggle
+     - Schedule configuration (day, hour)
+     - Content options checkboxes
+     - Preview and Send Now buttons
+     - Beautiful HTML email template
+  4. **Built Admin Panel Social Moderation** - Complete with:
+     - Dashboard with content statistics
+     - User management (ban/unban)
+     - Group/Page deletion
+     - Reports system
+  5. **Continued Monolith Refactoring** - Created modular folder structure
      - Backend: utils, models, services, routes modules
      - Frontend: utils, services, contexts, components (layout, common, pages)
-  4. **Testing**: All 16 backend tests passed (100%), all frontend features verified
+  6. **Testing**: All features verified via screenshots and API testing
   3. **Data Management** - Users/admins can clear entire databases or specific categories
   4. **Clickable Category Trees** - Click category names to filter results
 - All features tested and working (95.5% pass rate)
