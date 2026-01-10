@@ -3691,14 +3691,16 @@ const UltimateSearchPage = () => {
   const handleDeleteSession = async (timestamp) => {
     if (!window.confirm(`Delete all results from session ${timestamp}?`)) return;
     try {
-      await axios.delete(`${API}/ultimate-search/session/${encodeURIComponent(timestamp)}`);
-      toast.success("Session deleted");
+      const res = await axios.delete(`${API}/ultimate-search/session/${encodeURIComponent(timestamp)}`);
+      toast.success(res.data.message || "Session deleted");
       fetchSessions();
       fetchCategories();
       fetchTreeCategories();
+      fetchDbStats();
       handleViewResults();
     } catch (error) {
-      toast.error("Failed to delete session");
+      console.error("Delete session error:", error.response?.data || error);
+      toast.error(error.response?.data?.detail || "Failed to delete session");
     }
   };
   
