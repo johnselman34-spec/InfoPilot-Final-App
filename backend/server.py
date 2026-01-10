@@ -2721,6 +2721,34 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
     # Calculate how many results we can still add
     remaining_capacity = max_allowed - current_result_count
     
+    # Extract key search terms for filtering (ignore common words)
+    search_stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 
+                        'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
+                        'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 
+                        'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'need',
+                        'about', 'into', 'through', 'during', 'before', 'after', 'above',
+                        'below', 'between', 'under', 'over', 'u.s.', 'u.s', 'us', 'usa'}
+    
+    # Extract meaningful search terms (keep multi-word names together)
+    search_query_lower = data.search_query.lower()
+    # Split but preserve quoted phrases or names with periods (like "William C. Gamble")
+    search_terms = []
+    # First try to find name patterns (First [Middle.] Last)
+    name_pattern = re.findall(r'[A-Z][a-z]+(?:\s+[A-Z]\.?\s+[A-Z][a-z]+)?', data.search_query)
+    for name in name_pattern:
+        if len(name.split()) >= 2:  # Multi-word names
+            search_terms.append(name.lower())
+    
+    # Also add individual significant words
+    words = re.findall(r'\b[a-z]+\b', search_query_lower)
+    for word in words:
+        if word not in search_stop_words and len(word) > 2:
+            search_terms.append(word)
+    
+    # Remove duplicates while preserving order
+    search_terms = list(dict.fromkeys(search_terms))
+    logger.info(f"Search terms extracted for filtering: {search_terms}")
+    
     # App is now free - all users get full access
     if not user.get("is_paid") and not user.get("is_admin"):
         # No restrictions - app is free
@@ -2756,6 +2784,7 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
     collated_results = []
     blocked_unsafe_count = 0
     limit_reached = False
+    skipped_no_search_terms = 0
     
     for result in search_results:
         # Check if we've reached the user's result limit
