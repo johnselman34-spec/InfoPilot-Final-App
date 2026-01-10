@@ -21,15 +21,13 @@ import {
 } from "recharts";
 import "@/App.css";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+// Import extracted components
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { Layout } from "./components/layout/Layout";
+import { FuturisticFrame } from "./components/common/FuturisticFrame";
+import { BACKEND_URL, API, GOOGLE_MAPS_API_KEY, GOOGLE_CLIENT_ID, stripeKey, IMAGES, BOOK_INFO, SALE_PRICE, REGULAR_PRICE } from "./utils/constants";
 
-// Google OAuth Client ID
-const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-
-// Stripe Publishable Key - Only initialize if key exists (app is now FREE, Stripe optional)
-const stripeKey = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
+// Stripe Promise - Only initialize if key exists (app is now FREE, Stripe optional)
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 // All Images - Including new book images
