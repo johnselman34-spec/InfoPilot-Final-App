@@ -3597,35 +3597,277 @@ const StripeCheckoutForm = ({ onSuccess }) => {
 // Subscribe Page - STRIPE INTEGRATION
 // Subscribe Page - Now redirects to book page since app is free
 const SubscribePage = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  
-  // App is now free - redirect users to book page
+  const [config, setConfig] = useState(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState(null);
+  const [customAmount, setCustomAmount] = useState("1.00");
+  const [loading, setLoading] = useState(true);
+  const [recording, setRecording] = useState(false);
+  const [transactionId, setTransactionId] = useState("");
+  const [showRecordPayment, setShowRecordPayment] = useState(false);
+
+  useEffect(() => {
+    fetchConfig();
+    fetchSubscriptionStatus();
+  }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const res = await axios.get(`${API}/subscription/config`);
+      setConfig(res.data);
+    } catch (error) {
+      console.error("Failed to fetch subscription config");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const res = await axios.get(`${API}/subscription/status`);
+      setSubscriptionStatus(res.data);
+    } catch (error) {
+      console.error("Failed to fetch subscription status");
+    }
+  };
+
+  const handlePayPalClick = (link) => {
+    window.open(link, '_blank');
+    setShowRecordPayment(true);
+  };
+
+  const handleRecordPayment = async () => {
+    const amount = parseFloat(customAmount);
+    if (isNaN(amount) || amount < 0.01) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+    
+    setRecording(true);
+    try {
+      const res = await axios.post(`${API}/subscription/record-payment?amount=${amount}&paypal_transaction_id=${encodeURIComponent(transactionId || '')}`);
+      toast.success(res.data.message);
+      fetchSubscriptionStatus();
+      setShowRecordPayment(false);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to record payment");
+    } finally {
+      setRecording(false);
+    }
+  };
+
+  // Calculate time remaining until promo ends
+  const getTimeRemaining = () => {
+    if (!config?.promo_end_date) return null;
+    const end = new Date(config.promo_end_date);
+    const now = new Date();
+    const diff = end - now;
+    if (diff <= 0) return null;
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    return { days, hours };
+  };
+
+  const timeRemaining = getTimeRemaining();
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-12 h-12 text-pink-400 animate-spin" />
+        </div>
+      </Layout>
+    );
+  }
+
+  // If already subscribed, show status
+  if (subscriptionStatus?.is_subscribed) {
+    return (
+      <Layout>
+        <div className="max-w-lg mx-auto space-y-6">
+          <FuturisticFrame title="✅ SUBSCRIPTION ACTIVE" color="green" className="bg-slate-900/80 border border-green-500/30 rounded-lg text-center py-8">
+            <Crown className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 font-mono mb-2">YOU'RE SUBSCRIBED!</h2>
+            <p className="text-purple-300/80 font-mono text-sm mb-2">Thank you for supporting InfoPilot Explorer!</p>
+            <div className="bg-slate-950 p-4 rounded-lg mt-4 max-w-xs mx-auto">
+              <p className="text-purple-400/60 font-mono text-xs">Amount Paid</p>
+              <p className="text-green-400 font-mono text-xl font-bold">${subscriptionStatus.subscription?.amount_paid?.toFixed(2)}</p>
+              <p className="text-purple-400/60 font-mono text-xs mt-2">Expires</p>
+              <p className="text-purple-300 font-mono text-sm">{new Date(subscriptionStatus.subscription?.expires_at).toLocaleDateString()}</p>
+            </div>
+            <button onClick={() => navigate("/")} className="mt-6 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-mono rounded hover:scale-[1.02]">
+              GO TO COMMAND CENTER
+            </button>
+          </FuturisticFrame>
+          
+          <BookSalesBanner variant="compact" />
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <div className="max-w-lg mx-auto space-y-6">
-        <FuturisticFrame title="🎉 INFOPILOT EXPLORER IS FREE!" color="green" className="bg-slate-900/80 border border-green-500/30 rounded-lg text-center py-12">
-          <Check className="w-20 h-20 text-green-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 font-mono mb-2">FULL ACCESS UNLOCKED!</h2>
-          <p className="text-purple-300/80 font-mono text-sm mb-4">InfoPilot Explorer is now completely free for everyone.</p>
-          <p className="text-purple-300/80 font-mono text-sm">Enjoy unlimited searches, categories, and all features!</p>
-          <button onClick={() => navigate("/")} className="mt-6 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-mono rounded hover:scale-[1.02]">
-            GO TO COMMAND CENTER
-          </button>
-        </FuturisticFrame>
-        
-        {/* Book Promotion */}
-        <FuturisticFrame title="📚 SUPPORT THE DEVELOPER" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
-          <div className="text-center">
-            <img src={IMAGES.bookCoverMain} alt="Letters to Evelyn" className="w-32 h-48 object-cover rounded-lg shadow-lg shadow-pink-500/30 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-2">Letters to Evelyn</h3>
-            <p className="text-purple-300/80 font-mono text-sm mb-1">A True Supernatural Thriller Comedy</p>
-            <p className="text-yellow-400 font-mono text-xs mb-4">⭐⭐⭐⭐⭐ 19 Five-Star Reviews</p>
-            <p className="text-pink-300 font-mono text-lg font-bold mb-4">Only $2.99</p>
-            <button onClick={() => navigate("/book")} className="px-8 py-3 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform flex items-center justify-center gap-2 mx-auto">
-              <ShoppingCart className="w-5 h-5" /> VIEW BOOK
-            </button>
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Pay What You Want Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono tracking-wider mb-2">
+            {config?.is_promo_active ? "PAY WHAT YOU WANT!" : "SUBSCRIBE NOW"}
+          </h1>
+          <p className="text-purple-300/80 font-mono">Support InfoPilot Explorer's development</p>
+        </div>
+
+        {/* Promo Timer */}
+        {config?.is_promo_active && timeRemaining && (
+          <FuturisticFrame title="⏰ LIMITED TIME OFFER" color="yellow" className="bg-slate-900/80 border border-yellow-500/30 rounded-lg">
+            <div className="text-center">
+              <p className="text-yellow-400 font-mono text-lg mb-2">Pay What You Want ends in:</p>
+              <div className="flex justify-center gap-4">
+                <div className="bg-slate-950 px-4 py-2 rounded">
+                  <p className="text-3xl font-bold text-yellow-400 font-mono">{timeRemaining.days}</p>
+                  <p className="text-purple-400/60 font-mono text-xs">DAYS</p>
+                </div>
+                <div className="bg-slate-950 px-4 py-2 rounded">
+                  <p className="text-3xl font-bold text-yellow-400 font-mono">{timeRemaining.hours}</p>
+                  <p className="text-purple-400/60 font-mono text-xs">HOURS</p>
+                </div>
+              </div>
+              <p className="text-purple-300/60 font-mono text-sm mt-3">After March 2nd, 2026: ${config?.regular_price}/year</p>
+            </div>
+          </FuturisticFrame>
+        )}
+
+        {/* Subscription Options */}
+        <FuturisticFrame title="💳 CHOOSE YOUR SUPPORT LEVEL" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+          <div className="space-y-6">
+            {/* Custom Amount Input (Promo only) */}
+            {config?.is_promo_active && (
+              <div className="text-center">
+                <label className="block text-purple-400 font-mono text-sm mb-2">YOUR CHOSEN AMOUNT (per year)</label>
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <span className="text-3xl font-bold text-pink-400 font-mono">$</span>
+                  <input
+                    type="number"
+                    value={customAmount}
+                    onChange={(e) => setCustomAmount(e.target.value)}
+                    min="0.01"
+                    step="0.01"
+                    className="w-32 px-4 py-3 bg-slate-950 border border-pink-500/30 rounded-lg text-pink-400 font-mono text-2xl font-bold text-center focus:border-pink-500 focus:outline-none"
+                    placeholder="1.00"
+                    data-testid="custom-amount-input"
+                  />
+                  <span className="text-purple-400/60 font-mono">/year</span>
+                </div>
+                <p className="text-purple-400/40 font-mono text-xs">Minimum: $0.01 • Suggested: $0.75 - $4.62</p>
+              </div>
+            )}
+
+            {/* Fixed Price (After promo) */}
+            {!config?.is_promo_active && (
+              <div className="text-center">
+                <p className="text-purple-400 font-mono text-sm mb-2">ANNUAL SUBSCRIPTION</p>
+                <p className="text-4xl font-bold text-pink-400 font-mono">${config?.regular_price}</p>
+                <p className="text-purple-400/60 font-mono text-sm">/year</p>
+              </div>
+            )}
+
+            {/* Quick Amount Buttons */}
+            {config?.is_promo_active && (
+              <div className="flex flex-wrap justify-center gap-2">
+                {[0.75, 1.00, 2.00, 3.00, 4.62].map(amount => (
+                  <button
+                    key={amount}
+                    onClick={() => setCustomAmount(amount.toFixed(2))}
+                    className={`px-4 py-2 rounded font-mono text-sm transition-colors ${
+                      parseFloat(customAmount) === amount
+                        ? 'bg-pink-600 text-white'
+                        : 'bg-slate-950 text-purple-400 border border-purple-500/30 hover:border-pink-500'
+                    }`}
+                  >
+                    ${amount.toFixed(2)}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* PayPal Buttons */}
+            <div className="space-y-3 pt-4">
+              <p className="text-center text-purple-400 font-mono text-sm mb-2">Pay securely with PayPal:</p>
+              
+              <button
+                onClick={() => handlePayPalClick(config?.paypal_link_1 || PAYPAL_PAYMENT_LINK_1)}
+                className="w-full px-6 py-4 bg-[#0070ba] hover:bg-[#003087] text-white font-mono rounded-lg transition-colors flex items-center justify-center gap-3"
+                data-testid="paypal-btn-1"
+              >
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.59 3.025-2.566 6.082-8.558 6.082H9.838l-1.363 8.642h2.464c.456 0 .843-.32.915-.77l.038-.19.735-4.66.047-.256c.072-.45.46-.77.915-.77h.576c3.727 0 6.645-1.514 7.499-5.893.32-1.634.193-3.002-.442-3.898z"/>
+                </svg>
+                PAY WITH PAYPAL
+              </button>
+
+              <button
+                onClick={() => handlePayPalClick(config?.paypal_link_2 || PAYPAL_PAYMENT_LINK_2)}
+                className="w-full px-6 py-3 bg-slate-950 border border-[#0070ba] text-[#0070ba] hover:bg-[#0070ba]/10 font-mono rounded-lg transition-colors flex items-center justify-center gap-3"
+                data-testid="paypal-btn-2"
+              >
+                <CreditCard className="w-5 h-5" />
+                ALTERNATIVE PAYMENT LINK
+              </button>
+            </div>
+
+            {/* Record Payment Section */}
+            {showRecordPayment && (
+              <div className="mt-6 p-4 bg-slate-950 border border-green-500/30 rounded-lg">
+                <h4 className="text-green-400 font-mono text-sm font-bold mb-3">AFTER PAYMENT, ACTIVATE YOUR SUBSCRIPTION:</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-purple-400/60 font-mono text-xs mb-1">PayPal Transaction ID (optional)</label>
+                    <input
+                      type="text"
+                      value={transactionId}
+                      onChange={(e) => setTransactionId(e.target.value)}
+                      placeholder="From your PayPal receipt"
+                      className="w-full px-3 py-2 bg-slate-900 border border-purple-500/30 rounded text-purple-300 font-mono text-sm focus:border-green-500 focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    onClick={handleRecordPayment}
+                    disabled={recording}
+                    className="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
+                    data-testid="record-payment-btn"
+                  >
+                    {recording ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                    ACTIVATE MY SUBSCRIPTION (${customAmount})
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </FuturisticFrame>
+
+        {/* What You Get */}
+        <FuturisticFrame title="✨ WHAT YOU GET" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+          <ul className="space-y-3">
+            {[
+              "Unlimited AI-powered searches",
+              "Create unlimited categories & protocols",
+              "Access to all social features (Groups, Pages, Messaging)",
+              "Protocol recommendations & collaboration",
+              "Priority support from the developer",
+              "Help sustain and improve InfoPilot Explorer"
+            ].map((item, idx) => (
+              <li key={idx} className="flex items-center gap-3 text-purple-300 font-mono text-sm">
+                <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </FuturisticFrame>
+
+        {/* Book Promotion */}
+        <BookSalesBanner variant="compact" />
       </div>
     </Layout>
   );
