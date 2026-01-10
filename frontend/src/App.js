@@ -6329,9 +6329,7 @@ const GroupDetailPage = () => {
   const [posting, setPosting] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => { if (groupId) fetchGroup(); }, [groupId]);
-
-  const fetchGroup = async () => {
+  const fetchGroup = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/groups/${groupId}`);
       setGroup(res.data.group);
@@ -6342,7 +6340,9 @@ const GroupDetailPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [groupId, navigate]);
+
+  useEffect(() => { if (groupId) fetchGroup(); }, [groupId, fetchGroup]);
 
   const handlePost = async (e) => {
     e.preventDefault();
