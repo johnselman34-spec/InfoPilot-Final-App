@@ -3526,6 +3526,7 @@ const UltimateSearchPage = () => {
   const handleSearchAndCollate = async () => {
     setLoading(true);
     setIsPreviewResults(false);
+    clearCategoryFilter();
     try {
       const res = await axios.post(`${API}/search/collate`, {
         search_query: keyword || aiQuery || "general search",
@@ -3533,10 +3534,17 @@ const UltimateSearchPage = () => {
       });
       setResults(res.data.results || []);
       setTotalResults(res.data.categorized_count || 0);
-      toast.success(`Collated ${res.data.categorized_count} of ${res.data.total_searched} results`);
+      let msg = `Collated ${res.data.categorized_count} of ${res.data.total_searched} results`;
+      if (res.data.limit_reached) {
+        msg += ` (Database limit reached: ${res.data.current_count}/${res.data.max_allowed})`;
+        toast.warning(msg);
+      } else {
+        toast.success(msg);
+      }
       fetchSessions();
       fetchCategories();
       fetchTreeCategories();
+      fetchDbStats();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Search & Collate failed");
     } finally {
