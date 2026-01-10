@@ -498,6 +498,92 @@ class StripeConfigResponse(BaseModel):
     sale_end_date: Optional[str] = None
 
 # ============================================
+# SOCIAL FEATURES - FRIENDS, GROUPS, PAGES
+# ============================================
+
+class FriendRequest(BaseModel):
+    friend_id: str
+
+class FriendshipResponse(BaseModel):
+    id: str
+    user_id: str
+    friend_id: str
+    status: str  # pending, accepted, rejected
+    created_at: str
+
+class GroupCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    description: str = Field(default="", max_length=2000)
+    privacy: str = "public"  # public, private, secret
+    cover_photo: Optional[str] = None
+
+class GroupUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    description: Optional[str] = None
+    privacy: Optional[str] = None
+    cover_photo: Optional[str] = None
+
+class GroupResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    name: str
+    description: str
+    privacy: str
+    cover_photo: Optional[str] = None
+    owner_id: str
+    member_count: int = 0
+    created_at: str
+
+class GroupPostCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=10000)
+    image_url: Optional[str] = None
+
+class PageCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    description: str = Field(default="", max_length=2000)
+    category: str = "General"  # Business, Community, Entertainment, etc.
+    cover_photo: Optional[str] = None
+    profile_photo: Optional[str] = None
+
+class PageUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    description: Optional[str] = None
+    category: Optional[str] = None
+    cover_photo: Optional[str] = None
+    profile_photo: Optional[str] = None
+
+class PageResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    name: str
+    description: str
+    category: str
+    cover_photo: Optional[str] = None
+    profile_photo: Optional[str] = None
+    owner_id: str
+    follower_count: int = 0
+    created_at: str
+
+class PostCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=10000)
+    image_url: Optional[str] = None
+    visibility: str = "public"  # public, friends, private
+
+class PostResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    user_id: str
+    content: str
+    image_url: Optional[str] = None
+    visibility: str
+    like_count: int = 0
+    comment_count: int = 0
+    created_at: str
+
+class CommentCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=2000)
+
+# ============================================
 # INFOPILOT 2.0 PROTOCOL PARSER
 # ============================================
 
