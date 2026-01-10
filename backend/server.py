@@ -6667,8 +6667,31 @@ async def startup():
     if not await db.admin_settings.find_one({"id": "admin_settings"}):
         await db.admin_settings.insert_one(AdminSettings().model_dump())
     
+    # Initialize email digest scheduler
+    try:
+        from services.scheduler import setup_digest_scheduler, start_scheduler
+        
+        # Get digest config from DB
+        digest_config = await db.admin_settings.find_one({"type": "email_digest_config"})
+        if digest_config and digest_config.get("enabled", False):
+            day_of_week = digest_config.get("day_of_week", "monday")
+            hour = digest_config.get("hour", 9)
+            setup_digest_scheduler(db, day_of_week, hour)
+            start_scheduler()
+            logger.info(f"Email digest scheduler started: {day_of_week} at {hour}:00 UTC")
+        else:
+            logger.info("Email digest scheduler not enabled")
+    except Exception as e:
+        logger.error(f"Failed to initialize email digest scheduler: {str(e)}")
+    
     logger.info("InfoPilot Explorer API v2.0 - Tactical Systems Online")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    # Stop scheduler
+    try:
+        from services.scheduler import stop_scheduler
+        stop_scheduler()
+    except:
+        pass
     client.close()
