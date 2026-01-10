@@ -2854,7 +2854,7 @@ async def get_global_database(
     
     # App is now free - no restrictions
     
-    public_categories = await db.categories.find({"is_public": True}).to_list(1000)
+    public_categories = await db.categories.find({"is_public": True}, {"_id": 0}).to_list(1000)
     public_category_ids = [c["id"] for c in public_categories]
     
     query = {"categories": {"$in": public_category_ids}}
@@ -2864,7 +2864,7 @@ async def get_global_database(
     skip = (page - 1) * settings.results_per_page
     
     total = await db.search_results.count_documents(query)
-    results = await db.search_results.find(query).skip(skip).limit(settings.results_per_page).to_list(settings.results_per_page)
+    results = await db.search_results.find(query, {"_id": 0}).skip(skip).limit(settings.results_per_page).to_list(settings.results_per_page)
     
     return {
         "public_categories": public_categories,
