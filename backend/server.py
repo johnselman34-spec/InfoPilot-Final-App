@@ -1832,6 +1832,11 @@ async def create_category(data: CategoryCreate, user: dict = Depends(require_use
             raise HTTPException(status_code=400, detail=f"Maximum category depth of {max_levels} exceeded")
     
     category_id = str(uuid.uuid4())
+    
+    # Private protocols can be set for sale
+    for_sale = data.for_sale if not data.is_public else False
+    price = data.price if for_sale else None
+    
     category = {
         "id": category_id,
         "user_id": user["id"],
@@ -1839,13 +1844,15 @@ async def create_category(data: CategoryCreate, user: dict = Depends(require_use
         "protocol_string": data.protocol.protocol_string,
         "parent_id": data.parent_id,
         "is_public": data.is_public,
+        "for_sale": for_sale,
+        "price": price,
         "level": level,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     
     await db.categories.insert_one(category)
     
-    return CategoryResponse(**{**category, "created_at": datetime.fromisoformat(category["created_at"])})
+    return CategoryResponse(**{**category, "created_at": datetime.fromisoformat(category["created_at"]), "owner_username": user.get("callsign", user.get("email", "Unknown"))})
 
 @api_router.get("/categories", response_model=List[CategoryResponse])
 async def get_categories(
