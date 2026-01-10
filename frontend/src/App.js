@@ -717,6 +717,314 @@ const UpdatesSection = () => {
   );
 };
 
+// ============================================
+// PROTOCOL RECOMMENDATIONS COMPONENTS
+// ============================================
+
+// Suggest Change Modal - For recommending changes to public protocols
+const SuggestChangeModal = ({ category, onClose, onSuccess }) => {
+  const [originalProtocol] = useState(category.protocol_string || "");
+  const [suggestedProtocol, setSuggestedProtocol] = useState(category.protocol_string || "");
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!reason.trim()) {
+      toast.error("Please provide a reason for your suggestion");
+      return;
+    }
+    if (suggestedProtocol === originalProtocol) {
+      toast.error("Please make changes to the protocol");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await axios.post(`${API}/categories/${category.id}/recommendations`, {
+        original_protocol: originalProtocol,
+        suggested_protocol: suggestedProtocol,
+        reason: reason.trim()
+      });
+      toast.success("Recommendation submitted successfully!");
+      onSuccess && onSuccess();
+      onClose();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to submit recommendation");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 border border-purple-500/30 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono">
+            SUGGEST PROTOCOL CHANGE
+          </h3>
+          <button onClick={onClose} className="text-purple-400 hover:text-pink-400">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <div className="mb-4 p-3 bg-purple-500/10 border border-purple-500/20 rounded">
+          <p className="text-purple-400 font-mono text-sm">Category: <span className="text-pink-400">{category.name}</span></p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-purple-400 font-mono text-sm mb-2">ORIGINAL PROTOCOL</label>
+            <textarea
+              value={originalProtocol}
+              readOnly
+              className="w-full px-4 py-3 bg-slate-950/50 border border-purple-500/20 rounded text-purple-300/60 font-mono h-24 resize-none cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-purple-400 font-mono text-sm mb-2">YOUR SUGGESTED PROTOCOL</label>
+            <textarea
+              value={suggestedProtocol}
+              onChange={(e) => setSuggestedProtocol(e.target.value)}
+              placeholder="Modify the protocol above..."
+              className="w-full px-4 py-3 bg-slate-950 border border-pink-500/30 rounded text-purple-300 font-mono h-24 resize-none focus:border-pink-500 focus:outline-none"
+              required
+              data-testid="suggest-protocol-input"
+            />
+          </div>
+
+          <div>
+            <label className="block text-purple-400 font-mono text-sm mb-2">REASON FOR CHANGE</label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Explain why this change would improve the protocol..."
+              className="w-full px-4 py-3 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono h-24 resize-none focus:border-pink-500 focus:outline-none"
+              required
+              maxLength={1000}
+              data-testid="suggest-reason-input"
+            />
+            <p className="text-purple-400/40 font-mono text-xs mt-1">{reason.length}/1000 characters</p>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border border-purple-500/30 text-purple-400 font-mono rounded hover:bg-purple-500/10"
+            >
+              CANCEL
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 px-4 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
+              data-testid="submit-suggestion-btn"
+            >
+              {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+              SUBMIT RECOMMENDATION
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// View Recommendations Modal - For owners to see recommendations
+const ViewRecommendationsModal = ({ category, onClose, onUpdate }) => {
+  const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(null);
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, [category.id]);
+
+  const fetchRecommendations = async () => {
+    try {
+      const res = await axios.get(`${API}/categories/${category.id}/recommendations`);
+      setRecommendations(res.data.recommendations || []);
+    } catch (error) {
+      toast.error("Failed to load recommendations");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (recId, status) => {
+    setUpdating(recId);
+    try {
+      await axios.put(`${API}/recommendations/${recId}/status?status=${status}`);
+      toast.success(`Recommendation ${status}`);
+      fetchRecommendations();
+      onUpdate && onUpdate();
+    } catch (error) {
+      toast.error("Failed to update status");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleDelete = async (recId) => {
+    if (!window.confirm("Delete this recommendation?")) return;
+    try {
+      await axios.delete(`${API}/recommendations/${recId}`);
+      toast.success("Recommendation deleted");
+      fetchRecommendations();
+      onUpdate && onUpdate();
+    } catch (error) {
+      toast.error("Failed to delete");
+    }
+  };
+
+  const handleApplyChange = async (rec) => {
+    if (!window.confirm("Apply this protocol change? This will update your category's protocol.")) return;
+    try {
+      await axios.put(`${API}/categories/${category.id}`, {
+        protocol_string: rec.suggested_protocol
+      });
+      await handleStatusUpdate(rec.id, "accepted");
+      toast.success("Protocol updated with recommended change!");
+    } catch (error) {
+      toast.error("Failed to apply change");
+    }
+  };
+
+  const statusColors = {
+    pending: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    accepted: "bg-green-500/20 text-green-400 border-green-500/30",
+    rejected: "bg-red-500/20 text-red-400 border-red-500/30"
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 border border-purple-500/30 rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono">
+              PROTOCOL RECOMMENDATIONS
+            </h3>
+            <p className="text-purple-400/60 font-mono text-sm mt-1">For: {category.name}</p>
+          </div>
+          <button onClick={onClose} className="text-purple-400 hover:text-pink-400">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 text-pink-400 animate-spin" />
+          </div>
+        ) : recommendations.length === 0 ? (
+          <div className="text-center py-12">
+            <MessageCircle className="w-16 h-16 text-purple-400/30 mx-auto mb-4" />
+            <p className="text-purple-400/60 font-mono">No recommendations yet</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {recommendations.map((rec) => (
+              <div key={rec.id} className="bg-slate-950 border border-purple-500/20 rounded-lg p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <User className="w-4 h-4 text-pink-400" />
+                    <span className="text-purple-300 font-mono text-sm font-bold">{rec.username}</span>
+                    <span className="text-purple-400/40 font-mono text-xs">{new Date(rec.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <span className={`px-2 py-1 text-xs rounded font-mono border ${statusColors[rec.status]}`}>
+                    {rec.status.toUpperCase()}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                  <div>
+                    <p className="text-purple-400/60 font-mono text-xs mb-1">ORIGINAL:</p>
+                    <p className="text-purple-300/70 font-mono text-sm bg-slate-900 p-2 rounded break-all">{rec.original_protocol}</p>
+                  </div>
+                  <div>
+                    <p className="text-pink-400/60 font-mono text-xs mb-1">SUGGESTED:</p>
+                    <p className="text-pink-300 font-mono text-sm bg-pink-500/10 p-2 rounded break-all">{rec.suggested_protocol}</p>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <p className="text-purple-400/60 font-mono text-xs mb-1">REASON:</p>
+                  <p className="text-purple-300/80 font-mono text-sm">{rec.reason}</p>
+                </div>
+
+                {rec.status === "pending" && (
+                  <div className="flex gap-2 pt-3 border-t border-purple-500/20">
+                    <button
+                      onClick={() => handleApplyChange(rec)}
+                      disabled={updating === rec.id}
+                      className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-mono text-sm rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2"
+                      data-testid={`apply-rec-${rec.id}`}
+                    >
+                      {updating === rec.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      APPLY CHANGE
+                    </button>
+                    <button
+                      onClick={() => handleStatusUpdate(rec.id, "rejected")}
+                      disabled={updating === rec.id}
+                      className="px-4 py-2 border border-red-500/30 text-red-400 font-mono text-sm rounded hover:bg-red-500/10 flex items-center gap-2"
+                    >
+                      <X className="w-4 h-4" /> REJECT
+                    </button>
+                    <button
+                      onClick={() => handleDelete(rec.id)}
+                      className="px-4 py-2 text-purple-400/60 hover:text-red-400 font-mono text-sm rounded hover:bg-red-500/10 ml-auto"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Recommendation Badge - Shows pending count on categories
+const RecommendationBadge = ({ categoryId, isOwner, onClick }) => {
+  const [count, setCount] = useState({ total: 0, pending: 0 });
+
+  useEffect(() => {
+    if (isOwner) {
+      fetchCount();
+    }
+  }, [categoryId, isOwner]);
+
+  const fetchCount = async () => {
+    try {
+      const res = await axios.get(`${API}/categories/${categoryId}/recommendations/count`);
+      setCount({ total: res.data.count, pending: res.data.pending });
+    } catch (error) {
+      console.error("Failed to fetch recommendation count");
+    }
+  };
+
+  if (!isOwner || count.total === 0) return null;
+
+  return (
+    <button
+      onClick={onClick}
+      className="relative p-1.5 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10 rounded transition-colors"
+      title={`${count.pending} pending recommendation${count.pending !== 1 ? 's' : ''}`}
+      data-testid={`rec-badge-${categoryId}`}
+    >
+      <Lightbulb className="w-4 h-4" />
+      {count.pending > 0 && (
+        <span className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 text-black text-xs font-bold rounded-full flex items-center justify-center">
+          {count.pending}
+        </span>
+      )}
+    </button>
+  );
+};
+
 // Sale Countdown Timer
 const SaleCountdown = ({ endDate }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
