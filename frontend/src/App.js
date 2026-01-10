@@ -1970,10 +1970,12 @@ const CategoryMap = ({ selectedCategories }) => {
   );
 };
 
-// Recursive Category Tree Component with +/- expansion
-const CategoryTreeItem = ({ category, selectedCategories, onToggle, level = 0 }) => {
+// Recursive Category Tree Component with +/- expansion and Suggest Change
+const CategoryTreeItem = ({ category, selectedCategories, onToggle, level = 0, currentUserId, onSuggestChange }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const hasChildren = category.children && category.children.length > 0;
+  const isOwner = category.user_id === currentUserId;
+  const canSuggest = category.is_public && !isOwner;
   
   return (
     <div className="select-none">
@@ -2001,6 +2003,25 @@ const CategoryTreeItem = ({ category, selectedCategories, onToggle, level = 0 })
           <span className="text-purple-300 font-mono text-sm flex-1">{category.name}</span>
           <span className="text-pink-400 font-mono text-xs">({category.result_count || 0})</span>
         </label>
+        {/* Suggest Change button for non-owners viewing public protocols */}
+        {canSuggest && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onSuggestChange && onSuggestChange(category); }}
+            className="p-1 text-yellow-400/60 hover:text-yellow-400 hover:bg-yellow-500/10 rounded transition-colors"
+            title="Suggest protocol change"
+            data-testid={`suggest-change-${category.id}`}
+          >
+            <Lightbulb className="w-3.5 h-3.5" />
+          </button>
+        )}
+        {/* Recommendation badge for owners */}
+        {isOwner && (
+          <RecommendationBadge 
+            categoryId={category.id} 
+            isOwner={true} 
+            onClick={() => onSuggestChange && onSuggestChange(category, true)} 
+          />
+        )}
       </div>
       {hasChildren && isExpanded && (
         <div className="border-l border-purple-500/20 ml-2">
