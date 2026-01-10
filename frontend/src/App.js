@@ -2500,7 +2500,7 @@ const MarketplacePage = () => {
                             <p className="text-purple-400/60 font-mono text-xs">from {purchase.seller_username} • ${purchase.amount?.toFixed(2)}</p>
                           </div>
                           <button
-                            onClick={() => copyProtocol(purchase.protocol_string)}
+                            onClick={() => copyProtocol(purchase.protocol_string, purchase.category_id)}
                             className="p-2 text-purple-400 hover:text-pink-400 rounded hover:bg-pink-500/10"
                             title="Copy Protocol"
                           >
