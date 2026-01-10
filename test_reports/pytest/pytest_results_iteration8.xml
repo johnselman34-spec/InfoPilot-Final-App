@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="12" skipped="0" tests="18" time="6.627" timestamp="2026-01-10T05:15:31.836598+00:00" hostname="agent-env-e28954ce-8eb1-4265-af27-57f68cc2e6d3"><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_01_login_user1_admin" time="0.627" /><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_02_login_user2_regular" time="0.283"><failure message="AssertionError: Login failed: {&quot;detail&quot;:&quot;Invalid credentials&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_protocol_recommendations.py:102: in test_02_login_user2_regular
+    assert response.status_code == 200, f"Login failed: {response.text}"
+E   AssertionError: Login failed: {"detail":"Invalid credentials"}
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_03_create_public_category_for_recommendations" time="0.332" /><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_04_create_private_category" time="0.367" /><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_05_submit_recommendation_success" time="0.349"><failure message="AssertionError: Submit recommendation failed: {&quot;detail&quot;:&quot;Authentication required&quot;}&#10;assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_protocol_recommendations.py:182: in test_05_submit_recommendation_success
+    assert rec_response.status_code == 200, f"Submit recommendation failed: {rec_response.text}"
+E   AssertionError: Submit recommendation failed: {"detail":"Authentication required"}
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_06_cannot_recommend_own_protocol" time="0.349" /><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_07_cannot_recommend_private_protocol" time="0.334"><failure message="AssertionError: Expected 403, got 401&#10;assert 401 == 403&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_protocol_recommendations.py:248: in test_07_cannot_recommend_private_protocol
+    assert rec_response.status_code == 403, f"Expected 403, got {rec_response.status_code}"
+E   AssertionError: Expected 403, got 401
+E   assert 401 == 403
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_08_recommendation_on_nonexistent_category" time="0.271"><failure message="assert 401 == 404&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_protocol_recommendations.py:264: in test_08_recommendation_on_nonexistent_category
+    assert rec_response.status_code == 404
+E   assert 401 == 404
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_09_get_category_recommendations_owner_only" time="0.396"><failure message="assert 0 &gt;= 1&#10; +  where 0 = len([])">tests/test_protocol_recommendations.py:306: in test_09_get_category_recommendations_owner_only
+    assert len(data["recommendations"]) &gt;= 1
+E   assert 0 &gt;= 1
+E    +  where 0 = len([])</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_10_get_my_protocol_recommendations" time="0.427" /><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_11_get_recommendation_count" time="0.398"><failure message="assert 0 &gt;= 1">tests/test_protocol_recommendations.py:398: in test_11_get_recommendation_count
+    assert data["count"] &gt;= 1
+E   assert 0 &gt;= 1</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_12_accept_recommendation" time="0.292"><failure message="KeyError: 'recommendation'">tests/test_protocol_recommendations.py:442: in test_12_accept_recommendation
+    rec_id = rec_response.json()["recommendation"]["id"]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'recommendation'</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_13_reject_recommendation" time="0.336"><failure message="KeyError: 'recommendation'">tests/test_protocol_recommendations.py:481: in test_13_reject_recommendation
+    rec_id = rec_response.json()["recommendation"]["id"]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'recommendation'</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_14_invalid_status_update" time="0.318"><failure message="KeyError: 'recommendation'">tests/test_protocol_recommendations.py:520: in test_14_invalid_status_update
+    rec_id = rec_response.json()["recommendation"]["id"]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'recommendation'</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_15_non_owner_cannot_update_status" time="0.304"><failure message="KeyError: 'recommendation'">tests/test_protocol_recommendations.py:557: in test_15_non_owner_cannot_update_status
+    rec_id = rec_response.json()["recommendation"]["id"]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'recommendation'</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_16_owner_can_delete_recommendation" time="0.388"><failure message="KeyError: 'recommendation'">tests/test_protocol_recommendations.py:598: in test_16_owner_can_delete_recommendation
+    rec_id = rec_response.json()["recommendation"]["id"]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'recommendation'</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_17_submitter_can_delete_own_recommendation" time="0.334"><failure message="KeyError: 'recommendation'">tests/test_protocol_recommendations.py:634: in test_17_submitter_can_delete_own_recommendation
+    rec_id = rec_response.json()["recommendation"]["id"]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'recommendation'</failure></testcase><testcase classname="tests.test_protocol_recommendations.TestProtocolRecommendations" name="test_18_delete_nonexistent_recommendation" time="0.358" /></testsuite></testsuites>
