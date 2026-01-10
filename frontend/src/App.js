@@ -2032,6 +2032,8 @@ const CategoryTreeItem = ({ category, selectedCategories, onToggle, level = 0, c
               selectedCategories={selectedCategories}
               onToggle={onToggle}
               level={level + 1}
+              currentUserId={currentUserId}
+              onSuggestChange={onSuggestChange}
             />
           ))}
         </div>
