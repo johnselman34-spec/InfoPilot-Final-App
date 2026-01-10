@@ -1782,6 +1782,11 @@ const CategoriesPage = () => {
                     <span className={`inline-block mt-2 px-2 py-0.5 text-xs rounded font-mono ${cat.is_public ? "bg-purple-500/20 text-purple-400" : "bg-pink-500/20 text-pink-400"}`}>{cat.is_public ? "PUBLIC" : "PRIVATE"}</span>
                   </div>
                   <div className="flex items-center gap-1 ml-2">
+                    <RecommendationBadge 
+                      categoryId={cat.id} 
+                      isOwner={true} 
+                      onClick={() => setViewRecsCategory(cat)} 
+                    />
                     <button onClick={() => handleEdit(cat)} className="p-2 text-purple-400/60 hover:text-pink-400 rounded hover:bg-pink-500/10" title="Edit"><Edit3 className="w-4 h-4" /></button>
                     <button onClick={() => handleDelete(cat.id)} className="p-2 text-red-400/60 hover:text-red-400 rounded hover:bg-red-500/10" title="Delete"><Trash2 className="w-4 h-4" /></button>
                   </div>
@@ -1792,6 +1797,15 @@ const CategoriesPage = () => {
         )}
 
         <BookSalesBanner variant="compact" />
+
+        {/* View Recommendations Modal */}
+        {viewRecsCategory && (
+          <ViewRecommendationsModal 
+            category={viewRecsCategory} 
+            onClose={() => setViewRecsCategory(null)} 
+            onUpdate={fetchCategories}
+          />
+        )}
       </div>
     </Layout>
   );
