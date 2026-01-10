@@ -2404,22 +2404,67 @@ const SubscribePage = () => {
 
         {/* Payment Section */}
         <FuturisticFrame title="SECURE PAYMENT" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
-          {!clientSecret ? (
+          {/* Payment Method Toggle */}
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setPaymentMethod('shopify')}
+              className={`flex-1 py-3 px-4 rounded-lg font-mono text-sm flex items-center justify-center gap-2 transition-all ${
+                paymentMethod === 'shopify' 
+                  ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white' 
+                  : 'bg-slate-800 border border-purple-500/30 text-purple-300 hover:bg-slate-700'
+              }`}
+            >
+              <ShoppingCart className="w-5 h-5" /> SHOPIFY
+            </button>
+            <button
+              onClick={() => setPaymentMethod('stripe')}
+              className={`flex-1 py-3 px-4 rounded-lg font-mono text-sm flex items-center justify-center gap-2 transition-all ${
+                paymentMethod === 'stripe' 
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' 
+                  : 'bg-slate-800 border border-purple-500/30 text-purple-300 hover:bg-slate-700'
+              }`}
+            >
+              <CreditCard className="w-5 h-5" /> STRIPE
+            </button>
+          </div>
+
+          {/* Shopify Payment */}
+          {paymentMethod === 'shopify' && (
             <div className="text-center">
-              <p className="text-purple-300 font-mono mb-4">Click below to start your secure payment with Stripe</p>
+              <p className="text-purple-300 font-mono mb-4">Complete your purchase securely through our Shopify store</p>
               <button
-                onClick={initializePayment}
-                disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-[1.02] transition-transform disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
+                onClick={handleShopifyCheckout}
+                disabled={loading || !shopifyConfig?.checkout_enabled}
+                className="w-full py-4 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-[1.02] transition-transform disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
               >
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CreditCard className="w-6 h-6" /> PAY $0.75 NOW</>}
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><ShoppingCart className="w-6 h-6" /> BUY NOW - $0.75</>}
               </button>
-              <p className="text-center text-purple-400/60 text-xs font-mono mt-4">🔒 Secure payment powered by Stripe</p>
+              <p className="text-center text-purple-400/60 text-xs font-mono mt-4">🔒 Secure checkout powered by Shopify</p>
+              <p className="text-center text-purple-400/40 text-xs font-mono mt-2">Opens in new tab • Accepts all major cards</p>
             </div>
-          ) : (
-            <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night', variables: { colorPrimary: '#ec4899' } } }}>
-              <StripeCheckoutForm onSuccess={handlePaymentSuccess} />
-            </Elements>
+          )}
+
+          {/* Stripe Payment */}
+          {paymentMethod === 'stripe' && (
+            <>
+              {!clientSecret ? (
+                <div className="text-center">
+                  <p className="text-purple-300 font-mono mb-4">Pay directly with Stripe</p>
+                  <button
+                    onClick={initializeStripePayment}
+                    disabled={loading}
+                    className="w-full py-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-[1.02] transition-transform disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
+                  >
+                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><CreditCard className="w-6 h-6" /> PAY $0.75 NOW</>}
+                  </button>
+                  <p className="text-center text-purple-400/60 text-xs font-mono mt-4">🔒 Secure payment powered by Stripe</p>
+                </div>
+              ) : (
+                <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night', variables: { colorPrimary: '#ec4899' } } }}>
+                  <StripeCheckoutForm onSuccess={handlePaymentSuccess} />
+                </Elements>
+              )}
+            </>
           )}
         </FuturisticFrame>
 
