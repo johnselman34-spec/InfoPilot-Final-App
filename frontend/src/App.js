@@ -4748,17 +4748,588 @@ const StatisticsPage = () => {
 
 const GlobalDatabasePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("explore");
+  const [resources, setResources] = useState([]);
+  const [trendingData, setTrendingData] = useState({ trending_hashtags: [], trending_categories: [] });
+  const [contributors, setContributors] = useState([]);
+  const [stats, setStats] = useState({});
+  const [mapData, setMapData] = useState({ resources: [], research_hotspots: [] });
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newResource, setNewResource] = useState({
+    title: "", description: "", url: "", category: "Science", tags: "", location: "", lat: "", lng: "", featured: false
+  });
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY || ''
+  });
+
+  const RESEARCH_CATEGORIES = [
+    "Science", "Technology", "History", "Arts & Culture", "Business & Finance",
+    "Education", "Government", "Health & Medicine", "Environment", "Law & Legal",
+    "Engineering", "Mathematics", "Philosophy", "Psychology", "Sociology"
+  ];
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      const [resourcesRes, trendingRes, contributorsRes, statsRes, mapRes] = await Promise.all([
+        axios.get(`${API}/research-database/resources`),
+        axios.get(`${API}/research-database/trending`),
+        axios.get(`${API}/research-database/contributors`),
+        axios.get(`${API}/research-database/stats`),
+        axios.get(`${API}/research-database/map-data`)
+      ]);
+      setResources(resourcesRes.data.resources || []);
+      setTrendingData(trendingRes.data);
+      setContributors(contributorsRes.data.contributors || []);
+      setStats(statsRes.data);
+      setMapData(mapRes.data);
+    } catch (error) {
+      console.error("Error fetching research database:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const searchResources = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append("search", searchQuery);
+      if (selectedCategory) params.append("category", selectedCategory);
+      const res = await axios.get(`${API}/research-database/resources?${params}`);
+      setResources(res.data.resources || []);
+    } catch (error) {
+      toast.error("Search failed");
+    }
+  };
+
+  const handleAddResource = async () => {
+    try {
+      const resourceData = {
+        ...newResource,
+        tags: newResource.tags.split(",").map(t => t.trim()).filter(Boolean),
+        lat: newResource.lat ? parseFloat(newResource.lat) : null,
+        lng: newResource.lng ? parseFloat(newResource.lng) : null
+      };
+      await axios.post(`${API}/research-database/resources`, resourceData);
+      toast.success("Resource added successfully!");
+      setShowAddModal(false);
+      setNewResource({ title: "", description: "", url: "", category: "Science", tags: "", location: "", lat: "", lng: "", featured: false });
+      fetchAllData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to add resource");
+    }
+  };
+
+  const handleDeleteResource = async (resourceId) => {
+    if (!confirm("Delete this resource?")) return;
+    try {
+      await axios.delete(`${API}/research-database/resources/${resourceId}`);
+      toast.success("Resource deleted");
+      fetchAllData();
+    } catch (error) {
+      toast.error("Failed to delete resource");
+    }
+  };
+
+  const mapContainerStyle = { width: '100%', height: '400px', borderRadius: '12px' };
+  const defaultCenter = { lat: 20, lng: 0 };
+
+  // Stunning gradient animations
+  const gradientStyle = {
+    background: 'linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #a855f7, #ec4899)',
+    backgroundSize: '400% 400%',
+    animation: 'gradientShift 15s ease infinite'
+  };
+
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">GLOBAL DATABASE</h1>
-        <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} />
-        <FuturisticFrame title="PUBLIC CATEGORIES" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg text-center py-12">
-          <Globe className="w-16 h-16 text-purple-500/30 mx-auto mb-4" />
-          <p className="text-purple-300 font-mono">Access public categories from pilots worldwide.</p>
-        </FuturisticFrame>
-        <BookSalesBanner variant="compact" />
+      <style>{`
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(236, 72, 153, 0.5), 0 0 40px rgba(168, 85, 247, 0.3); }
+          50% { box-shadow: 0 0 40px rgba(236, 72, 153, 0.8), 0 0 80px rgba(168, 85, 247, 0.5); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        .glow-card { animation: pulse-glow 3s ease-in-out infinite; }
+        .float-animation { animation: float 3s ease-in-out infinite; }
+      `}</style>
+
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* STUNNING HERO SECTION */}
+        <div className="relative overflow-hidden rounded-2xl" style={gradientStyle}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+          <div className="relative p-8 text-center">
+            <div className="float-animation inline-block mb-4">
+              <div className="w-24 h-24 mx-auto bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-2xl glow-card">
+                <Globe className="w-12 h-12 text-white" />
+              </div>
+            </div>
+            <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 font-mono tracking-wider mb-4 drop-shadow-lg">
+              WORLDWIDE INFORMATION
+            </h1>
+            <h2 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-pink-300 to-purple-300 font-mono mb-4">
+              RESEARCH DATABASE
+            </h2>
+            <p className="text-xl text-white/90 font-mono max-w-2xl mx-auto">
+              🌐 Curated research resources from around the globe • Trending topics • Top contributors
+            </p>
+            
+            {/* Stats Row */}
+            <div className="flex flex-wrap justify-center gap-6 mt-8">
+              {[
+                { label: "RESOURCES", value: stats.total_resources || 0, icon: BookOpen, color: "from-pink-500 to-rose-500" },
+                { label: "RESEARCH RESULTS", value: stats.total_results || 0, icon: Search, color: "from-purple-500 to-violet-500" },
+                { label: "PUBLIC PROTOCOLS", value: stats.total_public_protocols || 0, icon: FolderTree, color: "from-blue-500 to-cyan-500" },
+                { label: "PILOTS WORLDWIDE", value: stats.total_users || 0, icon: Users, color: "from-emerald-500 to-teal-500" }
+              ].map((stat, i) => (
+                <div key={i} className={`bg-gradient-to-br ${stat.color} p-1 rounded-xl shadow-lg hover:scale-105 transition-transform`}>
+                  <div className="bg-slate-900/90 rounded-lg px-6 py-4 text-center">
+                    <stat.icon className="w-8 h-8 text-white mx-auto mb-2" />
+                    <div className="text-3xl font-black text-white font-mono">{stat.value.toLocaleString()}</div>
+                    <div className="text-xs text-white/70 font-mono tracking-wider">{stat.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* NAVIGATION TABS */}
+        <div className="flex flex-wrap justify-center gap-2 bg-slate-900/50 p-2 rounded-xl border border-purple-500/30">
+          {[
+            { id: "explore", label: "🔍 EXPLORE", icon: Search },
+            { id: "trending", label: "🔥 TRENDING", icon: Zap },
+            { id: "map", label: "🗺️ WORLD MAP", icon: MapPin },
+            { id: "contributors", label: "🏆 TOP CONTRIBUTORS", icon: Award }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-mono text-sm transition-all ${
+                activeTab === tab.id
+                  ? "bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/50"
+                  : "text-purple-300 hover:bg-purple-500/20"
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* EXPLORE TAB */}
+        {activeTab === "explore" && (
+          <div className="space-y-6">
+            {/* Search Bar */}
+            <div className="bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 border border-purple-500/30 rounded-xl p-6">
+              <div className="flex flex-wrap gap-4">
+                <div className="flex-1 min-w-64">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-400" />
+                    <input
+                      type="text"
+                      placeholder="Search research resources..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && searchResources()}
+                      className="w-full bg-slate-900/80 border border-purple-500/50 rounded-lg pl-12 pr-4 py-3 text-purple-200 font-mono focus:border-pink-500 focus:outline-none focus:ring-2 focus:ring-pink-500/30"
+                    />
+                  </div>
+                </div>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="bg-slate-900/80 border border-purple-500/50 rounded-lg px-4 py-3 text-purple-200 font-mono focus:border-pink-500 focus:outline-none"
+                >
+                  <option value="">All Categories</option>
+                  {RESEARCH_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={searchResources}
+                  className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded-lg hover:scale-105 transition-transform shadow-lg"
+                >
+                  SEARCH
+                </button>
+                {user?.is_admin && (
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-mono rounded-lg hover:scale-105 transition-transform shadow-lg flex items-center gap-2"
+                  >
+                    <Plus className="w-5 h-5" />
+                    ADD RESOURCE
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Resources Grid */}
+            {loading ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-12 h-12 text-pink-400 animate-spin mx-auto" />
+                <p className="text-purple-400 font-mono mt-4">Loading research database...</p>
+              </div>
+            ) : resources.length === 0 ? (
+              <div className="text-center py-16 bg-gradient-to-br from-purple-900/20 to-pink-900/20 rounded-xl border border-purple-500/30">
+                <Globe className="w-20 h-20 text-purple-500/30 mx-auto mb-4" />
+                <h3 className="text-2xl text-purple-300 font-mono mb-2">No Resources Yet</h3>
+                <p className="text-purple-400/70 font-mono">The research database is being curated. Check back soon!</p>
+                {user?.is_admin && (
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="mt-6 px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded-lg hover:scale-105 transition-transform"
+                  >
+                    Add First Resource
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {resources.map((resource, idx) => (
+                  <div
+                    key={resource.id || idx}
+                    className="group relative bg-gradient-to-br from-slate-900 via-purple-900/30 to-slate-900 border border-purple-500/30 rounded-xl overflow-hidden hover:border-pink-500/50 hover:shadow-xl hover:shadow-pink-500/20 transition-all"
+                  >
+                    {resource.featured && (
+                      <div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-500 to-orange-500 text-black text-xs font-bold px-3 py-1 rounded-bl-lg">
+                        ⭐ FEATURED
+                      </div>
+                    )}
+                    <div className="p-6">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <BookOpen className="w-6 h-6 text-pink-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono line-clamp-2">{resource.title}</h3>
+                          <span className="inline-block px-2 py-0.5 bg-blue-500/20 border border-blue-500/50 rounded text-xs text-blue-300 font-mono mt-1">{resource.category}</span>
+                        </div>
+                      </div>
+                      <p className="text-purple-300/80 text-sm font-mono line-clamp-3 mb-4">{resource.description}</p>
+                      {resource.tags?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {resource.tags.slice(0, 4).map((tag, i) => (
+                            <span key={i} className="px-2 py-0.5 bg-purple-500/20 rounded text-xs text-purple-300 font-mono">#{tag}</span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <a
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-pink-400 hover:text-pink-300 font-mono text-sm"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                          Visit Resource
+                        </a>
+                        {user?.is_admin && (
+                          <button
+                            onClick={() => handleDeleteResource(resource.id)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TRENDING TAB */}
+        {activeTab === "trending" && (
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Trending Hashtags */}
+            <div className="bg-gradient-to-br from-pink-900/30 via-purple-900/30 to-blue-900/30 border border-pink-500/30 rounded-xl p-6">
+              <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-6 flex items-center gap-3">
+                <Zap className="w-6 h-6 text-yellow-400" />
+                TRENDING HASHTAGS
+              </h3>
+              {trendingData.trending_hashtags?.length > 0 ? (
+                <div className="flex flex-wrap gap-3">
+                  {trendingData.trending_hashtags.map((hashtag, i) => (
+                    <div
+                      key={i}
+                      className={`px-4 py-2 rounded-full font-mono transition-all hover:scale-105 cursor-pointer ${
+                        i === 0 ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold text-lg" :
+                        i < 3 ? "bg-gradient-to-r from-pink-600 to-purple-600 text-white" :
+                        "bg-purple-500/20 text-purple-300 border border-purple-500/50"
+                      }`}
+                    >
+                      {hashtag.tag} <span className="opacity-70">({hashtag.count})</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-purple-400/70 font-mono text-center py-8">No trending hashtags yet</p>
+              )}
+            </div>
+
+            {/* Trending Categories */}
+            <div className="bg-gradient-to-br from-blue-900/30 via-purple-900/30 to-pink-900/30 border border-blue-500/30 rounded-xl p-6">
+              <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 font-mono mb-6 flex items-center gap-3">
+                <FolderTree className="w-6 h-6 text-blue-400" />
+                HOT CATEGORIES
+              </h3>
+              {trendingData.trending_categories?.length > 0 ? (
+                <div className="space-y-3">
+                  {trendingData.trending_categories.map((cat, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-4 p-3 bg-slate-900/50 rounded-lg border border-purple-500/20 hover:border-purple-500/50 transition-all"
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold font-mono ${
+                        i === 0 ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-black" :
+                        i === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400 text-black" :
+                        i === 2 ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white" :
+                        "bg-purple-500/30 text-purple-300"
+                      }`}>
+                        {i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <span className="text-purple-200 font-mono">{cat.name}</span>
+                      </div>
+                      <span className="text-pink-400 font-mono font-bold">{cat.count} results</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-purple-400/70 font-mono text-center py-8">No category data yet</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* MAP TAB */}
+        {activeTab === "map" && (
+          <div className="bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 border border-purple-500/30 rounded-xl overflow-hidden">
+            <div className="p-6 border-b border-purple-500/30">
+              <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono flex items-center gap-3">
+                <MapPin className="w-6 h-6 text-pink-400" />
+                WORLDWIDE RESEARCH HOTSPOTS
+              </h3>
+              <p className="text-purple-400/70 font-mono mt-2">
+                {mapData.total_resources || 0} resources • {mapData.total_hotspots || 0} research hotspots
+              </p>
+            </div>
+            <div className="p-4">
+              {isLoaded && GOOGLE_MAPS_API_KEY ? (
+                <GoogleMap
+                  mapContainerStyle={mapContainerStyle}
+                  center={defaultCenter}
+                  zoom={2}
+                  options={{
+                    styles: [
+                      { elementType: "geometry", stylers: [{ color: "#1a1a2e" }] },
+                      { elementType: "labels.text.stroke", stylers: [{ color: "#1a1a2e" }] },
+                      { elementType: "labels.text.fill", stylers: [{ color: "#8b5cf6" }] },
+                      { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f0f23" }] }
+                    ]
+                  }}
+                >
+                  {mapData.research_hotspots?.map((spot, i) => (
+                    <Marker
+                      key={i}
+                      position={{ lat: spot.lat, lng: spot.lng }}
+                      title={`${spot.name}: ${spot.count} results`}
+                    />
+                  ))}
+                </GoogleMap>
+              ) : (
+                <div className="h-96 bg-slate-800/50 rounded-xl flex items-center justify-center">
+                  <div className="text-center">
+                    <Globe className="w-16 h-16 text-purple-500/30 mx-auto mb-4" />
+                    <p className="text-purple-400 font-mono">Map visualization requires Google Maps API key</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* CONTRIBUTORS TAB */}
+        {activeTab === "contributors" && (
+          <div className="bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 border border-purple-500/30 rounded-xl p-6">
+            <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-400 to-purple-400 font-mono mb-6 flex items-center gap-3">
+              <Award className="w-6 h-6 text-yellow-400" />
+              TOP CONTRIBUTORS LEADERBOARD
+            </h3>
+            {contributors.length > 0 ? (
+              <div className="space-y-4">
+                {contributors.map((contributor, i) => (
+                  <div
+                    key={i}
+                    className={`flex items-center gap-4 p-4 rounded-xl transition-all hover:scale-[1.02] ${
+                      i === 0 ? "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-2 border-yellow-500/50" :
+                      i === 1 ? "bg-gradient-to-r from-gray-300/20 to-gray-400/20 border border-gray-400/50" :
+                      i === 2 ? "bg-gradient-to-r from-amber-600/20 to-amber-700/20 border border-amber-600/50" :
+                      "bg-slate-900/50 border border-purple-500/20"
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold font-mono text-xl ${
+                      i === 0 ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-black" :
+                      i === 1 ? "bg-gradient-to-r from-gray-300 to-gray-400 text-black" :
+                      i === 2 ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white" :
+                      "bg-purple-500/30 text-purple-300"
+                    }`}>
+                      #{contributor.rank}
+                    </div>
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 border border-purple-500 flex items-center justify-center text-pink-400 font-bold font-mono overflow-hidden">
+                      {contributor.profile_photo ? (
+                        <img src={contributor.profile_photo} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        contributor.username?.[0]?.toUpperCase() || "?"
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-lg font-bold text-purple-200 font-mono">{contributor.username}</p>
+                      <p className="text-sm text-purple-400/70 font-mono">
+                        {contributor.protocol_count} protocols • {contributor.total_copies} total copies
+                      </p>
+                    </div>
+                    {i === 0 && <Crown className="w-8 h-8 text-yellow-400" />}
+                    {i === 1 && <Award className="w-8 h-8 text-gray-400" />}
+                    {i === 2 && <Award className="w-8 h-8 text-amber-600" />}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-purple-400/70 font-mono text-center py-8">No contributors data yet</p>
+            )}
+          </div>
+        )}
+
+        {/* BOOK PROMOTION - Always visible */}
+        <div className="relative overflow-hidden rounded-2xl">
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-600/20 via-purple-600/20 to-blue-600/20"></div>
+          <BookSalesBanner variant="full" />
+        </div>
       </div>
+
+      {/* ADD RESOURCE MODAL */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-slate-900 via-purple-900/50 to-slate-900 border border-purple-500/50 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-purple-500/30 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-pink-400 font-mono">ADD RESEARCH RESOURCE</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-purple-400 hover:text-white">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-purple-400 font-mono text-sm mb-2">Title *</label>
+                <input
+                  type="text"
+                  value={newResource.title}
+                  onChange={(e) => setNewResource({ ...newResource, title: e.target.value })}
+                  className="w-full bg-slate-900/80 border border-purple-500/50 rounded-lg px-4 py-3 text-purple-200 font-mono focus:border-pink-500 focus:outline-none"
+                  placeholder="Resource title"
+                />
+              </div>
+              <div>
+                <label className="block text-purple-400 font-mono text-sm mb-2">Description *</label>
+                <textarea
+                  value={newResource.description}
+                  onChange={(e) => setNewResource({ ...newResource, description: e.target.value })}
+                  className="w-full bg-slate-900/80 border border-purple-500/50 rounded-lg px-4 py-3 text-purple-200 font-mono focus:border-pink-500 focus:outline-none h-24 resize-none"
+                  placeholder="Brief description of the resource"
+                />
+              </div>
+              <div>
+                <label className="block text-purple-400 font-mono text-sm mb-2">URL *</label>
+                <input
+                  type="url"
+                  value={newResource.url}
+                  onChange={(e) => setNewResource({ ...newResource, url: e.target.value })}
+                  className="w-full bg-slate-900/80 border border-purple-500/50 rounded-lg px-4 py-3 text-purple-200 font-mono focus:border-pink-500 focus:outline-none"
+                  placeholder="https://..."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-purple-400 font-mono text-sm mb-2">Category</label>
+                  <select
+                    value={newResource.category}
+                    onChange={(e) => setNewResource({ ...newResource, category: e.target.value })}
+                    className="w-full bg-slate-900/80 border border-purple-500/50 rounded-lg px-4 py-3 text-purple-200 font-mono focus:border-pink-500 focus:outline-none"
+                  >
+                    {RESEARCH_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-purple-400 font-mono text-sm mb-2">Location</label>
+                  <input
+                    type="text"
+                    value={newResource.location}
+                    onChange={(e) => setNewResource({ ...newResource, location: e.target.value })}
+                    className="w-full bg-slate-900/80 border border-purple-500/50 rounded-lg px-4 py-3 text-purple-200 font-mono focus:border-pink-500 focus:outline-none"
+                    placeholder="Country or region"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-purple-400 font-mono text-sm mb-2">Tags (comma separated)</label>
+                <input
+                  type="text"
+                  value={newResource.tags}
+                  onChange={(e) => setNewResource({ ...newResource, tags: e.target.value })}
+                  className="w-full bg-slate-900/80 border border-purple-500/50 rounded-lg px-4 py-3 text-purple-200 font-mono focus:border-pink-500 focus:outline-none"
+                  placeholder="tag1, tag2, tag3"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="featured"
+                  checked={newResource.featured}
+                  onChange={(e) => setNewResource({ ...newResource, featured: e.target.checked })}
+                  className="w-5 h-5 rounded border-purple-500"
+                />
+                <label htmlFor="featured" className="text-purple-300 font-mono">Mark as Featured Resource</label>
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 px-6 py-3 border border-purple-500 text-purple-400 font-mono rounded-lg hover:bg-purple-500/20"
+                >
+                  CANCEL
+                </button>
+                <button
+                  onClick={handleAddResource}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded-lg hover:scale-105 transition-transform"
+                >
+                  ADD RESOURCE
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
