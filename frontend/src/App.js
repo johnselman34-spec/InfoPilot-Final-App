@@ -2327,6 +2327,725 @@ const SubscribePage = () => {
     </Layout>
   );
 };
+
+// ============================================
+// SOCIAL FEATURES - FRIENDS PAGE
+// ============================================
+const FriendsPage = () => {
+  const { user } = useAuth();
+  const [friends, setFriends] = useState([]);
+  const [requests, setRequests] = useState({ incoming: [], outgoing: [] });
+  const [loading, setLoading] = useState(true);
+  const [searchEmail, setSearchEmail] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchFriends();
+    fetchRequests();
+  }, []);
+
+  const fetchFriends = async () => {
+    try {
+      const res = await axios.get(`${API}/friends`);
+      setFriends(res.data.friends || []);
+    } catch (error) {
+      console.error("Failed to fetch friends");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRequests = async () => {
+    try {
+      const res = await axios.get(`${API}/friends/requests`);
+      setRequests(res.data);
+    } catch (error) {
+      console.error("Failed to fetch requests");
+    }
+  };
+
+  const handleAccept = async (requestId) => {
+    try {
+      await axios.post(`${API}/friends/accept/${requestId}`);
+      toast.success("Friend request accepted!");
+      fetchFriends();
+      fetchRequests();
+    } catch (error) {
+      toast.error("Failed to accept request");
+    }
+  };
+
+  const handleReject = async (requestId) => {
+    try {
+      await axios.post(`${API}/friends/reject/${requestId}`);
+      toast.success("Friend request rejected");
+      fetchRequests();
+    } catch (error) {
+      toast.error("Failed to reject request");
+    }
+  };
+
+  const handleRemove = async (friendId) => {
+    if (!window.confirm("Remove this friend?")) return;
+    try {
+      await axios.delete(`${API}/friends/${friendId}`);
+      toast.success("Friend removed");
+      fetchFriends();
+    } catch (error) {
+      toast.error("Failed to remove friend");
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">FRIENDS</h1>
+          <span className="px-3 py-1 bg-purple-500/20 border border-purple-500/50 text-purple-300 font-mono rounded">{friends.length} Friends</span>
+        </div>
+
+        {/* Friend Requests */}
+        {requests.incoming.length > 0 && (
+          <FuturisticFrame title="FRIEND REQUESTS" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+            <div className="space-y-3">
+              {requests.incoming.map((req) => (
+                <div key={req.id} className="flex items-center justify-between p-3 bg-purple-500/10 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-pink-400" />
+                    </div>
+                    <span className="text-purple-300 font-mono">{req.from_username}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleAccept(req.id)} className="px-3 py-1 bg-green-600 text-white font-mono text-sm rounded hover:bg-green-700">
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleReject(req.id)} className="px-3 py-1 bg-red-600 text-white font-mono text-sm rounded hover:bg-red-700">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </FuturisticFrame>
+        )}
+
+        {/* Friends List */}
+        <FuturisticFrame title="YOUR FRIENDS" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 text-pink-400 animate-spin" /></div>
+          ) : friends.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="w-16 h-16 text-purple-400/30 mx-auto mb-4" />
+              <p className="text-purple-400/60 font-mono">No friends yet</p>
+              <p className="text-purple-400/40 font-mono text-sm mt-2">The admin has been added as your first friend!</p>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {friends.map((friend) => (
+                <div key={friend.id} className="flex items-center justify-between p-4 bg-purple-500/10 rounded-lg hover:bg-purple-500/20 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center border border-purple-500/30">
+                      {friend.profile_photo ? (
+                        <img src={friend.profile_photo} alt={friend.username} className="w-12 h-12 rounded-full object-cover" />
+                      ) : (
+                        <User className="w-6 h-6 text-pink-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-purple-300 font-mono font-bold">{friend.username}</p>
+                      {friend.is_admin && <span className="text-xs text-pink-400 font-mono">ADMIN</span>}
+                    </div>
+                  </div>
+                  <button onClick={() => handleRemove(friend.id)} className="p-2 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 rounded">
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </FuturisticFrame>
+      </div>
+    </Layout>
+  );
+};
+
+// ============================================
+// SOCIAL FEATURES - GROUPS PAGE
+// ============================================
+const GroupsPage = () => {
+  const [myGroups, setMyGroups] = useState([]);
+  const [publicGroups, setPublicGroups] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newGroup, setNewGroup] = useState({ name: '', description: '', privacy: 'public' });
+  const [creating, setCreating] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => { fetchGroups(); }, []);
+
+  const fetchGroups = async () => {
+    try {
+      const res = await axios.get(`${API}/groups`);
+      setMyGroups(res.data.my_groups || []);
+      setPublicGroups(res.data.public_groups || []);
+    } catch (error) {
+      console.error("Failed to fetch groups");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setCreating(true);
+    try {
+      await axios.post(`${API}/groups`, newGroup);
+      toast.success("Group created!");
+      setShowCreate(false);
+      setNewGroup({ name: '', description: '', privacy: 'public' });
+      fetchGroups();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to create group");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleJoin = async (groupId) => {
+    try {
+      await axios.post(`${API}/groups/${groupId}/join`);
+      toast.success("Joined group!");
+      fetchGroups();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to join group");
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">GROUPS</h1>
+          <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] flex items-center gap-2">
+            <Plus className="w-5 h-5" /> CREATE GROUP
+          </button>
+        </div>
+
+        {/* Create Modal */}
+        {showCreate && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <FuturisticFrame title="CREATE GROUP" color="pink" className="bg-slate-900 border border-pink-500/30 rounded-lg max-w-lg w-full">
+              <form onSubmit={handleCreate} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-mono text-purple-400 mb-1">GROUP NAME</label>
+                  <input type="text" value={newGroup.name} onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-purple-400 mb-1">DESCRIPTION</label>
+                  <textarea value={newGroup.description} onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono h-24 focus:border-pink-500" placeholder="What's your group about?" />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-purple-400 mb-1">PRIVACY</label>
+                  <select value={newGroup.privacy} onChange={(e) => setNewGroup({ ...newGroup, privacy: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500">
+                    <option value="public">Public - Anyone can see and join</option>
+                    <option value="private">Private - Anyone can see, but must request to join</option>
+                    <option value="secret">Secret - Only members can see</option>
+                  </select>
+                </div>
+                <div className="flex gap-4">
+                  <button type="button" onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2 border border-purple-500/30 text-purple-300 font-mono rounded hover:bg-purple-500/10">CANCEL</button>
+                  <button type="submit" disabled={creating} className="flex-1 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50">
+                    {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "CREATE"}
+                  </button>
+                </div>
+              </form>
+            </FuturisticFrame>
+          </div>
+        )}
+
+        {/* My Groups */}
+        <FuturisticFrame title="MY GROUPS" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 text-pink-400 animate-spin" /></div>
+          ) : myGroups.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="w-16 h-16 text-purple-400/30 mx-auto mb-4" />
+              <p className="text-purple-400/60 font-mono">You haven't joined any groups yet</p>
+              <button onClick={() => setShowCreate(true)} className="mt-4 px-4 py-2 bg-pink-600 text-white font-mono rounded hover:bg-pink-700">Create Your First Group</button>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4">
+              {myGroups.map((group) => (
+                <div key={group.id} onClick={() => navigate(`/groups/${group.id}`)} className="p-4 bg-purple-500/10 rounded-lg hover:bg-purple-500/20 cursor-pointer transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="w-14 h-14 bg-gradient-to-br from-pink-500/30 to-purple-500/30 rounded-lg flex items-center justify-center">
+                      <Users className="w-7 h-7 text-pink-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-purple-300 font-mono font-bold">{group.name}</h3>
+                      <p className="text-purple-400/60 font-mono text-xs mt-1">{group.member_count} members • {group.privacy}</p>
+                      <p className="text-purple-400/40 font-mono text-xs mt-1 line-clamp-2">{group.description || "No description"}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </FuturisticFrame>
+
+        {/* Discover Groups */}
+        {publicGroups.length > 0 && (
+          <FuturisticFrame title="DISCOVER GROUPS" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
+            <div className="grid md:grid-cols-2 gap-4">
+              {publicGroups.filter(g => !myGroups.find(m => m.id === g.id)).slice(0, 6).map((group) => (
+                <div key={group.id} className="p-4 bg-blue-500/10 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-lg flex items-center justify-center">
+                        <Users className="w-6 h-6 text-blue-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-purple-300 font-mono font-bold">{group.name}</h3>
+                        <p className="text-purple-400/60 font-mono text-xs">{group.member_count} members</p>
+                      </div>
+                    </div>
+                    <button onClick={() => handleJoin(group.id)} className="px-3 py-1 bg-blue-600 text-white font-mono text-sm rounded hover:bg-blue-700">
+                      JOIN
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </FuturisticFrame>
+        )}
+      </div>
+    </Layout>
+  );
+};
+
+// Group Detail Page
+const GroupDetailPage = () => {
+  const { groupId } = useParams();
+  const { user } = useAuth();
+  const [group, setGroup] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newPost, setNewPost] = useState('');
+  const [posting, setPosting] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => { if (groupId) fetchGroup(); }, [groupId]);
+
+  const fetchGroup = async () => {
+    try {
+      const res = await axios.get(`${API}/groups/${groupId}`);
+      setGroup(res.data.group);
+      setPosts(res.data.posts || []);
+    } catch (error) {
+      toast.error("Failed to load group");
+      navigate("/groups");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePost = async (e) => {
+    e.preventDefault();
+    if (!newPost.trim()) return;
+    setPosting(true);
+    try {
+      await axios.post(`${API}/groups/${groupId}/posts`, { content: newPost });
+      setNewPost('');
+      fetchGroup();
+      toast.success("Post created!");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to post");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const handleLeave = async () => {
+    if (!window.confirm("Leave this group?")) return;
+    try {
+      await axios.post(`${API}/groups/${groupId}/leave`);
+      toast.success("Left group");
+      navigate("/groups");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to leave group");
+    }
+  };
+
+  if (loading) return <Layout><div className="flex justify-center py-20"><Loader2 className="w-12 h-12 text-pink-400 animate-spin" /></div></Layout>;
+  if (!group) return <Layout><div className="text-center py-20 text-purple-400 font-mono">Group not found</div></Layout>;
+
+  const isMember = group.members?.includes(user?.id);
+
+  return (
+    <Layout>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Group Header */}
+        <div className="bg-gradient-to-r from-pink-900/40 to-purple-900/40 rounded-xl p-6 border border-pink-500/30">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-pink-500/30 to-purple-500/30 rounded-xl flex items-center justify-center">
+                <Users className="w-10 h-10 text-pink-400" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono">{group.name}</h1>
+                <p className="text-purple-400/60 font-mono text-sm">{group.member_count} members • {group.privacy}</p>
+                <p className="text-purple-300/80 font-mono text-sm mt-2">{group.description || "No description"}</p>
+              </div>
+            </div>
+            {isMember && group.owner_id !== user?.id && (
+              <button onClick={handleLeave} className="px-4 py-2 border border-red-500/50 text-red-400 font-mono rounded hover:bg-red-500/10">
+                LEAVE
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Create Post */}
+        {isMember && (
+          <FuturisticFrame title="CREATE POST" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+            <form onSubmit={handlePost} className="space-y-4">
+              <textarea value={newPost} onChange={(e) => setNewPost(e.target.value)} placeholder="What's on your mind?" className="w-full px-4 py-3 bg-slate-950 border border-purple-500/30 rounded-lg text-purple-300 font-mono h-24 focus:border-pink-500 resize-none" />
+              <button type="submit" disabled={posting || !newPost.trim()} className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2">
+                {posting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> POST</>}
+              </button>
+            </form>
+          </FuturisticFrame>
+        )}
+
+        {/* Posts */}
+        <div className="space-y-4">
+          {posts.length === 0 ? (
+            <div className="text-center py-12 bg-slate-900/50 rounded-lg border border-purple-500/20">
+              <MessageCircle className="w-16 h-16 text-purple-400/30 mx-auto mb-4" />
+              <p className="text-purple-400/60 font-mono">No posts yet. Be the first to post!</p>
+            </div>
+          ) : (
+            posts.map((post) => (
+              <div key={post.id} className="p-4 bg-slate-900/80 rounded-lg border border-purple-500/20">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-pink-400" />
+                  </div>
+                  <div>
+                    <p className="text-purple-300 font-mono font-bold">{post.username}</p>
+                    <p className="text-purple-400/40 font-mono text-xs">{new Date(post.created_at).toLocaleString()}</p>
+                  </div>
+                </div>
+                <p className="text-purple-300/90 font-mono whitespace-pre-wrap">{post.content}</p>
+                <div className="flex items-center gap-4 mt-4 pt-3 border-t border-purple-500/20">
+                  <button className="flex items-center gap-2 text-purple-400/60 hover:text-pink-400 font-mono text-sm">
+                    <Heart className="w-4 h-4" /> {post.like_count || 0}
+                  </button>
+                  <button className="flex items-center gap-2 text-purple-400/60 hover:text-blue-400 font-mono text-sm">
+                    <MessageCircle className="w-4 h-4" /> {post.comment_count || 0}
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
+// ============================================
+// SOCIAL FEATURES - PAGES
+// ============================================
+const PagesPage = () => {
+  const [myPages, setMyPages] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [popular, setPopular] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newPage, setNewPage] = useState({ name: '', description: '', category: 'General' });
+  const [creating, setCreating] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => { fetchPages(); }, []);
+
+  const fetchPages = async () => {
+    try {
+      const res = await axios.get(`${API}/pages`);
+      setMyPages(res.data.my_pages || []);
+      setFollowing(res.data.following || []);
+      setPopular(res.data.popular || []);
+    } catch (error) {
+      console.error("Failed to fetch pages");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    setCreating(true);
+    try {
+      await axios.post(`${API}/pages`, newPage);
+      toast.success("Page created!");
+      setShowCreate(false);
+      setNewPage({ name: '', description: '', category: 'General' });
+      fetchPages();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to create page");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleFollow = async (pageId) => {
+    try {
+      await axios.post(`${API}/pages/${pageId}/follow`);
+      toast.success("Now following!");
+      fetchPages();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to follow");
+    }
+  };
+
+  const categories = ['General', 'Business', 'Community', 'Entertainment', 'Education', 'Technology', 'News', 'Sports'];
+
+  return (
+    <Layout>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">PAGES</h1>
+          <button onClick={() => setShowCreate(true)} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] flex items-center gap-2">
+            <Plus className="w-5 h-5" /> CREATE PAGE
+          </button>
+        </div>
+
+        {/* Create Modal */}
+        {showCreate && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <FuturisticFrame title="CREATE PAGE" color="pink" className="bg-slate-900 border border-pink-500/30 rounded-lg max-w-lg w-full">
+              <form onSubmit={handleCreate} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-mono text-purple-400 mb-1">PAGE NAME</label>
+                  <input type="text" value={newPage.name} onChange={(e) => setNewPage({ ...newPage, name: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500" required />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-purple-400 mb-1">DESCRIPTION</label>
+                  <textarea value={newPage.description} onChange={(e) => setNewPage({ ...newPage, description: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono h-24 focus:border-pink-500" placeholder="What's your page about?" />
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-purple-400 mb-1">CATEGORY</label>
+                  <select value={newPage.category} onChange={(e) => setNewPage({ ...newPage, category: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500">
+                    {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                  </select>
+                </div>
+                <div className="flex gap-4">
+                  <button type="button" onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2 border border-purple-500/30 text-purple-300 font-mono rounded hover:bg-purple-500/10">CANCEL</button>
+                  <button type="submit" disabled={creating} className="flex-1 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50">
+                    {creating ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "CREATE"}
+                  </button>
+                </div>
+              </form>
+            </FuturisticFrame>
+          </div>
+        )}
+
+        {/* My Pages */}
+        <FuturisticFrame title="MY PAGES" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 text-pink-400 animate-spin" /></div>
+          ) : myPages.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="w-16 h-16 text-purple-400/30 mx-auto mb-4" />
+              <p className="text-purple-400/60 font-mono">You haven't created any pages yet</p>
+              <button onClick={() => setShowCreate(true)} className="mt-4 px-4 py-2 bg-pink-600 text-white font-mono rounded hover:bg-pink-700">Create Your First Page</button>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4">
+              {myPages.map((page) => (
+                <div key={page.id} onClick={() => navigate(`/pages/${page.id}`)} className="p-4 bg-purple-500/10 rounded-lg hover:bg-purple-500/20 cursor-pointer transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="w-14 h-14 bg-gradient-to-br from-pink-500/30 to-purple-500/30 rounded-lg flex items-center justify-center">
+                      <FileText className="w-7 h-7 text-pink-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-purple-300 font-mono font-bold">{page.name}</h3>
+                      <p className="text-purple-400/60 font-mono text-xs mt-1">{page.follower_count} followers • {page.category}</p>
+                      <p className="text-purple-400/40 font-mono text-xs mt-1 line-clamp-2">{page.description || "No description"}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </FuturisticFrame>
+
+        {/* Popular Pages */}
+        {popular.length > 0 && (
+          <FuturisticFrame title="POPULAR PAGES" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
+            <div className="grid md:grid-cols-2 gap-4">
+              {popular.filter(p => !myPages.find(m => m.id === p.id)).slice(0, 6).map((page) => (
+                <div key={page.id} className="p-4 bg-blue-500/10 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 cursor-pointer" onClick={() => navigate(`/pages/${page.id}`)}>
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500/30 to-purple-500/30 rounded-lg flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-blue-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-purple-300 font-mono font-bold">{page.name}</h3>
+                        <p className="text-purple-400/60 font-mono text-xs">{page.follower_count} followers</p>
+                      </div>
+                    </div>
+                    <button onClick={() => handleFollow(page.id)} className="px-3 py-1 bg-blue-600 text-white font-mono text-sm rounded hover:bg-blue-700">
+                      FOLLOW
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </FuturisticFrame>
+        )}
+      </div>
+    </Layout>
+  );
+};
+
+// Page Detail Page
+const PageDetailPage = () => {
+  const { pageId } = useParams();
+  const { user } = useAuth();
+  const [page, setPage] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [newPost, setNewPost] = useState('');
+  const [posting, setPosting] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => { if (pageId) fetchPage(); }, [pageId]);
+
+  const fetchPage = async () => {
+    try {
+      const res = await axios.get(`${API}/pages/${pageId}`);
+      setPage(res.data.page);
+      setPosts(res.data.posts || []);
+      setIsFollowing(res.data.is_following);
+    } catch (error) {
+      toast.error("Failed to load page");
+      navigate("/pages");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePost = async (e) => {
+    e.preventDefault();
+    if (!newPost.trim()) return;
+    setPosting(true);
+    try {
+      await axios.post(`${API}/pages/${pageId}/posts`, { content: newPost });
+      setNewPost('');
+      fetchPage();
+      toast.success("Post created!");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to post");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  const handleFollow = async () => {
+    try {
+      if (isFollowing) {
+        await axios.post(`${API}/pages/${pageId}/unfollow`);
+        toast.success("Unfollowed");
+      } else {
+        await axios.post(`${API}/pages/${pageId}/follow`);
+        toast.success("Now following!");
+      }
+      fetchPage();
+    } catch (error) {
+      toast.error("Failed to update follow status");
+    }
+  };
+
+  if (loading) return <Layout><div className="flex justify-center py-20"><Loader2 className="w-12 h-12 text-pink-400 animate-spin" /></div></Layout>;
+  if (!page) return <Layout><div className="text-center py-20 text-purple-400 font-mono">Page not found</div></Layout>;
+
+  const isAdmin = page.admins?.includes(user?.id);
+
+  return (
+    <Layout>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Page Header */}
+        <div className="bg-gradient-to-r from-pink-900/40 to-purple-900/40 rounded-xl p-6 border border-pink-500/30">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 bg-gradient-to-br from-pink-500/30 to-purple-500/30 rounded-xl flex items-center justify-center">
+                <FileText className="w-10 h-10 text-pink-400" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono">{page.name}</h1>
+                <p className="text-purple-400/60 font-mono text-sm">{page.follower_count} followers • {page.category}</p>
+                <p className="text-purple-300/80 font-mono text-sm mt-2">{page.description || "No description"}</p>
+              </div>
+            </div>
+            <button onClick={handleFollow} className={`px-4 py-2 font-mono rounded ${isFollowing ? 'border border-purple-500/50 text-purple-400 hover:bg-purple-500/10' : 'bg-pink-600 text-white hover:bg-pink-700'}`}>
+              {isFollowing ? 'FOLLOWING' : 'FOLLOW'}
+            </button>
+          </div>
+        </div>
+
+        {/* Create Post (Admin only) */}
+        {isAdmin && (
+          <FuturisticFrame title="CREATE POST" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+            <form onSubmit={handlePost} className="space-y-4">
+              <textarea value={newPost} onChange={(e) => setNewPost(e.target.value)} placeholder="Share an update with your followers..." className="w-full px-4 py-3 bg-slate-950 border border-purple-500/30 rounded-lg text-purple-300 font-mono h-24 focus:border-pink-500 resize-none" />
+              <button type="submit" disabled={posting || !newPost.trim()} className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2">
+                {posting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> POST</>}
+              </button>
+            </form>
+          </FuturisticFrame>
+        )}
+
+        {/* Posts */}
+        <div className="space-y-4">
+          {posts.length === 0 ? (
+            <div className="text-center py-12 bg-slate-900/50 rounded-lg border border-purple-500/20">
+              <MessageCircle className="w-16 h-16 text-purple-400/30 mx-auto mb-4" />
+              <p className="text-purple-400/60 font-mono">No posts yet.</p>
+            </div>
+          ) : (
+            posts.map((post) => (
+              <div key={post.id} className="p-4 bg-slate-900/80 rounded-lg border border-purple-500/20">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-pink-400" />
+                  </div>
+                  <div>
+                    <p className="text-purple-300 font-mono font-bold">{page.name}</p>
+                    <p className="text-purple-400/40 font-mono text-xs">{new Date(post.created_at).toLocaleString()}</p>
+                  </div>
+                </div>
+                <p className="text-purple-300/90 font-mono whitespace-pre-wrap">{post.content}</p>
+                <div className="flex items-center gap-4 mt-4 pt-3 border-t border-purple-500/20">
+                  <button className="flex items-center gap-2 text-purple-400/60 hover:text-pink-400 font-mono text-sm">
+                    <Heart className="w-4 h-4" /> {post.like_count || 0}
+                  </button>
+                  <button className="flex items-center gap-2 text-purple-400/60 hover:text-blue-400 font-mono text-sm">
+                    <MessageCircle className="w-4 h-4" /> {post.comment_count || 0}
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </Layout>
+  );
+};
+
 // Admin Page
 const AdminPage = () => {
   const { user } = useAuth();
