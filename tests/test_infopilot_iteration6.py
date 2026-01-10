@@ -244,12 +244,12 @@ class TestGroupsFeature:
             })
         group_id = create_response.json()["group"]["id"]
         
-        # Get group detail
+        # Get group detail - response is nested under "group" key
         detail_response = requests.get(f"{BASE_URL}/api/groups/{group_id}",
             headers={"Authorization": f"Bearer {auth_token}"})
         assert detail_response.status_code == 200
         data = detail_response.json()
-        assert data["name"] == unique_name
+        assert data["group"]["name"] == unique_name
 
 
 class TestPagesFeature:
