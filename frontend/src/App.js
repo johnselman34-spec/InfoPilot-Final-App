@@ -5697,7 +5697,10 @@ const AdminPage = () => {
         ...prev,
         regular_price: res.data.regular_price || 4.62,
         min_price: res.data.min_price || 0.01,
+        max_price: res.data.max_price || 100,
+        preset_amounts: res.data.preset_amounts || "1.00, 2.00, 4.62, 10.00",
         promo_end_date: res.data.promo_end_date?.split("T")[0] || "2026-03-02",
+        promo_message: res.data.promo_message || "Pay What You Want - Limited Time!",
         paypal_link_1: res.data.paypal_link_1 || "",
         paypal_link_2: res.data.paypal_link_2 || ""
       }));
@@ -5721,12 +5724,15 @@ const AdminPage = () => {
       const params = new URLSearchParams();
       params.append("regular_price", subscriptionConfig.regular_price);
       params.append("min_price", subscriptionConfig.min_price);
+      params.append("max_price", subscriptionConfig.max_price || 100);
+      params.append("preset_amounts", subscriptionConfig.preset_amounts || "1.00, 2.00, 4.62, 10.00");
       params.append("promo_end_date", subscriptionConfig.promo_end_date);
+      params.append("promo_message", subscriptionConfig.promo_message || "Pay What You Want - Limited Time!");
       if (subscriptionConfig.paypal_link_1) params.append("paypal_link_1", subscriptionConfig.paypal_link_1);
       if (subscriptionConfig.paypal_link_2) params.append("paypal_link_2", subscriptionConfig.paypal_link_2);
       
       await axios.put(`${API}/admin/subscription/config?${params.toString()}`);
-      toast.success("Subscription settings updated!");
+      toast.success("Subscription pricing settings saved!");
     } catch (error) {
       toast.error("Failed to save subscription settings");
     } finally {
