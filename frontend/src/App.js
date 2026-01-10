@@ -3997,6 +3997,24 @@ const SubscribePage = () => {
     }
   }, [paymentPending]);
 
+  // Initialize PayPal Hosted Button
+  useEffect(() => {
+    if (!showRecordPayment && window.paypal) {
+      const container = document.getElementById('paypal-container-765S46VPPEP5C');
+      if (container && container.children.length === 0) {
+        try {
+          window.paypal.HostedButtons({
+            hostedButtonId: "765S46VPPEP5C",
+          }).render("#paypal-container-765S46VPPEP5C").catch(err => {
+            console.log("PayPal button render info:", err);
+          });
+        } catch (e) {
+          console.log("PayPal SDK not fully loaded yet");
+        }
+      }
+    }
+  }, [showRecordPayment, loading]);
+
   const fetchConfig = async () => {
     try {
       const res = await axios.get(`${API}/subscription/config`);
