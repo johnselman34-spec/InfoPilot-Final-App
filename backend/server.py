@@ -985,15 +985,22 @@ class InfoPilot2Parser:
         def phrase_matches(phrase: str, text: str) -> bool:
             """Check if a phrase/word matches in text using word boundaries.
             Handles multi-word phrases like 'William C. Gamble' as complete phrases.
+            Uses simple string operations first for speed, then regex for edge cases.
             """
             phrase_lower = phrase.lower().strip()
-            # Escape special regex characters in the phrase
+            
+            # Quick check: if phrase not in text at all, skip regex
+            if phrase_lower not in text:
+                return False
+            
+            # For single words without special chars, use simple word boundary check
+            if ' ' not in phrase_lower and '.' not in phrase_lower:
+                # Check if it's a whole word match using split
+                words_in_text = set(re.findall(r'\b\w+\b', text))
+                return phrase_lower in words_in_text
+            
+            # For multi-word phrases or phrases with punctuation, use regex
             escaped_phrase = re.escape(phrase_lower)
-            # Use word boundary for whole phrase matching
-            # \b doesn't work well with punctuation, so we use a more flexible pattern
-            # This matches the phrase when it's:
-            # - At start/end of string
-            # - Surrounded by whitespace or punctuation
             pattern = r'(?:^|[\s\.,;:!?\-\(\)\[\]"])' + escaped_phrase + r'(?:[\s\.,;:!?\-\(\)\[\]"]|$)'
             return bool(re.search(pattern, text))
         
