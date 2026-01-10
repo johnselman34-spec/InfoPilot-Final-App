@@ -755,6 +755,7 @@ class AdminSettingsUpdate(BaseModel):
     phd_keyword_count: Optional[int] = None
     blog_keyword_count: Optional[int] = None
     max_search_results: Optional[int] = None
+    user_max_results_limit: Optional[int] = None  # Max results per user's database
 
 class AdminSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -769,6 +770,7 @@ class AdminSettings(BaseModel):
     phd_keyword_count: int = 3
     blog_keyword_count: int = 3
     max_search_results: int = 120  # 6 pages * 20 results per page
+    user_max_results_limit: int = 4000  # Max results stored per user's database (default 4000)
 
 # Payment Models (Stripe Integration)
 class PaymentRequest(BaseModel):
