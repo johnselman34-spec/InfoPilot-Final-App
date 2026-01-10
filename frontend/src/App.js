@@ -4174,6 +4174,22 @@ const UltimateSearchPage = () => {
                               <span key={idx} className="px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs rounded font-mono">{name}</span>
                             ))}
                           </div>
+                          {/* Hashtags Section - Clickable for search */}
+                          {result.hashtags && result.hashtags.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-purple-500/10">
+                              {result.hashtags.map((hashtag, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => handleHashtagSearch(hashtag)}
+                                  className="px-2 py-0.5 bg-cyan-500/10 text-cyan-400 text-xs rounded font-mono hover:bg-cyan-500/20 hover:text-cyan-300 transition-colors"
+                                  title={`Search for ${hashtag}`}
+                                  data-testid={`hashtag-${hashtag.replace('#', '')}`}
+                                >
+                                  {hashtag}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                           {/* Reactions & Comments for Search Results */}
                           <div className="flex items-center gap-4 mt-3 pt-3 border-t border-purple-500/20">
                             <ReactionButton
