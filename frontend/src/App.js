@@ -689,16 +689,72 @@ function CategoriesPage() {
   );
 }
 
-// Map Page
+// Map Page with Leaflet
 function MapPage() {
   const { user } = useAuth();
   const [markers, setMarkers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMarker, setSelectedMarker] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const mapRef = useRef(null);
+
+  // Category color mapping
+  const categoryColors = [
+    '#2196F3', '#4CAF50', '#FF9800', '#f44336', '#9C27B0', 
+    '#00BCD4', '#795548', '#607D8B', '#E91E63', '#3F51B5'
+  ];
 
   useEffect(() => {
-    api.get('/map-data').then(data => setMarkers(data.markers || [])).catch(() => {}).finally(() => setLoading(false));
+    loadData();
   }, []);
+
+  useEffect(() => {
+    // Reload markers when categories change
+    if (selectedCategories.length > 0) {
+      loadMapMarkers();
+    }
+  }, [selectedCategories]);
+
+  const loadData = async () => {
+    try {
+      const [markersData, catsData] = await Promise.all([
+        api.get('/map-data'),
+        api.get('/categories')
+      ]);
+      setMarkers(markersData.markers || []);
+      setCategories(catsData || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadMapMarkers = async () => {
+    try {
+      const params = selectedCategories.length > 0 
+        ? { category_ids: selectedCategories.join(',') }
+        : {};
+      const data = await api.get('/map-data', params);
+      setMarkers(data.markers || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const toggleCategory = (catId) => {
+    setSelectedCategories(prev => 
+      prev.includes(catId) 
+        ? prev.filter(id => id !== catId)
+        : [...prev, catId]
+    );
+  };
+
+  const getCategoryColor = (categoryName) => {
+    const idx = categories.findIndex(c => c.name === categoryName);
+    return categoryColors[idx % categoryColors.length];
+  };
 
   if (!user?.is_paid) {
     return (
@@ -720,48 +776,158 @@ function MapPage() {
     <>
       <div className="page-header"><h1><Icons.Map /> World Map</h1></div>
       <div className="page-content">
-        {loading ? <div className="loading"><div className="spinner"/></div> :
-          markers.length === 0 ? (
-            <div className="empty-state">
-              <Icons.Location />
-              <h3>No Location Data Yet</h3>
-              <p>Search and collate web content to see location markers on the map. Location data is automatically extracted from articles when available.</p>
+        {/* Category Filters */}
+        {categories.length > 0 && (
+          <div className="category-chips" style={{marginBottom: 16}}>
+            {categories.map((cat, idx) => (
+              <span 
+                key={cat.id} 
+                className={`chip ${selectedCategories.includes(cat.id) ? 'chip-selected' : 'chip-default'}`}
+                style={{
+                  borderLeft: `4px solid ${categoryColors[idx % categoryColors.length]}`,
+                }}
+                onClick={() => toggleCategory(cat.id)}
+              >
+                {cat.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {loading ? <div className="loading"><div className="spinner"/></div> : (
+          <>
+            {/* Leaflet Map */}
+            <div style={{ height: '400px', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px', border: '1px solid #E0E0E0' }}>
+              <MapContainer 
+                center={[20, 0]} 
+                zoom={2} 
+                style={{ height: '100%', width: '100%' }}
+                ref={mapRef}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {markers.filter(m => m.latitude && m.longitude).map((marker, idx) => (
+                  <Marker 
+                    key={marker.id || idx}
+                    position={[marker.latitude, marker.longitude]}
+                    icon={createColoredMarkerIcon(getCategoryColor(marker.categories?.[0] || 'default'))}
+                    eventHandlers={{
+                      click: () => setSelectedMarker(marker)
+                    }}
+                  >
+                    <Popup>
+                      <div style={{ maxWidth: '250px' }}>
+                        <strong>{marker.title}</strong>
+                        <p style={{ fontSize: '12px', color: '#666', margin: '8px 0' }}>{marker.snippet?.substring(0, 100)}...</p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                          {marker.categories?.slice(0, 3).map((cat, i) => (
+                            <span key={i} style={{
+                              background: getCategoryColor(cat),
+                              color: 'white',
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              fontSize: '10px'
+                            }}>{cat}</span>
+                          ))}
+                        </div>
+                        <a href={marker.url} target="_blank" rel="noopener noreferrer" style={{ color: '#2196F3', fontSize: '12px' }}>
+                          Open Article →
+                        </a>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
             </div>
-          ) : (
-            <>
-              <div className="map-placeholder">
-                <h3>World Map View</h3>
-                <p>{markers.length} locations found</p>
+
+            {/* Stats */}
+            <div className="stats-bar" style={{marginBottom: 20}}>
+              <div className="stat-item">
+                <div className="value">{markers.filter(m => m.latitude).length}</div>
+                <div className="label">Locations</div>
               </div>
-              <div className="section-title">Location Markers</div>
-              {markers.map(marker => (
-                <div key={marker.id} className="marker-card" onClick={() => setSelectedMarker(marker)}>
-                  <div className="marker-icon"><Icons.Location /></div>
-                  <div className="marker-info">
-                    <div className="marker-title">{marker.title}</div>
-                    <div className="marker-coords">{marker.latitude?.toFixed(4)}, {marker.longitude?.toFixed(4)}</div>
-                    <div className="result-categories">{marker.categories?.slice(0, 2).map((cat, idx) => <span key={idx} className="badge badge-primary">{cat}</span>)}</div>
+              <div className="stat-item">
+                <div className="value">{markers.length}</div>
+                <div className="label">Total Results</div>
+              </div>
+              <div className="stat-item">
+                <div className="value">{new Set(markers.flatMap(m => m.categories || [])).size}</div>
+                <div className="label">Categories</div>
+              </div>
+            </div>
+
+            {/* Results List */}
+            {markers.length === 0 ? (
+              <div className="empty-state">
+                <Icons.Location />
+                <h3>No Location Data Yet</h3>
+                <p>Search and collate web content to see location markers on the map. Location data is automatically extracted from articles when available.</p>
+              </div>
+            ) : (
+              <>
+                <div className="section-title">Location Results ({markers.length})</div>
+                {markers.slice(0, 20).map((marker, idx) => (
+                  <div key={marker.id || idx} className="marker-card" onClick={() => {
+                    setSelectedMarker(marker);
+                    if (marker.latitude && marker.longitude && mapRef.current) {
+                      // Zoom to marker
+                    }
+                  }}>
+                    <div className="marker-icon" style={{background: marker.latitude ? getCategoryColor(marker.categories?.[0]) : '#ccc'}}>
+                      <Icons.Location />
+                    </div>
+                    <div className="marker-info">
+                      <div className="marker-title">{marker.title}</div>
+                      {marker.latitude && marker.longitude ? (
+                        <div className="marker-coords">{marker.latitude?.toFixed(4)}, {marker.longitude?.toFixed(4)}</div>
+                      ) : (
+                        <div className="marker-coords" style={{color: '#999'}}>No coordinates available</div>
+                      )}
+                      <div className="result-categories">
+                        {marker.categories?.slice(0, 2).map((cat, i) => (
+                          <span key={i} className="badge badge-primary" style={{background: getCategoryColor(cat)}}>{cat}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <a href={marker.url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} style={{color: '#2196F3'}}>
+                      <Icons.ExternalLink />
+                    </a>
                   </div>
-                </div>
-              ))}
-            </>
-          )
-        }
+                ))}
+              </>
+            )}
+          </>
+        )}
       </div>
 
       {selectedMarker && (
         <div className="modal-overlay" onClick={() => setSelectedMarker(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{textAlign: 'center'}}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{maxWidth: '500px'}}>
             <button className="modal-close" onClick={() => setSelectedMarker(null)} style={{position: 'absolute', right: 12, top: 12}}><Icons.X /></button>
-            <div style={{color: '#f44336', marginBottom: 12}}><Icons.Location style={{width: 48, height: 48}}/></div>
-            <h3>{selectedMarker.title}</h3>
-            <p style={{color: '#666', fontSize: 12, marginTop: 8}}>Lat: {selectedMarker.latitude?.toFixed(6)}, Long: {selectedMarker.longitude?.toFixed(6)}</p>
-            <div style={{display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginTop: 12}}>
-              {selectedMarker.categories?.map((cat, idx) => <span key={idx} className="badge badge-primary">{cat}</span>)}
+            <div style={{textAlign: 'center', paddingTop: 20}}>
+              <div style={{color: getCategoryColor(selectedMarker.categories?.[0]), marginBottom: 12}}>
+                <Icons.Location style={{width: 48, height: 48}}/>
+              </div>
+              <h3>{selectedMarker.title}</h3>
+              {selectedMarker.latitude && selectedMarker.longitude && (
+                <p style={{color: '#666', fontSize: 12, marginTop: 8}}>
+                  📍 {selectedMarker.latitude?.toFixed(6)}, {selectedMarker.longitude?.toFixed(6)}
+                </p>
+              )}
+              <p style={{fontSize: 14, color: '#666', margin: '12px 0', lineHeight: 1.5}}>
+                {selectedMarker.snippet}
+              </p>
+              <div style={{display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginTop: 12}}>
+                {selectedMarker.categories?.map((cat, idx) => (
+                  <span key={idx} className="badge badge-primary" style={{background: getCategoryColor(cat)}}>{cat}</span>
+                ))}
+              </div>
+              <a href={selectedMarker.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{marginTop: 20, width: 'auto', display: 'inline-flex'}}>
+                <Icons.ExternalLink /> Open Article
+              </a>
             </div>
-            <a href={selectedMarker.url} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{marginTop: 20, width: 'auto', display: 'inline-flex'}}>
-              <Icons.ExternalLink /> Open Article
-            </a>
           </div>
         </div>
       )}
