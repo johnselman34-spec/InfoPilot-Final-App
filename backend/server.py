@@ -47,6 +47,13 @@ STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
 stripe.api_key = STRIPE_SECRET_KEY
 
+# Shopify Configuration
+SHOPIFY_API_KEY = os.environ.get('SHOPIFY_API_KEY', '')
+SHOPIFY_API_SECRET = os.environ.get('SHOPIFY_API_SECRET', '')
+SHOPIFY_STORE_DOMAIN = os.environ.get('SHOPIFY_STORE_DOMAIN', '')
+SHOPIFY_PRODUCT_ID = os.environ.get('SHOPIFY_PRODUCT_ID', '')
+SHOPIFY_PRODUCT_URL = os.environ.get('SHOPIFY_PRODUCT_URL', '')
+
 # Emergent LLM Configuration
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
 
@@ -55,7 +62,7 @@ GOOGLE_SEARCH_API_KEY = os.environ.get('GOOGLE_SEARCH_API_KEY', '')
 GOOGLE_SEARCH_CX = os.environ.get('GOOGLE_SEARCH_CX', '')
 
 # Create the main app without a prefix
-app = FastAPI(title="InfoPilot API", version="2.0.0")
+app = FastAPI(title="InfoPilot Explorer API", version="2.0.0")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
