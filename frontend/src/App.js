@@ -4170,8 +4170,17 @@ const UltimateSearchPage = () => {
                               <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded font-mono">{result.document_type}</span>
                             )}
                             <span className="px-2 py-0.5 bg-slate-800 text-purple-400/60 text-xs rounded font-mono">{result.domain}</span>
-                            {result.category_names?.map((name, idx) => (
-                              <span key={idx} className="px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs rounded font-mono">{name}</span>
+                            {/* Clickable Category Names */}
+                            {result.categories?.map((catId, idx) => (
+                              <button
+                                key={catId}
+                                onClick={() => handleCategoryFilter(catId, result.category_names?.[idx] || 'Category')}
+                                className="px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs rounded font-mono hover:bg-purple-500/30 hover:text-pink-400 cursor-pointer transition-colors"
+                                title={`Click to filter by "${result.category_names?.[idx] || 'Category'}"`}
+                                data-testid={`result-category-${catId}`}
+                              >
+                                {result.category_names?.[idx] || 'Category'}
+                              </button>
                             ))}
                           </div>
                           {/* Hashtags Section - Clickable for search */}
