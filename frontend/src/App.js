@@ -694,13 +694,6 @@ function MapPage() {
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const mapRef = useRef(null);
-
-  // Category color mapping
-  const categoryColors = [
-    '#2196F3', '#4CAF50', '#FF9800', '#f44336', '#9C27B0', 
-    '#00BCD4', '#795548', '#607D8B', '#E91E63', '#3F51B5'
-  ];
 
   useEffect(() => {
     loadData();
