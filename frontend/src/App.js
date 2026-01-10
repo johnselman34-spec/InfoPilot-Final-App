@@ -146,6 +146,124 @@ const AuthProvider = ({ children }) => {
   );
 };
 
+// Badge Notification Component - Shows when user earns new badges
+const BadgeNotificationProvider = ({ children }) => {
+  const { user, token } = useAuth();
+  const [notification, setNotification] = useState(null);
+  const [showNotification, setShowNotification] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && token) {
+      checkForNewBadges();
+      // Check periodically
+      const interval = setInterval(checkForNewBadges, 60000); // Every minute
+      return () => clearInterval(interval);
+    }
+  }, [user, token]);
+
+  const checkForNewBadges = async () => {
+    try {
+      const res = await axios.post(`${API}/badges/check-new`);
+      if (res.data.has_new_badges && res.data.new_badges.length > 0) {
+        setNotification(res.data);
+        setShowNotification(true);
+      }
+    } catch (error) {
+      // Silently fail - badge notifications are non-critical
+    }
+  };
+
+  const dismissNotification = () => {
+    setShowNotification(false);
+    setTimeout(() => setNotification(null), 500);
+  };
+
+  return (
+    <>
+      {children}
+      
+      {/* Badge Notification Modal */}
+      {showNotification && notification && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4 animate-fadeIn">
+          <div className="bg-gradient-to-br from-slate-900 via-purple-900/50 to-slate-900 border-2 border-yellow-500/50 rounded-2xl max-w-md w-full p-6 shadow-2xl shadow-yellow-500/20 animate-scaleIn">
+            {/* Confetti effect */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl">
+              {[...Array(20)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-2 h-2 rounded-full animate-confetti"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    backgroundColor: ['#ec4899', '#8b5cf6', '#eab308', '#22c55e', '#3b82f6'][i % 5],
+                    animationDelay: `${Math.random() * 0.5}s`,
+                    animationDuration: `${1 + Math.random()}s`
+                  }}
+                />
+              ))}
+            </div>
+            
+            {/* Header */}
+            <div className="text-center mb-6 relative">
+              <div className="text-6xl mb-4 animate-bounce">🎉</div>
+              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 font-mono">
+                BADGE UNLOCKED!
+              </h2>
+            </div>
+            
+            {/* Badges */}
+            <div className="flex flex-wrap justify-center gap-4 mb-6">
+              {notification.new_badges.map((badge) => (
+                <div key={badge.id} className="text-center p-4 bg-slate-950 rounded-xl border border-yellow-500/30">
+                  <span className="text-5xl block mb-2">{badge.icon}</span>
+                  <p className="text-yellow-400 font-mono font-bold text-sm">{badge.name}</p>
+                  <p className="text-purple-400/60 font-mono text-xs mt-1">{badge.description}</p>
+                </div>
+              ))}
+            </div>
+            
+            {/* Promotional Message */}
+            {notification.promotional_message && (
+              <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 p-4 rounded-lg border border-pink-500/30 mb-4">
+                <p className="text-purple-300 font-mono text-sm text-center">
+                  {notification.promotional_message}
+                </p>
+              </div>
+            )}
+            
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { dismissNotification(); navigate('/subscribe'); }}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-mono font-bold rounded-lg hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
+                >
+                  <Crown className="w-5 h-5" /> SUBSCRIBE
+                </button>
+                <a
+                  href={notification.book_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={dismissNotification}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono font-bold rounded-lg hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
+                >
+                  <Book className="w-5 h-5" /> GET THE BOOK
+                </a>
+              </div>
+              <button
+                onClick={dismissNotification}
+                className="w-full px-4 py-2 text-purple-400/60 hover:text-purple-300 font-mono text-sm"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
 // Protected Route
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
