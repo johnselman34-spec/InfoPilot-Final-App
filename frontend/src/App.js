@@ -2626,11 +2626,7 @@ const MarketplacePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       if (activeTab === "browse") {
@@ -2648,7 +2644,11 @@ const MarketplacePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handlePurchase = async (protocolId) => {
     if (!window.confirm("Confirm purchase? You will be able to view and copy this protocol after payment.")) return;
