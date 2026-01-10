@@ -3372,9 +3372,9 @@ async def add_reaction(post_type: str, post_id: str, data: ReactionCreate, user:
         "update": db.updates,
         "search_result": db.search_results
     }
-    collection = collection_map.get(post_type)
-    if not collection:
+    if post_type not in collection_map:
         raise HTTPException(status_code=400, detail="Invalid post type")
+    collection = collection_map[post_type]
     
     post = await collection.find_one({"id": post_id})
     if not post:
