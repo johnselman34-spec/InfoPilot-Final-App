@@ -3952,6 +3952,8 @@ const UltimateSearchPage = () => {
                         onToggle={toggleCategory}
                         currentUserId={user?.id}
                         onSuggestChange={handleSuggestChangeClick}
+                        onCategoryClick={handleCategoryFilter}
+                        onClearCategory={handleClearCategoryResults}
                       />
                       {/* Add subcategory button for root categories */}
                       <button
