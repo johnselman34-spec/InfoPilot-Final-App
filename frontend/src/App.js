@@ -3790,6 +3790,89 @@ const UltimateSearchPage = () => {
           )}
         </FuturisticFrame>
         
+        {/* Database Stats & Data Management Section */}
+        <FuturisticFrame title="📊 DATABASE STATS & MANAGEMENT" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
+          <div className="space-y-4">
+            {/* Stats Display */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-slate-950 p-4 rounded border border-purple-500/30">
+                <p className="text-purple-400/60 font-mono text-xs">STORED RESULTS</p>
+                <p className="text-2xl font-mono text-purple-300">{dbStats.current_count.toLocaleString()}</p>
+              </div>
+              <div className="bg-slate-950 p-4 rounded border border-pink-500/30">
+                <p className="text-pink-400/60 font-mono text-xs">LIMIT</p>
+                <p className="text-2xl font-mono text-pink-300">{dbStats.max_allowed.toLocaleString()}</p>
+              </div>
+              <div className="bg-slate-950 p-4 rounded border border-green-500/30">
+                <p className="text-green-400/60 font-mono text-xs">REMAINING</p>
+                <p className="text-2xl font-mono text-green-300">{dbStats.remaining.toLocaleString()}</p>
+              </div>
+              <div className="bg-slate-950 p-4 rounded border border-yellow-500/30">
+                <p className="text-yellow-400/60 font-mono text-xs">USAGE</p>
+                <p className="text-2xl font-mono text-yellow-300">{dbStats.percentage_used}%</p>
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="relative h-4 bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className={`absolute left-0 top-0 h-full rounded-full transition-all ${
+                  dbStats.percentage_used > 90 ? 'bg-red-500' : 
+                  dbStats.percentage_used > 70 ? 'bg-yellow-500' : 'bg-green-500'
+                }`}
+                style={{ width: `${Math.min(dbStats.percentage_used, 100)}%` }}
+              />
+            </div>
+            
+            {/* Warning if near limit */}
+            {dbStats.percentage_used > 80 && (
+              <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
+                <AlertTriangle className="w-5 h-5 text-yellow-400" />
+                <p className="text-yellow-400 font-mono text-sm">
+                  {dbStats.percentage_used > 95 
+                    ? "Database almost full! Clear some results to continue collating."
+                    : "Database filling up. Consider clearing old results."
+                  }
+                </p>
+              </div>
+            )}
+            
+            {/* Clear All Button */}
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={handleClearAllResults}
+                disabled={dbStats.current_count === 0}
+                className="px-4 py-2 bg-red-500/20 border border-red-500/30 text-red-400 font-mono text-sm rounded hover:bg-red-500/30 disabled:opacity-50 flex items-center gap-2"
+                data-testid="clear-all-results-btn"
+              >
+                <Trash2 className="w-4 h-4" /> CLEAR ALL RESULTS ({dbStats.current_count})
+              </button>
+              <button
+                onClick={fetchDbStats}
+                className="px-4 py-2 bg-blue-500/20 border border-blue-500/30 text-blue-400 font-mono text-sm rounded hover:bg-blue-500/30 flex items-center gap-2"
+              >
+                <BarChart3 className="w-4 h-4" /> REFRESH STATS
+              </button>
+            </div>
+          </div>
+        </FuturisticFrame>
+        
+        {/* Category Filter Active Banner */}
+        {filterByCategoryId && (
+          <div className="flex items-center justify-between p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-cyan-400" />
+              <span className="text-cyan-300 font-mono">Filtering by category: <strong>{filterByCategoryName}</strong></span>
+            </div>
+            <button
+              onClick={clearCategoryFilter}
+              className="px-3 py-1 bg-cyan-500/20 text-cyan-400 font-mono text-sm rounded hover:bg-cyan-500/30 flex items-center gap-2"
+            >
+              <X className="w-4 h-4" /> Clear Filter
+            </button>
+          </div>
+        )}
+        
         {/* Updates Section - Facebook-like Posts */}
         <UpdatesSection />
         
