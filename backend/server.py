@@ -3356,6 +3356,305 @@ async def create_page_post(page_id: str, data: GroupPostCreate, user: dict = Dep
     return {"message": "Post created", "post": {k: v for k, v in post.items() if k != "_id"}}
 
 # ============================================
+# API ROUTES - REACTIONS & COMMENTS (Facebook-style)
+# ============================================
+
+@api_router.post("/posts/{post_type}/{post_id}/reactions")
+async def add_reaction(post_type: str, post_id: str, data: ReactionCreate, user: dict = Depends(require_user)):
+    """Add a reaction to a post (group, page, update, or search_result)"""
+    if data.reaction_type not in REACTION_TYPES:
+        raise HTTPException(status_code=400, detail=f"Invalid reaction type. Must be one of: {REACTION_TYPES}")
+    
+    # Determine collection based on post type
+    collection_map = {
+        "group": db.group_posts,
+        "page": db.page_posts,
+        "update": db.updates,
+        "search_result": db.search_results
+    }
+    collection = collection_map.get(post_type)
+    if not collection:
+        raise HTTPException(status_code=400, detail="Invalid post type")
+    
+    post = await collection.find_one({"id": post_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    # Initialize reactions dict if not exists
+    reactions = post.get("reactions", {})
+    
+    # Remove user from all other reaction types first
+    for rtype in REACTION_TYPES:
+        if rtype in reactions and user["id"] in reactions[rtype]:
+            reactions[rtype].remove(user["id"])
+    
+    # Add user to new reaction type
+    if data.reaction_type not in reactions:
+        reactions[data.reaction_type] = []
+    if user["id"] not in reactions[data.reaction_type]:
+        reactions[data.reaction_type].append(user["id"])
+    
+    # Calculate counts
+    reaction_counts = {rtype: len(reactions.get(rtype, [])) for rtype in REACTION_TYPES}
+    total_reactions = sum(reaction_counts.values())
+    
+    await collection.update_one(
+        {"id": post_id},
+        {"$set": {"reactions": reactions, "reaction_counts": reaction_counts, "total_reactions": total_reactions}}
+    )
+    
+    return {"message": "Reaction added", "reactions": reactions, "reaction_counts": reaction_counts, "user_reaction": data.reaction_type}
+
+@api_router.delete("/posts/{post_type}/{post_id}/reactions")
+async def remove_reaction(post_type: str, post_id: str, user: dict = Depends(require_user)):
+    """Remove user's reaction from a post"""
+    collection_map = {
+        "group": db.group_posts,
+        "page": db.page_posts,
+        "update": db.updates,
+        "search_result": db.search_results
+    }
+    collection = collection_map.get(post_type)
+    if not collection:
+        raise HTTPException(status_code=400, detail="Invalid post type")
+    
+    post = await collection.find_one({"id": post_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    reactions = post.get("reactions", {})
+    
+    # Remove user from all reaction types
+    for rtype in REACTION_TYPES:
+        if rtype in reactions and user["id"] in reactions[rtype]:
+            reactions[rtype].remove(user["id"])
+    
+    reaction_counts = {rtype: len(reactions.get(rtype, [])) for rtype in REACTION_TYPES}
+    total_reactions = sum(reaction_counts.values())
+    
+    await collection.update_one(
+        {"id": post_id},
+        {"$set": {"reactions": reactions, "reaction_counts": reaction_counts, "total_reactions": total_reactions}}
+    )
+    
+    return {"message": "Reaction removed", "reactions": reactions, "reaction_counts": reaction_counts}
+
+@api_router.get("/posts/{post_type}/{post_id}/reactions")
+async def get_reactions(post_type: str, post_id: str, user: dict = Depends(require_user)):
+    """Get reactions for a post"""
+    collection_map = {
+        "group": db.group_posts,
+        "page": db.page_posts,
+        "update": db.updates,
+        "search_result": db.search_results
+    }
+    collection = collection_map.get(post_type)
+    if not collection:
+        raise HTTPException(status_code=400, detail="Invalid post type")
+    
+    post = await collection.find_one({"id": post_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    reactions = post.get("reactions", {})
+    reaction_counts = post.get("reaction_counts", {})
+    
+    # Find user's reaction
+    user_reaction = None
+    for rtype in REACTION_TYPES:
+        if rtype in reactions and user["id"] in reactions[rtype]:
+            user_reaction = rtype
+            break
+    
+    return {"reactions": reactions, "reaction_counts": reaction_counts, "user_reaction": user_reaction}
+
+# ============================================
+# API ROUTES - COMMENTS WITH NESTED REPLIES
+# ============================================
+
+@api_router.post("/posts/{post_type}/{post_id}/comments")
+async def add_comment(post_type: str, post_id: str, data: CommentCreate, user: dict = Depends(require_user)):
+    """Add a comment to a post or reply to another comment"""
+    collection_map = {
+        "group": db.group_posts,
+        "page": db.page_posts,
+        "update": db.updates,
+        "search_result": db.search_results
+    }
+    collection = collection_map.get(post_type)
+    if not collection:
+        raise HTTPException(status_code=400, detail="Invalid post type")
+    
+    post = await collection.find_one({"id": post_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    comment = {
+        "id": str(uuid.uuid4()),
+        "post_id": post_id,
+        "post_type": post_type,
+        "user_id": user["id"],
+        "username": user["username"],
+        "content": data.content,
+        "parent_id": data.parent_id,  # For nested replies
+        "reactions": {},
+        "reaction_counts": {},
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.comments.insert_one(comment)
+    
+    # Update comment count on post
+    await collection.update_one(
+        {"id": post_id},
+        {"$inc": {"comment_count": 1}}
+    )
+    
+    return {"message": "Comment added", "comment": {k: v for k, v in comment.items() if k != "_id"}}
+
+@api_router.get("/posts/{post_type}/{post_id}/comments")
+async def get_comments(post_type: str, post_id: str, user: dict = Depends(require_user)):
+    """Get all comments for a post with nested structure"""
+    comments = await db.comments.find(
+        {"post_id": post_id, "post_type": post_type},
+        {"_id": 0}
+    ).sort("created_at", 1).to_list(500)
+    
+    # Build nested structure
+    comment_map = {c["id"]: {**c, "replies": []} for c in comments}
+    root_comments = []
+    
+    for comment in comments:
+        if comment.get("parent_id") and comment["parent_id"] in comment_map:
+            comment_map[comment["parent_id"]]["replies"].append(comment_map[comment["id"]])
+        else:
+            root_comments.append(comment_map[comment["id"]])
+    
+    return {"comments": root_comments, "total_count": len(comments)}
+
+@api_router.delete("/comments/{comment_id}")
+async def delete_comment(comment_id: str, user: dict = Depends(require_user)):
+    """Delete a comment (owner only)"""
+    comment = await db.comments.find_one({"id": comment_id})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    if comment["user_id"] != user["id"] and not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Not authorized to delete this comment")
+    
+    # Delete comment and all its replies
+    await db.comments.delete_many({"$or": [{"id": comment_id}, {"parent_id": comment_id}]})
+    
+    # Update comment count on post
+    collection_map = {
+        "group": db.group_posts,
+        "page": db.page_posts,
+        "update": db.updates,
+        "search_result": db.search_results
+    }
+    collection = collection_map.get(comment["post_type"])
+    if collection:
+        await collection.update_one(
+            {"id": comment["post_id"]},
+            {"$inc": {"comment_count": -1}}
+        )
+    
+    return {"message": "Comment deleted"}
+
+@api_router.post("/comments/{comment_id}/reactions")
+async def add_comment_reaction(comment_id: str, data: ReactionCreate, user: dict = Depends(require_user)):
+    """Add a reaction to a comment"""
+    if data.reaction_type not in REACTION_TYPES:
+        raise HTTPException(status_code=400, detail=f"Invalid reaction type")
+    
+    comment = await db.comments.find_one({"id": comment_id})
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    
+    reactions = comment.get("reactions", {})
+    
+    # Remove user from all other reaction types
+    for rtype in REACTION_TYPES:
+        if rtype in reactions and user["id"] in reactions[rtype]:
+            reactions[rtype].remove(user["id"])
+    
+    # Add user to new reaction type
+    if data.reaction_type not in reactions:
+        reactions[data.reaction_type] = []
+    if user["id"] not in reactions[data.reaction_type]:
+        reactions[data.reaction_type].append(user["id"])
+    
+    reaction_counts = {rtype: len(reactions.get(rtype, [])) for rtype in REACTION_TYPES}
+    
+    await db.comments.update_one(
+        {"id": comment_id},
+        {"$set": {"reactions": reactions, "reaction_counts": reaction_counts}}
+    )
+    
+    return {"message": "Reaction added", "reactions": reactions, "reaction_counts": reaction_counts}
+
+# ============================================
+# API ROUTES - UPDATES (User Posts on Ultimate Search Page)
+# ============================================
+
+@api_router.get("/updates")
+async def get_user_updates(user: dict = Depends(require_user)):
+    """Get updates/posts from the user's Ultimate Search page"""
+    updates = await db.updates.find(
+        {"user_id": user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(50).to_list(50)
+    
+    return {"updates": updates}
+
+@api_router.get("/updates/{user_id}/public")
+async def get_public_updates(user_id: str, user: dict = Depends(require_user)):
+    """Get public updates from any user's Ultimate Search page"""
+    updates = await db.updates.find(
+        {"user_id": user_id, "visibility": "public"},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(50).to_list(50)
+    
+    target_user = await db.users.find_one({"id": user_id}, {"_id": 0, "username": 1, "page_name": 1})
+    
+    return {"updates": updates, "user": target_user}
+
+@api_router.post("/updates")
+async def create_update(data: UpdateCreate, user: dict = Depends(require_user)):
+    """Create an update/post on user's Ultimate Search page"""
+    update = {
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "username": user["username"],
+        "content": data.content,
+        "image_url": data.image_url,
+        "visibility": "public",
+        "reactions": {},
+        "reaction_counts": {},
+        "total_reactions": 0,
+        "comment_count": 0,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.updates.insert_one(update)
+    return {"message": "Update posted", "update": {k: v for k, v in update.items() if k != "_id"}}
+
+@api_router.delete("/updates/{update_id}")
+async def delete_update(update_id: str, user: dict = Depends(require_user)):
+    """Delete an update (owner only)"""
+    update = await db.updates.find_one({"id": update_id})
+    if not update:
+        raise HTTPException(status_code=404, detail="Update not found")
+    
+    if update["user_id"] != user["id"] and not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Not authorized to delete this update")
+    
+    await db.updates.delete_one({"id": update_id})
+    await db.comments.delete_many({"post_id": update_id, "post_type": "update"})
+    
+    return {"message": "Update deleted"}
+
+# ============================================
 # API ROUTES - STATISTICS
 # ============================================
 
