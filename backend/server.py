@@ -72,6 +72,31 @@ EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
 GOOGLE_SEARCH_API_KEY = os.environ.get('GOOGLE_SEARCH_API_KEY', '')
 GOOGLE_SEARCH_CX = os.environ.get('GOOGLE_SEARCH_CX', '')
 
+# SendGrid Email Configuration
+SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY', '')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'noreply@infopilot-explorer.com')
+
+# Email notification helper function
+async def send_notification_email(to_email: str, subject: str, html_content: str):
+    """Send email notification using SendGrid"""
+    if not SENDGRID_AVAILABLE or not SENDGRID_API_KEY:
+        logging.warning("SendGrid not configured - email notification skipped")
+        return False
+    
+    try:
+        message = Mail(
+            from_email=SENDER_EMAIL,
+            to_emails=to_email,
+            subject=subject,
+            html_content=html_content
+        )
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+        return response.status_code == 202
+    except Exception as e:
+        logging.error(f"Failed to send email: {str(e)}")
+        return False
+
 # Create the main app without a prefix
 app = FastAPI(title="InfoPilot Explorer API", version="2.0.0")
 
