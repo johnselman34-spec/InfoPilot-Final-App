@@ -4331,6 +4331,64 @@ async def update_subscription_config(
     
     return {"message": "Subscription configuration updated"}
 
+@api_router.put("/admin/database-limits")
+async def update_database_limits(
+    user_max_results_limit: int = Query(..., ge=100, le=10000, description="Max results per user (100-10000)"),
+    user: dict = Depends(require_user)
+):
+    """Update the maximum number of results a user can store in their database (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.admin_settings.update_one(
+        {"id": "admin_settings"},
+        {"$set": {"user_max_results_limit": user_max_results_limit}},
+        upsert=True
+    )
+    
+    return {
+        "message": f"Database limit updated to {user_max_results_limit} results per user",
+        "user_max_results_limit": user_max_results_limit
+    }
+
+@api_router.get("/admin/database-limits")
+async def get_database_limits(user: dict = Depends(require_user)):
+    """Get current database limits (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
+    settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
+    
+    # Get stats about all users' database usage
+    pipeline = [
+        {"$group": {
+            "_id": "$user_id",
+            "count": {"$sum": 1}
+        }},
+        {"$lookup": {
+            "from": "users",
+            "localField": "_id",
+            "foreignField": "id",
+            "as": "user_info"
+        }},
+        {"$unwind": {"path": "$user_info", "preserveNullAndEmptyArrays": True}},
+        {"$project": {
+            "user_id": "$_id",
+            "username": "$user_info.username",
+            "result_count": "$count"
+        }},
+        {"$sort": {"result_count": -1}},
+        {"$limit": 20}
+    ]
+    
+    user_stats = await db.search_results.aggregate(pipeline).to_list(20)
+    
+    return {
+        "user_max_results_limit": settings.user_max_results_limit,
+        "top_users_by_results": user_stats
+    }
+
 @api_router.get("/admin/subscriptions")
 async def get_all_subscriptions(user: dict = Depends(require_user)):
     """Get all subscriptions (admin only)"""
