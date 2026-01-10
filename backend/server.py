@@ -364,6 +364,120 @@ def extract_locations(content: str, title: str) -> List[Dict[str, Any]]:
     return unique_locations[:5]  # Limit to 5 locations per result
 
 # ============================================
+# HASHTAG EXTRACTION
+# ============================================
+# Common stop words to exclude from hashtags
+STOP_WORDS = {
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with',
+    'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been', 'be', 'have', 'has', 'had',
+    'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must',
+    'this', 'that', 'these', 'those', 'it', 'its', 'he', 'she', 'they', 'we', 'you',
+    'their', 'his', 'her', 'my', 'your', 'our', 'which', 'who', 'whom', 'what', 'when',
+    'where', 'why', 'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most',
+    'other', 'some', 'such', 'no', 'not', 'only', 'same', 'so', 'than', 'too', 'very',
+    'can', 'just', 'into', 'about', 'over', 'after', 'before', 'between', 'under', 'again',
+    'further', 'then', 'once', 'here', 'there', 'any', 'new', 'also', 'said', 'one', 'two'
+}
+
+# Popular topic hashtags for categorization
+POPULAR_HASHTAGS = {
+    # Technology
+    'artificial': '#AI', 'intelligence': '#AI', 'machine': '#MachineLearning', 'learning': '#MachineLearning',
+    'software': '#Technology', 'computer': '#Technology', 'digital': '#Digital', 'data': '#Data',
+    'internet': '#Internet', 'cyber': '#CyberSecurity', 'blockchain': '#Blockchain', 'crypto': '#Crypto',
+    'robot': '#Robotics', 'automation': '#Automation', 'cloud': '#CloudComputing', 'app': '#Apps',
+    # Science
+    'science': '#Science', 'research': '#Research', 'study': '#Research', 'discovery': '#Discovery',
+    'physics': '#Physics', 'biology': '#Biology', 'chemistry': '#Chemistry', 'space': '#Space',
+    'nasa': '#NASA', 'astronomy': '#Astronomy', 'medical': '#Medical', 'health': '#Health',
+    'medicine': '#Medicine', 'vaccine': '#Health', 'climate': '#ClimateChange', 'environment': '#Environment',
+    # History
+    'history': '#History', 'historical': '#History', 'war': '#History', 'civil': '#CivilWar',
+    'battle': '#Military', 'military': '#Military', 'army': '#Military', 'navy': '#Military',
+    'revolution': '#History', 'ancient': '#AncientHistory', 'medieval': '#MedievalHistory',
+    # Business & Finance
+    'business': '#Business', 'finance': '#Finance', 'market': '#Markets', 'stock': '#Stocks',
+    'investment': '#Investment', 'economy': '#Economy', 'economic': '#Economy', 'bank': '#Banking',
+    'startup': '#Startup', 'entrepreneur': '#Entrepreneurship', 'company': '#Business',
+    # Education
+    'education': '#Education', 'university': '#Education', 'college': '#Education', 'school': '#Education',
+    'learning': '#Learning', 'student': '#Education', 'academic': '#Academia', 'degree': '#Education',
+    # Politics & Law
+    'politics': '#Politics', 'political': '#Politics', 'government': '#Government', 'law': '#Law',
+    'legal': '#Legal', 'court': '#Legal', 'congress': '#Politics', 'president': '#Politics',
+    'election': '#Election', 'vote': '#Democracy', 'policy': '#Policy',
+    # Arts & Culture
+    'art': '#Art', 'music': '#Music', 'film': '#Film', 'movie': '#Movies', 'book': '#Books',
+    'culture': '#Culture', 'museum': '#Museum', 'entertainment': '#Entertainment',
+    # Sports
+    'sports': '#Sports', 'football': '#Football', 'basketball': '#Basketball', 'baseball': '#Baseball',
+    'soccer': '#Soccer', 'olympic': '#Olympics', 'athlete': '#Sports',
+    # News & Current Events
+    'news': '#News', 'breaking': '#BreakingNews', 'update': '#Update', 'report': '#Report',
+    'today': '#CurrentEvents', 'latest': '#LatestNews',
+}
+
+def extract_hashtags(content: str, title: str, max_hashtags: int = 6) -> List[str]:
+    """Extract relevant hashtags from content for linking related articles"""
+    hashtags = []
+    hashtag_scores = {}
+    
+    # Combine title and content, give more weight to title
+    text = (title + " " + title + " " + content).lower()
+    
+    # Extract words
+    words = re.findall(r'\b[a-z]{4,}\b', text)  # Words with 4+ chars
+    word_freq = {}
+    
+    for word in words:
+        if word not in STOP_WORDS:
+            word_freq[word] = word_freq.get(word, 0) + 1
+    
+    # Match against popular hashtags
+    for word, freq in word_freq.items():
+        if word in POPULAR_HASHTAGS:
+            hashtag = POPULAR_HASHTAGS[word]
+            if hashtag not in hashtag_scores:
+                hashtag_scores[hashtag] = 0
+            hashtag_scores[hashtag] += freq * 2  # Boost for known topics
+    
+    # Get top keywords that aren't already matched
+    top_keywords = sorted(word_freq.items(), key=lambda x: -x[1])[:20]
+    
+    # Create hashtags from top unmatched keywords
+    for word, freq in top_keywords:
+        if freq >= 2:  # Word appears at least twice
+            hashtag = f"#{word.capitalize()}"
+            if hashtag not in hashtag_scores and len(word) > 4:
+                hashtag_scores[hashtag] = freq
+    
+    # Sort by score and return top hashtags
+    sorted_hashtags = sorted(hashtag_scores.items(), key=lambda x: -x[1])
+    
+    # Ensure diversity - limit similar hashtags
+    final_hashtags = []
+    seen_bases = set()
+    
+    for hashtag, score in sorted_hashtags:
+        base = hashtag.lower().replace('#', '')[:5]
+        if base not in seen_bases:
+            final_hashtags.append(hashtag)
+            seen_bases.add(base)
+            if len(final_hashtags) >= max_hashtags:
+                break
+    
+    # If we don't have enough, add generic ones based on content
+    if len(final_hashtags) < 4:
+        fallback_hashtags = ['#Article', '#Information', '#Reference', '#Research']
+        for fb in fallback_hashtags:
+            if fb not in final_hashtags:
+                final_hashtags.append(fb)
+                if len(final_hashtags) >= 4:
+                    break
+    
+    return final_hashtags[:max_hashtags]
+
+# ============================================
 # BLOCKED WORDS LIST (Expandable by Admin)
 # ============================================
 DEFAULT_BLOCKED_WORDS = [
