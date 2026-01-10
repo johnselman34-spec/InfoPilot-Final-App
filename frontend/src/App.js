@@ -422,7 +422,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { path: "/statistics", icon: BarChart3, label: "INTEL STATS" },
     { path: "/global-database", icon: Globe, label: "GLOBAL DATABASE" },
     { path: "/book", icon: Book, label: "📚 LETTERS TO EVELYN", highlight: true },
-    { path: "/subscribe", icon: Crown, label: user?.is_paid ? "✅ PREMIUM" : "🎉 SALE: $0.75", highlight: !user?.is_paid },
+    { path: "/book", icon: Book, label: "📚 GET THE BOOK", highlight: true },
   ];
 
   if (user?.is_admin) {
