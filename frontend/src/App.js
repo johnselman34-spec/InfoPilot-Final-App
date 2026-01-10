@@ -2463,16 +2463,63 @@ const SubscribePage = () => {
           {/* Shopify Payment */}
           {paymentMethod === 'shopify' && (
             <div className="text-center">
-              <p className="text-purple-300 font-mono mb-4">Complete your purchase securely through our Shopify store</p>
-              <button
-                onClick={handleShopifyCheckout}
-                disabled={loading || !shopifyConfig?.checkout_enabled}
-                className="w-full py-4 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-[1.02] transition-transform disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
-              >
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><ShoppingCart className="w-6 h-6" /> BUY NOW - $0.75</>}
-              </button>
-              <p className="text-center text-purple-400/60 text-xs font-mono mt-4">🔒 Secure checkout powered by Shopify</p>
-              <p className="text-center text-purple-400/40 text-xs font-mono mt-2">Opens in new tab • Accepts all major cards</p>
+              {!showVerification ? (
+                <>
+                  <p className="text-purple-300 font-mono mb-4">Complete your purchase securely through our Shopify store</p>
+                  <button
+                    onClick={handleShopifyCheckout}
+                    disabled={loading || !shopifyConfig?.checkout_enabled}
+                    className="w-full py-4 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-[1.02] transition-transform disabled:opacity-50 flex items-center justify-center gap-2 text-lg"
+                    data-testid="shopify-buy-btn"
+                  >
+                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <><ShoppingCart className="w-6 h-6" /> BUY NOW - $0.75</>}
+                  </button>
+                  <p className="text-center text-purple-400/60 text-xs font-mono mt-4">🔒 Secure checkout powered by Shopify</p>
+                  <p className="text-center text-purple-400/40 text-xs font-mono mt-2">Opens in new tab • Accepts all major cards</p>
+                  
+                  {/* Already purchased link */}
+                  <button
+                    onClick={() => { setShowVerification(true); setVerificationEmail(user?.email || ''); }}
+                    className="mt-4 text-pink-400 font-mono text-sm underline hover:text-pink-300"
+                    data-testid="already-purchased-btn"
+                  >
+                    Already purchased? Click here to verify
+                  </button>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-4">
+                    <p className="text-green-400 font-mono text-sm">✅ Complete your purchase on Shopify, then verify below</p>
+                  </div>
+                  
+                  <p className="text-purple-300 font-mono text-sm mb-2">Enter the email you used for your Shopify purchase:</p>
+                  
+                  <input
+                    type="email"
+                    value={verificationEmail}
+                    onChange={(e) => setVerificationEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="w-full px-4 py-3 bg-slate-950 border border-purple-500/30 rounded-lg text-purple-300 font-mono focus:border-pink-500 focus:outline-none"
+                    data-testid="verification-email-input"
+                  />
+                  
+                  <button
+                    onClick={handleVerifyPurchase}
+                    disabled={verifying || !verificationEmail.trim()}
+                    className="w-full py-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-[1.02] transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
+                    data-testid="verify-purchase-btn"
+                  >
+                    {verifying ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Check className="w-6 h-6" /> VERIFY MY PURCHASE</>}
+                  </button>
+                  
+                  <button
+                    onClick={() => setShowVerification(false)}
+                    className="text-purple-400/60 font-mono text-sm hover:text-purple-300"
+                  >
+                    ← Back to checkout
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
