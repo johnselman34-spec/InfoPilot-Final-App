@@ -2281,113 +2281,41 @@ const StripeCheckoutForm = ({ onSuccess }) => {
 };
 
 // Subscribe Page - STRIPE INTEGRATION
+// Subscribe Page - Now redirects to book page since app is free
 const SubscribePage = () => {
-  const { user, refreshUser } = useAuth();
-  const [clientSecret, setClientSecret] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [saleInfo, setSaleInfo] = useState(null);
-  const [shopifyConfig, setShopifyConfig] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState('shopify'); // 'shopify' or 'stripe'
-  const [showVerification, setShowVerification] = useState(false);
-  const [verificationEmail, setVerificationEmail] = useState('');
-  const [verifying, setVerifying] = useState(false);
   const navigate = useNavigate();
   
-  useEffect(() => {
-    // Fetch sale info and Shopify config
-    axios.get(`${API}/subscription/info`).then(res => setSaleInfo(res.data)).catch(() => {});
-    axios.get(`${API}/shopify/config`).then(res => setShopifyConfig(res.data)).catch(() => {});
-  }, []);
-  
-  const handleShopifyCheckout = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${API}/shopify/checkout-url`);
-      // Open Shopify checkout in new tab
-      window.open(res.data.checkout_url, '_blank');
-      toast.success("Redirecting to Shopify checkout...");
-      // Show verification form after a short delay
-      setTimeout(() => {
-        setShowVerification(true);
-        setVerificationEmail(user?.email || '');
-      }, 2000);
-    } catch (error) {
-      toast.error(error.response?.data?.detail || "Failed to get checkout URL");
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleVerifyPurchase = async () => {
-    if (!verificationEmail.trim()) {
-      toast.error("Please enter your email");
-      return;
-    }
-    setVerifying(true);
-    try {
-      const res = await axios.post(`${API}/shopify/verify-purchase`, { 
-        email: verificationEmail.trim().toLowerCase() 
-      });
-      if (res.data.verified) {
-        toast.success("🎉 Purchase verified! Premium access granted!");
-        await refreshUser();
-        setTimeout(() => navigate("/"), 2000);
-      } else {
-        toast.error(res.data.message || "Could not verify purchase. Please try again or contact support.");
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.detail || "Verification failed. Please try again.");
-    } finally {
-      setVerifying(false);
-    }
-  };
-  
-  const initializeStripePayment = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post(`${API}/payments/create-intent`, { item_type: "subscription" });
-      setClientSecret(res.data.client_secret);
-    } catch (error) {
-      toast.error(error.response?.data?.detail || "Failed to initialize payment");
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handlePaymentSuccess = async () => {
-    await refreshUser();
-    setTimeout(() => navigate("/"), 2000);
-  };
-
-  if (user?.is_paid) {
-    return (
-      <Layout>
-        <div className="max-w-lg mx-auto space-y-6">
-          <FuturisticFrame title="LIFETIME ACCESS ACTIVE" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg text-center py-12">
-            <Crown className="w-20 h-20 text-pink-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-2">🎉 YOU'RE A PREMIUM MEMBER!</h2>
-            <p className="text-purple-300/80 font-mono text-sm">Enjoy unlimited access to all InfoPilot Explorer features forever.</p>
-            <button onClick={() => navigate("/")} className="mt-6 px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02]">GO TO COMMAND CENTER</button>
-          </FuturisticFrame>
-          <BookSalesBanner variant="full" />
-        </div>
-      </Layout>
-    );
-  }
-
+  // App is now free - redirect users to book page
   return (
     <Layout>
       <div className="max-w-lg mx-auto space-y-6">
-        {/* MEGA Price Banner */}
-        <div className="text-center p-8 bg-gradient-to-r from-pink-900/40 via-purple-900/40 to-blue-900/40 rounded-xl border-2 border-pink-500">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Gift className="w-10 h-10 text-pink-400 animate-bounce" />
-            <Sparkles className="w-6 h-6 text-yellow-400 animate-pulse" />
+        <FuturisticFrame title="🎉 INFOPILOT EXPLORER IS FREE!" color="green" className="bg-slate-900/80 border border-green-500/30 rounded-lg text-center py-12">
+          <Check className="w-20 h-20 text-green-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 font-mono mb-2">FULL ACCESS UNLOCKED!</h2>
+          <p className="text-purple-300/80 font-mono text-sm mb-4">InfoPilot Explorer is now completely free for everyone.</p>
+          <p className="text-purple-300/80 font-mono text-sm">Enjoy unlimited searches, categories, and all features!</p>
+          <button onClick={() => navigate("/")} className="mt-6 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-mono rounded hover:scale-[1.02]">
+            GO TO COMMAND CENTER
+          </button>
+        </FuturisticFrame>
+        
+        {/* Book Promotion */}
+        <FuturisticFrame title="📚 SUPPORT THE DEVELOPER" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+          <div className="text-center">
+            <img src={IMAGES.bookCoverMain} alt="Letters to Evelyn" className="w-32 h-48 object-cover rounded-lg shadow-lg shadow-pink-500/30 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-2">Letters to Evelyn</h3>
+            <p className="text-purple-300/80 font-mono text-sm mb-1">A True Supernatural Thriller Comedy</p>
+            <p className="text-yellow-400 font-mono text-xs mb-4">⭐⭐⭐⭐⭐ 19 Five-Star Reviews</p>
+            <p className="text-pink-300 font-mono text-lg font-bold mb-4">Only $2.99</p>
+            <button onClick={() => navigate("/book")} className="px-8 py-3 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform flex items-center justify-center gap-2 mx-auto">
+              <ShoppingCart className="w-5 h-5" /> VIEW BOOK
+            </button>
           </div>
-          <div className="bg-gradient-to-r from-pink-500 to-red-500 text-white px-4 py-1 rounded-full text-sm font-bold inline-block mb-4 animate-pulse">🎉 WELCOME SALE - 2 MONTHS ONLY!</div>
-          <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono mb-2">$0.75</div>
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="text-purple-400/50 font-mono line-through">$4.62/year</span>
+        </FuturisticFrame>
+      </div>
+    </Layout>
+  );
+};
             <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">SAVE 84%!</span>
           </div>
           <p className="text-pink-300 font-mono text-lg">LIFETIME PREMIUM ACCESS</p>
