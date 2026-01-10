@@ -1295,17 +1295,6 @@ const MessagesPage = () => {
     }
   };
 
-  const fetchConversations = async () => {
-    try {
-      const res = await axios.get(`${API}/messages/conversations`);
-      setConversations(res.data.conversations || []);
-    } catch (error) {
-      console.error("Failed to fetch conversations");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchMessages = async (otherUserId) => {
     try {
       const res = await axios.get(`${API}/messages/conversation/${otherUserId}`);
