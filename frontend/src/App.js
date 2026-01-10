@@ -1928,15 +1928,17 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               key={item.path}
               onClick={() => { navigate(item.path); setIsOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded transition-all font-mono text-sm
-                ${location.pathname === item.path
-                  ? "bg-purple-500/20 text-pink-400 border border-pink-500/50"
-                  : item.highlight
-                    ? "text-pink-400 hover:bg-pink-500/10 border border-pink-500/30"
-                    : "text-purple-300/70 hover:bg-purple-500/10 hover:text-purple-300 border border-transparent"
+                ${item.isAdmin
+                  ? "bg-gradient-to-r from-pink-600/30 to-purple-600/30 text-yellow-400 border-2 border-yellow-500/50 hover:border-yellow-400 animate-pulse"
+                  : location.pathname === item.path
+                    ? "bg-purple-500/20 text-pink-400 border border-pink-500/50"
+                    : item.highlight
+                      ? "text-pink-400 hover:bg-pink-500/10 border border-pink-500/30"
+                      : "text-purple-300/70 hover:bg-purple-500/10 hover:text-purple-300 border border-transparent"
                 }`}
-              data-testid={`nav-${item.path.replace('/', '')}`}
+              data-testid={`nav-${item.path.replace('/', '') || 'home'}`}
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className={`w-5 h-5 ${item.isAdmin ? 'text-yellow-400' : ''}`} />
               <span className="tracking-wider">{item.label}</span>
             </button>
           ))}
