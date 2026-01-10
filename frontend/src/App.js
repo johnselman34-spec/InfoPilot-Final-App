@@ -3360,6 +3360,23 @@ const UltimateSearchPage = () => {
   const [suggestChangeCategory, setSuggestChangeCategory] = useState(null);
   const [viewRecsCategory, setViewRecsCategory] = useState(null);
   
+  // User Settings Modal state
+  const [showUserSettings, setShowUserSettings] = useState(false);
+  const [emailDigestEnabled, setEmailDigestEnabled] = useState(true);
+  
+  // Fetch email preferences on mount
+  useEffect(() => {
+    const fetchEmailPrefs = async () => {
+      try {
+        const res = await axios.get(`${API}/user/email-preferences`);
+        setEmailDigestEnabled(res.data.digest_enabled !== false);
+      } catch (error) {
+        console.error("Failed to fetch email preferences");
+      }
+    };
+    fetchEmailPrefs();
+  }, []);
+  
   // Determine if current user is the owner of their own Ultimate Search page
   const isOwner = true; // In this context, user always owns their own search page
   
