@@ -471,15 +471,13 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           ))}
         </nav>
 
-        {/* Sidebar Promo */}
-        {!user?.is_paid && (
-          <div className="mx-4 p-3 bg-gradient-to-r from-pink-500/20 to-red-500/20 rounded-lg border border-pink-500/50">
-            <p className="text-pink-400 font-mono text-xs text-center">
-              🎉 WELCOME SALE: <span className="font-bold">$0.75</span> LIFETIME!
-            </p>
-            <p className="text-purple-400/60 font-mono text-xs text-center mt-1">2 Months Only!</p>
-          </div>
-        )}
+        {/* Sidebar Book Promo */}
+        <div className="mx-4 p-3 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-lg border border-pink-500/50">
+          <p className="text-pink-400 font-mono text-xs text-center">
+            📚 NEW: <span className="font-bold">Letters to Evelyn</span>
+          </p>
+          <p className="text-purple-400/60 font-mono text-xs text-center mt-1">Only $2.99!</p>
+        </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-purple-500/30 bg-slate-950/90">
           <div className="flex items-center gap-3 mb-4">
