@@ -4058,6 +4058,24 @@ const UltimateSearchPage = () => {
             
             {/* Document Type Checkboxes */}
             <FuturisticFrame title="📄 DOCUMENT TYPES" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDocTypes([...documentTypes])}
+                  className="px-3 py-1 bg-purple-500/20 text-purple-400 font-mono text-xs rounded hover:bg-purple-500/30 transition-colors"
+                  data-testid="select-all-doc-types"
+                >
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDocTypes([])}
+                  className="px-3 py-1 bg-pink-500/20 text-pink-400 font-mono text-xs rounded hover:bg-pink-500/30 transition-colors"
+                  data-testid="deselect-all-doc-types"
+                >
+                  Deselect All
+                </button>
+              </div>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {documentTypes.map(docType => (
                   <label key={docType} className="flex items-center gap-3 p-2 hover:bg-purple-500/10 rounded cursor-pointer">
@@ -4071,6 +4089,9 @@ const UltimateSearchPage = () => {
                   </label>
                 ))}
               </div>
+              <p className="text-purple-400/50 font-mono text-xs mt-2">
+                {selectedDocTypes.length === 0 ? "All types selected (no filter)" : `${selectedDocTypes.length} type(s) selected`}
+              </p>
             </FuturisticFrame>
           </div>
           
