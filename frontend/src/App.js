@@ -531,20 +531,18 @@ const PostCard = ({ post, postType, onUpdate }) => {
   const { user } = useAuth();
   const [localReactions, setLocalReactions] = useState(post.reactions || {});
   const [localReactionCounts, setLocalReactionCounts] = useState(post.reaction_counts || {});
-  const [userReaction, setUserReaction] = useState(null);
-
-  useEffect(() => {
-    // Check if user has reacted
+  
+  // Calculate user's reaction without useEffect
+  const userReaction = useMemo(() => {
     for (const [type, users] of Object.entries(localReactions)) {
       if (users && users.includes(user?.id)) {
-        setUserReaction(type);
-        break;
+        return type;
       }
     }
-  }, [localReactions, user]);
+    return null;
+  }, [localReactions, user?.id]);
 
   const handleReactionUpdate = (newReaction, newReactions, newCounts) => {
-    setUserReaction(newReaction);
     if (newReactions) setLocalReactions(newReactions);
     if (newCounts) setLocalReactionCounts(newCounts);
     onUpdate && onUpdate();
