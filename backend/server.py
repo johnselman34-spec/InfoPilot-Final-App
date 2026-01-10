@@ -3385,6 +3385,123 @@ async def delete_session_results(session_timestamp: str, user: dict = Depends(re
         "deleted_count": delete_result.deleted_count
     }
 
+@api_router.delete("/ultimate-search/clear-all")
+async def clear_all_user_results(user: dict = Depends(require_user)):
+    """Clear ALL results from user's database (user's own action)"""
+    result = await db.search_results.delete_many({"user_id": user["id"]})
+    
+    return {
+        "message": f"Cleared {result.deleted_count} results from your database",
+        "deleted_count": result.deleted_count
+    }
+
+@api_router.delete("/ultimate-search/category/{category_id}/clear")
+async def clear_category_results(category_id: str, user: dict = Depends(require_user)):
+    """Clear all results from a specific category (including subcategories)"""
+    # Get the category
+    category = await db.categories.find_one({"id": category_id})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    # Verify ownership
+    if category["user_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="You can only clear your own categories")
+    
+    # Get all subcategory IDs recursively
+    async def get_all_child_ids(parent_id: str) -> List[str]:
+        ids = [parent_id]
+        children = await db.categories.find({"parent_id": parent_id}).to_list(1000)
+        for child in children:
+            child_ids = await get_all_child_ids(child["id"])
+            ids.extend(child_ids)
+        return ids
+    
+    all_category_ids = await get_all_child_ids(category_id)
+    
+    # Delete all results associated with these categories
+    result = await db.search_results.delete_many({
+        "user_id": user["id"],
+        "categories": {"$in": all_category_ids}
+    })
+    
+    return {
+        "message": f"Cleared {result.deleted_count} results from category '{category['name']}' and subcategories",
+        "deleted_count": result.deleted_count,
+        "categories_cleared": len(all_category_ids)
+    }
+
+@api_router.delete("/admin/clear-user-results/{target_user_id}")
+async def admin_clear_user_results(target_user_id: str, user: dict = Depends(require_user)):
+    """Admin: Clear all results for a specific user"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Verify target user exists
+    target_user = await db.users.find_one({"id": target_user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    result = await db.search_results.delete_many({"user_id": target_user_id})
+    
+    return {
+        "message": f"Cleared {result.deleted_count} results for user '{target_user.get('username', target_user_id)}'",
+        "deleted_count": result.deleted_count,
+        "target_user": target_user.get("username", target_user_id)
+    }
+
+@api_router.delete("/admin/clear-user-category/{target_user_id}/{category_id}")
+async def admin_clear_user_category(target_user_id: str, category_id: str, user: dict = Depends(require_user)):
+    """Admin: Clear all results from a specific user's category"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Verify target user and category exist
+    target_user = await db.users.find_one({"id": target_user_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    category = await db.categories.find_one({"id": category_id, "user_id": target_user_id})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found for this user")
+    
+    # Get all subcategory IDs recursively
+    async def get_all_child_ids(parent_id: str) -> List[str]:
+        ids = [parent_id]
+        children = await db.categories.find({"parent_id": parent_id}).to_list(1000)
+        for child in children:
+            child_ids = await get_all_child_ids(child["id"])
+            ids.extend(child_ids)
+        return ids
+    
+    all_category_ids = await get_all_child_ids(category_id)
+    
+    result = await db.search_results.delete_many({
+        "user_id": target_user_id,
+        "categories": {"$in": all_category_ids}
+    })
+    
+    return {
+        "message": f"Cleared {result.deleted_count} results from category '{category['name']}' for user '{target_user.get('username')}'",
+        "deleted_count": result.deleted_count,
+        "categories_cleared": len(all_category_ids)
+    }
+
+@api_router.get("/ultimate-search/user-stats")
+async def get_user_result_stats(user: dict = Depends(require_user)):
+    """Get user's result count and limit info"""
+    settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
+    settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
+    
+    current_count = await db.search_results.count_documents({"user_id": user["id"]})
+    max_allowed = settings.user_max_results_limit
+    
+    return {
+        "current_count": current_count,
+        "max_allowed": max_allowed,
+        "remaining": max(0, max_allowed - current_count),
+        "percentage_used": round((current_count / max_allowed) * 100, 1) if max_allowed > 0 else 0
+    }
+
 @api_router.get("/ultimate-search/category/{category_id}/results")
 async def get_category_results(
     category_id: str, 
