@@ -1981,6 +1981,135 @@ async def update_category_visibility(category_id: str, is_public: bool, user: di
     return {"message": "Visibility updated"}
 
 # ============================================
+# API ROUTES - PROTOCOL RECOMMENDATIONS
+# ============================================
+
+@api_router.post("/categories/{category_id}/recommendations")
+async def submit_recommendation(category_id: str, data: ProtocolRecommendationCreate, user: dict = Depends(require_user)):
+    """Submit a recommendation for a public protocol"""
+    category = await db.categories.find_one({"id": category_id})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    if not category.get("is_public", True):
+        raise HTTPException(status_code=403, detail="Cannot recommend changes to private protocols")
+    
+    # Don't allow self-recommendations
+    if category["user_id"] == user["id"]:
+        raise HTTPException(status_code=400, detail="Cannot recommend changes to your own protocol")
+    
+    recommendation = {
+        "id": str(uuid.uuid4()),
+        "category_id": category_id,
+        "category_name": category["name"],
+        "user_id": user["id"],
+        "username": user["username"],
+        "owner_id": category["user_id"],
+        "original_protocol": data.original_protocol,
+        "suggested_protocol": data.suggested_protocol,
+        "reason": data.reason,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.protocol_recommendations.insert_one(recommendation)
+    return {"message": "Recommendation submitted", "recommendation": {k: v for k, v in recommendation.items() if k != "_id"}}
+
+@api_router.get("/categories/{category_id}/recommendations")
+async def get_category_recommendations(category_id: str, user: dict = Depends(require_user)):
+    """Get all recommendations for a category (owner only)"""
+    category = await db.categories.find_one({"id": category_id})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    if category["user_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="Only the owner can view recommendations")
+    
+    recommendations = await db.protocol_recommendations.find(
+        {"category_id": category_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return {"recommendations": recommendations, "count": len(recommendations)}
+
+@api_router.get("/recommendations/my-protocols")
+async def get_my_protocol_recommendations(user: dict = Depends(require_user)):
+    """Get all recommendations across all of the user's protocols"""
+    recommendations = await db.protocol_recommendations.find(
+        {"owner_id": user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(500)
+    
+    # Group by category
+    by_category = {}
+    for rec in recommendations:
+        cat_id = rec["category_id"]
+        if cat_id not in by_category:
+            by_category[cat_id] = {
+                "category_id": cat_id,
+                "category_name": rec["category_name"],
+                "recommendations": [],
+                "pending_count": 0
+            }
+        by_category[cat_id]["recommendations"].append(rec)
+        if rec["status"] == "pending":
+            by_category[cat_id]["pending_count"] += 1
+    
+    return {
+        "total_count": len(recommendations),
+        "pending_count": sum(1 for r in recommendations if r["status"] == "pending"),
+        "by_category": list(by_category.values())
+    }
+
+@api_router.put("/recommendations/{recommendation_id}/status")
+async def update_recommendation_status(recommendation_id: str, status: str, user: dict = Depends(require_user)):
+    """Accept or reject a recommendation (owner only)"""
+    if status not in ["accepted", "rejected", "pending"]:
+        raise HTTPException(status_code=400, detail="Status must be 'accepted', 'rejected', or 'pending'")
+    
+    recommendation = await db.protocol_recommendations.find_one({"id": recommendation_id})
+    if not recommendation:
+        raise HTTPException(status_code=404, detail="Recommendation not found")
+    
+    if recommendation["owner_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="Only the owner can update recommendation status")
+    
+    await db.protocol_recommendations.update_one(
+        {"id": recommendation_id},
+        {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": f"Recommendation {status}", "status": status}
+
+@api_router.delete("/recommendations/{recommendation_id}")
+async def delete_recommendation(recommendation_id: str, user: dict = Depends(require_user)):
+    """Delete a recommendation (owner or submitter)"""
+    recommendation = await db.protocol_recommendations.find_one({"id": recommendation_id})
+    if not recommendation:
+        raise HTTPException(status_code=404, detail="Recommendation not found")
+    
+    if recommendation["owner_id"] != user["id"] and recommendation["user_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this recommendation")
+    
+    await db.protocol_recommendations.delete_one({"id": recommendation_id})
+    return {"message": "Recommendation deleted"}
+
+@api_router.get("/categories/{category_id}/recommendations/count")
+async def get_recommendation_count(category_id: str, user: dict = Depends(require_user)):
+    """Get pending recommendation count for a category (owner only)"""
+    category = await db.categories.find_one({"id": category_id})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    if category["user_id"] != user["id"]:
+        return {"count": 0, "pending": 0}  # Non-owners see 0
+    
+    total = await db.protocol_recommendations.count_documents({"category_id": category_id})
+    pending = await db.protocol_recommendations.count_documents({"category_id": category_id, "status": "pending"})
+    
+    return {"count": total, "pending": pending}
+
+# ============================================
 # API ROUTES - PROTOCOL VALIDATION
 # ============================================
 
