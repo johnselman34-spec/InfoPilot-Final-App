@@ -140,11 +140,12 @@ class TestPrivateMessaging:
     def test_08_send_message_image_too_large(self):
         """Test that images > 8MB are rejected"""
         headers = {"Authorization": f"Bearer {TestPrivateMessaging.token_user1}"}
-        # Create a large fake base64 string (> 8MB)
+        # Create a large valid base64 string (> 8MB when decoded)
         # 8MB = 8 * 1024 * 1024 = 8388608 bytes
-        # Base64 encoding increases size by ~33%, so we need ~6.3MB of raw data
-        large_data = "A" * (9 * 1024 * 1024)  # ~9MB of base64 data
-        large_image_base64 = f"data:image/png;base64,{large_data}"
+        # Base64 encoding increases size by ~33%, so we need ~9MB of raw data to exceed 8MB decoded
+        raw_data = b'\x00' * (9 * 1024 * 1024)  # 9MB of null bytes
+        large_base64 = base64.b64encode(raw_data).decode('utf-8')
+        large_image_base64 = f"data:image/png;base64,{large_base64}"
         payload = {
             "recipient_id": TestPrivateMessaging.user2_id,
             "content": "TEST_Message with large image",
@@ -152,6 +153,7 @@ class TestPrivateMessaging:
         }
         response = requests.post(f"{BASE_URL}/api/messages/send", json=payload, headers=headers)
         assert response.status_code == 400, f"Large image should be rejected: {response.text}"
+        assert "exceeds" in response.json().get("detail", "").lower() or "8MB" in response.json().get("detail", "")
         print("✓ Large image (>8MB) correctly rejected")
     
     def test_09_cannot_message_self(self):
