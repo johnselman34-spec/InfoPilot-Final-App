@@ -825,11 +825,19 @@ async def get_blocked_words() -> List[str]:
     return DEFAULT_BLOCKED_WORDS
 
 def contains_blocked_words(text: str, blocked_words: List[str]) -> tuple[bool, List[str]]:
-    """Check if text contains any blocked words"""
+    """
+    Check if text contains any blocked words as WHOLE WORDS only.
+    This allows words like "association" even if "ass" is blocked,
+    because "ass" is part of a larger word, not a standalone word.
+    """
+    import re
     text_lower = text.lower()
     found = []
     for word in blocked_words:
-        if word.lower() in text_lower:
+        # Use word boundary regex to match whole words only
+        # \b matches word boundaries (spaces, punctuation, start/end of string)
+        pattern = r'\b' + re.escape(word.lower()) + r'\b'
+        if re.search(pattern, text_lower):
             found.append(word)
     return len(found) > 0, found
 
