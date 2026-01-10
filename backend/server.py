@@ -392,11 +392,15 @@ class CategoryCreate(BaseModel):
     protocol: ProtocolCreate
     parent_id: Optional[str] = None  # For subcategories
     is_public: bool = True
+    for_sale: bool = False  # Whether protocol can be purchased
+    price: Optional[float] = Field(None, ge=0.75, le=2.99)  # Price range $0.75-$2.99
 
 class CategoryUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=200)
     protocol_string: Optional[str] = None
     is_public: Optional[bool] = None
+    for_sale: Optional[bool] = None
+    price: Optional[float] = Field(None, ge=0.75, le=2.99)
 
 class CategoryResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -406,8 +410,22 @@ class CategoryResponse(BaseModel):
     protocol_string: str
     parent_id: Optional[str] = None
     is_public: bool = True
+    for_sale: bool = False
+    price: Optional[float] = None
+    owner_username: Optional[str] = None
     level: int = 0
     created_at: datetime
+
+# Protocol Purchase Models
+class ProtocolPurchase(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    buyer_id: str
+    seller_id: str
+    category_id: str
+    amount: float
+    status: str  # pending, completed
+    created_at: str
 
 # Protocol Recommendation Models
 class ProtocolRecommendationCreate(BaseModel):
