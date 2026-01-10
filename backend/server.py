@@ -4016,7 +4016,10 @@ async def record_payment(
 async def update_subscription_config(
     regular_price: float = Query(None),
     min_price: float = Query(None),
+    max_price: float = Query(None),
+    preset_amounts: str = Query(None),
     promo_end_date: str = Query(None),
+    promo_message: str = Query(None),
     paypal_link_1: str = Query(None),
     paypal_link_2: str = Query(None),
     user: dict = Depends(require_user)
@@ -4030,8 +4033,14 @@ async def update_subscription_config(
         update_data["regular_price"] = regular_price
     if min_price is not None:
         update_data["min_price"] = min_price
+    if max_price is not None:
+        update_data["max_price"] = max_price
+    if preset_amounts is not None:
+        update_data["preset_amounts"] = preset_amounts
     if promo_end_date is not None:
         update_data["promo_end_date"] = promo_end_date
+    if promo_message is not None:
+        update_data["promo_message"] = promo_message
     if paypal_link_1 is not None:
         update_data["paypal_link_1"] = paypal_link_1
     if paypal_link_2 is not None:
