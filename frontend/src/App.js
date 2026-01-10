@@ -584,12 +584,12 @@ const LoginPage = () => {
           <p className="text-purple-400/80 mt-2 font-mono text-sm">TACTICAL INFORMATION EXCHANGE SYSTEM</p>
         </div>
 
-        {/* Special Offer Banner */}
-        <div className="mb-6 p-4 bg-gradient-to-r from-pink-500/30 via-purple-500/30 to-red-500/30 rounded-lg border border-pink-500 animate-pulse">
+        {/* Book Promotion Banner on Login Page */}
+        <div className="mb-6 p-4 bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 rounded-lg border border-pink-500/50">
           <p className="text-center text-pink-300 font-mono font-bold">
-            🎉 WELCOME SALE: Get LIFETIME ACCESS for just $0.75!
+            📚 NEW BOOK: "Letters to Evelyn" - A Supernatural Thriller Comedy
           </p>
-          <p className="text-center text-purple-400/70 font-mono text-xs mt-1">Limited time - 2 Months Only!</p>
+          <p className="text-center text-purple-400/70 font-mono text-xs mt-1">⭐⭐⭐⭐⭐ 19 Five-Star Reviews • Only $2.99</p>
         </div>
 
         <FuturisticFrame title="AUTHENTICATION" color="pink" className="bg-slate-900/90 backdrop-blur border border-purple-500/30 rounded-lg">
