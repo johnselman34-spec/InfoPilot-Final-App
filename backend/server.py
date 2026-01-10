@@ -1860,10 +1860,11 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
     settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
     settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
     
+    # App is now free - all users get full access
     if not user.get("is_paid") and not user.get("is_admin"):
-        max_results = settings.results_per_page
-    else:
-        max_results = min(data.max_results, 100)
+        # No restrictions - app is free
+        pass
+    max_results = min(data.max_results, 100)
     
     user_categories = await db.categories.find({"user_id": user["id"]}).to_list(1000)
     
