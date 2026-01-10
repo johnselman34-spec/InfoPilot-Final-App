@@ -889,7 +889,12 @@ const CategoriesPage = () => {
             <FuturisticFrame title="CREATE CATEGORY" color="pink" className="bg-slate-900 border border-pink-500/30 rounded-lg max-w-lg w-full">
               <form onSubmit={handleCreate} className="space-y-4">
                 <div><label className="block text-xs font-mono text-purple-400 mb-1">CATEGORY NAME</label><input type="text" value={newCategory.name} onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500" required /></div>
-                <div><label className="block text-xs font-mono text-purple-400 mb-1">INFOPILOT 2.0 PROTOCOL</label><textarea value={newCategory.protocol} onChange={(e) => setNewCategory({ ...newCategory, protocol: e.target.value })} placeholder="(word1 or word2) & (word3)+ & (excluded)^" className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono h-24 focus:border-pink-500" required /></div>
+                <div>
+                  <label className="block text-xs font-mono text-purple-400 mb-1">INFOPILOT 2.0 PROTOCOL</label>
+                  <textarea value={newCategory.protocol} onChange={(e) => setNewCategory({ ...newCategory, protocol: e.target.value })} placeholder="(word1 or word2) & (word3)+ & (excluded)^" className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono h-24 focus:border-pink-500" required />
+                  <p className="text-xs text-green-400/80 mt-1 font-mono">💡 Capitalization doesn't matter - "Science" = "science" = "SCIENCE"</p>
+                  <p className="text-xs text-purple-400/60 mt-1 font-mono">Syntax: (word1 or word2) & (required)+ & (excluded)^</p>
+                </div>
                 <div className="flex items-center gap-2"><input type="checkbox" id="isPublic" checked={newCategory.isPublic} onChange={(e) => setNewCategory({ ...newCategory, isPublic: e.target.checked })} className="rounded bg-slate-950 border-purple-500/30" /><label htmlFor="isPublic" className="text-sm text-purple-300 font-mono">Make public</label></div>
                 <div className="flex gap-4">
                   <button type="button" onClick={() => setShowCreate(false)} className="flex-1 px-4 py-2 border border-purple-500/30 text-purple-300 font-mono rounded hover:bg-purple-500/10">CANCEL</button>
@@ -906,7 +911,12 @@ const CategoriesPage = () => {
             <FuturisticFrame title="EDIT CATEGORY" color="blue" className="bg-slate-900 border border-blue-500/30 rounded-lg max-w-lg w-full">
               <form onSubmit={handleUpdate} className="space-y-4">
                 <div><label className="block text-xs font-mono text-blue-400 mb-1">CATEGORY NAME</label><input type="text" value={editingCategory.name} onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono focus:border-blue-500" required /></div>
-                <div><label className="block text-xs font-mono text-blue-400 mb-1">INFOPILOT 2.0 PROTOCOL</label><textarea value={editingCategory.protocol_string} onChange={(e) => setEditingCategory({ ...editingCategory, protocol_string: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono h-32 focus:border-blue-500" required /><p className="text-xs text-purple-400/60 mt-1 font-mono">Syntax: (word1 or word2) & (required)+ & (excluded)^</p></div>
+                <div>
+                  <label className="block text-xs font-mono text-blue-400 mb-1">INFOPILOT 2.0 PROTOCOL</label>
+                  <textarea value={editingCategory.protocol_string} onChange={(e) => setEditingCategory({ ...editingCategory, protocol_string: e.target.value })} className="w-full px-4 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono h-32 focus:border-blue-500" required />
+                  <p className="text-xs text-green-400/80 mt-1 font-mono">💡 Capitalization doesn't matter - "Science" = "science" = "SCIENCE"</p>
+                  <p className="text-xs text-purple-400/60 mt-1 font-mono">Syntax: (word1 or word2) & (required)+ & (excluded)^</p>
+                </div>
                 <div className="flex items-center gap-2"><input type="checkbox" id="editIsPublic" checked={editingCategory.is_public} onChange={(e) => setEditingCategory({ ...editingCategory, is_public: e.target.checked })} className="rounded bg-slate-950 border-blue-500/30" /><label htmlFor="editIsPublic" className="text-sm text-purple-300 font-mono">Make public</label></div>
                 <div className="flex gap-4">
                   <button type="button" onClick={() => { setShowEdit(false); setEditingCategory(null); }} className="flex-1 px-4 py-2 border border-purple-500/30 text-purple-300 font-mono rounded hover:bg-purple-500/10">CANCEL</button>
