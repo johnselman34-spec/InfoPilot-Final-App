@@ -4269,8 +4269,13 @@ const UltimateSearchPage = () => {
                         <span className="text-pink-400 font-mono text-xs">({session.result_count} results)</span>
                       </div>
                       <button
-                        onClick={() => handleDeleteSession(session.timestamp)}
-                        className="p-1 text-red-400/60 hover:text-red-400 rounded hover:bg-red-500/10"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDeleteSession(session.timestamp);
+                        }}
+                        className="p-1 text-red-400/60 hover:text-red-400 rounded hover:bg-red-500/10 cursor-pointer z-10"
                         title={`Delete session ${session.timestamp}`}
                         data-testid={`delete-session-${idx}`}
                       >
