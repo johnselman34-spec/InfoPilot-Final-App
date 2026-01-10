@@ -2260,7 +2260,19 @@ const CategoriesPage = () => {
                 <div>
                   <label className="block text-xs font-mono text-purple-400 mb-1">INFOPILOT 2.0 PROTOCOL</label>
                   <textarea value={newCategory.protocol} onChange={(e) => setNewCategory({ ...newCategory, protocol: e.target.value })} placeholder="(word1 or word2) & (word3)+ & (excluded)^" className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono h-24 focus:border-pink-500" required />
-                  <p className="text-xs text-green-400/80 mt-1 font-mono">Capitalization doesn't matter - "Science" = "science"</p>
+                  
+                  {/* Case Insensitive Notice */}
+                  <div className="mt-2 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                    <p className="text-green-400 font-mono text-xs font-bold flex items-center gap-2">
+                      <Check className="w-4 h-4" /> CASE INSENSITIVE
+                    </p>
+                    <p className="text-green-400/80 font-mono text-xs mt-1">
+                      All protocols are case insensitive! "Science" = "science" = "SCIENCE"
+                    </p>
+                    <p className="text-purple-400/60 font-mono text-xs mt-1">
+                      Syntax: (word1 or word2) & (required)+ & (excluded)^
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" id="isPublic" checked={newCategory.isPublic} onChange={(e) => setNewCategory({ ...newCategory, isPublic: e.target.checked, forSale: false })} className="rounded bg-slate-950 border-purple-500/30" />
