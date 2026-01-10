@@ -3345,9 +3345,9 @@ async def create_page_post(page_id: str, data: GroupPostCreate, user: dict = Dep
         "username": user["username"],
         "content": data.content,
         "image_url": data.image_url,
-        "likes": [],
-        "like_count": 0,
-        "comments": [],
+        "reactions": {},
+        "reaction_counts": {},
+        "total_reactions": 0,
         "comment_count": 0,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
