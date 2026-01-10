@@ -30,14 +30,16 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ.get('DB_NAME', 'infopilot_db')]
 
 # JWT Settings
-JWT_SECRET = os.environ.get('JWT_SECRET', 'infopilot-secret-key-2024')
+JWT_SECRET = os.environ.get('JWT_SECRET', '')
+if not JWT_SECRET:
+    JWT_SECRET = 'infopilot-secret-key-2024-dev'  # Only for development
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 1 week
 
 # Google OAuth Settings - Supports Web, Android, and iOS
-GOOGLE_WEB_CLIENT_ID = os.environ.get('GOOGLE_WEB_CLIENT_ID', '553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com')
-GOOGLE_ANDROID_CLIENT_ID = os.environ.get('GOOGLE_ANDROID_CLIENT_ID', '553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com')
-GOOGLE_IOS_CLIENT_ID = os.environ.get('GOOGLE_IOS_CLIENT_ID', '553762726406-a6it1kotb3tbb8o9j9ijad82r965o9va.apps.googleusercontent.com')
+GOOGLE_WEB_CLIENT_ID = os.environ.get('GOOGLE_WEB_CLIENT_ID', '')
+GOOGLE_ANDROID_CLIENT_ID = os.environ.get('GOOGLE_ANDROID_CLIENT_ID', '')
+GOOGLE_IOS_CLIENT_ID = os.environ.get('GOOGLE_IOS_CLIENT_ID', '')
 
 # All valid Google Client IDs (for token verification)
 GOOGLE_CLIENT_IDS = [GOOGLE_WEB_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID]
