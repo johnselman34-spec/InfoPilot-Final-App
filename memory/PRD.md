@@ -140,6 +140,15 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
   - Group moderation: search and delete groups
   - Page moderation: search and delete pages
   - Reports system: users can report content, admins review
+- [x] **User Settings Panel on Ultimate Search** - COMPLETED Jan 10, 2026
+  - MY SETTINGS button in page header
+  - Page name customization with suggestions
+  - Photo gallery management (up to 26 photos)
+  - Database usage stats display
+  - Email digest preference toggle
+- [x] **React Hooks Warnings Fixed** - COMPLETED Jan 10, 2026
+  - All 13 exhaustive-deps warnings resolved
+  - Proper useCallback usage for fetch functions
 - [~] **Refactor Monoliths** - IN PROGRESS: Created modular structure, gradual migration ongoing
   - Backend: `/app/backend/utils/`, `/app/backend/models/`, `/app/backend/services/`, `/app/backend/routes/`
   - Frontend: `/app/frontend/src/utils/`, `/app/frontend/src/services/`, `/app/frontend/src/contexts/`, `/app/frontend/src/components/`
