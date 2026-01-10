@@ -11,7 +11,7 @@ from datetime import datetime
 import time
 
 # Backend URL from frontend .env
-BACKEND_URL = "https://infonavigator.preview.emergentagent.com/api"
+BACKEND_URL = "https://explorer-app-3.preview.emergentagent.com/api"
 
 class InfoPilotTester:
     def __init__(self):
