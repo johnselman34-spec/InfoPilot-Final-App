@@ -2730,12 +2730,12 @@ async def get_category_results(
     }
 
 # ============================================
-# API ROUTES - REACTIONS
+# API ROUTES - REACTIONS (Legacy)
 # ============================================
 
 @api_router.post("/results/{result_id}/react")
-async def add_reaction(result_id: str, data: ArticleReaction, user: dict = Depends(require_user)):
-    """Add reaction to a search result"""
+async def add_legacy_reaction(result_id: str, data: ArticleReaction, user: dict = Depends(require_user)):
+    """Add reaction to a search result (legacy endpoint)"""
     valid_reactions = ["like", "love", "funny", "sad", "caution", "spam", "best"]
     if data.reaction_type not in valid_reactions:
         raise HTTPException(status_code=400, detail=f"Invalid reaction. Must be one of: {valid_reactions}")
