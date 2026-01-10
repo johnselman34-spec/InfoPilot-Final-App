@@ -6713,11 +6713,7 @@ const ModerationPanel = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    fetchModerationData();
-  }, [activeSection]);
-
-  const fetchModerationData = async () => {
+  const fetchModerationData = useCallback(async () => {
     setLoading(true);
     try {
       if (activeSection === "dashboard") {
@@ -6741,7 +6737,11 @@ const ModerationPanel = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeSection, searchQuery]);
+
+  useEffect(() => {
+    fetchModerationData();
+  }, [fetchModerationData]);
 
   const handleBanUser = async (userId, username) => {
     const reason = prompt(`Enter reason for banning ${username}:`);
