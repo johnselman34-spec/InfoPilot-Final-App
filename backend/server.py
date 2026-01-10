@@ -394,6 +394,34 @@ class ProtocolRecommendationResponse(BaseModel):
     status: str  # pending, accepted, rejected
     created_at: str
 
+# Private Messaging Models
+class MessageCreate(BaseModel):
+    recipient_id: str
+    content: str = Field(..., max_length=5000)
+    image_url: Optional[str] = None  # Base64 or URL
+
+class MessageResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    conversation_id: str
+    sender_id: str
+    sender_username: str
+    recipient_id: str
+    recipient_username: str
+    content: str
+    image_url: Optional[str] = None
+    read: bool = False
+    created_at: str
+
+class ConversationResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    participants: List[str]
+    participant_usernames: Dict[str, str]
+    last_message: Optional[str] = None
+    last_message_at: Optional[str] = None
+    unread_count: int = 0
+
 class ArticleReaction(BaseModel):
     reaction_type: str
 
