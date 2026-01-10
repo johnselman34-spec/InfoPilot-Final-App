@@ -28,12 +28,10 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
 - [x] Admin role support
 
 #### Subscription & Payments
-- [x] Shopify integration (primary payment method)
-- [x] Stripe integration (secondary option, TEST keys)
-- [x] Welcome Sale: $0.75 lifetime access (2 months)
-- [x] Regular price: $4.62/year after sale
-- [x] Payment history tracking
-- [x] Webhook support for Shopify order confirmation
+- [x] **APP IS NOW COMPLETELY FREE** - No subscription required
+- [x] All users get full access to all features
+- [x] Book promotion replaces subscription prompts throughout the app
+- [x] Shopify/Stripe payment code removed from UI
 
 #### Ultimate Search Page
 - [x] AI-powered intelligent search (Emergent LLM)
