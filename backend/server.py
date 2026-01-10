@@ -976,11 +976,26 @@ class InfoPilot2Parser:
     
     @staticmethod
     def match_content(content: str, parsed_protocol: Dict[str, Any]) -> bool:
-        """Check if content matches the parsed protocol"""
+        """Check if content matches the parsed protocol using word boundary matching"""
         if not parsed_protocol["valid"]:
             return False
         
         content_lower = content.lower()
+        
+        def phrase_matches(phrase: str, text: str) -> bool:
+            """Check if a phrase/word matches in text using word boundaries.
+            Handles multi-word phrases like 'William C. Gamble' as complete phrases.
+            """
+            phrase_lower = phrase.lower().strip()
+            # Escape special regex characters in the phrase
+            escaped_phrase = re.escape(phrase_lower)
+            # Use word boundary for whole phrase matching
+            # \b doesn't work well with punctuation, so we use a more flexible pattern
+            # This matches the phrase when it's:
+            # - At start/end of string
+            # - Surrounded by whitespace or punctuation
+            pattern = r'(?:^|[\s\.,;:!?\-\(\)\[\]"])' + escaped_phrase + r'(?:[\s\.,;:!?\-\(\)\[\]"]|$)'
+            return bool(re.search(pattern, text))
         
         for group in parsed_protocol["groups"]:
             words = group["words"]
@@ -988,17 +1003,20 @@ class InfoPilot2Parser:
             exclude_all = group["exclude_all"]
             
             if exclude_all:
+                # None of these phrases should be present
                 for word in words:
-                    if word.lower() in content_lower:
+                    if phrase_matches(word, content_lower):
                         return False
             elif include_all:
+                # ALL of these phrases must be present
                 for word in words:
-                    if word.lower() not in content_lower:
+                    if not phrase_matches(word, content_lower):
                         return False
             else:
+                # ANY of these phrases must be present (OR logic)
                 found = False
                 for word in words:
-                    if word.lower() in content_lower:
+                    if phrase_matches(word, content_lower):
                         found = True
                         break
                 if not found:
