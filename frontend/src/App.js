@@ -3606,11 +3606,36 @@ const SubscribePage = () => {
   const [recording, setRecording] = useState(false);
   const [transactionId, setTransactionId] = useState("");
   const [showRecordPayment, setShowRecordPayment] = useState(false);
+  const [paymentPending, setPaymentPending] = useState(false);
 
   useEffect(() => {
     fetchConfig();
     fetchSubscriptionStatus();
+    
+    // Check if user is returning from PayPal payment
+    const pendingPayment = localStorage.getItem('paypal_payment_pending');
+    if (pendingPayment) {
+      const { amount, timestamp } = JSON.parse(pendingPayment);
+      // Only show if payment was initiated within last 30 minutes
+      if (Date.now() - timestamp < 30 * 60 * 1000) {
+        setCustomAmount(amount);
+        setShowRecordPayment(true);
+        setPaymentPending(true);
+      } else {
+        localStorage.removeItem('paypal_payment_pending');
+      }
+    }
   }, []);
+
+  // Poll for subscription status when payment is pending
+  useEffect(() => {
+    if (paymentPending) {
+      const interval = setInterval(() => {
+        fetchSubscriptionStatus();
+      }, 5000); // Check every 5 seconds
+      return () => clearInterval(interval);
+    }
+  }, [paymentPending]);
 
   const fetchConfig = async () => {
     try {
@@ -3627,14 +3652,27 @@ const SubscribePage = () => {
     try {
       const res = await axios.get(`${API}/subscription/status`);
       setSubscriptionStatus(res.data);
+      
+      // If subscription is now active and we were waiting, redirect to home
+      if (res.data.is_subscribed && paymentPending) {
+        localStorage.removeItem('paypal_payment_pending');
+        toast.success("🎉 Subscription activated! Welcome to InfoPilot Explorer!");
+        setTimeout(() => navigate("/"), 1500);
+      }
     } catch (error) {
       console.error("Failed to fetch subscription status");
     }
   };
 
   const handlePayPalClick = (link) => {
-    window.open(link, '_blank');
-    setShowRecordPayment(true);
+    // Store payment intent in localStorage before opening PayPal
+    localStorage.setItem('paypal_payment_pending', JSON.stringify({
+      amount: customAmount,
+      timestamp: Date.now()
+    }));
+    
+    // Open PayPal in same window for better UX
+    window.location.href = link;
   };
 
   const handleRecordPayment = async () => {
@@ -3647,9 +3685,17 @@ const SubscribePage = () => {
     setRecording(true);
     try {
       const res = await axios.post(`${API}/subscription/record-payment?amount=${amount}&paypal_transaction_id=${encodeURIComponent(transactionId || '')}`);
-      toast.success(res.data.message);
-      fetchSubscriptionStatus();
-      setShowRecordPayment(false);
+      
+      // Clear pending payment from localStorage
+      localStorage.removeItem('paypal_payment_pending');
+      
+      toast.success("🎉 " + res.data.message);
+      
+      // Redirect to home page after successful activation
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+      
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to record payment");
     } finally {
