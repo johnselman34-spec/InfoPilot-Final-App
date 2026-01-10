@@ -2654,6 +2654,20 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
     settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
     settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
     
+    # Check user's current result count against limit
+    current_result_count = await db.search_results.count_documents({"user_id": user["id"]})
+    max_allowed = settings.user_max_results_limit
+    
+    if current_result_count >= max_allowed:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Database limit reached. You have {current_result_count}/{max_allowed} results. "
+                   f"Please clear some results before adding new ones."
+        )
+    
+    # Calculate how many results we can still add
+    remaining_capacity = max_allowed - current_result_count
+    
     # App is now free - all users get full access
     if not user.get("is_paid") and not user.get("is_admin"):
         # No restrictions - app is free
@@ -2688,6 +2702,7 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
     
     collated_results = []
     blocked_unsafe_count = 0
+    limit_reached = False
     
     for result in search_results:
         # Skip unsafe URLs
