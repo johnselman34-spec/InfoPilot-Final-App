@@ -1735,7 +1735,7 @@ const BookSalesBanner = ({ variant = "full" }) => {
       setCurrentImage((prev) => (prev + 1) % bookImages.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, []);
+  }, [bookImages.length]);
   
   const openAmazon = () => window.open(BOOK_INFO.amazonUrl, '_blank');
   
