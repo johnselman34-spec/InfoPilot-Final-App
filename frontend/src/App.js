@@ -2314,6 +2314,242 @@ const CategoriesPage = () => {
   );
 };
 
+// ============================================
+// PROTOCOL MARKETPLACE PAGE
+// ============================================
+const MarketplacePage = () => {
+  const [activeTab, setActiveTab] = useState("browse");
+  const [protocols, setProtocols] = useState([]);
+  const [purchases, setPurchases] = useState([]);
+  const [sales, setSales] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [purchasing, setPurchasing] = useState(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchData();
+  }, [activeTab]);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      if (activeTab === "browse") {
+        const res = await axios.get(`${API}/marketplace/protocols`);
+        setProtocols(res.data.protocols || []);
+      } else if (activeTab === "purchases") {
+        const res = await axios.get(`${API}/marketplace/my-purchases`);
+        setPurchases(res.data.purchases || []);
+      } else if (activeTab === "sales") {
+        const res = await axios.get(`${API}/marketplace/my-sales`);
+        setSales(res.data.sales || []);
+      }
+    } catch (error) {
+      toast.error("Failed to load marketplace data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePurchase = async (protocolId) => {
+    if (!window.confirm("Confirm purchase? You will be able to view and copy this protocol after payment.")) return;
+    
+    setPurchasing(protocolId);
+    try {
+      const res = await axios.post(`${API}/marketplace/protocols/${protocolId}/purchase`);
+      toast.success(res.data.message);
+      
+      // Show the protocol
+      alert(`Protocol purchased!\n\nProtocol: ${res.data.protocol_string}\n\nThis has been added to your purchases.`);
+      
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Purchase failed");
+    } finally {
+      setPurchasing(null);
+    }
+  };
+
+  const copyProtocol = (protocol) => {
+    navigator.clipboard.writeText(protocol);
+    toast.success("Protocol copied to clipboard!");
+  };
+
+  return (
+    <Layout>
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 font-mono tracking-wider mb-2">PROTOCOL MARKETPLACE</h1>
+            <p className="text-purple-300/80 font-mono text-sm">Buy and sell private InfoPilot protocols</p>
+          </div>
+          <button onClick={() => navigate("/categories")} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono tracking-wider rounded hover:scale-[1.02] flex items-center gap-2">
+            <Plus className="w-5 h-5" /> SELL YOUR PROTOCOL
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-purple-500/30 pb-2">
+          {[
+            { id: "browse", label: "BROWSE", icon: ShoppingCart },
+            { id: "purchases", label: "MY PURCHASES", icon: Gift },
+            { id: "sales", label: "MY SALES", icon: DollarSign }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2 font-mono text-sm rounded-t flex items-center gap-2 transition-colors ${
+                activeTab === tab.id 
+                  ? "bg-yellow-500/20 text-yellow-400 border-b-2 border-yellow-400" 
+                  : "text-purple-400/60 hover:text-purple-300"
+              }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
+          </div>
+        ) : (
+          <>
+            {/* Browse Tab */}
+            {activeTab === "browse" && (
+              <div className="space-y-4">
+                {protocols.length === 0 ? (
+                  <FuturisticFrame title="NO PROTOCOLS FOR SALE" color="yellow" className="bg-slate-900/80 border border-yellow-500/30 rounded-lg text-center py-12">
+                    <ShoppingCart className="w-16 h-16 text-yellow-500/30 mx-auto mb-4" />
+                    <p className="text-purple-300 font-mono mb-4">No protocols are currently listed for sale</p>
+                    <p className="text-purple-400/60 font-mono text-sm">List your private protocols in Categories to start selling!</p>
+                  </FuturisticFrame>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {protocols.map((protocol) => (
+                      <div key={protocol.id} className="bg-slate-900/80 p-4 rounded-lg border border-yellow-500/20 hover:border-yellow-500/50 transition-colors">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="text-yellow-400 font-mono font-bold">{protocol.name}</h3>
+                            <p className="text-purple-400/60 font-mono text-xs">by {protocol.owner_username}</p>
+                          </div>
+                          <span className="text-xl font-bold text-green-400 font-mono">${protocol.price?.toFixed(2)}</span>
+                        </div>
+                        
+                        {protocol.is_purchased ? (
+                          <div className="flex items-center gap-2">
+                            <span className="flex-1 text-green-400 font-mono text-sm flex items-center gap-2">
+                              <Check className="w-4 h-4" /> PURCHASED
+                            </span>
+                          </div>
+                        ) : protocol.owner_id === user?.id ? (
+                          <span className="text-purple-400/60 font-mono text-sm">YOUR PROTOCOL</span>
+                        ) : (
+                          <button
+                            onClick={() => handlePurchase(protocol.id)}
+                            disabled={purchasing === protocol.id}
+                            className="w-full px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-mono font-bold rounded hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
+                            data-testid={`buy-protocol-${protocol.id}`}
+                          >
+                            {purchasing === protocol.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                <ShoppingCart className="w-4 h-4" /> BUY NOW
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Purchases Tab */}
+            {activeTab === "purchases" && (
+              <div className="space-y-4">
+                {purchases.length === 0 ? (
+                  <FuturisticFrame title="NO PURCHASES" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg text-center py-12">
+                    <Gift className="w-16 h-16 text-purple-500/30 mx-auto mb-4" />
+                    <p className="text-purple-300 font-mono mb-4">You haven't purchased any protocols yet</p>
+                    <button onClick={() => setActiveTab("browse")} className="px-6 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-mono rounded hover:scale-[1.02]">
+                      BROWSE MARKETPLACE
+                    </button>
+                  </FuturisticFrame>
+                ) : (
+                  <div className="space-y-3">
+                    {purchases.map((purchase) => (
+                      <div key={purchase.id} className="bg-slate-900/80 p-4 rounded-lg border border-green-500/20">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="text-green-400 font-mono font-bold">{purchase.category_name}</h3>
+                            <p className="text-purple-400/60 font-mono text-xs">from {purchase.seller_username} • ${purchase.amount?.toFixed(2)}</p>
+                          </div>
+                          <button
+                            onClick={() => copyProtocol(purchase.protocol_string)}
+                            className="p-2 text-purple-400 hover:text-pink-400 rounded hover:bg-pink-500/10"
+                            title="Copy Protocol"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="bg-slate-950 p-3 rounded font-mono text-sm text-purple-300 break-all">
+                          {purchase.protocol_string}
+                        </div>
+                        <p className="text-purple-400/40 font-mono text-xs mt-2">Purchased: {new Date(purchase.purchased_at).toLocaleDateString()}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Sales Tab */}
+            {activeTab === "sales" && (
+              <div className="space-y-4">
+                {sales.length === 0 ? (
+                  <FuturisticFrame title="NO SALES" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg text-center py-12">
+                    <DollarSign className="w-16 h-16 text-blue-500/30 mx-auto mb-4" />
+                    <p className="text-purple-300 font-mono mb-4">You haven't made any sales yet</p>
+                    <button onClick={() => navigate("/categories")} className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02]">
+                      LIST A PROTOCOL FOR SALE
+                    </button>
+                  </FuturisticFrame>
+                ) : (
+                  <>
+                    <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-4 rounded-lg border border-green-500/30">
+                      <p className="text-green-400 font-mono text-sm">TOTAL REVENUE</p>
+                      <p className="text-3xl font-bold text-green-400 font-mono">${sales.reduce((sum, s) => sum + (s.amount || 0), 0).toFixed(2)}</p>
+                    </div>
+                    <div className="space-y-3">
+                      {sales.map((sale) => (
+                        <div key={sale.id} className="bg-slate-900/80 p-4 rounded-lg border border-green-500/20 flex items-center justify-between">
+                          <div>
+                            <h3 className="text-purple-300 font-mono font-bold">{sale.category_name}</h3>
+                            <p className="text-purple-400/60 font-mono text-xs">Buyer: {sale.buyer_username}</p>
+                            <p className="text-purple-400/40 font-mono text-xs">{new Date(sale.sold_at).toLocaleDateString()}</p>
+                          </div>
+                          <span className="text-xl font-bold text-green-400 font-mono">+${sale.amount?.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        <BookSalesBanner variant="compact" />
+      </div>
+    </Layout>
+  );
+};
+
 // Google Maps Component with Category-Colored Markers
 const CategoryMap = ({ selectedCategories }) => {
   const [mapData, setMapData] = useState({ markers: [], categories: {} });
