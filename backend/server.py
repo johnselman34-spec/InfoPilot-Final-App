@@ -689,6 +689,7 @@ class SearchResultResponse(BaseModel):
 class CollateRequest(BaseModel):
     search_query: str
     max_results: int = 20
+    require_search_terms: bool = True  # If true, results must contain key terms from search query
 
 class UltimateSearchRequest(BaseModel):
     category_ids: List[str] = []
