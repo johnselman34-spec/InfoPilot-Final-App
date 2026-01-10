@@ -3013,6 +3013,26 @@ const UltimateSearchPage = () => {
         </div>
         
         <BookSalesBanner variant="compact" />
+        
+        {/* Protocol Recommendation Modals */}
+        {suggestChangeCategory && (
+          <SuggestChangeModal 
+            category={suggestChangeCategory} 
+            onClose={() => setSuggestChangeCategory(null)} 
+            onSuccess={() => {
+              setSuggestChangeCategory(null);
+              toast.success("Your recommendation has been submitted to the protocol owner!");
+            }}
+          />
+        )}
+        
+        {viewRecsCategory && (
+          <ViewRecommendationsModal 
+            category={viewRecsCategory} 
+            onClose={() => setViewRecsCategory(null)} 
+            onUpdate={fetchTreeCategories}
+          />
+        )}
       </div>
     </Layout>
   );
