@@ -2040,6 +2040,24 @@ async def update_category(category_id: str, data: CategoryUpdate, user: dict = D
     # Update visibility if provided
     if data.is_public is not None:
         update_data["is_public"] = data.is_public
+        # If making public, remove for_sale status
+        if data.is_public:
+            update_data["for_sale"] = False
+            update_data["price"] = None
+    
+    # Update for_sale status (only for private protocols)
+    if data.for_sale is not None:
+        category = await db.categories.find_one({"id": category_id})
+        if category and not category.get("is_public", True) and not data.is_public:
+            update_data["for_sale"] = data.for_sale
+            if data.for_sale and data.price is not None:
+                update_data["price"] = data.price
+            elif not data.for_sale:
+                update_data["price"] = None
+    
+    # Update price if for_sale
+    if data.price is not None and data.for_sale is not False:
+        update_data["price"] = data.price
     
     if not update_data:
         raise HTTPException(status_code=400, detail="No updates provided")
