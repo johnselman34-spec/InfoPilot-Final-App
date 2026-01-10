@@ -2544,7 +2544,13 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
         pass
     max_results = min(data.max_results, 100)
     
-    user_categories = await db.categories.find({"user_id": user["id"]}).to_list(1000)
+    # Get user's own categories AND public categories from other users
+    user_categories = await db.categories.find({
+        "$or": [
+            {"user_id": user["id"]},  # User's own categories
+            {"is_public": True}        # Public categories from all users
+        ]
+    }).to_list(1000)
     
     if not user_categories:
         raise HTTPException(status_code=400, detail="Create at least one category with a protocol before searching")
