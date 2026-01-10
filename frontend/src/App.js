@@ -1176,9 +1176,21 @@ const MessagesPage = () => {
   useEffect(() => {
     if (!token) return;
     
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = API.replace(/^https?:\/\//, '').replace('/api', '');
-    const wsUrl = `${wsProtocol}//${wsHost}/ws/messages/${token}`;
+    // Construct WebSocket URL from API URL
+    // API is like https://xxx.preview.emergentagent.com/api
+    // WebSocket should be wss://xxx.preview.emergentagent.com/ws/messages/{token}
+    let wsUrl;
+    try {
+      const apiUrl = new URL(API);
+      const wsProtocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${wsProtocol}//${apiUrl.host}/ws/messages/${token}`;
+    } catch (e) {
+      // Fallback for relative URLs
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${wsProtocol}//${window.location.host}/ws/messages/${token}`;
+    }
+    
+    console.log('WebSocket URL:', wsUrl);
     
     const connectWebSocket = () => {
       try {
