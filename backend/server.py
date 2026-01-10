@@ -29,6 +29,9 @@ db = client[os.environ.get('DB_NAME', 'infopilot_db')]
 # PayPal Configuration
 PAYPAL_PAYMENT_LINK = "https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ"
 
+# SerpAPI Configuration
+SERPAPI_KEY = os.environ.get('SERPAPI_KEY', '')
+
 # Create the main app
 app = FastAPI(title="InfoPilot API", version="1.0.0")
 
