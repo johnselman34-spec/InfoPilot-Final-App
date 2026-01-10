@@ -2091,6 +2091,9 @@ const InfoPilotPage = () => {
               <div className="flex flex-wrap gap-2">
                 {categories.slice(0, 5).map((cat) => (<span key={cat.id} className="px-3 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 rounded text-xs font-mono">{cat.name}</span>))}
               </div>
+              <p className="text-xs text-green-400/60 mt-3 font-mono flex items-center gap-1">
+                <Check className="w-3 h-3" /> All protocols are case insensitive
+              </p>
             </div>
           )}
         </FuturisticFrame>
