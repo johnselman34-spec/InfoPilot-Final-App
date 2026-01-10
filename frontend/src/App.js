@@ -5962,6 +5962,16 @@ const AdminPage = () => {
   // Database limits state
   const [dbLimits, setDbLimits] = useState({ user_max_results_limit: 4000, top_users_by_results: [] });
   const [newDbLimit, setNewDbLimit] = useState(4000);
+  
+  // Search pages config state
+  const [searchPagesConfig, setSearchPagesConfig] = useState({
+    unpaid_user_search_pages: 50,
+    paid_user_search_pages: 99,
+    results_per_page: 20,
+    is_app_free: true
+  });
+  const [newUnpaidPages, setNewUnpaidPages] = useState(50);
+  const [newPaidPages, setNewPaidPages] = useState(99);
 
   useEffect(() => {
     if (user?.is_admin) {
@@ -5969,8 +5979,36 @@ const AdminPage = () => {
       fetchSubscriptionConfig();
       fetchSubscriptions();
       fetchDbLimits();
+      fetchSearchPagesConfig();
     }
   }, [user]);
+  
+  const fetchSearchPagesConfig = async () => {
+    try {
+      const res = await axios.get(`${API}/admin/search-pages-config`);
+      setSearchPagesConfig(res.data);
+      setNewUnpaidPages(res.data.unpaid_user_search_pages);
+      setNewPaidPages(res.data.paid_user_search_pages);
+    } catch (error) {
+      console.error("Failed to fetch search pages config");
+    }
+  };
+  
+  const saveSearchPagesConfig = async () => {
+    setSaving(true);
+    try {
+      const params = new URLSearchParams();
+      params.append('unpaid_user_search_pages', newUnpaidPages);
+      params.append('paid_user_search_pages', newPaidPages);
+      const res = await axios.put(`${API}/admin/search-pages-config?${params.toString()}`);
+      toast.success(res.data.message);
+      setSearchPagesConfig(res.data);
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to save search pages config");
+    } finally {
+      setSaving(false);
+    }
+  };
   
   const fetchDbLimits = async () => {
     try {
