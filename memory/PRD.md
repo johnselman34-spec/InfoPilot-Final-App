@@ -1,9 +1,10 @@
-# InfoPilot Search App - Product Requirements Document
+# InfoPilot Explorer - Product Requirements Document
 
 ## Original Problem Statement
-InfoPilot is a sophisticated information exchange social network with a custom search language and subscription model. The application features:
+InfoPilot Explorer is a sophisticated information exchange social network with a custom search language and subscription model. The application features:
 - Custom registration and Google OAuth authentication
-- Stripe payment integration with a "Welcome Sale" promotion
+- Shopify payment integration with a "Welcome Sale" promotion ($0.75 lifetime)
+- Stripe payment as secondary option
 - AI-powered intelligent search using Emergent LLM
 - Hierarchical categories with custom InfoPilot 2.0 Protocol syntax
 - Google Maps integration for location visualization
