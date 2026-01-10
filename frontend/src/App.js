@@ -161,7 +161,7 @@ const LoadingScreen = () => (
         <div className="absolute inset-2 border-2 border-purple-400 rounded-full animate-spin"></div>
         <Radar className="absolute inset-0 m-auto w-12 h-12 text-pink-400 animate-pulse" />
       </div>
-      <p className="text-purple-300 font-mono text-lg tracking-wider">INITIALIZING INFOPILOT...</p>
+      <p className="text-purple-300 font-mono text-lg tracking-wider">INITIALIZING INFOPILOT EXPLORER...</p>
     </div>
   </div>
 );
@@ -450,7 +450,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">INFOPILOT</h1>
+                <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">INFOPILOT EXPLORER</h1>
                 <p className="text-xs text-purple-400/60 font-mono">TACTICAL SEARCH v2.0</p>
               </div>
             </div>
@@ -533,7 +533,7 @@ const Layout = ({ children }) => {
         </button>
         <div className="flex items-center gap-2 ml-4">
           <Plane className="w-6 h-6 text-pink-400" />
-          <span className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono">INFOPILOT</span>
+          <span className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono">INFOPILOT EXPLORER</span>
         </div>
       </header>
       <main className="lg:ml-72 pt-16 lg:pt-0 min-h-screen">
@@ -593,7 +593,7 @@ const LoginPage = () => {
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-pink-500/20 to-purple-500/20 border-2 border-pink-500 rounded-xl mb-4 relative">
             <Plane className="w-12 h-12 text-pink-400" />
           </div>
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono tracking-wider">INFOPILOT</h1>
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono tracking-wider">INFOPILOT EXPLORER</h1>
           <p className="text-purple-400/80 mt-2 font-mono text-sm">TACTICAL INFORMATION EXCHANGE SYSTEM</p>
         </div>
 
@@ -662,7 +662,7 @@ const HomePage = () => {
         {/* Welcome */}
         <FuturisticFrame title="COMMAND CENTER" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
           <div className="flex flex-col md:flex-row items-center gap-6">
-            <img src={IMAGES.globe} alt="InfoPilot Global Network" className="w-32 h-32 rounded-lg border border-purple-500/50 object-cover shadow-lg shadow-purple-500/30" />
+            <img src={IMAGES.globe} alt="InfoPilot Explorer Global Network" className="w-32 h-32 rounded-lg border border-purple-500/50 object-cover shadow-lg shadow-purple-500/30" />
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider mb-2">WELCOME, {user?.username?.toUpperCase()}</h1>
               <p className="text-purple-300/80 mb-4 font-mono text-sm">Your tactical gateway to the World Wide Web Information Exchange.</p>
@@ -2332,7 +2332,7 @@ const SubscribePage = () => {
           <FuturisticFrame title="LIFETIME ACCESS ACTIVE" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg text-center py-12">
             <Crown className="w-20 h-20 text-pink-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-2">🎉 YOU'RE A PREMIUM MEMBER!</h2>
-            <p className="text-purple-300/80 font-mono text-sm">Enjoy unlimited access to all InfoPilot features forever.</p>
+            <p className="text-purple-300/80 font-mono text-sm">Enjoy unlimited access to all InfoPilot Explorer features forever.</p>
             <button onClick={() => navigate("/")} className="mt-6 px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02]">GO TO COMMAND CENTER</button>
           </FuturisticFrame>
           <BookSalesBanner variant="full" />
