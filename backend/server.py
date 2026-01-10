@@ -1237,7 +1237,7 @@ async def require_paid_user(credentials: HTTPAuthorizationCredentials = Depends(
 # ============================================
 
 async def fetch_page_content(url: str) -> Dict[str, Any]:
-    """Fetch and parse webpage content"""
+    """Fetch and parse webpage content - extracts only meaningful article text"""
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(url, follow_redirects=True)
@@ -1248,10 +1248,37 @@ async def fetch_page_content(url: str) -> Dict[str, Any]:
             
             title = soup.title.string if soup.title else ""
             
-            for tag in soup(['script', 'style', 'nav', 'footer', 'header']):
+            # Remove all non-content elements
+            for tag in soup(['script', 'style', 'nav', 'footer', 'header', 'noscript', 
+                           'iframe', 'embed', 'object', 'svg', 'canvas', 'map', 'area',
+                           'aside', 'form', 'input', 'button', 'select', 'textarea']):
                 tag.decompose()
             
-            text = soup.get_text(separator=' ', strip=True)
+            # Remove elements with common non-content classes/ids
+            for selector in ['[class*="menu"]', '[class*="nav"]', '[class*="sidebar"]', 
+                           '[class*="footer"]', '[class*="header"]', '[class*="widget"]',
+                           '[class*="comment"]', '[class*="social"]', '[class*="share"]',
+                           '[id*="menu"]', '[id*="nav"]', '[id*="sidebar"]', '[id*="footer"]']:
+                for tag in soup.select(selector):
+                    tag.decompose()
+            
+            # Try to find main content area first
+            main_content = None
+            for selector in ['article', 'main', '[role="main"]', '.content', '.article', 
+                           '.post', '.entry', '#content', '#main']:
+                main_content = soup.select_one(selector)
+                if main_content:
+                    break
+            
+            # Use main content if found, otherwise use body
+            content_source = main_content if main_content else soup.body if soup.body else soup
+            
+            # Get clean text
+            text = content_source.get_text(separator=' ', strip=True)
+            
+            # Additional cleanup - remove excessive whitespace
+            text = ' '.join(text.split())
+            
             word_count = len(text.split())
             
             year_match = re.search(r'\b(19|20)\d{2}\b', text)
