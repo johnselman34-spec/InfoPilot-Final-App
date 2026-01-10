@@ -2101,12 +2101,8 @@ async def ultimate_search(data: UltimateSearchRequest, user: dict = Depends(requ
     settings_doc = await db.admin_settings.find_one({"id": "admin_settings"})
     settings = AdminSettings(**settings_doc) if settings_doc else AdminSettings()
     
-    if not user.get("is_paid") and not user.get("is_admin"):
-        if data.page > settings.free_user_pages:
-            raise HTTPException(
-                status_code=403,
-                detail=f"Free users can only access {settings.free_user_pages} page(s). Upgrade for just $0.75 lifetime!"
-            )
+    # App is now free - no page restrictions
+    # All users get full access
     
     query = {"user_id": user["id"]}
     
