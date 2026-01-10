@@ -125,12 +125,28 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
   - Interactive Google Maps with research hotspots
   - Top contributors leaderboard with rankings
   - Book promotion for "Letters to Evelyn"
+  - **28 curated research resources seeded** across Science, Technology, Education, Health, History, Government, Business, Environment, Arts & Culture, Law & Legal
+- [x] **Weekly Email Digest System** - COMPLETED Jan 10, 2026
+  - Admin panel for configuring digest schedule (day of week, hour)
+  - Content options: Trending Hashtags, Marketplace Listings, Notifications
+  - Preview email functionality
+  - Manual "Send Now" button
+  - Per-user opt-out support
+  - Beautiful HTML email template with book promotion
+  - Note: Requires SendGrid API key for actual sending
+- [x] **Admin Panel Social Moderation** - COMPLETED Jan 10, 2026
+  - Moderation Dashboard with content statistics
+  - User management: search, ban/unban users
+  - Group moderation: search and delete groups
+  - Page moderation: search and delete pages
+  - Reports system: users can report content, admins review
 - [~] **Refactor Monoliths** - IN PROGRESS: Created modular structure, gradual migration ongoing
   - Backend: `/app/backend/utils/`, `/app/backend/models/`, `/app/backend/services/`, `/app/backend/routes/`
   - Frontend: `/app/frontend/src/utils/`, `/app/frontend/src/services/`, `/app/frontend/src/contexts/`, `/app/frontend/src/components/`
 
-#### P1 - High Priority
-- [ ] Weekly email digest system (requires SendGrid key)
+#### Future Tasks
+- [ ] Complete monolith refactoring (migrate all routes/pages to modular structure)
+- [ ] Native mobile apps (Android/iOS)
 
 #### P2 - Medium Priority
 - [ ] Admin Panel enhancements for social feature moderation
