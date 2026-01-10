@@ -298,16 +298,16 @@ const FuturisticFrame = ({ children, title, className = "", color = "purple" }) 
   
   return (
     <div className={`relative ${className}`}>
-      <div className={`absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 ${c.border}`}></div>
-      <div className={`absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 ${c.border}`}></div>
-      <div className={`absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 ${c.border}`}></div>
-      <div className={`absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 ${c.border}`}></div>
+      <div className={`absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 ${c.border} pointer-events-none`}></div>
+      <div className={`absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 ${c.border} pointer-events-none`}></div>
+      <div className={`absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 ${c.border} pointer-events-none`}></div>
+      <div className={`absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 ${c.border} pointer-events-none`}></div>
       {title && (
-        <div className="absolute -top-3 left-6 bg-slate-950 px-2">
+        <div className="absolute -top-3 left-6 bg-slate-950 px-2 pointer-events-none">
           <span className={`${c.text} text-xs font-mono tracking-wider`}>{title}</span>
         </div>
       )}
-      <div className="p-4">{children}</div>
+      <div className="p-4 relative z-10">{children}</div>
     </div>
   );
 };
