@@ -584,6 +584,29 @@ class PostResponse(BaseModel):
 
 class CommentCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=2000)
+    parent_id: Optional[str] = None  # For nested replies
+
+# Reaction Types (Facebook-style)
+REACTION_TYPES = ["like", "love", "haha", "wow", "sad", "angry"]
+
+class ReactionCreate(BaseModel):
+    reaction_type: str = Field(..., description="One of: like, love, haha, wow, sad, angry")
+
+class UpdateCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=5000)
+    image_url: Optional[str] = None
+
+class CommentResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    user_id: str
+    username: str
+    content: str
+    parent_id: Optional[str] = None
+    reactions: Dict[str, List[str]] = {}  # reaction_type -> list of user_ids
+    reaction_counts: Dict[str, int] = {}
+    replies: List[Any] = []
+    created_at: str
 
 # ============================================
 # INFOPILOT 2.0 PROTOCOL PARSER
