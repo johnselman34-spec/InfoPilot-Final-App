@@ -4314,18 +4314,290 @@ const PageDetailPage = () => {
 // Admin Page
 const AdminPage = () => {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [privacyPolicy, setPrivacyPolicy] = useState("");
+  const [termsOfService, setTermsOfService] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (user?.is_admin) {
+      fetchLegalPages();
+    }
+  }, [user]);
+
+  const fetchLegalPages = async () => {
+    try {
+      const [privacyRes, termsRes] = await Promise.all([
+        axios.get(`${API}/legal/privacy-policy`),
+        axios.get(`${API}/legal/terms-of-service`)
+      ]);
+      setPrivacyPolicy(privacyRes.data.content);
+      setTermsOfService(termsRes.data.content);
+    } catch (error) {
+      console.error("Failed to fetch legal pages");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const savePrivacyPolicy = async () => {
+    setSaving(true);
+    try {
+      await axios.put(`${API}/admin/legal/privacy-policy?content=${encodeURIComponent(privacyPolicy)}`);
+      toast.success("Privacy Policy updated!");
+    } catch (error) {
+      toast.error("Failed to save Privacy Policy");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveTermsOfService = async () => {
+    setSaving(true);
+    try {
+      await axios.put(`${API}/admin/legal/terms-of-service?content=${encodeURIComponent(termsOfService)}`);
+      toast.success("Terms of Service updated!");
+    } catch (error) {
+      toast.error("Failed to save Terms of Service");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (!user?.is_admin) {
     return (<Layout><div className="text-center py-12"><Shield className="w-16 h-16 text-red-400/50 mx-auto mb-4" /><h1 className="text-2xl font-bold text-red-400 font-mono">ACCESS DENIED</h1></div></Layout>);
   }
+
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider mb-6">ADMIN CONTROL</h1>
-        <FuturisticFrame title="SYSTEM STATUS" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
-          <p className="text-purple-300 font-mono">Admin dashboard for system management.</p>
-        </FuturisticFrame>
+        
+        {/* Admin Tabs */}
+        <div className="flex gap-2 mb-6 overflow-x-auto">
+          {[
+            { id: "dashboard", label: "Dashboard", icon: Shield },
+            { id: "privacy", label: "Privacy Policy", icon: Lock },
+            { id: "terms", label: "Terms of Service", icon: FileText }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded font-mono text-sm whitespace-nowrap ${
+                activeTab === tab.id 
+                  ? 'bg-gradient-to-r from-pink-600 to-purple-600 text-white' 
+                  : 'bg-slate-900 text-purple-400 border border-purple-500/30 hover:border-pink-500/50'
+              }`}
+              data-testid={`admin-tab-${tab.id}`}
+            >
+              <tab.icon className="w-4 h-4" /> {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Dashboard Tab */}
+        {activeTab === "dashboard" && (
+          <FuturisticFrame title="SYSTEM STATUS" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+            <div className="space-y-4">
+              <p className="text-purple-300 font-mono">Admin dashboard for InfoPilot Explorer system management.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="bg-slate-950 p-4 rounded border border-green-500/30">
+                  <p className="text-green-400 font-mono text-sm">SYSTEM STATUS</p>
+                  <p className="text-green-300 font-mono text-2xl mt-2">OPERATIONAL</p>
+                </div>
+                <div className="bg-slate-950 p-4 rounded border border-purple-500/30">
+                  <p className="text-purple-400 font-mono text-sm">APP VERSION</p>
+                  <p className="text-purple-300 font-mono text-2xl mt-2">2.0.0</p>
+                </div>
+              </div>
+              <div className="mt-4 p-4 bg-slate-950 rounded border border-pink-500/20">
+                <p className="text-pink-400 font-mono text-sm mb-2">QUICK LINKS</p>
+                <div className="flex flex-wrap gap-2">
+                  <a href="/privacy-policy" target="_blank" className="text-purple-400 hover:text-pink-400 font-mono text-sm underline">Privacy Policy</a>
+                  <span className="text-purple-400/40">|</span>
+                  <a href="/terms-of-service" target="_blank" className="text-purple-400 hover:text-pink-400 font-mono text-sm underline">Terms of Service</a>
+                </div>
+              </div>
+            </div>
+          </FuturisticFrame>
+        )}
+
+        {/* Privacy Policy Tab */}
+        {activeTab === "privacy" && (
+          <FuturisticFrame title="EDIT PRIVACY POLICY" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+            {loading ? (
+              <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 text-pink-400 animate-spin" /></div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-purple-400/60 font-mono text-sm">Edit the Privacy Policy below. Supports Markdown formatting.</p>
+                <textarea
+                  value={privacyPolicy}
+                  onChange={(e) => setPrivacyPolicy(e.target.value)}
+                  className="w-full h-96 px-4 py-3 bg-slate-950 border border-purple-500/30 rounded-lg text-purple-300 font-mono text-sm focus:border-pink-500 focus:outline-none resize-y"
+                  placeholder="Enter Privacy Policy content..."
+                  data-testid="privacy-policy-editor"
+                />
+                <div className="flex justify-between items-center">
+                  <a href="/privacy-policy" target="_blank" className="text-purple-400 hover:text-pink-400 font-mono text-sm flex items-center gap-1">
+                    <ExternalLink className="w-4 h-4" /> Preview
+                  </a>
+                  <button
+                    onClick={savePrivacyPolicy}
+                    disabled={saving}
+                    className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2"
+                    data-testid="save-privacy-policy"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    SAVE CHANGES
+                  </button>
+                </div>
+              </div>
+            )}
+          </FuturisticFrame>
+        )}
+
+        {/* Terms of Service Tab */}
+        {activeTab === "terms" && (
+          <FuturisticFrame title="EDIT TERMS OF SERVICE" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
+            {loading ? (
+              <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 text-blue-400 animate-spin" /></div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-purple-400/60 font-mono text-sm">Edit the Terms of Service below. Supports Markdown formatting.</p>
+                <textarea
+                  value={termsOfService}
+                  onChange={(e) => setTermsOfService(e.target.value)}
+                  className="w-full h-96 px-4 py-3 bg-slate-950 border border-purple-500/30 rounded-lg text-purple-300 font-mono text-sm focus:border-blue-500 focus:outline-none resize-y"
+                  placeholder="Enter Terms of Service content..."
+                  data-testid="terms-of-service-editor"
+                />
+                <div className="flex justify-between items-center">
+                  <a href="/terms-of-service" target="_blank" className="text-purple-400 hover:text-blue-400 font-mono text-sm flex items-center gap-1">
+                    <ExternalLink className="w-4 h-4" /> Preview
+                  </a>
+                  <button
+                    onClick={saveTermsOfService}
+                    disabled={saving}
+                    className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2"
+                    data-testid="save-terms-of-service"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                    SAVE CHANGES
+                  </button>
+                </div>
+              </div>
+            )}
+          </FuturisticFrame>
+        )}
       </div>
     </Layout>
+  );
+};
+
+// Privacy Policy Page (Public)
+const PrivacyPolicyPage = () => {
+  const [content, setContent] = useState("");
+  const [lastUpdated, setLastUpdated] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPolicy();
+  }, []);
+
+  const fetchPolicy = async () => {
+    try {
+      const res = await axios.get(`${API}/legal/privacy-policy`);
+      setContent(res.data.content);
+      setLastUpdated(res.data.last_updated);
+    } catch (error) {
+      setContent("Failed to load Privacy Policy. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/30 to-slate-950">
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="mb-8">
+          <a href="/" className="text-pink-400 hover:text-pink-300 font-mono text-sm flex items-center gap-2 mb-4">
+            <Home className="w-4 h-4" /> Back to Home
+          </a>
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider">PRIVACY POLICY</h1>
+          <p className="text-purple-400/60 font-mono text-sm mt-2">Last Updated: {lastUpdated}</p>
+        </div>
+        
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 text-pink-400 animate-spin" />
+          </div>
+        ) : (
+          <div className="bg-slate-900/80 border border-purple-500/30 rounded-lg p-6 md:p-8">
+            <div className="prose prose-invert prose-pink max-w-none font-mono text-purple-300/90 whitespace-pre-wrap">
+              {content}
+            </div>
+          </div>
+        )}
+        
+        <div className="mt-8 text-center">
+          <p className="text-purple-400/40 font-mono text-xs">InfoPilot Explorer © 2026</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Terms of Service Page (Public)
+const TermsOfServicePage = () => {
+  const [content, setContent] = useState("");
+  const [lastUpdated, setLastUpdated] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTerms();
+  }, []);
+
+  const fetchTerms = async () => {
+    try {
+      const res = await axios.get(`${API}/legal/terms-of-service`);
+      setContent(res.data.content);
+      setLastUpdated(res.data.last_updated);
+    } catch (error) {
+      setContent("Failed to load Terms of Service. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/30 to-slate-950">
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <div className="mb-8">
+          <a href="/" className="text-pink-400 hover:text-pink-300 font-mono text-sm flex items-center gap-2 mb-4">
+            <Home className="w-4 h-4" /> Back to Home
+          </a>
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 font-mono tracking-wider">TERMS OF SERVICE</h1>
+          <p className="text-purple-400/60 font-mono text-sm mt-2">Last Updated: {lastUpdated}</p>
+        </div>
+        
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
+          </div>
+        ) : (
+          <div className="bg-slate-900/80 border border-purple-500/30 rounded-lg p-6 md:p-8">
+            <div className="prose prose-invert prose-blue max-w-none font-mono text-purple-300/90 whitespace-pre-wrap">
+              {content}
+            </div>
+          </div>
+        )}
+        
+        <div className="mt-8 text-center">
+          <p className="text-purple-400/40 font-mono text-xs">InfoPilot Explorer © 2026</p>
+        </div>
+      </div>
+    </div>
   );
 };
 
