@@ -3067,33 +3067,38 @@ const AdminPage = () => {
 
 // Main App
 function App() {
-  return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <AuthProvider>
-        <Toaster position="top-right" toastOptions={{ style: { background: '#0f172a', border: '1px solid #ec4899', color: '#c084fc', fontFamily: 'monospace' } }} />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-            <Route path="/infopilot" element={<ProtectedRoute><InfoPilotPage /></ProtectedRoute>} />
-            <Route path="/ultimate-search" element={<ProtectedRoute><UltimateSearchPage /></ProtectedRoute>} />
-            <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
-            <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
-            <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
-            <Route path="/groups/:groupId" element={<ProtectedRoute><GroupDetailPage /></ProtectedRoute>} />
-            <Route path="/pages" element={<ProtectedRoute><PagesPage /></ProtectedRoute>} />
-            <Route path="/pages/:pageId" element={<ProtectedRoute><PageDetailPage /></ProtectedRoute>} />
-            <Route path="/statistics" element={<ProtectedRoute><StatisticsPage /></ProtectedRoute>} />
-            <Route path="/global-database" element={<ProtectedRoute><GlobalDatabasePage /></ProtectedRoute>} />
-            <Route path="/book" element={<ProtectedRoute><BookPage /></ProtectedRoute>} />
-            <Route path="/subscribe" element={<ProtectedRoute><SubscribePage /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </GoogleOAuthProvider>
+  const appContent = (
+    <AuthProvider>
+      <Toaster position="top-right" toastOptions={{ style: { background: '#0f172a', border: '1px solid #ec4899', color: '#c084fc', fontFamily: 'monospace' } }} />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+          <Route path="/infopilot" element={<ProtectedRoute><InfoPilotPage /></ProtectedRoute>} />
+          <Route path="/ultimate-search" element={<ProtectedRoute><UltimateSearchPage /></ProtectedRoute>} />
+          <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
+          <Route path="/friends" element={<ProtectedRoute><FriendsPage /></ProtectedRoute>} />
+          <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
+          <Route path="/groups/:groupId" element={<ProtectedRoute><GroupDetailPage /></ProtectedRoute>} />
+          <Route path="/pages" element={<ProtectedRoute><PagesPage /></ProtectedRoute>} />
+          <Route path="/pages/:pageId" element={<ProtectedRoute><PageDetailPage /></ProtectedRoute>} />
+          <Route path="/statistics" element={<ProtectedRoute><StatisticsPage /></ProtectedRoute>} />
+          <Route path="/global-database" element={<ProtectedRoute><GlobalDatabasePage /></ProtectedRoute>} />
+          <Route path="/book" element={<ProtectedRoute><BookPage /></ProtectedRoute>} />
+          <Route path="/subscribe" element={<ProtectedRoute><SubscribePage /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
+
+  // Wrap with GoogleOAuthProvider only if client ID is available
+  if (GOOGLE_CLIENT_ID) {
+    return <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>{appContent}</GoogleOAuthProvider>;
+  }
+  
+  return appContent;
 }
 
 export default App;
