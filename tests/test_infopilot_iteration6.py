@@ -317,12 +317,12 @@ class TestPagesFeature:
             })
         page_id = create_response.json()["page"]["id"]
         
-        # Get page detail
+        # Get page detail - response is nested under "page" key
         detail_response = requests.get(f"{BASE_URL}/api/pages/{page_id}",
             headers={"Authorization": f"Bearer {auth_token}"})
         assert detail_response.status_code == 200
         data = detail_response.json()
-        assert data["name"] == unique_name
+        assert data["page"]["name"] == unique_name
 
 
 class TestAuthentication:
