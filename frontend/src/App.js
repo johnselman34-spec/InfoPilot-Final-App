@@ -4262,7 +4262,8 @@ const UltimateSearchPage = () => {
                       <button
                         onClick={() => handleDeleteSession(session.timestamp)}
                         className="p-1 text-red-400/60 hover:text-red-400 rounded hover:bg-red-500/10"
-                        title="Delete session"
+                        title={`Delete session ${session.timestamp}`}
+                        data-testid={`delete-session-${idx}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
