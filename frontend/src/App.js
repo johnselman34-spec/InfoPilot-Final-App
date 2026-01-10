@@ -2,27 +2,24 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './App.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { api } from './services/api';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
-// Fix Leaflet default marker icon
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
+// Leaflet will be loaded dynamically to avoid SSR issues
+let MapContainer, TileLayer, Marker, Popup;
+try {
+  const leafletReact = require('react-leaflet');
+  MapContainer = leafletReact.MapContainer;
+  TileLayer = leafletReact.TileLayer;
+  Marker = leafletReact.Marker;
+  Popup = leafletReact.Popup;
+} catch (e) {
+  console.log('React-Leaflet not loaded');
+}
 
 // Custom marker icons by category
-const createColoredMarkerIcon = (color) => {
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-  });
-};
+const categoryColors = [
+  '#2196F3', '#4CAF50', '#FF9800', '#f44336', '#9C27B0', 
+  '#00BCD4', '#795548', '#607D8B', '#E91E63', '#3F51B5'
+];
 
 // Icons Component
 const Icons = {
