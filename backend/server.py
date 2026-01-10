@@ -757,12 +757,14 @@ class AdminSettingsUpdate(BaseModel):
     blog_keyword_count: Optional[int] = None
     max_search_results: Optional[int] = None
     user_max_results_limit: Optional[int] = None  # Max results per user's database
+    unpaid_user_search_pages: Optional[int] = None  # Pages of search results for unpaid users (1-99)
+    paid_user_search_pages: Optional[int] = None  # Pages of search results for paid users (1-99)
 
 class AdminSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = "admin_settings"
     results_per_page: int = 20
-    free_user_pages: int = 6  # Increased to 6 pages for free users
+    free_user_pages: int = 6  # Legacy - kept for compatibility
     max_category_levels: int = 100
     blocked_words: List[str] = DEFAULT_BLOCKED_WORDS
     subscription_price: float = 0.75  # Current sale price
@@ -770,8 +772,20 @@ class AdminSettings(BaseModel):
     informative_min_words: int = 1500
     phd_keyword_count: int = 3
     blog_keyword_count: int = 3
-    max_search_results: int = 120  # 6 pages * 20 results per page
+    max_search_results: int = 120  # Legacy - kept for compatibility
     user_max_results_limit: int = 4000  # Max results stored per user's database (default 4000)
+    unpaid_user_search_pages: int = 50  # Pages of search results for unpaid users (1-99), >40 = free app
+    paid_user_search_pages: int = 99  # Pages of search results for paid users (1-99)
+    
+    @property
+    def is_app_free(self) -> bool:
+        """App is considered free if unpaid users get more than 40 pages"""
+        return self.unpaid_user_search_pages > 40
+    
+    def get_max_results_for_user(self, is_paid: bool) -> int:
+        """Calculate max search results based on user type"""
+        pages = self.paid_user_search_pages if is_paid else self.unpaid_user_search_pages
+        return pages * self.results_per_page
 
 # Payment Models (Stripe Integration)
 class PaymentRequest(BaseModel):
