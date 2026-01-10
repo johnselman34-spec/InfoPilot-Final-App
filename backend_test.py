@@ -486,6 +486,7 @@ class InfoPilotAPITester:
             self.test_ultimate_search()
             self.test_user_settings()
             self.test_payment_endpoints()
+            self.test_social_features()
             self.test_cleanup()
             
         except Exception as e:
