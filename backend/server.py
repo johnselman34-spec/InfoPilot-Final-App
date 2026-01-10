@@ -2803,6 +2803,33 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
             continue
         
         content = f"{result['title']} {result['snippet']} {page_data.get('content', '')}"
+        content_lower = content.lower()
+        
+        # Check if content contains key search terms (if require_search_terms is enabled)
+        if data.require_search_terms and search_terms:
+            # For multi-word search terms (like names), require at least ONE to be present
+            # For single words, require at least 50% to be present
+            multi_word_terms = [t for t in search_terms if ' ' in t]
+            single_word_terms = [t for t in search_terms if ' ' not in t]
+            
+            has_multi_word_match = False
+            if multi_word_terms:
+                for term in multi_word_terms:
+                    if term in content_lower:
+                        has_multi_word_match = True
+                        break
+            
+            # Count single word matches
+            single_word_matches = sum(1 for t in single_word_terms if t in content_lower)
+            min_single_required = max(1, len(single_word_terms) // 2)  # At least 50%
+            
+            # Skip if no multi-word match AND insufficient single word matches
+            if multi_word_terms and not has_multi_word_match:
+                skipped_no_search_terms += 1
+                continue
+            if not multi_word_terms and single_word_matches < min_single_required:
+                skipped_no_search_terms += 1
+                continue
         
         has_blocked, _ = contains_blocked_words(content, blocked_words)
         if has_blocked:
