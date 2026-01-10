@@ -5662,6 +5662,33 @@ const SubscribePage = () => {
   const [showRecordPayment, setShowRecordPayment] = useState(false);
   const [paymentPending, setPaymentPending] = useState(false);
 
+  const fetchConfig = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/subscription/config`);
+      setConfig(res.data);
+    } catch (error) {
+      console.error("Failed to fetch subscription config");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchSubscriptionStatus = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/subscription/status`);
+      setSubscriptionStatus(res.data);
+      
+      // If subscription is now active and we were waiting, redirect to home
+      if (res.data.is_subscribed && paymentPending) {
+        localStorage.removeItem('paypal_payment_pending');
+        toast.success("🎉 Subscription activated! Welcome to InfoPilot Explorer!");
+        setTimeout(() => navigate("/"), 1500);
+      }
+    } catch (error) {
+      console.error("Failed to fetch subscription status");
+    }
+  }, [paymentPending, navigate]);
+
   useEffect(() => {
     fetchConfig();
     fetchSubscriptionStatus();
@@ -5679,7 +5706,7 @@ const SubscribePage = () => {
         localStorage.removeItem('paypal_payment_pending');
       }
     }
-  }, []);
+  }, [fetchConfig, fetchSubscriptionStatus]);
 
   // Poll for subscription status when payment is pending
   useEffect(() => {
@@ -5689,7 +5716,7 @@ const SubscribePage = () => {
       }, 5000); // Check every 5 seconds
       return () => clearInterval(interval);
     }
-  }, [paymentPending]);
+  }, [paymentPending, fetchSubscriptionStatus]);
 
   // Initialize PayPal Hosted Button
   useEffect(() => {
@@ -5708,33 +5735,6 @@ const SubscribePage = () => {
       }
     }
   }, [showRecordPayment, loading]);
-
-  const fetchConfig = async () => {
-    try {
-      const res = await axios.get(`${API}/subscription/config`);
-      setConfig(res.data);
-    } catch (error) {
-      console.error("Failed to fetch subscription config");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchSubscriptionStatus = async () => {
-    try {
-      const res = await axios.get(`${API}/subscription/status`);
-      setSubscriptionStatus(res.data);
-      
-      // If subscription is now active and we were waiting, redirect to home
-      if (res.data.is_subscribed && paymentPending) {
-        localStorage.removeItem('paypal_payment_pending');
-        toast.success("🎉 Subscription activated! Welcome to InfoPilot Explorer!");
-        setTimeout(() => navigate("/"), 1500);
-      }
-    } catch (error) {
-      console.error("Failed to fetch subscription status");
-    }
-  };
 
   const handlePayPalClick = (link) => {
     // Store payment intent in localStorage before opening PayPal
