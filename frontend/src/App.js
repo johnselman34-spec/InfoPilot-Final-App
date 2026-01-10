@@ -955,11 +955,7 @@ const ViewRecommendationsModal = ({ category, onClose, onUpdate }) => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
 
-  useEffect(() => {
-    fetchRecommendations();
-  }, [category.id]);
-
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = useCallback(async () => {
     try {
       const res = await axios.get(`${API}/categories/${category.id}/recommendations`);
       setRecommendations(res.data.recommendations || []);
@@ -968,7 +964,11 @@ const ViewRecommendationsModal = ({ category, onClose, onUpdate }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [category.id]);
+
+  useEffect(() => {
+    fetchRecommendations();
+  }, [fetchRecommendations]);
 
   const handleStatusUpdate = async (recId, status) => {
     setUpdating(recId);
@@ -1261,14 +1261,14 @@ const MessagesPage = () => {
         wsRef.current.close();
       }
     };
-  }, [token, selectedConversation]);
+  }, [token, selectedConversation, user?.id]);
 
   useEffect(() => {
     fetchConversations();
     // Fallback polling (less frequent when WS is connected)
     const interval = setInterval(fetchConversations, wsConnected ? 30000 : 10000);
     return () => clearInterval(interval);
-  }, [wsConnected]);
+  }, [wsConnected, fetchConversations]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
