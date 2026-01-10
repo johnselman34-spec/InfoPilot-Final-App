@@ -194,6 +194,403 @@ const FuturisticFrame = ({ children, title, className = "", color = "purple" }) 
   );
 };
 
+// ============================================
+// FACEBOOK-STYLE REACTIONS & COMMENTS
+// ============================================
+
+// Reaction Types Configuration
+const REACTION_CONFIG = {
+  like: { emoji: "👍", label: "Like", color: "text-blue-400" },
+  love: { emoji: "❤️", label: "Love", color: "text-red-400" },
+  haha: { emoji: "😂", label: "Haha", color: "text-yellow-400" },
+  wow: { emoji: "😮", label: "Wow", color: "text-yellow-400" },
+  sad: { emoji: "😢", label: "Sad", color: "text-yellow-400" },
+  angry: { emoji: "😠", label: "Angry", color: "text-orange-400" }
+};
+
+// Reaction Button Component with Emoji Picker
+const ReactionButton = ({ postType, postId, reactions = {}, reactionCounts = {}, userReaction, onUpdate }) => {
+  const [showPicker, setShowPicker] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const pickerRef = React.useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target)) {
+        setShowPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const totalReactions = Object.values(reactionCounts || {}).reduce((a, b) => a + b, 0);
+  
+  const handleReaction = async (reactionType) => {
+    setLoading(true);
+    try {
+      if (userReaction === reactionType) {
+        await axios.delete(`${API}/posts/${postType}/${postId}/reactions`);
+        onUpdate && onUpdate(null);
+      } else {
+        const res = await axios.post(`${API}/posts/${postType}/${postId}/reactions`, { reaction_type: reactionType });
+        onUpdate && onUpdate(res.data.user_reaction, res.data.reactions, res.data.reaction_counts);
+      }
+    } catch (error) {
+      toast.error("Failed to update reaction");
+    } finally {
+      setLoading(false);
+      setShowPicker(false);
+    }
+  };
+
+  const topReactions = Object.entries(reactionCounts || {})
+    .filter(([_, count]) => count > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  return (
+    <div className="relative" ref={pickerRef}>
+      <button
+        onClick={() => userReaction ? handleReaction(userReaction) : setShowPicker(!showPicker)}
+        onMouseEnter={() => !loading && setShowPicker(true)}
+        disabled={loading}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${
+          userReaction 
+            ? `bg-${REACTION_CONFIG[userReaction]?.color.split('-')[1]}-500/20 ${REACTION_CONFIG[userReaction]?.color}` 
+            : 'text-purple-400/60 hover:text-pink-400 hover:bg-pink-500/10'
+        } font-mono text-sm`}
+        data-testid={`reaction-btn-${postId}`}
+      >
+        {loading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <>
+            {userReaction ? (
+              <span className="text-lg">{REACTION_CONFIG[userReaction]?.emoji}</span>
+            ) : (
+              <ThumbsUp className="w-4 h-4" />
+            )}
+            <span className="flex items-center gap-1">
+              {topReactions.map(([type]) => (
+                <span key={type} className="text-sm">{REACTION_CONFIG[type]?.emoji}</span>
+              ))}
+              {totalReactions > 0 && <span className="ml-1">{totalReactions}</span>}
+            </span>
+          </>
+        )}
+      </button>
+      
+      {/* Reaction Picker Popup */}
+      {showPicker && (
+        <div 
+          className="absolute bottom-full left-0 mb-2 bg-slate-900 border border-purple-500/30 rounded-full px-2 py-1 flex gap-1 shadow-xl shadow-purple-500/20 z-50"
+          onMouseLeave={() => setShowPicker(false)}
+        >
+          {Object.entries(REACTION_CONFIG).map(([type, config]) => (
+            <button
+              key={type}
+              onClick={() => handleReaction(type)}
+              className={`text-2xl hover:scale-125 transition-transform p-1 rounded-full ${userReaction === type ? 'bg-purple-500/30' : 'hover:bg-purple-500/20'}`}
+              title={config.label}
+              data-testid={`reaction-${type}-${postId}`}
+            >
+              {config.emoji}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Comment Input Component
+const CommentInput = ({ postType, postId, parentId = null, onSubmit, placeholder = "Write a comment...", compact = false }) => {
+  const [content, setContent] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!content.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await axios.post(`${API}/posts/${postType}/${postId}/comments`, {
+        content: content.trim(),
+        parent_id: parentId
+      });
+      setContent("");
+      onSubmit && onSubmit(res.data.comment);
+      toast.success(parentId ? "Reply added!" : "Comment added!");
+    } catch (error) {
+      toast.error("Failed to add comment");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className={`flex gap-2 ${compact ? '' : 'mt-3'}`}>
+      <input
+        type="text"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder={placeholder}
+        className={`flex-1 ${compact ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'} bg-slate-950 border border-purple-500/30 rounded-full text-purple-300 font-mono focus:border-pink-500 focus:outline-none`}
+        data-testid={`comment-input-${postId}`}
+      />
+      <button
+        type="submit"
+        disabled={submitting || !content.trim()}
+        className={`${compact ? 'px-3 py-1.5' : 'px-4 py-2'} bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-full hover:scale-105 transition-transform disabled:opacity-50 disabled:hover:scale-100`}
+        data-testid={`comment-submit-${postId}`}
+      >
+        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+      </button>
+    </form>
+  );
+};
+
+// Single Comment Component with Replies
+const CommentItem = ({ comment, postType, postId, onDelete, onReplyAdded, depth = 0 }) => {
+  const { user } = useAuth();
+  const [showReplies, setShowReplies] = useState(depth < 2);
+  const [showReplyInput, setShowReplyInput] = useState(false);
+  const [localReaction, setLocalReaction] = useState(null);
+
+  const handleReplyAdded = (newComment) => {
+    setShowReplyInput(false);
+    onReplyAdded && onReplyAdded(newComment);
+  };
+
+  return (
+    <div className={`${depth > 0 ? 'ml-8 border-l-2 border-purple-500/20 pl-4' : ''}`}>
+      <div className="bg-slate-900/50 rounded-lg p-3 mb-2">
+        <div className="flex items-start gap-2">
+          <div className="w-8 h-8 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+            <User className="w-4 h-4 text-pink-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-purple-300 font-mono text-sm font-bold">{comment.username}</span>
+              <span className="text-purple-400/40 font-mono text-xs">{new Date(comment.created_at).toLocaleString()}</span>
+            </div>
+            <p className="text-purple-300/90 font-mono text-sm mt-1 whitespace-pre-wrap break-words">{comment.content}</p>
+            
+            <div className="flex items-center gap-3 mt-2">
+              <button
+                onClick={() => setShowReplyInput(!showReplyInput)}
+                className="text-purple-400/60 hover:text-pink-400 font-mono text-xs flex items-center gap-1"
+              >
+                <MessageCircle className="w-3 h-3" /> Reply
+              </button>
+              {user?.id === comment.user_id && (
+                <button
+                  onClick={() => onDelete && onDelete(comment.id)}
+                  className="text-red-400/60 hover:text-red-400 font-mono text-xs flex items-center gap-1"
+                >
+                  <Trash2 className="w-3 h-3" /> Delete
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {showReplyInput && (
+          <div className="mt-3 ml-10">
+            <CommentInput
+              postType={postType}
+              postId={postId}
+              parentId={comment.id}
+              onSubmit={handleReplyAdded}
+              placeholder={`Reply to ${comment.username}...`}
+              compact
+            />
+          </div>
+        )}
+      </div>
+      
+      {/* Nested Replies */}
+      {comment.replies && comment.replies.length > 0 && (
+        <div>
+          {!showReplies && (
+            <button
+              onClick={() => setShowReplies(true)}
+              className="text-pink-400 font-mono text-xs mb-2 hover:underline"
+            >
+              Show {comment.replies.length} {comment.replies.length === 1 ? 'reply' : 'replies'}
+            </button>
+          )}
+          {showReplies && comment.replies.map(reply => (
+            <CommentItem
+              key={reply.id}
+              comment={reply}
+              postType={postType}
+              postId={postId}
+              onDelete={onDelete}
+              onReplyAdded={onReplyAdded}
+              depth={depth + 1}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Comments Section Component
+const CommentsSection = ({ postType, postId, initialCount = 0 }) => {
+  const [comments, setComments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [totalCount, setTotalCount] = useState(initialCount);
+
+  const fetchComments = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/posts/${postType}/${postId}/comments`);
+      setComments(res.data.comments || []);
+      setTotalCount(res.data.total_count || 0);
+    } catch (error) {
+      console.error("Failed to fetch comments");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleComments = () => {
+    if (!showComments && comments.length === 0) {
+      fetchComments();
+    }
+    setShowComments(!showComments);
+  };
+
+  const handleCommentAdded = (newComment) => {
+    fetchComments();
+    setTotalCount(prev => prev + 1);
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm("Delete this comment?")) return;
+    try {
+      await axios.delete(`${API}/comments/${commentId}`);
+      toast.success("Comment deleted");
+      fetchComments();
+      setTotalCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      toast.error("Failed to delete comment");
+    }
+  };
+
+  return (
+    <div>
+      <button
+        onClick={handleToggleComments}
+        className="flex items-center gap-2 text-purple-400/60 hover:text-blue-400 font-mono text-sm px-3 py-1.5 rounded-lg hover:bg-blue-500/10 transition-colors"
+        data-testid={`comments-toggle-${postId}`}
+      >
+        <MessageCircle className="w-4 h-4" />
+        {totalCount > 0 ? `${totalCount} Comment${totalCount !== 1 ? 's' : ''}` : 'Comment'}
+      </button>
+      
+      {showComments && (
+        <div className="mt-3 pt-3 border-t border-purple-500/20">
+          <CommentInput
+            postType={postType}
+            postId={postId}
+            onSubmit={handleCommentAdded}
+          />
+          
+          {loading ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="w-6 h-6 text-pink-400 animate-spin" />
+            </div>
+          ) : comments.length > 0 ? (
+            <div className="mt-4 space-y-2">
+              {comments.map(comment => (
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  postType={postType}
+                  postId={postId}
+                  onDelete={handleDeleteComment}
+                  onReplyAdded={handleCommentAdded}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-purple-400/40 font-mono text-sm text-center py-4">No comments yet. Be the first!</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced Post Card Component (for Groups, Pages, Updates)
+const PostCard = ({ post, postType, onUpdate }) => {
+  const { user } = useAuth();
+  const [localReactions, setLocalReactions] = useState(post.reactions || {});
+  const [localReactionCounts, setLocalReactionCounts] = useState(post.reaction_counts || {});
+  const [userReaction, setUserReaction] = useState(null);
+
+  useEffect(() => {
+    // Check if user has reacted
+    for (const [type, users] of Object.entries(localReactions)) {
+      if (users && users.includes(user?.id)) {
+        setUserReaction(type);
+        break;
+      }
+    }
+  }, [localReactions, user]);
+
+  const handleReactionUpdate = (newReaction, newReactions, newCounts) => {
+    setUserReaction(newReaction);
+    if (newReactions) setLocalReactions(newReactions);
+    if (newCounts) setLocalReactionCounts(newCounts);
+    onUpdate && onUpdate();
+  };
+
+  return (
+    <div className="p-4 bg-slate-900/80 rounded-lg border border-purple-500/20 hover:border-purple-500/40 transition-colors" data-testid={`post-card-${post.id}`}>
+      {/* Post Header */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
+          <User className="w-5 h-5 text-pink-400" />
+        </div>
+        <div className="flex-1">
+          <p className="text-purple-300 font-mono font-bold">{post.username}</p>
+          <p className="text-purple-400/40 font-mono text-xs">{new Date(post.created_at).toLocaleString()}</p>
+        </div>
+      </div>
+      
+      {/* Post Content */}
+      <p className="text-purple-300/90 font-mono whitespace-pre-wrap mb-3">{post.content}</p>
+      
+      {/* Post Image */}
+      {post.image_url && (
+        <img src={post.image_url} alt="Post" className="w-full rounded-lg mb-3 max-h-96 object-cover" />
+      )}
+      
+      {/* Reactions & Comments Bar */}
+      <div className="flex items-center gap-4 pt-3 border-t border-purple-500/20">
+        <ReactionButton
+          postType={postType}
+          postId={post.id}
+          reactions={localReactions}
+          reactionCounts={localReactionCounts}
+          userReaction={userReaction}
+          onUpdate={handleReactionUpdate}
+        />
+        <CommentsSection
+          postType={postType}
+          postId={post.id}
+          initialCount={post.comment_count || 0}
+        />
+      </div>
+    </div>
+  );
+};
+
 // Sale Countdown Timer
 const SaleCountdown = ({ endDate }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
