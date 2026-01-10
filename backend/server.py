@@ -4918,6 +4918,171 @@ async def track_protocol_copy(category_id: str, user: dict = Depends(require_use
     }
 
 # ============================================
+# API ROUTES - BADGES & ACHIEVEMENTS
+# ============================================
+
+def calculate_badges(copy_count: int = 0, protocols_created: int = 0, sales_count: int = 0, purchases_count: int = 0) -> list:
+    """Calculate earned badges based on metrics"""
+    badges = []
+    
+    # Copy count badges
+    copy_badges = [
+        ("first_copy", 1), ("rising_star", 10), ("popular", 25),
+        ("trending", 50), ("viral", 100), ("legendary", 500), ("hall_of_fame", 1000)
+    ]
+    for badge_id, threshold in copy_badges:
+        if copy_count >= threshold:
+            badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": True, "progress": min(100, (copy_count / threshold) * 100)})
+        else:
+            badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": False, "progress": (copy_count / threshold) * 100})
+    
+    # Creator badges
+    creator_badges = [("creator_novice", 1), ("creator_prolific", 10), ("creator_master", 25)]
+    for badge_id, threshold in creator_badges:
+        if protocols_created >= threshold:
+            badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": True, "progress": 100})
+        else:
+            badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": False, "progress": (protocols_created / threshold) * 100})
+    
+    # Sales badges
+    sales_badges = [("first_sale", 1), ("seller_bronze", 5), ("seller_silver", 10), ("seller_gold", 25)]
+    for badge_id, threshold in sales_badges:
+        if sales_count >= threshold:
+            badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": True, "progress": 100})
+        else:
+            badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": False, "progress": (sales_count / threshold) * 100})
+    
+    # Purchases badges
+    purchase_badges = [("collector_novice", 1), ("collector_avid", 10)]
+    for badge_id, threshold in purchase_badges:
+        if purchases_count >= threshold:
+            badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": True, "progress": 100})
+        else:
+            badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": False, "progress": (purchases_count / threshold) * 100})
+    
+    return badges
+
+@api_router.get("/badges/my-badges")
+async def get_my_badges(user: dict = Depends(require_user)):
+    """Get user's badges and achievements"""
+    user_id = user["id"]
+    
+    # Get total copy count across all user's protocols
+    copy_pipeline = [
+        {"$match": {"user_id": user_id}},
+        {"$group": {"_id": None, "total": {"$sum": "$copy_count"}}}
+    ]
+    copy_result = await db.categories.aggregate(copy_pipeline).to_list(1)
+    total_copies = copy_result[0]["total"] if copy_result else 0
+    
+    # Get protocols created count
+    protocols_created = await db.categories.count_documents({"user_id": user_id})
+    
+    # Get sales count
+    sales_count = await db.protocol_purchases.count_documents({"seller_id": user_id, "status": "completed"})
+    
+    # Get purchases count
+    purchases_count = await db.protocol_purchases.count_documents({"buyer_id": user_id, "status": "completed"})
+    
+    # Calculate badges
+    all_badges = calculate_badges(total_copies, protocols_created, sales_count, purchases_count)
+    
+    # Separate earned vs locked
+    earned_badges = [b for b in all_badges if b["earned"]]
+    locked_badges = [b for b in all_badges if not b["earned"]]
+    
+    # Get top protocol by copies
+    top_protocol = await db.categories.find_one(
+        {"user_id": user_id, "copy_count": {"$gt": 0}},
+        sort=[("copy_count", -1)]
+    )
+    
+    return {
+        "stats": {
+            "total_copies_received": total_copies,
+            "protocols_created": protocols_created,
+            "sales_count": sales_count,
+            "purchases_count": purchases_count
+        },
+        "top_protocol": {
+            "name": top_protocol["name"],
+            "copy_count": top_protocol.get("copy_count", 0)
+        } if top_protocol else None,
+        "earned_badges": earned_badges,
+        "locked_badges": locked_badges,
+        "total_earned": len(earned_badges),
+        "total_badges": len(all_badges)
+    }
+
+@api_router.get("/badges/protocol/{category_id}")
+async def get_protocol_badges(category_id: str, user: dict = Depends(require_user)):
+    """Get badges for a specific protocol"""
+    category = await db.categories.find_one({"id": category_id})
+    if not category:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    
+    copy_count = category.get("copy_count", 0)
+    
+    # Copy count badges only for individual protocols
+    badges = []
+    copy_badges = [
+        ("first_copy", 1), ("rising_star", 10), ("popular", 25),
+        ("trending", 50), ("viral", 100), ("legendary", 500), ("hall_of_fame", 1000)
+    ]
+    
+    for badge_id, threshold in copy_badges:
+        if copy_count >= threshold:
+            badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": True})
+    
+    # Get highest badge
+    highest_badge = badges[-1] if badges else None
+    
+    return {
+        "protocol_name": category["name"],
+        "copy_count": copy_count,
+        "badges": badges,
+        "highest_badge": highest_badge,
+        "next_milestone": next((t for _, t in copy_badges if t > copy_count), None)
+    }
+
+@api_router.get("/badges/leaderboard")
+async def get_badges_leaderboard(user: dict = Depends(require_user)):
+    """Get top users by earned badges"""
+    # Get all users with their stats
+    users = await db.users.find({}, {"_id": 0, "id": 1, "callsign": 1, "email": 1}).to_list(100)
+    
+    leaderboard = []
+    for u in users:
+        # Get total copies for user's protocols
+        copy_pipeline = [
+            {"$match": {"user_id": u["id"]}},
+            {"$group": {"_id": None, "total": {"$sum": "$copy_count"}}}
+        ]
+        copy_result = await db.categories.aggregate(copy_pipeline).to_list(1)
+        total_copies = copy_result[0]["total"] if copy_result else 0
+        
+        protocols_created = await db.categories.count_documents({"user_id": u["id"]})
+        sales_count = await db.protocol_purchases.count_documents({"seller_id": u["id"], "status": "completed"})
+        purchases_count = await db.protocol_purchases.count_documents({"buyer_id": u["id"], "status": "completed"})
+        
+        badges = calculate_badges(total_copies, protocols_created, sales_count, purchases_count)
+        earned_count = len([b for b in badges if b["earned"]])
+        
+        if earned_count > 0:  # Only include users with at least 1 badge
+            leaderboard.append({
+                "user_id": u["id"],
+                "username": u.get("callsign", u.get("email", "Unknown")),
+                "badges_earned": earned_count,
+                "total_copies": total_copies,
+                "top_badges": [b for b in badges if b["earned"]][:3]  # Top 3 badges
+            })
+    
+    # Sort by badges earned
+    leaderboard.sort(key=lambda x: (-x["badges_earned"], -x["total_copies"]))
+    
+    return {"leaderboard": leaderboard[:20]}
+
+# ============================================
 # API ROUTES - USER SEARCH RESULTS MANAGEMENT
 # ============================================
 
