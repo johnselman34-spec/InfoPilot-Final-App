@@ -6084,6 +6084,100 @@ const AdminPage = () => {
           </FuturisticFrame>
         )}
 
+        {/* Database Limits Tab */}
+        {activeTab === "database" && (
+          <div className="space-y-6">
+            <FuturisticFrame title="📊 USER DATABASE LIMITS" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
+              <div className="space-y-6">
+                <p className="text-purple-300/70 font-mono text-sm">
+                  Control the maximum number of search results each user can store in their database.
+                </p>
+                
+                {/* Current Limit Display */}
+                <div className="flex items-center gap-4 p-4 bg-slate-950 rounded border border-blue-500/30">
+                  <div className="flex-1">
+                    <p className="text-blue-400/60 font-mono text-xs">CURRENT LIMIT PER USER</p>
+                    <p className="text-3xl font-mono text-blue-300">{dbLimits.user_max_results_limit.toLocaleString()} results</p>
+                  </div>
+                </div>
+                
+                {/* Update Limit Form */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-mono text-purple-400 mb-2">SET NEW LIMIT (100 - 10,000)</label>
+                    <div className="flex gap-4">
+                      <input
+                        type="number"
+                        min="100"
+                        max="10000"
+                        value={newDbLimit}
+                        onChange={(e) => setNewDbLimit(parseInt(e.target.value) || 4000)}
+                        className="flex-1 px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                        data-testid="db-limit-input"
+                      />
+                      <button
+                        onClick={saveDbLimit}
+                        disabled={saving || newDbLimit < 100 || newDbLimit > 10000}
+                        className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2"
+                        data-testid="save-db-limit-btn"
+                      >
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "SAVE LIMIT"}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Quick Preset Buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-purple-400/60 font-mono text-xs">Quick presets:</span>
+                    {[1000, 2000, 4000, 5000, 10000].map(preset => (
+                      <button
+                        key={preset}
+                        onClick={() => setNewDbLimit(preset)}
+                        className={`px-3 py-1 font-mono text-xs rounded ${
+                          newDbLimit === preset 
+                            ? 'bg-blue-500/30 text-blue-300 border border-blue-500/50'
+                            : 'bg-slate-800 text-purple-400 hover:bg-slate-700'
+                        }`}
+                      >
+                        {preset.toLocaleString()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Top Users by Results */}
+                {dbLimits.top_users_by_results && dbLimits.top_users_by_results.length > 0 && (
+                  <div className="mt-6 pt-6 border-t border-purple-500/20">
+                    <h3 className="text-lg font-mono text-purple-400 mb-4">TOP USERS BY STORED RESULTS</h3>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {dbLimits.top_users_by_results.map((userStat, idx) => (
+                        <div key={userStat.user_id} className="flex items-center justify-between p-3 bg-slate-950 rounded border border-purple-500/20">
+                          <div className="flex items-center gap-3">
+                            <span className="text-pink-400 font-mono text-sm">#{idx + 1}</span>
+                            <span className="text-purple-300 font-mono">{userStat.username || 'Unknown User'}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-purple-400 font-mono text-sm">{userStat.result_count.toLocaleString()} results</span>
+                            <div className="w-24 h-2 bg-slate-800 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full rounded-full ${
+                                  (userStat.result_count / dbLimits.user_max_results_limit) > 0.9 ? 'bg-red-500' :
+                                  (userStat.result_count / dbLimits.user_max_results_limit) > 0.7 ? 'bg-yellow-500' : 'bg-green-500'
+                                }`}
+                                style={{ width: `${Math.min((userStat.result_count / dbLimits.user_max_results_limit) * 100, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </FuturisticFrame>
+          </div>
+        )}
+
         {/* Subscriptions Tab */}
         {activeTab === "subscriptions" && (
           <div className="space-y-6">
