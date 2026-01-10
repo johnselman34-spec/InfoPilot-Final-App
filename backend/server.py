@@ -2823,13 +2823,22 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
             single_word_matches = sum(1 for t in single_word_terms if t in content_lower)
             min_single_required = max(1, len(single_word_terms) // 2)  # At least 50%
             
-            # Skip if no multi-word match AND insufficient single word matches
-            if multi_word_terms and not has_multi_word_match:
-                skipped_no_search_terms += 1
-                continue
-            if not multi_word_terms and single_word_matches < min_single_required:
-                skipped_no_search_terms += 1
-                continue
+            # STRICT FILTERING:
+            # If we have multi-word terms (like a person's name), we REQUIRE a match
+            # because that's likely the main subject of the search
+            if multi_word_terms:
+                if not has_multi_word_match:
+                    # No multi-word match - check if we have strong single word evidence
+                    # Need at least 75% of single words to compensate for missing name match
+                    strict_single_required = max(2, int(len(single_word_terms) * 0.75))
+                    if single_word_matches < strict_single_required:
+                        skipped_no_search_terms += 1
+                        continue
+            else:
+                # No multi-word terms, just check single words
+                if single_word_matches < min_single_required:
+                    skipped_no_search_terms += 1
+                    continue
         
         has_blocked, _ = contains_blocked_words(content, blocked_words)
         if has_blocked:
