@@ -5828,56 +5828,149 @@ const AdminPage = () => {
         {activeTab === "subscriptions" && (
           <div className="space-y-6">
             {/* Subscription Config */}
-            <FuturisticFrame title="💳 SUBSCRIPTION SETTINGS" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-purple-400 font-mono text-sm mb-2">Regular Price ($/year)</label>
-                  <input
-                    type="number"
-                    value={subscriptionConfig.regular_price}
-                    onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, regular_price: parseFloat(e.target.value) || 0 }))}
-                    step="0.01"
-                    className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
-                  />
+            <FuturisticFrame title="💳 SUBSCRIPTION PRICING" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+              <div className="space-y-6">
+                {/* Pricing Section */}
+                <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                  <h4 className="text-yellow-400 font-mono font-bold mb-4 flex items-center gap-2">
+                    <DollarSign className="w-5 h-5" /> 1-YEAR SUBSCRIPTION PRICING
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-purple-400 font-mono text-sm mb-2">Minimum Price ($)</label>
+                      <input
+                        type="number"
+                        value={subscriptionConfig.min_price}
+                        onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, min_price: parseFloat(e.target.value) || 0.01 }))}
+                        step="0.01"
+                        min="0.01"
+                        className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                      />
+                      <p className="text-purple-400/40 font-mono text-xs mt-1">Lowest amount users can pay</p>
+                    </div>
+                    <div>
+                      <label className="block text-purple-400 font-mono text-sm mb-2">Regular Price ($/year)</label>
+                      <input
+                        type="number"
+                        value={subscriptionConfig.regular_price}
+                        onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, regular_price: parseFloat(e.target.value) || 4.62 }))}
+                        step="0.01"
+                        min="0.01"
+                        className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                      />
+                      <p className="text-purple-400/40 font-mono text-xs mt-1">Price after promo ends</p>
+                    </div>
+                    <div>
+                      <label className="block text-purple-400 font-mono text-sm mb-2">Max Custom Price ($)</label>
+                      <input
+                        type="number"
+                        value={subscriptionConfig.max_price || 100}
+                        onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, max_price: parseFloat(e.target.value) || 100 }))}
+                        step="1"
+                        min="1"
+                        className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                      />
+                      <p className="text-purple-400/40 font-mono text-xs mt-1">Maximum for custom amount</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-purple-400 font-mono text-sm mb-2">Promo End Date</label>
+
+                {/* Preset Amounts Section */}
+                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <h4 className="text-blue-400 font-mono font-bold mb-4 flex items-center gap-2">
+                    <Settings className="w-5 h-5" /> PRESET AMOUNT BUTTONS
+                  </h4>
+                  <p className="text-purple-400/60 font-mono text-xs mb-4">
+                    Comma-separated list of preset amounts shown to users (e.g., "1.00, 2.00, 4.62, 10.00")
+                  </p>
                   <input
-                    type="date"
-                    value={subscriptionConfig.promo_end_date}
-                    onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, promo_end_date: e.target.value }))}
+                    type="text"
+                    value={subscriptionConfig.preset_amounts || "1.00, 2.00, 4.62, 10.00"}
+                    onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, preset_amounts: e.target.value }))}
+                    placeholder="1.00, 2.00, 4.62, 10.00"
                     className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
                   />
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="text-purple-400/60 font-mono text-xs">Preview:</span>
+                    {(subscriptionConfig.preset_amounts || "1.00, 2.00, 4.62, 10.00").split(",").map((amt, i) => (
+                      <span key={i} className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded font-mono text-sm">
+                        ${amt.trim()}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-purple-400 font-mono text-sm mb-2">PayPal Link 1</label>
-                  <input
-                    type="url"
-                    value={subscriptionConfig.paypal_link_1}
-                    onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, paypal_link_1: e.target.value }))}
-                    placeholder="https://www.paypal.com/ncp/payment/..."
-                    className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
-                  />
+
+                {/* Promo Period Section */}
+                <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <h4 className="text-green-400 font-mono font-bold mb-4 flex items-center gap-2">
+                    <Calendar className="w-5 h-5" /> PROMOTIONAL PERIOD
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-purple-400 font-mono text-sm mb-2">Promo End Date</label>
+                      <input
+                        type="date"
+                        value={subscriptionConfig.promo_end_date}
+                        onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, promo_end_date: e.target.value }))}
+                        className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                      />
+                      <p className="text-purple-400/40 font-mono text-xs mt-1">"Pay What You Want" ends on this date</p>
+                    </div>
+                    <div>
+                      <label className="block text-purple-400 font-mono text-sm mb-2">Promo Message</label>
+                      <input
+                        type="text"
+                        value={subscriptionConfig.promo_message || "Pay What You Want - Limited Time!"}
+                        onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, promo_message: e.target.value }))}
+                        className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-purple-400 font-mono text-sm mb-2">PayPal Link 2 (Alternative)</label>
-                  <input
-                    type="url"
-                    value={subscriptionConfig.paypal_link_2}
-                    onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, paypal_link_2: e.target.value }))}
-                    placeholder="https://www.paypal.com/ncp/payment/..."
-                    className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
-                  />
+
+                {/* PayPal Links Section */}
+                <div className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                  <h4 className="text-purple-400 font-mono font-bold mb-4 flex items-center gap-2">
+                    <CreditCard className="w-5 h-5" /> PAYPAL INTEGRATION
+                  </h4>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-purple-400 font-mono text-sm mb-2">PayPal Payment Link</label>
+                      <input
+                        type="url"
+                        value={subscriptionConfig.paypal_link_1}
+                        onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, paypal_link_1: e.target.value }))}
+                        placeholder="https://www.paypal.com/ncp/payment/..."
+                        className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-purple-400 font-mono text-sm mb-2">Alternative PayPal Link</label>
+                      <input
+                        type="url"
+                        value={subscriptionConfig.paypal_link_2}
+                        onChange={(e) => setSubscriptionConfig(prev => ({ ...prev, paypal_link_2: e.target.value }))}
+                        placeholder="https://www.paypal.com/ncp/payment/..."
+                        className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                      />
+                    </div>
+                    <div className="p-3 bg-slate-950 rounded border border-yellow-500/20">
+                      <p className="text-yellow-400 font-mono text-xs">
+                        💡 TIP: PayPal IPN (Instant Payment Notification) is enabled. Payments are automatically recorded when completed.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="mt-4 flex justify-end">
+              
+              <div className="mt-6 flex justify-end">
                 <button
                   onClick={saveSubscriptionConfig}
                   disabled={saving}
-                  className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2"
+                  className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2"
                 >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  SAVE SETTINGS
+                  {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5" />}
+                  SAVE ALL PRICING SETTINGS
                 </button>
               </div>
             </FuturisticFrame>
