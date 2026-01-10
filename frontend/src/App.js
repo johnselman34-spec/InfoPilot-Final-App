@@ -6531,6 +6531,249 @@ const PageDetailPage = () => {
   );
 };
 
+// Moderation Panel Component
+const ModerationPanel = () => {
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [dashboard, setDashboard] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [pages, setPages] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    fetchModerationData();
+  }, [activeSection]);
+
+  const fetchModerationData = async () => {
+    setLoading(true);
+    try {
+      if (activeSection === "dashboard") {
+        const res = await axios.get(`${API}/admin/moderation/dashboard`);
+        setDashboard(res.data);
+      } else if (activeSection === "users") {
+        const res = await axios.get(`${API}/admin/moderation/users${searchQuery ? `?search=${searchQuery}` : ''}`);
+        setUsers(res.data.users || []);
+      } else if (activeSection === "groups") {
+        const res = await axios.get(`${API}/admin/moderation/groups${searchQuery ? `?search=${searchQuery}` : ''}`);
+        setGroups(res.data.groups || []);
+      } else if (activeSection === "pages") {
+        const res = await axios.get(`${API}/admin/moderation/pages${searchQuery ? `?search=${searchQuery}` : ''}`);
+        setPages(res.data.pages || []);
+      } else if (activeSection === "reports") {
+        const res = await axios.get(`${API}/admin/moderation/reports`);
+        setReports(res.data.reports || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch moderation data", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBanUser = async (userId, username) => {
+    const reason = prompt(`Enter reason for banning ${username}:`);
+    if (!reason) return;
+    try {
+      await axios.post(`${API}/admin/moderation/users/${userId}/ban?reason=${encodeURIComponent(reason)}`);
+      toast.success(`User ${username} has been banned`);
+      fetchModerationData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to ban user");
+    }
+  };
+
+  const handleUnbanUser = async (userId, username) => {
+    if (!confirm(`Unban user ${username}?`)) return;
+    try {
+      await axios.post(`${API}/admin/moderation/users/${userId}/unban`);
+      toast.success(`User ${username} has been unbanned`);
+      fetchModerationData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to unban user");
+    }
+  };
+
+  const handleDeleteGroup = async (groupId, groupName) => {
+    if (!confirm(`Delete group "${groupName}"?`)) return;
+    try {
+      await axios.delete(`${API}/admin/moderation/groups/${groupId}`);
+      toast.success(`Group "${groupName}" deleted`);
+      fetchModerationData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to delete group");
+    }
+  };
+
+  const handleDeletePage = async (pageId, pageName) => {
+    if (!confirm(`Delete page "${pageName}"?`)) return;
+    try {
+      await axios.delete(`${API}/admin/moderation/pages/${pageId}`);
+      toast.success(`Page "${pageName}" deleted`);
+      fetchModerationData();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to delete page");
+    }
+  };
+
+  return (
+    <FuturisticFrame title="👮 CONTENT MODERATION" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+      <div className="flex flex-wrap gap-2 mb-6">
+        {["dashboard", "users", "groups", "pages", "reports"].map(section => (
+          <button key={section} onClick={() => setActiveSection(section)}
+            className={`px-4 py-2 rounded font-mono text-sm capitalize ${activeSection === section ? "bg-pink-600 text-white" : "bg-slate-800 text-purple-400"}`}>
+            {section}
+          </button>
+        ))}
+      </div>
+      {loading ? <div className="text-center py-8"><Loader2 className="w-8 h-8 text-pink-400 animate-spin mx-auto" /></div> : (
+        <>
+          {activeSection === "dashboard" && dashboard && (
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="bg-slate-950 p-4 rounded border border-blue-500/30"><p className="text-blue-400 font-mono text-xs">GROUPS</p><p className="text-blue-300 font-mono text-2xl">{dashboard.content_stats?.groups || 0}</p></div>
+              <div className="bg-slate-950 p-4 rounded border border-purple-500/30"><p className="text-purple-400 font-mono text-xs">PAGES</p><p className="text-purple-300 font-mono text-2xl">{dashboard.content_stats?.pages || 0}</p></div>
+              <div className="bg-slate-950 p-4 rounded border border-pink-500/30"><p className="text-pink-400 font-mono text-xs">POSTS</p><p className="text-pink-300 font-mono text-2xl">{dashboard.content_stats?.posts || 0}</p></div>
+              <div className="bg-slate-950 p-4 rounded border border-cyan-500/30"><p className="text-cyan-400 font-mono text-xs">COMMENTS</p><p className="text-cyan-300 font-mono text-2xl">{dashboard.content_stats?.comments || 0}</p></div>
+              <div className="bg-slate-950 p-4 rounded border border-red-500/30"><p className="text-red-400 font-mono text-xs">REPORTS</p><p className="text-red-300 font-mono text-2xl">{dashboard.reported_content || 0}</p></div>
+            </div>
+          )}
+          {activeSection === "users" && (
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <input type="text" placeholder="Search users..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && fetchModerationData()} className="flex-1 bg-slate-800 border border-purple-500/30 rounded px-4 py-2 text-purple-200 font-mono" />
+                <button onClick={fetchModerationData} className="px-4 py-2 bg-pink-600 text-white rounded font-mono">Search</button>
+              </div>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {users.map(u => (
+                  <div key={u.id} className={`flex items-center justify-between p-3 rounded border ${u.is_banned ? 'bg-red-900/20 border-red-500/30' : 'bg-slate-800 border-purple-500/20'}`}>
+                    <div><p className="text-purple-200 font-mono">{u.username} {u.is_admin && <span className="text-yellow-400 text-xs">(ADMIN)</span>}</p><p className="text-purple-400/60 font-mono text-xs">{u.email}</p></div>
+                    {!u.is_admin && (u.is_banned ? <button onClick={() => handleUnbanUser(u.id, u.username)} className="px-3 py-1 bg-green-600 text-white rounded text-sm font-mono">Unban</button> : <button onClick={() => handleBanUser(u.id, u.username)} className="px-3 py-1 bg-red-600 text-white rounded text-sm font-mono">Ban</button>)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {activeSection === "groups" && (
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {groups.map(g => (
+                <div key={g.id} className="flex items-center justify-between p-3 rounded bg-slate-800 border border-purple-500/20">
+                  <div><p className="text-purple-200 font-mono">{g.name}</p><p className="text-purple-400/60 font-mono text-xs">{g.member_count || 0} members</p></div>
+                  <button onClick={() => handleDeleteGroup(g.id, g.name)} className="px-3 py-1 bg-red-600 text-white rounded text-sm font-mono">Delete</button>
+                </div>
+              ))}
+              {groups.length === 0 && <p className="text-purple-400/60 font-mono text-center py-4">No groups found</p>}
+            </div>
+          )}
+          {activeSection === "pages" && (
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {pages.map(p => (
+                <div key={p.id} className="flex items-center justify-between p-3 rounded bg-slate-800 border border-purple-500/20">
+                  <div><p className="text-purple-200 font-mono">{p.name}</p><p className="text-purple-400/60 font-mono text-xs">{p.follower_count || 0} followers</p></div>
+                  <button onClick={() => handleDeletePage(p.id, p.name)} className="px-3 py-1 bg-red-600 text-white rounded text-sm font-mono">Delete</button>
+                </div>
+              ))}
+              {pages.length === 0 && <p className="text-purple-400/60 font-mono text-center py-4">No pages found</p>}
+            </div>
+          )}
+          {activeSection === "reports" && (
+            <div className="space-y-2">{reports.length === 0 ? <p className="text-green-400 font-mono text-center py-8">✅ No pending reports</p> : reports.map(r => (
+              <div key={r.id} className="p-3 rounded bg-slate-800 border border-yellow-500/30"><span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded font-mono">{r.content_type}</span><p className="text-purple-200 font-mono mt-2">{r.reason}</p></div>
+            ))}</div>
+          )}
+        </>
+      )}
+    </FuturisticFrame>
+  );
+};
+
+// Email Digest Panel Component  
+const EmailDigestPanel = () => {
+  const [config, setConfig] = useState({ enabled: false, day_of_week: "monday", hour: 9, include_trending: true, include_marketplace: true, include_notifications: true, last_sent: null, total_sent: 0 });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
+
+  useEffect(() => { fetchConfig(); }, []);
+
+  const fetchConfig = async () => {
+    try { const res = await axios.get(`${API}/admin/email-digest/config`); setConfig(res.data); } catch (error) { console.error("Failed to fetch config"); } finally { setLoading(false); }
+  };
+
+  const saveConfig = async () => {
+    setSaving(true);
+    try {
+      const params = new URLSearchParams();
+      Object.entries(config).forEach(([k, v]) => { if (k !== 'last_sent' && k !== 'total_sent') params.append(k, v); });
+      await axios.put(`${API}/admin/email-digest/config?${params.toString()}`);
+      toast.success("Configuration saved");
+    } catch (error) { toast.error("Failed to save"); } finally { setSaving(false); }
+  };
+
+  const previewDigest = async () => {
+    try { const res = await axios.post(`${API}/admin/email-digest/preview`); setPreviewHtml(res.data.html); setShowPreview(true); } catch (error) { toast.error("Failed to generate preview"); }
+  };
+
+  const sendNow = async () => {
+    if (!confirm("Send weekly digest now?")) return;
+    try { const res = await axios.post(`${API}/admin/email-digest/send-now`); toast.success(`Sent: ${res.data.results.sent}, Skipped: ${res.data.results.skipped}`); fetchConfig(); } catch (error) { toast.error("Failed to send"); }
+  };
+
+  if (loading) return <div className="text-center py-8"><Loader2 className="w-8 h-8 text-pink-400 animate-spin mx-auto" /></div>;
+
+  return (
+    <FuturisticFrame title="📧 WEEKLY EMAIL DIGEST" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between p-4 bg-slate-950 rounded border border-purple-500/30">
+          <div><p className="text-purple-200 font-mono">Enable Weekly Digest</p><p className="text-purple-400/60 font-mono text-xs">Automated emails to subscribers</p></div>
+          <button onClick={() => setConfig({ ...config, enabled: !config.enabled })} className={`w-14 h-8 rounded-full relative ${config.enabled ? 'bg-green-500' : 'bg-slate-700'}`}>
+            <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform ${config.enabled ? 'translate-x-7' : 'translate-x-1'}`} />
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div><label className="block text-purple-400 font-mono text-sm mb-2">Day of Week</label>
+            <select value={config.day_of_week} onChange={(e) => setConfig({ ...config, day_of_week: e.target.value })} className="w-full bg-slate-800 border border-purple-500/30 rounded px-4 py-2 text-purple-200 font-mono">
+              {["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"].map(d => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
+            </select>
+          </div>
+          <div><label className="block text-purple-400 font-mono text-sm mb-2">Hour (UTC)</label>
+            <select value={config.hour} onChange={(e) => setConfig({ ...config, hour: parseInt(e.target.value) })} className="w-full bg-slate-800 border border-purple-500/30 rounded px-4 py-2 text-purple-200 font-mono">
+              {[...Array(24)].map((_, h) => <option key={h} value={h}>{h.toString().padStart(2, '0')}:00</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="space-y-2">
+          {[{ key: "include_trending", label: "Trending Hashtags" }, { key: "include_marketplace", label: "Marketplace Listings" }, { key: "include_notifications", label: "Notifications" }].map(opt => (
+            <label key={opt.key} className="flex items-center gap-3 p-3 bg-slate-950 rounded cursor-pointer">
+              <input type="checkbox" checked={config[opt.key]} onChange={(e) => setConfig({ ...config, [opt.key]: e.target.checked })} className="w-5 h-5" />
+              <span className="text-purple-200 font-mono">{opt.label}</span>
+            </label>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-slate-950 p-4 rounded border border-purple-500/30"><p className="text-purple-400/60 font-mono text-xs">LAST SENT</p><p className="text-purple-200 font-mono">{config.last_sent ? new Date(config.last_sent).toLocaleString() : 'Never'}</p></div>
+          <div className="bg-slate-950 p-4 rounded border border-green-500/30"><p className="text-green-400/60 font-mono text-xs">TOTAL SENT</p><p className="text-green-200 font-mono">{config.total_sent || 0}</p></div>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button onClick={saveConfig} disabled={saving} className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded flex items-center gap-2">{saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Save</button>
+          <button onClick={previewDigest} className="px-6 py-2 bg-slate-700 text-purple-300 font-mono rounded flex items-center gap-2"><Eye className="w-4 h-4" /> Preview</button>
+          <button onClick={sendNow} className="px-6 py-2 bg-blue-600 text-white font-mono rounded flex items-center gap-2"><Send className="w-4 h-4" /> Send Now</button>
+        </div>
+        <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded"><p className="text-yellow-400 font-mono text-sm">⚠️ Requires SendGrid API key for actual sending</p></div>
+      </div>
+      {showPreview && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 border border-purple-500/50 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-4 border-b border-purple-500/30 flex items-center justify-between"><h3 className="text-xl font-bold text-pink-400 font-mono">EMAIL PREVIEW</h3><button onClick={() => setShowPreview(false)} className="text-purple-400 hover:text-white"><X className="w-6 h-6" /></button></div>
+            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]"><iframe srcDoc={previewHtml} className="w-full h-[600px] bg-white rounded" title="Preview" /></div>
+          </div>
+        </div>
+      )}
+    </FuturisticFrame>
+  );
+};
+
 // Admin Page
 const AdminPage = () => {
   const { user } = useAuth();
