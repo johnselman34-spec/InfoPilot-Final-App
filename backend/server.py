@@ -3390,14 +3390,21 @@ async def delete_search_results(data: SearchResultDeleteRequest, user: dict = De
 @api_router.delete("/ultimate-search/session/{session_timestamp}")
 async def delete_session_results(session_timestamp: str, user: dict = Depends(require_user)):
     """Delete all results from a specific collate session"""
-    # Find results from this session
+    # Convert the session timestamp format (YYYY-MM-DD HH:MM) to match the ISO format prefix
+    # Session timestamp: "2026-01-10 10:37" -> ISO prefix: "2026-01-10T10:37"
+    iso_prefix = session_timestamp.replace(" ", "T")
+    
+    # Find results from this session using both possible formats
     results = await db.search_results.find({
         "user_id": user["id"],
-        "collated_at": {"$regex": f"^{session_timestamp}"}
+        "$or": [
+            {"collated_at": {"$regex": f"^{iso_prefix}"}},
+            {"collated_at": {"$regex": f"^{session_timestamp}"}}
+        ]
     }).to_list(1000)
     
     if not results:
-        raise HTTPException(status_code=404, detail="No results found for this session")
+        raise HTTPException(status_code=404, detail=f"No results found for session {session_timestamp}")
     
     result_ids = [r["id"] for r in results]
     delete_result = await db.search_results.delete_many({
