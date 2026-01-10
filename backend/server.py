@@ -2867,6 +2867,462 @@ async def get_global_database(
     }
 
 # ============================================
+# API ROUTES - SOCIAL FEATURES (FRIENDS)
+# ============================================
+
+@api_router.get("/friends")
+async def get_friends(user: dict = Depends(require_user)):
+    """Get user's friends list"""
+    friend_ids = user.get("friends", [])
+    if not friend_ids:
+        return {"friends": [], "count": 0}
+    
+    friends = await db.users.find(
+        {"id": {"$in": friend_ids}},
+        {"_id": 0, "id": 1, "username": 1, "profile_photo": 1, "is_admin": 1}
+    ).to_list(1000)
+    
+    return {"friends": friends, "count": len(friends)}
+
+@api_router.post("/friends/request")
+async def send_friend_request(data: FriendRequest, user: dict = Depends(require_user)):
+    """Send a friend request"""
+    if data.friend_id == user["id"]:
+        raise HTTPException(status_code=400, detail="Cannot friend yourself")
+    
+    # Check if already friends
+    if data.friend_id in user.get("friends", []):
+        raise HTTPException(status_code=400, detail="Already friends")
+    
+    # Check if request already exists
+    existing = await db.friend_requests.find_one({
+        "from_id": user["id"],
+        "to_id": data.friend_id,
+        "status": "pending"
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Friend request already sent")
+    
+    # Check if target user exists
+    target_user = await db.users.find_one({"id": data.friend_id})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    request = {
+        "id": str(uuid.uuid4()),
+        "from_id": user["id"],
+        "from_username": user["username"],
+        "to_id": data.friend_id,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.friend_requests.insert_one(request)
+    
+    return {"message": "Friend request sent", "request_id": request["id"]}
+
+@api_router.get("/friends/requests")
+async def get_friend_requests(user: dict = Depends(require_user)):
+    """Get pending friend requests"""
+    incoming = await db.friend_requests.find(
+        {"to_id": user["id"], "status": "pending"},
+        {"_id": 0}
+    ).to_list(100)
+    
+    outgoing = await db.friend_requests.find(
+        {"from_id": user["id"], "status": "pending"},
+        {"_id": 0}
+    ).to_list(100)
+    
+    return {"incoming": incoming, "outgoing": outgoing}
+
+@api_router.post("/friends/accept/{request_id}")
+async def accept_friend_request(request_id: str, user: dict = Depends(require_user)):
+    """Accept a friend request"""
+    request = await db.friend_requests.find_one({"id": request_id, "to_id": user["id"]})
+    if not request:
+        raise HTTPException(status_code=404, detail="Friend request not found")
+    
+    # Add to both users' friends lists
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$addToSet": {"friends": request["from_id"]}, "$inc": {"friend_count": 1}}
+    )
+    await db.users.update_one(
+        {"id": request["from_id"]},
+        {"$addToSet": {"friends": user["id"]}, "$inc": {"friend_count": 1}}
+    )
+    
+    # Update request status
+    await db.friend_requests.update_one(
+        {"id": request_id},
+        {"$set": {"status": "accepted"}}
+    )
+    
+    return {"message": "Friend request accepted"}
+
+@api_router.post("/friends/reject/{request_id}")
+async def reject_friend_request(request_id: str, user: dict = Depends(require_user)):
+    """Reject a friend request"""
+    request = await db.friend_requests.find_one({"id": request_id, "to_id": user["id"]})
+    if not request:
+        raise HTTPException(status_code=404, detail="Friend request not found")
+    
+    await db.friend_requests.update_one(
+        {"id": request_id},
+        {"$set": {"status": "rejected"}}
+    )
+    
+    return {"message": "Friend request rejected"}
+
+@api_router.delete("/friends/{friend_id}")
+async def remove_friend(friend_id: str, user: dict = Depends(require_user)):
+    """Remove a friend"""
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$pull": {"friends": friend_id}, "$inc": {"friend_count": -1}}
+    )
+    await db.users.update_one(
+        {"id": friend_id},
+        {"$pull": {"friends": user["id"]}, "$inc": {"friend_count": -1}}
+    )
+    
+    return {"message": "Friend removed"}
+
+# ============================================
+# API ROUTES - SOCIAL FEATURES (GROUPS)
+# ============================================
+
+@api_router.get("/groups")
+async def get_groups(user: dict = Depends(require_user)):
+    """Get all groups (public) and user's groups"""
+    # Get user's groups
+    my_groups = await db.groups.find(
+        {"$or": [{"owner_id": user["id"]}, {"members": user["id"]}]},
+        {"_id": 0}
+    ).to_list(100)
+    
+    # Get public groups
+    public_groups = await db.groups.find(
+        {"privacy": "public"},
+        {"_id": 0}
+    ).to_list(50)
+    
+    return {"my_groups": my_groups, "public_groups": public_groups}
+
+@api_router.post("/groups")
+async def create_group(data: GroupCreate, user: dict = Depends(require_user)):
+    """Create a new group"""
+    group = {
+        "id": str(uuid.uuid4()),
+        "name": data.name,
+        "description": data.description,
+        "privacy": data.privacy,
+        "cover_photo": data.cover_photo,
+        "owner_id": user["id"],
+        "owner_username": user["username"],
+        "members": [user["id"]],
+        "member_count": 1,
+        "admins": [user["id"]],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.groups.insert_one(group)
+    return {"message": "Group created", "group": {k: v for k, v in group.items() if k != "_id"}}
+
+@api_router.get("/groups/{group_id}")
+async def get_group(group_id: str, user: dict = Depends(require_user)):
+    """Get group details"""
+    group = await db.groups.find_one({"id": group_id}, {"_id": 0})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Check access for secret groups
+    if group["privacy"] == "secret" and user["id"] not in group.get("members", []):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Get recent posts
+    posts = await db.group_posts.find(
+        {"group_id": group_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    return {"group": group, "posts": posts}
+
+@api_router.put("/groups/{group_id}")
+async def update_group(group_id: str, data: GroupUpdate, user: dict = Depends(require_user)):
+    """Update group (owner/admin only)"""
+    group = await db.groups.find_one({"id": group_id})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    if user["id"] not in group.get("admins", []) and user["id"] != group["owner_id"]:
+        raise HTTPException(status_code=403, detail="Only admins can update the group")
+    
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    if updates:
+        await db.groups.update_one({"id": group_id}, {"$set": updates})
+    
+    return {"message": "Group updated"}
+
+@api_router.delete("/groups/{group_id}")
+async def delete_group(group_id: str, user: dict = Depends(require_user)):
+    """Delete group (owner only)"""
+    group = await db.groups.find_one({"id": group_id})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    if user["id"] != group["owner_id"] and not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Only the owner can delete the group")
+    
+    await db.groups.delete_one({"id": group_id})
+    await db.group_posts.delete_many({"group_id": group_id})
+    
+    return {"message": "Group deleted"}
+
+@api_router.post("/groups/{group_id}/join")
+async def join_group(group_id: str, user: dict = Depends(require_user)):
+    """Join a group"""
+    group = await db.groups.find_one({"id": group_id})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    if group["privacy"] == "secret":
+        raise HTTPException(status_code=403, detail="Cannot join secret groups directly")
+    
+    if user["id"] in group.get("members", []):
+        raise HTTPException(status_code=400, detail="Already a member")
+    
+    await db.groups.update_one(
+        {"id": group_id},
+        {"$addToSet": {"members": user["id"]}, "$inc": {"member_count": 1}}
+    )
+    
+    return {"message": "Joined group"}
+
+@api_router.post("/groups/{group_id}/leave")
+async def leave_group(group_id: str, user: dict = Depends(require_user)):
+    """Leave a group"""
+    group = await db.groups.find_one({"id": group_id})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    if user["id"] == group["owner_id"]:
+        raise HTTPException(status_code=400, detail="Owner cannot leave. Delete the group or transfer ownership.")
+    
+    await db.groups.update_one(
+        {"id": group_id},
+        {"$pull": {"members": user["id"], "admins": user["id"]}, "$inc": {"member_count": -1}}
+    )
+    
+    return {"message": "Left group"}
+
+@api_router.post("/groups/{group_id}/posts")
+async def create_group_post(group_id: str, data: GroupPostCreate, user: dict = Depends(require_user)):
+    """Create a post in a group"""
+    group = await db.groups.find_one({"id": group_id})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    if user["id"] not in group.get("members", []):
+        raise HTTPException(status_code=403, detail="Must be a member to post")
+    
+    post = {
+        "id": str(uuid.uuid4()),
+        "group_id": group_id,
+        "user_id": user["id"],
+        "username": user["username"],
+        "content": data.content,
+        "image_url": data.image_url,
+        "likes": [],
+        "like_count": 0,
+        "comments": [],
+        "comment_count": 0,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.group_posts.insert_one(post)
+    return {"message": "Post created", "post": {k: v for k, v in post.items() if k != "_id"}}
+
+# ============================================
+# API ROUTES - SOCIAL FEATURES (PAGES)
+# ============================================
+
+@api_router.get("/pages")
+async def get_pages(user: dict = Depends(require_user)):
+    """Get all pages and user's pages"""
+    # Get user's pages
+    my_pages = await db.pages.find(
+        {"owner_id": user["id"]},
+        {"_id": 0}
+    ).to_list(50)
+    
+    # Get pages user follows
+    following = await db.page_followers.find(
+        {"user_id": user["id"]},
+        {"_id": 0, "page_id": 1}
+    ).to_list(100)
+    following_ids = [f["page_id"] for f in following]
+    
+    followed_pages = []
+    if following_ids:
+        followed_pages = await db.pages.find(
+            {"id": {"$in": following_ids}},
+            {"_id": 0}
+        ).to_list(100)
+    
+    # Get popular pages
+    popular_pages = await db.pages.find(
+        {},
+        {"_id": 0}
+    ).sort("follower_count", -1).limit(20).to_list(20)
+    
+    return {"my_pages": my_pages, "following": followed_pages, "popular": popular_pages}
+
+@api_router.post("/pages")
+async def create_page(data: PageCreate, user: dict = Depends(require_user)):
+    """Create a new page"""
+    page = {
+        "id": str(uuid.uuid4()),
+        "name": data.name,
+        "description": data.description,
+        "category": data.category,
+        "cover_photo": data.cover_photo,
+        "profile_photo": data.profile_photo,
+        "owner_id": user["id"],
+        "owner_username": user["username"],
+        "follower_count": 0,
+        "admins": [user["id"]],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.pages.insert_one(page)
+    return {"message": "Page created", "page": {k: v for k, v in page.items() if k != "_id"}}
+
+@api_router.get("/pages/{page_id}")
+async def get_page(page_id: str, user: dict = Depends(require_user)):
+    """Get page details"""
+    page = await db.pages.find_one({"id": page_id}, {"_id": 0})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    # Check if user follows this page
+    is_following = await db.page_followers.find_one({
+        "page_id": page_id,
+        "user_id": user["id"]
+    }) is not None
+    
+    # Get recent posts
+    posts = await db.page_posts.find(
+        {"page_id": page_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(20).to_list(20)
+    
+    return {"page": page, "posts": posts, "is_following": is_following}
+
+@api_router.put("/pages/{page_id}")
+async def update_page(page_id: str, data: PageUpdate, user: dict = Depends(require_user)):
+    """Update page (owner/admin only)"""
+    page = await db.pages.find_one({"id": page_id})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    if user["id"] not in page.get("admins", []) and user["id"] != page["owner_id"]:
+        raise HTTPException(status_code=403, detail="Only admins can update the page")
+    
+    updates = {k: v for k, v in data.model_dump().items() if v is not None}
+    if updates:
+        await db.pages.update_one({"id": page_id}, {"$set": updates})
+    
+    return {"message": "Page updated"}
+
+@api_router.delete("/pages/{page_id}")
+async def delete_page(page_id: str, user: dict = Depends(require_user)):
+    """Delete page (owner only)"""
+    page = await db.pages.find_one({"id": page_id})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    if user["id"] != page["owner_id"] and not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Only the owner can delete the page")
+    
+    await db.pages.delete_one({"id": page_id})
+    await db.page_posts.delete_many({"page_id": page_id})
+    await db.page_followers.delete_many({"page_id": page_id})
+    
+    return {"message": "Page deleted"}
+
+@api_router.post("/pages/{page_id}/follow")
+async def follow_page(page_id: str, user: dict = Depends(require_user)):
+    """Follow a page"""
+    page = await db.pages.find_one({"id": page_id})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    existing = await db.page_followers.find_one({
+        "page_id": page_id,
+        "user_id": user["id"]
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Already following")
+    
+    await db.page_followers.insert_one({
+        "id": str(uuid.uuid4()),
+        "page_id": page_id,
+        "user_id": user["id"],
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    await db.pages.update_one(
+        {"id": page_id},
+        {"$inc": {"follower_count": 1}}
+    )
+    
+    return {"message": "Now following page"}
+
+@api_router.post("/pages/{page_id}/unfollow")
+async def unfollow_page(page_id: str, user: dict = Depends(require_user)):
+    """Unfollow a page"""
+    result = await db.page_followers.delete_one({
+        "page_id": page_id,
+        "user_id": user["id"]
+    })
+    
+    if result.deleted_count > 0:
+        await db.pages.update_one(
+            {"id": page_id},
+            {"$inc": {"follower_count": -1}}
+        )
+    
+    return {"message": "Unfollowed page"}
+
+@api_router.post("/pages/{page_id}/posts")
+async def create_page_post(page_id: str, data: GroupPostCreate, user: dict = Depends(require_user)):
+    """Create a post on a page (admin only)"""
+    page = await db.pages.find_one({"id": page_id})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    if user["id"] not in page.get("admins", []):
+        raise HTTPException(status_code=403, detail="Only admins can post on the page")
+    
+    post = {
+        "id": str(uuid.uuid4()),
+        "page_id": page_id,
+        "user_id": user["id"],
+        "username": user["username"],
+        "content": data.content,
+        "image_url": data.image_url,
+        "likes": [],
+        "like_count": 0,
+        "comments": [],
+        "comment_count": 0,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.page_posts.insert_one(post)
+    return {"message": "Post created", "post": {k: v for k, v in post.items() if k != "_id"}}
+
+# ============================================
 # API ROUTES - STATISTICS
 # ============================================
 
