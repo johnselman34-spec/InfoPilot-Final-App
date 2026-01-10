@@ -3611,6 +3611,241 @@ async def create_page_post(page_id: str, data: GroupPostCreate, user: dict = Dep
     return {"message": "Post created", "post": {k: v for k, v in post.items() if k != "_id"}}
 
 # ============================================
+# API ROUTES - LEGAL PAGES (Privacy Policy & Terms of Service)
+# ============================================
+
+# Default Privacy Policy
+DEFAULT_PRIVACY_POLICY = """
+# Privacy Policy for InfoPilot Explorer
+
+**Last Updated: January 10, 2026**
+
+## 1. Introduction
+
+Welcome to InfoPilot Explorer ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our application.
+
+## 2. Information We Collect
+
+### 2.1 Personal Information
+We may collect personal information that you voluntarily provide to us when you:
+- Register for an account (username, email address)
+- Use our search and categorization features
+- Participate in social features (groups, pages, messaging)
+- Contact us for support
+
+### 2.2 Automatically Collected Information
+When you access InfoPilot Explorer, we may automatically collect:
+- Device information (browser type, operating system)
+- Usage data (pages visited, features used)
+- IP address and general location data
+
+## 3. How We Use Your Information
+
+We use the information we collect to:
+- Provide, maintain, and improve our services
+- Process your searches and categorizations
+- Enable social features (messaging, groups, pages)
+- Send you notifications about your account
+- Respond to your inquiries and support requests
+- Protect against unauthorized access and abuse
+
+## 4. Information Sharing
+
+We do not sell your personal information. We may share your information only:
+- With your consent
+- To comply with legal obligations
+- To protect our rights and prevent fraud
+- With service providers who assist our operations
+
+## 5. Data Security
+
+We implement appropriate technical and organizational security measures to protect your personal information. However, no method of transmission over the Internet is 100% secure.
+
+## 6. Your Rights
+
+You have the right to:
+- Access your personal data
+- Correct inaccurate data
+- Delete your account and associated data
+- Opt-out of marketing communications
+
+## 7. Third-Party Services
+
+Our application integrates with third-party services including:
+- Google (OAuth authentication, Search API, Maps, Safe Browsing)
+- These services have their own privacy policies
+
+## 8. Children's Privacy
+
+InfoPilot Explorer is not intended for children under 13. We do not knowingly collect information from children under 13.
+
+## 9. Changes to This Policy
+
+We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page.
+
+## 10. Contact Us
+
+If you have questions about this Privacy Policy, please contact us through the application.
+
+---
+*InfoPilot Explorer - Your Gateway to Organized Information*
+"""
+
+# Default Terms of Service
+DEFAULT_TERMS_OF_SERVICE = """
+# Terms of Service for InfoPilot Explorer
+
+**Last Updated: January 10, 2026**
+
+## 1. Acceptance of Terms
+
+By accessing or using InfoPilot Explorer ("the Application"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, please do not use the Application.
+
+## 2. Description of Service
+
+InfoPilot Explorer is a free information exchange and social networking platform that provides:
+- AI-powered intelligent search capabilities
+- Hierarchical category organization with custom protocols
+- Social features including groups, pages, and messaging
+- Integration with Google services (Search, Maps, Safe Browsing)
+
+## 3. User Accounts
+
+### 3.1 Registration
+To access certain features, you must create an account. You agree to:
+- Provide accurate and complete information
+- Maintain the security of your password
+- Accept responsibility for all activities under your account
+- Notify us immediately of any unauthorized use
+
+### 3.2 Account Termination
+We reserve the right to suspend or terminate accounts that violate these Terms or engage in prohibited activities.
+
+## 4. Acceptable Use
+
+You agree NOT to:
+- Use the Application for any illegal purpose
+- Upload malicious content or malware
+- Harass, abuse, or harm other users
+- Attempt to gain unauthorized access to our systems
+- Scrape or collect user data without permission
+- Post content that infringes intellectual property rights
+- Spam or send unsolicited communications
+- Impersonate others or misrepresent your identity
+
+## 5. User Content
+
+### 5.1 Ownership
+You retain ownership of content you create. By posting content, you grant us a license to display and distribute it within the Application.
+
+### 5.2 Content Standards
+All user content must comply with our community guidelines. We reserve the right to remove content that violates these Terms.
+
+### 5.3 Protocol Recommendations
+Users may suggest changes to public protocols. Protocol owners have full discretion to accept or reject recommendations.
+
+## 6. Intellectual Property
+
+The Application, including its design, features, and content (excluding user-generated content), is owned by us and protected by intellectual property laws.
+
+## 7. Third-Party Services
+
+The Application integrates with third-party services. Your use of these services is subject to their respective terms and policies:
+- Google Services (Search, Maps, OAuth, Safe Browsing)
+- Other integrated APIs
+
+## 8. Privacy
+
+Your use of the Application is also governed by our Privacy Policy. Please review it to understand our data practices.
+
+## 9. Disclaimers
+
+### 9.1 Service Availability
+The Application is provided "as is" without warranties of any kind. We do not guarantee uninterrupted or error-free service.
+
+### 9.2 Search Results
+Search results are provided by third-party services. We do not guarantee the accuracy, completeness, or reliability of search results.
+
+### 9.3 User Interactions
+We are not responsible for interactions between users, including messages, posts, or other communications.
+
+## 10. Limitation of Liability
+
+To the maximum extent permitted by law, we shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Application.
+
+## 11. Indemnification
+
+You agree to indemnify and hold us harmless from any claims, damages, or expenses arising from your use of the Application or violation of these Terms.
+
+## 12. Changes to Terms
+
+We may modify these Terms at any time. Continued use of the Application after changes constitutes acceptance of the modified Terms.
+
+## 13. Governing Law
+
+These Terms shall be governed by and construed in accordance with applicable laws, without regard to conflict of law principles.
+
+## 14. Contact Information
+
+For questions about these Terms, please contact us through the Application.
+
+---
+*InfoPilot Explorer - Information at Your Fingertips*
+"""
+
+@api_router.get("/legal/privacy-policy")
+async def get_privacy_policy():
+    """Get the privacy policy (public endpoint)"""
+    policy = await db.legal_pages.find_one({"type": "privacy_policy"}, {"_id": 0})
+    if not policy:
+        return {"content": DEFAULT_PRIVACY_POLICY, "last_updated": "January 10, 2026"}
+    return {"content": policy.get("content", DEFAULT_PRIVACY_POLICY), "last_updated": policy.get("last_updated", "January 10, 2026")}
+
+@api_router.get("/legal/terms-of-service")
+async def get_terms_of_service():
+    """Get the terms of service (public endpoint)"""
+    terms = await db.legal_pages.find_one({"type": "terms_of_service"}, {"_id": 0})
+    if not terms:
+        return {"content": DEFAULT_TERMS_OF_SERVICE, "last_updated": "January 10, 2026"}
+    return {"content": terms.get("content", DEFAULT_TERMS_OF_SERVICE), "last_updated": terms.get("last_updated", "January 10, 2026")}
+
+@api_router.put("/admin/legal/privacy-policy")
+async def update_privacy_policy(content: str = Query(...), user: dict = Depends(require_user)):
+    """Update privacy policy (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.legal_pages.update_one(
+        {"type": "privacy_policy"},
+        {"$set": {
+            "type": "privacy_policy",
+            "content": content,
+            "last_updated": datetime.now(timezone.utc).strftime("%B %d, %Y"),
+            "updated_by": user["id"]
+        }},
+        upsert=True
+    )
+    return {"message": "Privacy policy updated"}
+
+@api_router.put("/admin/legal/terms-of-service")
+async def update_terms_of_service(content: str = Query(...), user: dict = Depends(require_user)):
+    """Update terms of service (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.legal_pages.update_one(
+        {"type": "terms_of_service"},
+        {"$set": {
+            "type": "terms_of_service",
+            "content": content,
+            "last_updated": datetime.now(timezone.utc).strftime("%B %d, %Y"),
+            "updated_by": user["id"]
+        }},
+        upsert=True
+    )
+    return {"message": "Terms of service updated"}
+
+# ============================================
 # API ROUTES - PRIVATE MESSAGING
 # ============================================
 
