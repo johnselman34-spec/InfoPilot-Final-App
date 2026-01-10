@@ -2729,6 +2729,9 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
             # Extract locations from content
             locations = extract_locations(content, result["title"])
             
+            # Extract hashtags for linking related content
+            hashtags = extract_hashtags(content, result["title"], max_hashtags=6)
+            
             result_id = str(uuid.uuid4())
             search_result = {
                 "id": result_id,
@@ -2743,6 +2746,7 @@ async def collate_search(data: CollateRequest, user: dict = Depends(require_user
                 "detected_year": page_data.get("detected_year"),
                 "word_count": page_data.get("word_count", 0),
                 "locations": locations,
+                "hashtags": hashtags,
                 "safety_checked": safety_check.get("checked", False),
                 "reactions": {},
                 "collated_at": datetime.now(timezone.utc).isoformat()
