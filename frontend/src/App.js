@@ -3380,8 +3380,8 @@ const PageDetailPage = () => {
         {isAdmin && (
           <FuturisticFrame title="CREATE POST" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
             <form onSubmit={handlePost} className="space-y-4">
-              <textarea value={newPost} onChange={(e) => setNewPost(e.target.value)} placeholder="Share an update with your followers..." className="w-full px-4 py-3 bg-slate-950 border border-purple-500/30 rounded-lg text-purple-300 font-mono h-24 focus:border-pink-500 resize-none" />
-              <button type="submit" disabled={posting || !newPost.trim()} className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2">
+              <textarea value={newPost} onChange={(e) => setNewPost(e.target.value)} placeholder="Share an update with your followers..." className="w-full px-4 py-3 bg-slate-950 border border-purple-500/30 rounded-lg text-purple-300 font-mono h-24 focus:border-pink-500 resize-none" data-testid="page-post-input" />
+              <button type="submit" disabled={posting || !newPost.trim()} className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2" data-testid="page-post-submit">
                 {posting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Send className="w-5 h-5" /> POST</>}
               </button>
             </form>
@@ -3397,26 +3397,7 @@ const PageDetailPage = () => {
             </div>
           ) : (
             posts.map((post) => (
-              <div key={post.id} className="p-4 bg-slate-900/80 rounded-lg border border-purple-500/20">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-pink-500/20 to-purple-500/20 rounded-full flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-pink-400" />
-                  </div>
-                  <div>
-                    <p className="text-purple-300 font-mono font-bold">{page.name}</p>
-                    <p className="text-purple-400/40 font-mono text-xs">{new Date(post.created_at).toLocaleString()}</p>
-                  </div>
-                </div>
-                <p className="text-purple-300/90 font-mono whitespace-pre-wrap">{post.content}</p>
-                <div className="flex items-center gap-4 mt-4 pt-3 border-t border-purple-500/20">
-                  <button className="flex items-center gap-2 text-purple-400/60 hover:text-pink-400 font-mono text-sm">
-                    <Heart className="w-4 h-4" /> {post.like_count || 0}
-                  </button>
-                  <button className="flex items-center gap-2 text-purple-400/60 hover:text-blue-400 font-mono text-sm">
-                    <MessageCircle className="w-4 h-4" /> {post.comment_count || 0}
-                  </button>
-                </div>
-              </div>
+              <PostCard key={post.id} post={{...post, username: page.name}} postType="page" onUpdate={fetchPage} />
             ))
           )}
         </div>
