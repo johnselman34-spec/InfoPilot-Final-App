@@ -44,7 +44,7 @@ def admin_auth(api_client):
     })
     if response.status_code == 200:
         data = response.json()
-        TestConfig.admin_token = data.get("token")
+        TestConfig.admin_token = data.get("access_token")
         TestConfig.admin_user_id = data.get("user", {}).get("id")
         return TestConfig.admin_token
     pytest.skip(f"Admin authentication failed: {response.status_code}")
@@ -59,7 +59,7 @@ def test_user_auth(api_client):
     })
     if response.status_code == 200:
         data = response.json()
-        TestConfig.test_user_token = data.get("token")
+        TestConfig.test_user_token = data.get("access_token")
         TestConfig.test_user_id = data.get("user", {}).get("id")
         return TestConfig.test_user_token
     pytest.skip(f"Test user authentication failed: {response.status_code}")
@@ -104,11 +104,11 @@ class TestAuthentication:
         })
         assert response.status_code == 200
         data = response.json()
-        assert "token" in data
+        assert "access_token" in data
         assert "user" in data
         assert data["user"]["email"] == ADMIN_EMAIL
         assert data["user"]["is_admin"] == True
-        TestConfig.admin_token = data["token"]
+        TestConfig.admin_token = data["access_token"]
         TestConfig.admin_user_id = data["user"]["id"]
         print(f"Admin login successful: {data['user']['username']}")
     
@@ -120,9 +120,9 @@ class TestAuthentication:
         })
         assert response.status_code == 200
         data = response.json()
-        assert "token" in data
+        assert "access_token" in data
         assert "user" in data
-        TestConfig.test_user_token = data["token"]
+        TestConfig.test_user_token = data["access_token"]
         TestConfig.test_user_id = data["user"]["id"]
         print(f"Test user login successful: {data['user']['username']}")
     
