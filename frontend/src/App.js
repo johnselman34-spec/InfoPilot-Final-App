@@ -6193,6 +6193,119 @@ const AdminPage = () => {
           </FuturisticFrame>
         )}
 
+        {/* Search Pages Config Tab */}
+        {activeTab === "search-pages" && (
+          <div className="space-y-6">
+            <FuturisticFrame title="🔍 SEARCH PAGES CONFIGURATION" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+              <div className="space-y-6">
+                <p className="text-purple-300/70 font-mono text-sm">
+                  Control how many pages of search results users can collate per search. Each page contains {searchPagesConfig.results_per_page} results.
+                </p>
+                
+                {/* App Status Banner */}
+                <div className={`p-4 rounded border ${searchPagesConfig.is_app_free ? 'bg-green-500/10 border-green-500/30' : 'bg-yellow-500/10 border-yellow-500/30'}`}>
+                  <div className="flex items-center gap-3">
+                    {searchPagesConfig.is_app_free ? (
+                      <>
+                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+                        <span className="text-green-400 font-mono font-bold">APP IS FREE</span>
+                        <span className="text-green-300/70 font-mono text-sm">- Unpaid users get {searchPagesConfig.unpaid_user_search_pages} pages (more than 40)</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+                        <span className="text-yellow-400 font-mono font-bold">SUBSCRIPTION REQUIRED</span>
+                        <span className="text-yellow-300/70 font-mono text-sm">- Unpaid users limited to {searchPagesConfig.unpaid_user_search_pages} pages</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Current Settings Display */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-slate-950 p-4 rounded border border-purple-500/30">
+                    <p className="text-purple-400/60 font-mono text-xs">UNPAID USERS</p>
+                    <p className="text-3xl font-mono text-purple-300">{searchPagesConfig.unpaid_user_search_pages} pages</p>
+                    <p className="text-purple-400/50 font-mono text-xs mt-1">= {searchPagesConfig.unpaid_max_results} max results</p>
+                  </div>
+                  <div className="bg-slate-950 p-4 rounded border border-pink-500/30">
+                    <p className="text-pink-400/60 font-mono text-xs">PAID USERS</p>
+                    <p className="text-3xl font-mono text-pink-300">{searchPagesConfig.paid_user_search_pages} pages</p>
+                    <p className="text-pink-400/50 font-mono text-xs mt-1">= {searchPagesConfig.paid_max_results} max results</p>
+                  </div>
+                </div>
+                
+                {/* Update Settings Form */}
+                <div className="space-y-4 pt-4 border-t border-purple-500/20">
+                  <h3 className="text-lg font-mono text-purple-400">Update Settings</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-mono text-purple-400 mb-2">
+                        UNPAID USER PAGES (1-99)
+                        <span className="text-green-400 ml-2">{newUnpaidPages > 40 ? '= FREE APP' : ''}</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={newUnpaidPages}
+                        onChange={(e) => setNewUnpaidPages(parseInt(e.target.value) || 1)}
+                        className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono focus:border-pink-500"
+                        data-testid="unpaid-pages-input"
+                      />
+                      <p className="text-purple-400/50 font-mono text-xs mt-1">
+                        &gt;40 pages = App is advertised as FREE
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-mono text-pink-400 mb-2">PAID USER PAGES (1-99)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={newPaidPages}
+                        onChange={(e) => setNewPaidPages(parseInt(e.target.value) || 1)}
+                        className="w-full px-4 py-2 bg-slate-950 border border-pink-500/30 rounded text-pink-300 font-mono focus:border-pink-500"
+                        data-testid="paid-pages-input"
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Quick Preset Buttons */}
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-purple-400/60 font-mono text-xs">Unpaid presets:</span>
+                    {[6, 20, 40, 50, 75, 99].map(preset => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setNewUnpaidPages(preset)}
+                        className={`px-3 py-1 font-mono text-xs rounded ${
+                          newUnpaidPages === preset 
+                            ? 'bg-purple-500/30 text-purple-300 border border-purple-500/50'
+                            : 'bg-slate-800 text-purple-400 hover:bg-slate-700'
+                        } ${preset > 40 ? 'ring-1 ring-green-500/30' : ''}`}
+                      >
+                        {preset} {preset > 40 ? '(FREE)' : ''}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={saveSearchPagesConfig}
+                    disabled={saving}
+                    className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-mono rounded hover:scale-[1.02] disabled:opacity-50 flex items-center gap-2"
+                    data-testid="save-search-pages-btn"
+                  >
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "SAVE CONFIGURATION"}
+                  </button>
+                </div>
+              </div>
+            </FuturisticFrame>
+          </div>
+        )}
+
         {/* Database Limits Tab */}
         {activeTab === "database" && (
           <div className="space-y-6">
