@@ -929,11 +929,11 @@ async def web_search(query: str, num_results: int = 20) -> List[Dict[str, Any]]:
 
 @api_router.get("/")
 async def root():
-    return {"message": "InfoPilot API v2.0 - Advanced Tactical Information Exchange System"}
+    return {"message": "InfoPilot Explorer API v2.0 - Advanced Tactical Information Exchange System"}
 
 @api_router.get("/health")
 async def health_check():
-    return {"status": "operational", "service": "InfoPilot", "mode": "tactical"}
+    return {"status": "operational", "service": "InfoPilot Explorer", "mode": "tactical"}
 
 # ============================================
 # API ROUTES - AUTHENTICATION
@@ -1151,7 +1151,7 @@ async def create_payment_intent(data: CreatePaymentIntentRequest, user: dict = D
         
         if data.item_type == "subscription":
             amount = int(price * 100)  # Convert to cents
-            description = f"InfoPilot Lifetime Subscription {'(Welcome Sale!)' if is_sale else ''}"
+            description = f"InfoPilot Explorer Lifetime Subscription {'(Welcome Sale!)' if is_sale else ''}"
         elif data.item_type == "book":
             amount = 299  # $2.99 for book
             description = "Letters to Evelyn - Digital Book"
