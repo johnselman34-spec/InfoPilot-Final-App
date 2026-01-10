@@ -2895,11 +2895,7 @@ const CategoryMap = ({ selectedCategories }) => {
     fullscreenControl: true
   }), []);
   
-  useEffect(() => {
-    fetchMapData();
-  }, [selectedCategories]);
-  
-  const fetchMapData = async () => {
+  const fetchMapData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API}/ultimate-search/map-data`);
@@ -2919,7 +2915,11 @@ const CategoryMap = ({ selectedCategories }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategories]);
+
+  useEffect(() => {
+    fetchMapData();
+  }, [fetchMapData]);
   
   if (loadError) {
     return (
