@@ -3916,12 +3916,18 @@ async def get_subscription_config():
         promo_end = settings.get("promo_end_date", PROMO_END_DATE.isoformat())
         regular_price = settings.get("regular_price", REGULAR_PRICE)
         min_price = settings.get("min_price", MIN_PRICE)
+        max_price = settings.get("max_price", 100)
+        preset_amounts = settings.get("preset_amounts", "1.00, 2.00, 4.62, 10.00")
+        promo_message = settings.get("promo_message", "Pay What You Want - Limited Time!")
         paypal_link_1 = settings.get("paypal_link_1", PAYPAL_PAYMENT_LINK_1)
         paypal_link_2 = settings.get("paypal_link_2", PAYPAL_PAYMENT_LINK_2)
     else:
         promo_end = PROMO_END_DATE.isoformat()
         regular_price = REGULAR_PRICE
         min_price = MIN_PRICE
+        max_price = 100
+        preset_amounts = "1.00, 2.00, 4.62, 10.00"
+        promo_message = "Pay What You Want - Limited Time!"
         paypal_link_1 = PAYPAL_PAYMENT_LINK_1
         paypal_link_2 = PAYPAL_PAYMENT_LINK_2
     
@@ -3930,9 +3936,12 @@ async def get_subscription_config():
         "promo_end_date": promo_end,
         "regular_price": regular_price,
         "min_price": min_price,
+        "max_price": max_price,
+        "preset_amounts": preset_amounts,
+        "promo_message": promo_message,
         "paypal_link_1": paypal_link_1,
         "paypal_link_2": paypal_link_2,
-        "message": "Pay what you want!" if is_promo_active else f"Annual subscription: ${regular_price}/year"
+        "message": promo_message if is_promo_active else f"Annual subscription: ${regular_price}/year"
     }
 
 @api_router.get("/subscription/status")
