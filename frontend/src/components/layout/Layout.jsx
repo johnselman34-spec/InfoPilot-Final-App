@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { Menu, Plane } from 'lucide-react';
 import Sidebar from './Sidebar';
 
-const Layout = ({ children }) => {
+export const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
