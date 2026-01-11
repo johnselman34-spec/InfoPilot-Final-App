@@ -2930,7 +2930,7 @@ Made with ❤️ and cosmic approval ✨<br>
     }
 
 async def generate_newsletter_content():
-    """Generate AI-powered EXTREMELY FUNNY newsletter content using rich book data and advertisement images"""
+    """Generate AI-powered EXTREMELY FUNNY newsletter content using FULL MANUSCRIPT analysis"""
     try:
         from emergentintegrations.llm.chat import LlmChat, UserMessage
         
@@ -2943,23 +2943,27 @@ async def generate_newsletter_content():
             api_key=api_key,
             session_id=f"newsletter-{datetime.now().strftime('%Y%m%d%H%M%S')}",
             system_message="""You are a COMEDIC GENIUS and marketing wizard writing newsletters for InfoPilot.
-Your humor style is: absurdist, witty, self-aware, warm-hearted, and laugh-out-loud funny!
-Reference: The Office, Parks & Rec, Brooklyn 99, Terry Pratchett, Douglas Adams
+Your humor style is: absurdist, witty, self-aware, warm-hearted, and laugh-out-loud HILARIOUS!
+References: The Office, Parks & Rec, Brooklyn 99, Terry Pratchett, Douglas Adams, Monty Python
+
+You have FULL ACCESS to the manuscript of "Letters to Evelyn" - use it to create the FUNNIEST newsletter ever!
 
 Your job is to create EXTREMELY FUNNY, laugh-out-loud emails that:
 1. Make people laugh so hard they snort their beverage of choice
 2. Use absurd jokes, witty puns, cosmic humor, and clever wordplay  
-3. Sell the book "Letters to Evelyn" using the hilarious advertisement taglines provided
-4. Promote InfoPilot subscriptions as if the universe itself depends on it
-5. Be so entertaining people FORWARD it to friends and enemies alike
-6. Use emojis strategically to make text POP and sparkle
-7. Create urgency and FOMO (Fear Of Missing Out on cosmic knowledge)
-8. Reference the book's absolutely WILD plot: Navy pilot, LSD poisoning, hallucinations, aliens, love story
+3. Feature ACTUAL QUOTES from the manuscript - they're comedy gold!
+4. Reference the book's WILD characters: John, Evelyn, Lauren, The Captain, Durham, Gray Aliens
+5. Include the bizarre plot elements: dinosaur escapes, "Jesus" encounters, penny bending, alien water advice
+6. Promote InfoPilot subscriptions as if the universe itself depends on it
+7. Use emojis strategically to make text POP and sparkle
+8. Create urgency and FOMO (Fear Of Missing Out on cosmic knowledge)
 9. The humor should be WARM, WITTY, COSMIC, and WELCOMING - never mean-spirited
-10. Include references to the hilarious ad taglines like "UNIVERSE FACT-CHECKED IT" and "THERAPIST: THIS IS A LOT TO UNPACK"
+10. Reference chapter teasers - they're hilarious!
+11. Include the COPYRIGHT WARNING about pregnant readers and "adults 26+"
+12. Mix profound quotes with absurdist humor for emotional whiplash (in a good way)
 
 You must output complete HTML email with inline styles. Be WILD, COSMIC, and CREATIVE!
-Think: What if Douglas Adams wrote marketing emails while on a spaceship?"""
+Think: What if Douglas Adams, Terry Pratchett, and a Navy pilot who got called Jesus wrote emails together?"""
         ).with_model("openai", "gpt-4o")
         
         # Get recent activity stats
@@ -2967,31 +2971,41 @@ Think: What if Douglas Adams wrote marketing emails while on a spaceship?"""
         total_results = await db.search_results.count_documents({})
         total_categories = await db.categories.count_documents({})
         
-        # Select a random promotional image with its hilarious tagline
+        # Select random content from the full manuscript
         import random
         promo = random.choice(BOOK_PROMO_IMAGES)
+        
+        # Select manuscript content randomly for variety
+        wild_elements = random.sample(MANUSCRIPT_CONTENT["wild_plot_elements"], min(5, len(MANUSCRIPT_CONTENT["wild_plot_elements"])))
+        quotes = random.sample(MANUSCRIPT_CONTENT["hilarious_quotes"], min(4, len(MANUSCRIPT_CONTENT["hilarious_quotes"])))
+        chapter_teasers = random.sample(MANUSCRIPT_CONTENT["chapter_teasers"], min(3, len(MANUSCRIPT_CONTENT["chapter_teasers"])))
+        dad_jokes = random.sample(MANUSCRIPT_CONTENT["dad_jokes"], min(3, len(MANUSCRIPT_CONTENT["dad_jokes"])))
+        marketing_hooks = random.sample(MANUSCRIPT_CONTENT["marketing_hooks"], min(2, len(MANUSCRIPT_CONTENT["marketing_hooks"])))
+        profound_lines = random.sample(MANUSCRIPT_CONTENT["profound_lines"], min(2, len(MANUSCRIPT_CONTENT["profound_lines"])))
+        subject_lines = random.sample(MANUSCRIPT_CONTENT["email_subject_lines"], min(2, len(MANUSCRIPT_CONTENT["email_subject_lines"])))
+        theme = random.choice(MANUSCRIPT_CONTENT["themes_for_newsletters"])
         
         # Select random reviews to feature
         rf_reviews = random.sample(BOOK_REVIEWS["readers_favorite"]["reviews"], min(3, len(BOOK_REVIEWS["readers_favorite"]["reviews"])))
         amazon_reviews = random.sample(BOOK_REVIEWS["amazon"]["reviews"], min(2, len(BOOK_REVIEWS["amazon"]["reviews"])))
         
-        # Build review strings before the f-string (can't use backslash in f-string)
+        # Build content strings
         rf_reviews_text = "\n".join([f'★ "{r["quote"]}" - {r["reviewer"]}, Readers\' Favorite' for r in rf_reviews])
         amazon_reviews_text = "\n".join([f'★ "{r["quote"]}" - {r["reviewer"]}' for r in amazon_reviews])
+        wild_elements_text = "\n".join([f"• {e}" for e in wild_elements])
+        quotes_text = "\n".join([f'• "{q["quote"]}" ({q["context"]})' for q in quotes])
+        chapter_teasers_text = "\n".join([f'• Ch.{t["chapter"]} "{t["title"]}": {t["teaser"]}' for t in chapter_teasers])
+        dad_jokes_text = "\n".join([f"• {j}" for j in dad_jokes])
+        profound_text = "\n".join([f'• "{p}"' for p in profound_lines])
         
-        # Funny recurring elements
-        dad_jokes = [
-            "Why did the Navy pilot write a book? Because his stories were PLANE amazing! ✈️",
-            "What do aliens and this book have in common? They're both OUT OF THIS WORLD! 👽",
-            "Why did the universe fact-check the book? Because even black holes couldn't contain these plot twists! 🕳️",
-            "What's the difference between this book and therapy? This one's cheaper and funnier! 🛋️",
-            "Why bring snacks while reading? Because the laughs will burn ALL your calories! 🍿",
-            "How many dimensions does this book span? ALL of them, and it still fits on your Kindle! 📱",
-            "Why did the therapist recommend this book? It unpacks itself! 📦"
-        ]
-        selected_joke = random.choice(dad_jokes)
+        # Select primary dad joke for featured section
+        selected_joke = random.choice(MANUSCRIPT_CONTENT["dad_jokes"])
         
-        # Create detailed prompt with all the rich content
+        # Get characters for this newsletter
+        characters = MANUSCRIPT_CONTENT["key_characters"]
+        char_spotlight = random.choice(list(characters.items()))
+        
+        # Create detailed prompt with FULL manuscript content
         prompt = f"""Write an absolutely HILARIOUS weekly newsletter HTML email for InfoPilot users!
 
 CURRENT STATS (make these sound impressive and funny):
