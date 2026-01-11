@@ -1458,6 +1458,12 @@ function App() {
 const AppContent = ({ authMode, setAuthMode }) => {
   const { user, loading } = useAuth();
 
+  // Check for session_id in URL hash (Google OAuth callback)
+  // REMINDER: This check must happen synchronously during render, NOT in useEffect
+  if (window.location.hash?.includes('session_id=')) {
+    return <AuthCallback />;
+  }
+
   if (loading) {
     return (
       <div className="auth-container">
