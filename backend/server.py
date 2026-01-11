@@ -1234,6 +1234,14 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
                 insert_result = await db.search_results.insert_one(search_result_doc)
                 search_result_doc["id"] = str(insert_result.inserted_id)
             
+            # Remove any non-serializable fields for response
+            if "_id" in search_result_doc:
+                del search_result_doc["_id"]
+            
+            # Convert datetime to ISO string
+            if isinstance(search_result_doc.get("collated_at"), datetime):
+                search_result_doc["collated_at"] = search_result_doc["collated_at"].isoformat()
+            
             search_result_doc["matching_categories"] = [
                 cat["name"] for cat in categories if str(cat["_id"]) in matching_category_ids
             ]
