@@ -1417,7 +1417,7 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
             <p style={{ fontSize: '0.9rem', color: '#a1a1aa', marginBottom: 15 }}>
               Get unlimited search results, access to the interactive map, and more!
             </p>
-            <button className="btn btn-primary">Subscribe - Pay What You Want</button>
+            <button className="btn btn-primary" onClick={() => setCurrentPage('subscribe')}>Subscribe - Pay What You Want</button>
           </div>
         )}
       </div>
