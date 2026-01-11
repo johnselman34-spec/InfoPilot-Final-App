@@ -104,6 +104,19 @@ Build a comprehensive information exchange social network application ("InfoPilo
 ### Book Promotion
 - GET `/api/book-promo` - Get book promotion data
 
+### User Settings
+- PUT `/api/users/settings` - Update user settings
+- POST `/api/users/change-password` - Change password
+- GET `/api/users/has-password` - Check if user has password set
+
+### Protocol Marketplace
+- GET `/api/marketplace/protocols` - List marketplace protocols
+- POST `/api/marketplace/protocols` - Create new listing
+- POST `/api/marketplace/purchase` - Purchase a protocol
+- GET `/api/marketplace/purchases` - Get user's purchases
+- GET `/api/marketplace/seller/dashboard` - Seller stats & earnings
+- GET `/api/marketplace/categories` - Marketplace categories
+
 ## Database Collections
 - `users` - User accounts
 - `sessions` - Auth sessions
