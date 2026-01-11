@@ -133,10 +133,17 @@ Build a comprehensive information exchange social network application ("InfoPilo
 1. ✅ Resend email integration for newsletters (API key configured, WORKING)
 2. ✅ Improved Protocol Parser (multi-word phrases, abbreviations, word boundaries)
 3. ✅ Enhanced web search (DuckDuckGo + Google scraping)
-4. ✅ Book promotion banner with rotating images
+4. ✅ Book promotion banner with rotating images (4 user-provided images)
 5. ✅ Newsletter test email endpoint
 6. ✅ Protocol debugging endpoint
-7. ✅ All features tested and verified by testing agent
+7. ✅ **AUTOMATED WEEKLY NEWSLETTER SCHEDULE** - Admin can set day/time
+8. ✅ Enhanced AI newsletter generation with actual book reviews:
+   - Divine Zape quote: "This memoir is a profound and unforgettable literary piece."
+   - 19 Five-Star Reviews from Readers' Favorite
+   - Book plot details (Navy pilot, LSD poisoning, aliens, love story)
+   - Rotating book advertisement images in emails
+9. ✅ Crawled Amazon and Readers' Favorite pages for rich content
+10. ✅ Admin Panel Newsletter tab with full scheduling UI
 
 ## Pending/Backlog
 
