@@ -561,6 +561,3 @@ async def get_push_status(credentials: HTTPAuthorizationCredentials = Depends(se
         "subscribed": subscription is not None,
         "updated_at": subscription["updated_at"].isoformat() if subscription else None
     }
-
-
-from pydantic import BaseModel
