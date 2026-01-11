@@ -310,22 +310,22 @@ Build a comprehensive information exchange social network application ("InfoPilo
 
 ### P0 - Critical
 - ✅ **COMPLETE: Newsletter Enhancement Phase 2** - Full manuscript integration
-- ✅ **COMPLETE: Code Refactoring Phase 1** - Frontend modules extracted
+- ✅ **COMPLETE: Code Refactoring Phase 1** - Frontend modules extracted (35% reduction)
+- ✅ **COMPLETE: Search Speed Optimization** - 12-20s (target was 19-22s)
+- ✅ **COMPLETE: Batch Deletion Feature** - Delete search sessions
 - ⏳ **IN PROGRESS: Code Refactoring Phase 2** - Extract remaining page components
 - Interactive map with Leaflet (IN PROGRESS)
 - Full social features (Groups, Pages, comments, reactions) (IN PROGRESS)
 
 ### P1 - High Priority
 - Backend refactoring - Move endpoints from server.py to /routes/
+- SerpAPI Integration - Scheduled in 3 weeks for higher result volume
 - PayPal Webhook testing with sandbox events
-- Better search API integration (SerpApi/DataForSEO) - Bing API retired
-- Internet Robot for automated classification
 
 ### P2 - Medium Priority
-- Global Research Database
-- Statistics pages
 - Gamification enhancements (weekly leaderboards)
-- "Quote of the Day" widget using manuscript quotes
+- Quote Gallery page - browse all 15 manuscript quotes
+- Mobile responsiveness improvements
 
 ### P3 - Nice to Have
 - Advanced analytics
