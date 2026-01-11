@@ -4813,17 +4813,18 @@ async def get_monthly_leaderboard():
 @api_router.post("/gamification/share-badge")
 async def share_badge(badge_id: str = Body(..., embed=True), user = Depends(get_current_user)):
     """Generate shareable badge data for social media"""
-    user_profile = await db.gamification.find_one({"user_id": str(user["_id"])})
+    # Badges are stored in user document, not separate gamification collection
+    user_badges = user.get("badges", [])
     
-    if not user_profile:
-        raise HTTPException(status_code=404, detail="User profile not found")
-    
-    # Find the badge
-    user_badges = user_profile.get("badges", [])
-    badge = next((b for b in user_badges if b.get("id") == badge_id), None)
-    
-    if not badge:
+    # Check if user has this badge
+    if badge_id not in user_badges:
         raise HTTPException(status_code=404, detail="Badge not found")
+    
+    # Get badge details from BADGES constant
+    if badge_id not in BADGES:
+        raise HTTPException(status_code=404, detail="Badge not found")
+    
+    badge = BADGES[badge_id]
     
     username = user.get("username", user.get("callsign", "Anonymous"))
     
