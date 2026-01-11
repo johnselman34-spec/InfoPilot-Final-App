@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API } from '../../utils/api';
 import { Icons } from '../shared';
 
@@ -11,11 +11,7 @@ const GroupsSection = ({ showToast, token, user }) => {
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
 
-  useEffect(() => {
-    fetchGroups();
-  }, []);
-
-  const fetchGroups = async () => {
+  const fetchGroups = useCallback(async () => {
     try {
       const res = await fetch(`${API}/groups`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -28,7 +24,11 @@ const GroupsSection = ({ showToast, token, user }) => {
       console.error('Failed to fetch groups');
     }
     setLoading(false);
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchGroups();
+  }, [fetchGroups]);
 
   const fetchGroupDetails = async (groupId) => {
     try {

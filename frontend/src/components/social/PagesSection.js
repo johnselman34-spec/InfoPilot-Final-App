@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API } from '../../utils/api';
 import { Icons } from '../shared';
 
@@ -13,11 +13,7 @@ const PagesSection = ({ showToast, token, user }) => {
 
   const categories = ['General', 'Technology', 'Science', 'History', 'Entertainment', 'Sports', 'News', 'Other'];
 
-  useEffect(() => {
-    fetchPages();
-  }, []);
-
-  const fetchPages = async () => {
+  const fetchPages = useCallback(async () => {
     try {
       const res = await fetch(`${API}/pages`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -30,7 +26,11 @@ const PagesSection = ({ showToast, token, user }) => {
       console.error('Failed to fetch pages');
     }
     setLoading(false);
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchPages();
+  }, [fetchPages]);
 
   const fetchPageDetails = async (pageId) => {
     try {
