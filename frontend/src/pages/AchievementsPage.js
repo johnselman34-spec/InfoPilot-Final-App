@@ -1,22 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import { Icons } from '../components/shared';
 
 const AchievementsPage = ({ showToast }) => {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [profile, setProfile] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [allBadges, setAllBadges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile'); // profile, badges, leaderboard
 
-  useEffect(() => {
-    fetchData();
-    trackLogin();
-  }, [token]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [profileRes, leaderboardRes, badgesRes] = await Promise.all([
         fetch(`${API}/gamification/profile`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -42,9 +37,9 @@ const AchievementsPage = ({ showToast }) => {
       console.error('Failed to fetch gamification data:', e);
     }
     setLoading(false);
-  };
+  }, [token, showToast]);
 
-  const trackLogin = async () => {
+  const trackLogin = useCallback(async () => {
     try {
       await fetch(`${API}/gamification/track-login`, {
         method: 'POST',
@@ -53,7 +48,12 @@ const AchievementsPage = ({ showToast }) => {
     } catch (e) {
       console.error('Failed to track login');
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchData();
+    trackLogin();
+  }, [fetchData, trackLogin]);
 
   const getRarityColor = (rarity) => {
     switch (rarity) {
