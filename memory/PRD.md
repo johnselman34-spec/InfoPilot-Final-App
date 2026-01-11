@@ -137,12 +137,17 @@ Build a comprehensive information exchange social network application ("InfoPilo
 5. ✅ Newsletter test email endpoint
 6. ✅ Protocol debugging endpoint
 7. ✅ **AUTOMATED WEEKLY NEWSLETTER SCHEDULE** - Admin can set day/time
-8. ✅ Enhanced AI newsletter generation with actual book reviews:
+8. ✅ Enhanced AI newsletter generation with actual book content:
    - Divine Zape quote: "This memoir is a profound and unforgettable literary piece."
    - 19 Five-Star Reviews from Readers' Favorite
-   - Book plot details (Navy pilot, LSD poisoning, aliens, love story)
+   - All 9 professional reviewer quotes from Readers' Favorite
+   - Book plot details from ACTUAL MANUSCRIPT (Navy pilot, LSD poisoning, aliens, love story)
+   - World record claim: steepest Sarajevo Approach in T-34C aircraft
+   - "Funnier than Dave Chappelle" tagline
+   - 50+ "hurricane force winds of laughter" jokes
    - Rotating book advertisement images in emails
-9. ✅ Crawled Amazon and Readers' Favorite pages for rich content
+   - Rotating funny taglines
+9. ✅ Crawled Amazon, Readers' Favorite pages, AND analyzed Google Drive manuscript
 10. ✅ Admin Panel Newsletter tab with full scheduling UI
 
 ## Pending/Backlog
