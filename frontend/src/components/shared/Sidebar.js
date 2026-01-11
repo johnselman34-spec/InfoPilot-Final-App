@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import Icons from '../shared/Icons';
+import Icons from './Icons';
 
 const Sidebar = ({ currentPage, setCurrentPage }) => {
   const { user, logout } = useAuth();
