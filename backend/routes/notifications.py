@@ -3,6 +3,7 @@ InfoPilot Explorer - Real-time Notifications with WebSockets
 """
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from pydantic import BaseModel
 from datetime import datetime
 from typing import Dict, List, Set
 from bson import ObjectId
