@@ -1066,10 +1066,10 @@ class WebSearchService:
         return all_results[:num_results]
     
     @staticmethod
-    async def search_fast(query: str, num_results: int = 500) -> List[Dict[str, Any]]:
+    async def search_fast(query: str, num_results: int = 70) -> List[Dict[str, Any]]:
         """
-        OPTIMIZED FAST SEARCH - Target: 120+ results in 19-22 seconds
-        Skips slow content enrichment, uses parallel scraping with timeouts
+        OPTIMIZED FAST SEARCH with SerpAPI - Target: 31-70 results in 19-22 seconds
+        Uses SerpAPI as primary source (premium Google results), falls back to free scrapers
         """
         import time
         start_time = time.time()
@@ -1077,37 +1077,39 @@ class WebSearchService:
         seen_urls = set()
         
         try:
-            logger.info(f"Starting FAST search for: {query} (target: {num_results} results)")
+            logger.info(f"Starting FAST search for: {query} (target: 31-70 results)")
             
             # Run ALL scrapers in parallel with aggressive timeout
             tasks = []
+            source_names = []
             
-            # DDGS library - most reliable
+            # SerpAPI - PRIMARY SOURCE (premium Google results)
+            if SERPAPI_KEY:
+                tasks.append(asyncio.wait_for(
+                    WebSearchService.search_serpapi(query, min(70, num_results)),
+                    timeout=15.0
+                ))
+                source_names.append("SerpAPI")
+            
+            # DDGS library - secondary
             if DDGS_AVAILABLE:
                 tasks.append(asyncio.wait_for(
-                    WebSearchService.search_ddgs_library(query, min(300, num_results)),
+                    WebSearchService.search_ddgs_library(query, min(50, num_results)),
                     timeout=12.0
                 ))
+                source_names.append("DDGS Library")
             
-            # Secondary scrapers - run in parallel
+            # Free scrapers - backup sources
             tasks.append(asyncio.wait_for(
-                WebSearchService.search_duckduckgo(query, min(200, num_results)),
+                WebSearchService.search_duckduckgo(query, min(30, num_results)),
                 timeout=10.0
             ))
-            tasks.append(asyncio.wait_for(
-                WebSearchService.search_bing_scrape(query, min(200, num_results)),
-                timeout=10.0
-            ))
-            tasks.append(asyncio.wait_for(
-                WebSearchService.search_google_scrape(query, min(150, num_results)),
-                timeout=10.0
-            ))
+            source_names.append("DuckDuckGo")
             
             # Execute all in parallel
             results = await asyncio.gather(*tasks, return_exceptions=True)
             
-            # Process results from each source
-            source_names = ["DDGS Library", "DuckDuckGo Scrape", "Bing", "Google"] if DDGS_AVAILABLE else ["DuckDuckGo Scrape", "Bing", "Google"]
+            # Process results from each source - prioritize SerpAPI results
             for i, source_results in enumerate(results):
                 if isinstance(source_results, list):
                     added = 0
@@ -1117,19 +1119,25 @@ class WebSearchService:
                             seen_urls.add(url)
                             all_results.append(result)
                             added += 1
+                            # Cap at 70 results per user's request
+                            if len(all_results) >= 70:
+                                break
                     logger.info(f"{source_names[i] if i < len(source_names) else f'Source {i}'}: +{added} results")
                 elif isinstance(source_results, asyncio.TimeoutError):
-                    logger.warning(f"Source {i} timed out")
+                    logger.warning(f"{source_names[i] if i < len(source_names) else f'Source {i}'} timed out")
                 else:
-                    logger.debug(f"Source {i} error: {type(source_results).__name__}")
+                    logger.debug(f"{source_names[i] if i < len(source_names) else f'Source {i}'} error: {type(source_results).__name__}")
+                
+                # Stop if we have enough results
+                if len(all_results) >= 70:
+                    break
             
             elapsed = time.time() - start_time
-            logger.info(f"FAST search completed: {len(all_results)} results in {elapsed:.1f}s (target: 19-22s)")
+            logger.info(f"FAST search completed: {len(all_results)} results in {elapsed:.1f}s (target: 31-70)")
             
-            # If we have time remaining and need more results, do quick content enrichment
-            if elapsed < 15 and len(all_results) < 50:
-                # Only enrich first 30 results if we're short on results
-                batch_size = 30
+            # Quick content enrichment for better matching (only if we have time)
+            if elapsed < 15 and len(all_results) < 40:
+                batch_size = 20
                 enrichment_tasks = [
                     asyncio.wait_for(WebSearchService.fetch_page_content(r["url"]), timeout=2.0)
                     for r in all_results[:batch_size]
@@ -1144,6 +1152,9 @@ class WebSearchService:
                                 all_results[j]["content"] = content["content"][:2000]
                 except Exception as e:
                     logger.debug(f"Quick enrichment error: {e}")
+            
+        except Exception as e:
+            logger.error(f"Fast search error: {e}")
             
         except Exception as e:
             logger.error(f"Fast search error: {e}")
