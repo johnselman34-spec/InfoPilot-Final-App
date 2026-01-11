@@ -1425,6 +1425,172 @@ const SettingsPage = ({ showToast }) => {
   );
 };
 
+// ==================== SUBSCRIBE PAGE ====================
+const SubscribePage = ({ showToast, onBack }) => {
+  const { token, refreshUser } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [paymentClicked, setPaymentClicked] = useState(false);
+  const [settings, setSettings] = useState({
+    subscription_price: 0.99,
+    paypal_link: 'https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ'
+  });
+
+  useEffect(() => {
+    // Fetch subscription settings from admin
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(`${API}/subscription-info`);
+        if (res.ok) {
+          const data = await res.json();
+          setSettings(data);
+        }
+      } catch (e) {
+        console.log('Using default settings');
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handlePayPalClick = (amount) => {
+    // Open PayPal payment link
+    window.open(settings.paypal_link, '_blank');
+    setPaymentClicked(true);
+  };
+
+  const handleActivateSubscription = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/subscriptions/activate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (res.ok) {
+        showToast('Subscription activated! Thank you!', 'success');
+        await refreshUser();
+        onBack();
+      } else {
+        const data = await res.json();
+        showToast(data.detail || 'Activation failed', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to activate subscription', 'error');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <h2>Subscribe to InfoPilot Premium</h2>
+        <button className="btn btn-secondary" onClick={onBack}>← Back</button>
+      </div>
+
+      <div style={{ maxWidth: 600, margin: '0 auto' }}>
+        {/* Benefits */}
+        <div style={{ marginBottom: 30, padding: 20, background: 'rgba(124, 58, 237, 0.1)', borderRadius: 12 }}>
+          <h3 style={{ color: '#f472b6', marginBottom: 15 }}>Premium Benefits</h3>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {[
+              '✨ Unlimited search results',
+              '🗺️ Access to interactive world map',
+              '📊 Advanced statistics and analytics',
+              '🚀 Priority support',
+              '💾 Unlimited categories and protocols'
+            ].map((benefit, i) => (
+              <li key={i} style={{ padding: '8px 0', borderBottom: '1px solid rgba(124, 58, 237, 0.2)' }}>
+                {benefit}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Pay What You Want */}
+        <div style={{ marginBottom: 30 }}>
+          <h3 style={{ color: '#f472b6', marginBottom: 15, textAlign: 'center' }}>
+            💝 Pay What You Want
+          </h3>
+          <p style={{ color: '#a1a1aa', textAlign: 'center', marginBottom: 20 }}>
+            Choose the amount that works for you - every contribution helps!
+          </p>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            {[
+              { amount: 0.75, label: '$0.75' },
+              { amount: 1.00, label: '$1.00' },
+              { amount: 2.00, label: '$2.00' },
+              { amount: 3.00, label: '$3.00' },
+              { amount: 4.62, label: '$4.62' },
+              { amount: 5.00, label: '$5.00+' }
+            ].map(({ amount, label }) => (
+              <button
+                key={amount}
+                className="btn btn-primary"
+                onClick={() => handlePayPalClick(amount)}
+                style={{ padding: '15px 10px', fontSize: '1rem' }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* After Payment */}
+        {paymentClicked && (
+          <div style={{ 
+            marginBottom: 30, 
+            padding: 25, 
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(124, 58, 237, 0.2))', 
+            borderRadius: 12,
+            border: '2px solid rgba(16, 185, 129, 0.5)'
+          }}>
+            <h3 style={{ color: '#10b981', marginBottom: 15 }}>Step 2: Activate Your Subscription</h3>
+            <p style={{ color: '#a1a1aa', marginBottom: 20 }}>
+              After completing your PayPal payment, click the button below to activate your premium access.
+            </p>
+            <button 
+              className="btn btn-success" 
+              onClick={handleActivateSubscription}
+              disabled={loading}
+              style={{ width: '100%', padding: '15px', fontSize: '1.1rem' }}
+            >
+              {loading ? 'Activating...' : "I've Completed Payment - Activate Now!"}
+            </button>
+          </div>
+        )}
+
+        {/* Book Promotion */}
+        <div style={{ 
+          padding: 20, 
+          background: 'rgba(236, 72, 153, 0.1)', 
+          borderRadius: 12,
+          border: '1px solid rgba(236, 72, 153, 0.3)',
+          textAlign: 'center'
+        }}>
+          <h4 style={{ color: '#f472b6', marginBottom: 10 }}>📚 Also Check Out</h4>
+          <p style={{ color: '#a1a1aa', marginBottom: 15 }}>
+            "Letters to Evelyn" - A Supernatural Thriller Comedy by John Selman
+          </p>
+          <p style={{ color: '#a1a1aa', fontSize: '0.85rem', marginBottom: 15, fontStyle: 'italic' }}>
+            "This memoir is a profound and unforgettable literary piece." - Dvine Zape, Readers' Favorite
+          </p>
+          <a 
+            href="https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-secondary"
+          >
+            View on Amazon - $2.99
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ==================== MAIN APP ====================
 const MainApp = () => {
   const { user } = useAuth();
@@ -1444,11 +1610,13 @@ const MainApp = () => {
       case 'social':
         return <SocialPage showToast={showToast} />;
       case 'map':
-        return <MapPage showToast={showToast} />;
+        return <MapPage showToast={showToast} setCurrentPage={setCurrentPage} />;
       case 'messages':
         return <MessagesPage showToast={showToast} />;
       case 'settings':
-        return <SettingsPage showToast={showToast} />;
+        return <SettingsPage showToast={showToast} setCurrentPage={setCurrentPage} />;
+      case 'subscribe':
+        return <SubscribePage showToast={showToast} onBack={() => setCurrentPage('settings')} />;
       default:
         return <UltimateSearchPage showToast={showToast} />;
     }
