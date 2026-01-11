@@ -18,7 +18,8 @@ import {
   SocialPage,
   MapPage,
   MarketplacePage,
-  AchievementsPage
+  AchievementsPage,
+  QuoteGalleryPage
 } from './pages';
 
 // Fix Leaflet default marker icon issue
@@ -53,6 +54,8 @@ const MainApp = () => {
         return <SocialPage showToast={showToast} />;
       case 'map':
         return <MapPage showToast={showToast} setCurrentPage={setCurrentPage} />;
+      case 'quotes':
+        return <QuoteGalleryPage showToast={showToast} />;
       case 'messages':
         return <MessagesPage showToast={showToast} />;
       case 'settings':
