@@ -1912,10 +1912,14 @@ async def preview_newsletter(credentials: HTTPAuthorizationCredentials = Depends
 
 @api_router.post("/newsletter/send")
 async def send_newsletter(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Send newsletter to all subscribed users (Admin only)"""
+    """Send newsletter to all subscribed users using Resend (Admin only)"""
     user = await get_current_user(credentials)
     if not user.get("is_admin"):
         raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Check if Resend is configured
+    if not RESEND_API_KEY:
+        raise HTTPException(status_code=500, detail="Email service not configured. Please add RESEND_API_KEY to backend/.env")
     
     newsletter = await db.newsletters.find_one(sort=[("generated_at", -1)])
     if not newsletter:
@@ -1931,21 +1935,91 @@ async def send_newsletter(credentials: HTTPAuthorizationCredentials = Depends(se
     users = await db.users.find({"newsletter_unsubscribed": {"$ne": True}}).to_list(10000)
     
     sent_count = 0
+    failed_count = 0
+    errors = []
+    
     for u in users:
-        logger.info(f"Newsletter would be sent to: {u['email']}")
-        sent_count += 1
+        try:
+            params = {
+                "from": SENDER_EMAIL,
+                "to": [u['email']],
+                "subject": "🚀 InfoPilot Weekly Newsletter - Your 3D View of the Internet!",
+                "html": newsletter["content"]
+            }
+            
+            # Run sync SDK in thread to keep FastAPI non-blocking
+            email_result = await asyncio.to_thread(resend.Emails.send, params)
+            logger.info(f"Newsletter sent to: {u['email']}, ID: {email_result.get('id', 'unknown')}")
+            sent_count += 1
+            
+        except Exception as e:
+            logger.error(f"Failed to send newsletter to {u['email']}: {str(e)}")
+            failed_count += 1
+            errors.append(f"{u['email']}: {str(e)}")
     
     # Mark as sent
     await db.newsletters.update_one(
         {"_id": newsletter["_id"]},
-        {"$set": {"sent": True, "sent_at": datetime.now(), "sent_count": sent_count}}
+        {"$set": {
+            "sent": True, 
+            "sent_at": datetime.now(), 
+            "sent_count": sent_count,
+            "failed_count": failed_count,
+            "errors": errors[:10]  # Store first 10 errors
+        }}
     )
     
     return {
         "success": True,
         "sent_count": sent_count,
-        "message": f"Newsletter queued for {sent_count} users"
+        "failed_count": failed_count,
+        "message": f"Newsletter sent to {sent_count} users" + (f", failed for {failed_count}" if failed_count else "")
     }
+
+# ============== BOOK PROMOTION ENDPOINT ==============
+
+@api_router.get("/book-promo")
+async def get_book_promotion():
+    """Get book promotion data for frontend display"""
+    return BOOK_PROMO
+
+# ============== EMAIL TESTING ==============
+
+@api_router.post("/newsletter/test-email")
+async def send_test_email(
+    email: str = Body(..., embed=True),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Send a test newsletter to a specific email (Admin only)"""
+    user = await get_current_user(credentials)
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    if not RESEND_API_KEY:
+        raise HTTPException(status_code=500, detail="Email service not configured")
+    
+    newsletter = await db.newsletters.find_one(sort=[("generated_at", -1)])
+    if not newsletter:
+        newsletter_data = await generate_newsletter_content()
+        newsletter = {"content": newsletter_data["content"]}
+    
+    try:
+        params = {
+            "from": SENDER_EMAIL,
+            "to": [email],
+            "subject": "[TEST] 🚀 InfoPilot Weekly Newsletter",
+            "html": newsletter["content"]
+        }
+        
+        email_result = await asyncio.to_thread(resend.Emails.send, params)
+        return {
+            "success": True,
+            "message": f"Test email sent to {email}",
+            "email_id": email_result.get("id")
+        }
+    except Exception as e:
+        logger.error(f"Test email failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to send test email: {str(e)}")
 
 @api_router.get("/newsletter/history")
 async def get_newsletter_history(credentials: HTTPAuthorizationCredentials = Depends(security)):
