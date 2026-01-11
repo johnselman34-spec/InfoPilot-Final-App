@@ -30,6 +30,35 @@ db = client[os.environ.get('DB_NAME', 'infopilot_db')]
 # PayPal Configuration
 PAYPAL_PAYMENT_LINK = "https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ"
 
+# Resend Email Configuration
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
+
+# Book Promotion Data
+BOOK_PROMO = {
+    "title": "Letters to Evelyn",
+    "author": "John Selman",
+    "genre": "A True Supernatural Thriller Comedy",
+    "price": "$2.99",
+    "amazon_url": "https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191",
+    "reviews_url": "https://readersfavorite.com/book-review/letters-to-evelyn",
+    "review_count": 19,
+    "review_source": "Readers' Favorite",
+    "featured_review": {
+        "reviewer": "Divine Zape",
+        "source": "Readers' Favorite",
+        "quote": "This memoir is a profound and unforgettable literary piece."
+    },
+    "images": [
+        "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/rtfq9tzg_Letters%20to%20Evelyn%20advertisement%201.jpg",
+        "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/c525b6c3_Letters%20to%20Evelyn%20advertisement%202.jpg",
+        "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/w9somusu_Letters%20to%20Evelyn%20advertisement%203.jpg",
+        "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/km4oz6iz_Letters%20to%20Evelyn%20advertisement%204.jpg"
+    ]
+}
+
 # Create the main app
 app = FastAPI(title="InfoPilot API", version="1.0.0")
 
