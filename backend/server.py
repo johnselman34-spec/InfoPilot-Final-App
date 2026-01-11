@@ -30,8 +30,18 @@ except ImportError:
     except ImportError:
         DDGS_AVAILABLE = False
 
+# SerpAPI for premium search results
+try:
+    from serpapi import GoogleSearch
+    SERPAPI_AVAILABLE = True
+except ImportError:
+    SERPAPI_AVAILABLE = False
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# SerpAPI Configuration
+SERPAPI_KEY = os.environ.get('SERPAPI_KEY')
 
 # MongoDB connection with Atlas-compatible settings
 mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
