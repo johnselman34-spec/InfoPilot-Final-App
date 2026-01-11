@@ -2348,8 +2348,8 @@ function SettingsPage() {
                 </button>
               </div>
               
-              <p style={{textAlign: 'center', marginTop: 16, fontSize: 12, color: '#64748B'}}>
-                <Icons.Heart style={{width: 12, height: 12, display: 'inline', marginRight: 4}} />
+              <p style={{textAlign: 'center', marginTop: 16, fontSize: 12, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6}}>
+                <span style={{width: 14, height: 14}}><Icons.Heart /></span>
                 Every contribution helps us grow and build amazing features!
               </p>
             </div>
