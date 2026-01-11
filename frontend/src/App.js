@@ -632,7 +632,17 @@ const AdminPanel = ({ showToast }) => {
               />
             </div>
             <div className="admin-setting">
-              <label>PayPal Payment Link</label>
+              <label>PayPal Business Email</label>
+              <input
+                type="email"
+                defaultValue={getSetting('paypal_email') || 'sb-h7vc448665634@business.example.com'}
+                onBlur={(e) => updateSetting('paypal_email', e.target.value)}
+                style={{ width: 300 }}
+                placeholder="your-business@email.com"
+              />
+            </div>
+            <div className="admin-setting">
+              <label>PayPal Payment Link (fallback)</label>
               <input
                 type="text"
                 defaultValue={getSetting('paypal_link') || ''}
@@ -642,7 +652,9 @@ const AdminPanel = ({ showToast }) => {
             </div>
             <div style={{ marginTop: 20, padding: 15, background: 'rgba(16, 185, 129, 0.1)', borderRadius: 10, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
               <p style={{ fontSize: '0.85rem', color: '#10b981' }}>
-                💡 Tip: Set "Unpaid User Max Pages" to more than 40 to make the app FREE
+                💡 Tips:<br/>
+                • Enter your PayPal business email to accept "Pay What You Want" payments<br/>
+                • Set "Unpaid User Max Pages" to more than 40 to make the app FREE
               </p>
             </div>
           </div>
