@@ -1811,6 +1811,163 @@ const SubscribePage = ({ showToast, onBack }) => {
   );
 };
 
+// ==================== BOOK PROMOTION BANNER ====================
+const BOOK_IMAGES = [
+  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/rtfq9tzg_Letters%20to%20Evelyn%20advertisement%201.jpg",
+  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/c525b6c3_Letters%20to%20Evelyn%20advertisement%202.jpg",
+  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/w9somusu_Letters%20to%20Evelyn%20advertisement%203.jpg",
+  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/km4oz6iz_Letters%20to%20Evelyn%20advertisement%204.jpg"
+];
+
+const BookPromoBanner = () => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % BOOK_IMAGES.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div data-testid="book-promo-banner" style={{
+      background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(236, 72, 153, 0.3), rgba(59, 130, 246, 0.2))',
+      borderRadius: 16,
+      padding: 20,
+      marginBottom: 20,
+      border: '2px solid rgba(236, 72, 153, 0.5)',
+      display: 'flex',
+      gap: 20,
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Animated background */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'linear-gradient(45deg, transparent 0%, rgba(236, 72, 153, 0.1) 50%, transparent 100%)',
+        animation: 'shimmer 3s infinite',
+        pointerEvents: 'none'
+      }} />
+
+      {/* Image Carousel */}
+      <div style={{ 
+        flex: '0 0 auto',
+        width: 200, 
+        height: 200, 
+        borderRadius: 12, 
+        overflow: 'hidden',
+        boxShadow: '0 10px 40px rgba(236, 72, 153, 0.4)',
+        border: '3px solid rgba(255, 255, 255, 0.3)'
+      }}>
+        <img 
+          src={BOOK_IMAGES[currentImageIndex]} 
+          alt="Letters to Evelyn by John Selman"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity 0.5s' }}
+        />
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 280, zIndex: 1 }}>
+        <div style={{ 
+          background: 'linear-gradient(135deg, #f472b6, #ec4899)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontSize: '1.6rem',
+          fontWeight: 800,
+          marginBottom: 8
+        }}>
+          "Letters to Evelyn"
+        </div>
+        <div style={{ color: '#fce7f3', fontWeight: 600, fontSize: '1rem', marginBottom: 8 }}>
+          A True Supernatural Thriller Comedy
+        </div>
+        <div style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: 8 }}>
+          by John Selman
+        </div>
+        
+        {/* Review Quote */}
+        <div style={{ 
+          background: 'rgba(16, 185, 129, 0.2)', 
+          padding: '12px 15px', 
+          borderRadius: 10, 
+          marginBottom: 12,
+          borderLeft: '4px solid #10b981'
+        }}>
+          <div style={{ color: '#10b981', fontStyle: 'italic', fontSize: '0.9rem', lineHeight: 1.5 }}>
+            "This memoir is a profound and unforgettable literary piece."
+          </div>
+          <div style={{ color: '#34d399', fontSize: '0.8rem', marginTop: 5, fontWeight: 600 }}>
+            — Divine Zape, Readers' Favorite
+          </div>
+        </div>
+
+        {/* Stars and Reviews */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 15 }}>
+          <div style={{ color: '#fbbf24', fontSize: '1.2rem' }}>★★★★★</div>
+          <div style={{ color: '#fbbf24', fontWeight: 700, fontSize: '0.9rem' }}>
+            19 Five-Star Reviews
+          </div>
+          <div style={{ color: '#a1a1aa', fontSize: '0.8rem' }}>from Readers' Favorite</div>
+        </div>
+
+        {/* CTA Button */}
+        <a 
+          href="https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="book-buy-button"
+          style={{
+            display: 'inline-block',
+            background: 'linear-gradient(135deg, #ec4899, #f97316)',
+            color: 'white',
+            padding: '14px 28px',
+            borderRadius: 25,
+            fontWeight: 700,
+            fontSize: '1.1rem',
+            textDecoration: 'none',
+            boxShadow: '0 5px 25px rgba(236, 72, 153, 0.5)',
+            transition: 'all 0.3s ease',
+            border: '2px solid rgba(255, 255, 255, 0.3)'
+          }}
+        >
+          🎁 GET IT NOW - Only $2.99!
+        </a>
+      </div>
+
+      {/* Image navigation dots */}
+      <div style={{ 
+        position: 'absolute', 
+        bottom: 15, 
+        left: '50%', 
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        gap: 8
+      }}>
+        {BOOK_IMAGES.map((_, idx) => (
+          <div 
+            key={idx}
+            onClick={() => setCurrentImageIndex(idx)}
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: idx === currentImageIndex ? '#ec4899' : 'rgba(255,255,255,0.3)',
+              cursor: 'pointer',
+              transition: 'all 0.3s'
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // ==================== MAIN APP ====================
 const MainApp = () => {
   const { user } = useAuth();
@@ -1846,6 +2003,8 @@ const MainApp = () => {
     <div className="app-container">
       <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
       <main className="main-content">
+        {/* Book Promotion Banner - Always visible */}
+        <BookPromoBanner />
         {renderPage()}
       </main>
       {toast && (
