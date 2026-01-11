@@ -2035,8 +2035,38 @@ async def get_newsletter_history(credentials: HTTPAuthorizationCredentials = Dep
         "sent": n.get("sent", False),
         "sent_at": n["sent_at"].isoformat() if n.get("sent_at") else None,
         "sent_count": n.get("sent_count", 0),
+        "failed_count": n.get("failed_count", 0),
         "ai_generated": n.get("ai_generated", False)
     } for n in newsletters]
+
+# ============== PROTOCOL DEBUG ENDPOINT ==============
+
+class ProtocolDebugRequest(BaseModel):
+    text: str
+    protocol: str
+
+@api_router.post("/protocol/debug")
+async def debug_protocol_matching(request: ProtocolDebugRequest, user = Depends(get_current_user)):
+    """Debug why a protocol is or isn't matching against text"""
+    details = ProtocolParser.get_match_details(request.text, request.protocol)
+    parsed = ProtocolParser.parse_protocol(request.protocol)
+    
+    return {
+        "matched": details["matched"],
+        "parsed_protocol": parsed,
+        "match_details": details["details"],
+        "text_preview": request.text[:500] + "..." if len(request.text) > 500 else request.text
+    }
+
+@api_router.post("/protocol/validate")
+async def validate_protocol(protocol: str = Body(..., embed=True)):
+    """Validate a protocol format and show how it will be parsed"""
+    parsed = ProtocolParser.parse_protocol(protocol)
+    return {
+        "valid": parsed["valid"],
+        "groups": parsed["groups"],
+        "explanation": "Each group contains items that will be matched. Modifiers: + = ALL must match, ^ = NONE must match, none = ANY must match"
+    }
 
 # ============== HEALTH CHECK ==============
 
