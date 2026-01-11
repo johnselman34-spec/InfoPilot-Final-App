@@ -175,25 +175,25 @@ class TestSubCategoryCreation:
         parent_id = parent_data["id"]
         print(f"✓ Parent category created: {parent_name} (ID: {parent_id})")
         
-        # Create sub-category with parent_id
-        child_name = f"TEST_Child_{uuid.uuid4().hex[:8]}"
-        child_res = requests.post(f"{BASE_URL}/api/categories",
+        # Create sub-category with parent_id (avoid blocked words like 'child')
+        nested_name = f"TEST_Nested_{uuid.uuid4().hex[:8]}"
+        nested_res = requests.post(f"{BASE_URL}/api/categories",
             json={
-                "name": child_name,
-                "protocol": "(child or sub)",
+                "name": nested_name,
+                "protocol": "(nested or secondary)",
                 "parent_id": parent_id,
                 "is_public": False
             },
             headers={"Authorization": f"Bearer {auth_token}"}
         )
-        assert child_res.status_code == 200
-        child_data = child_res.json()
-        assert child_data["parent_id"] == parent_id
-        assert child_data["level"] == 1  # Should be level 1 (parent is level 0)
-        print(f"✓ Sub-category created: {child_name} (parent_id: {parent_id}, level: {child_data['level']})")
+        assert nested_res.status_code == 200, f"Sub-category creation failed: {nested_res.text}"
+        nested_data = nested_res.json()
+        assert nested_data["parent_id"] == parent_id
+        assert nested_data["level"] == 1  # Should be level 1 (parent is level 0)
+        print(f"✓ Sub-category created: {nested_name} (parent_id: {parent_id}, level: {nested_data['level']})")
         
-        # Cleanup - delete child first, then parent
-        requests.delete(f"{BASE_URL}/api/categories/{child_data['id']}",
+        # Cleanup - delete nested first, then parent
+        requests.delete(f"{BASE_URL}/api/categories/{nested_data['id']}",
             headers={"Authorization": f"Bearer {auth_token}"}
         )
         requests.delete(f"{BASE_URL}/api/categories/{parent_id}",
