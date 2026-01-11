@@ -808,55 +808,54 @@ class WebSearchService:
         return {"title": "", "description": "", "content": ""}
     
     @staticmethod
-    async def search(query: str, num_results: int = 200, max_pages: int = 99) -> List[Dict[str, Any]]:
+    async def search(query: str, num_results: int = 500, max_pages: int = 99) -> List[Dict[str, Any]]:
         """
-        Perform web search using multiple sources
+        Perform web search using MULTIPLE sources with PAGINATION
         Returns deduplicated results with content enrichment
-        Now supports up to 99 pages of results (configurable via admin panel)
+        Now supports up to 99 pages of results - targeting HUNDREDS of results
         """
         all_results = []
         seen_urls = set()
         
         try:
-            # Run primary searches in parallel with increased limits
+            # Run ALL search sources in parallel for maximum coverage
+            logger.info(f"Starting aggressive search for: {query}")
+            
             ddg_task = WebSearchService.search_duckduckgo(query, min(200, num_results))
             bing_task = WebSearchService.search_bing_scrape(query, min(150, num_results))
+            google_task = WebSearchService.search_google_scrape(query, min(100, num_results))
             
-            ddg_results, bing_results = await asyncio.gather(
+            results = await asyncio.gather(
                 ddg_task, 
                 bing_task,
+                google_task,
                 return_exceptions=True
             )
             
-            # Process DuckDuckGo results
-            if isinstance(ddg_results, list):
-                for result in ddg_results:
-                    if result["url"] not in seen_urls:
-                        seen_urls.add(result["url"])
-                        all_results.append(result)
-                logger.info(f"DuckDuckGo returned {len(ddg_results)} results")
-            else:
-                logger.error(f"DuckDuckGo error: {ddg_results}")
+            # Process all results
+            source_names = ["DuckDuckGo", "Bing", "Google"]
+            for i, source_results in enumerate(results):
+                if isinstance(source_results, list):
+                    for result in source_results:
+                        url = result.get("url", "")
+                        if url and url not in seen_urls:
+                            seen_urls.add(url)
+                            all_results.append(result)
+                    logger.info(f"{source_names[i]} contributed {len(source_results)} results")
+                else:
+                    logger.error(f"{source_names[i]} error: {source_results}")
             
-            # Process Bing results
-            if isinstance(bing_results, list):
-                for result in bing_results:
-                    if result["url"] not in seen_urls:
-                        seen_urls.add(result["url"])
-                        all_results.append(result)
-                logger.info(f"Bing returned {len(bing_results)} results")
-            else:
-                logger.error(f"Bing error: {bing_results}")
+            logger.info(f"Total unique results from all sources: {len(all_results)}")
             
         except Exception as e:
             logger.error(f"Search aggregation error: {e}")
         
         # Fetch content for ALL results to improve protocol matching
-        # Significantly increased for better collation coverage
         if all_results:
-            batch_size = 20
-            max_content_fetch = len(all_results)  # Fetch content for ALL results
-            for i in range(0, max_content_fetch, batch_size):
+            logger.info(f"Fetching content for {len(all_results)} results...")
+            batch_size = 25
+            
+            for i in range(0, len(all_results), batch_size):
                 batch = all_results[i:i+batch_size]
                 tasks = [WebSearchService.fetch_page_content(r["url"]) for r in batch]
                 
@@ -872,9 +871,9 @@ class WebSearchService:
                             if content.get("description"):
                                 all_results[idx]["snippet"] = content["description"]
                 except Exception as e:
-                    logger.debug(f"Content enrichment error: {e}")
+                    logger.debug(f"Content enrichment batch error: {e}")
         
-        logger.info(f"Search for '{query}' returned {len(all_results)} results (with content enrichment)")
+        logger.info(f"Search for '{query}' returning {len(all_results)} results (with content enrichment)")
         return all_results[:num_results]
     
 # ============== AUTH ENDPOINTS ==============
