@@ -1,181 +1,164 @@
 <analysis>Here is the summary of the current session:
 
 **original_problem_statement:**
-The user's core objective is to build a complex web application called InfoPilot Explorer. Initially cloned from a React Native repository, the application was rebuilt from the ground up as a React/FastAPI web app.
+The user's core objective is to build a complex web application called InfoPilot Explorer. The application's primary functions include a specialized search engine (InfoJet 2.0) that parses a custom protocol language, a marketplace for these protocols, robust social features (Groups/Pages), an interactive map for geolocated results, and heavy promotion of the user's book, Letters to Evelyn.
 
 **PRODUCT REQUIREMENTS:**
-- **UI/UX:** A dazzling UI with a specific purple/pink/red/blue color scheme.
-- **Core Functionality:** A specialized search engine (InfoJet 2.0) that parses a custom protocol language, collates results from the web, and displays them. The user has a very high expectation for the volume of results, wanting them to flow like water by the hundred.
-- **Monetization (Currently Paused):** A Pay What You Want model was implemented but is now disabled. The app is currently free for all users. The user plans to re-introduce monetization with a Protocol Marketplace in the future.
-- **Book Sales:** Heavily promote and sell the user's book, Letters to Evelyn, using provided images, professional reviews, and humorous, AI-generated copy.
+- **UI/UX:** A dazzling and distinctive UI, avoiding generic AI aesthetics.
+- **Core Functionality:**
+    - A powerful search engine that collates a high volume of results (up to 99 pages) from the web.
+    - An interactive map to visualize geolocated search results with clickable markers.
+    - Clickable hashtags generated from search result content.
+- **Monetization:** A Protocol Marketplace where users can buy and sell search protocols, with a 90/10 revenue split (user/platform) and PayPal integration.
 - **Social Features:** Implement Facebook-like Groups and Pages.
-- **Interactive Map:** Display geolocated search results on an interactive map.
-- **Admin Controls:** A comprehensive admin panel to manage the application, including newsletter generation and scheduling.
-- **Email Marketing:** An automated, weekly, AI-generated email newsletter with extremely funny text to sell the app and book.
+- **Admin Controls:** A comprehensive admin panel, including the ability to configure the number of search result pages. The admin user should have a visible badge in the UI.
+- **Content Policy:** All content filtering and restrictions have been removed at the user's request.
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack application with a monolithic FastAPI backend () and a monolithic React frontend ().
-
-- **Backend:** Manages user authentication (JWT & Google OAuth), a vastly improved search/collation engine, and a complete AI-powered newsletter system with Resend integration and a scheduler. It also includes newly added (but not fully functional) endpoints for social features and map data.
-- **Frontend:** Features a functional login/registration system, a multi-tab Admin Panel, and enhanced book promotion banners. The app has been made free, removing all subscription paywalls. UI shells and basic logic for the Interactive Map and Social pages have been implemented.
-- **Key Completed Features:**
-    - The application is **free** for all users.
-    - An automated, scheduled, AI-powered newsletter system that uses content from the user's manuscript and marketing pages.
-    - Significantly improved search and protocol collation logic, yielding more results.
-    - Highly visible and humorous book promotions with rotating images and taglines.
+The application is a full-stack React/FastAPI app. The agent was in the middle of a significant backend refactoring to break down the monolithic  into a modular structure. The new directory structure (, , ) has been created, and empty files for each module have been added. The frontend remains a large, monolithic  file. All recent bug fixes and feature enhancements (map interactivity, hashtags, admin search settings) are present in the monolithic files.
 
 **Last working item**:
-- **Last item agent was working:** The agent was building the **Interactive Map and Social Features**. This was in response to a user request that also reported a Network Error when creating a category with a new user account. The agent implemented the basic UI and backend endpoints for the Map and Social pages and confirmed the map component was rendering. The underlying auth issue causing the network error was identified but not fixed.
+- **Last item agent was working:** The agent was performing a major **backend code refactoring**. The goal was to move from a single  file to a modular and scalable architecture. The agent successfully created the new directory structure and all the necessary empty Python files within , , and . The next step is to move the code from  into these new files.
 - **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** both. The frontend testing agent is needed to verify the map functionality (markers, popups) and the social features (creating groups/pages, posting). The backend testing agent is needed to test the new API endpoints and, more importantly, to reproduce and fix the user authentication bug.
+- **Which testing method agent to use?** backend testing agent. After the code is moved from  to the new modular files, the testing agent is critical to run a full regression test on all API endpoints to ensure no functionality has been broken during the refactor.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Network Error on Category Creation for New Users (P0)**
-- **Issue 2: Insufficient Search Result Volume (P1)**
+- **Issue 1: Recurring Category Creation Error (P0)**
+- **Issue 2: Admin Account Configuration (P1)**
 
 **Issues Detail:**
-- **Issue 1: Network Error on Category Creation for New Users**
-    - **Attempted fixes:** The agent correctly identified that the user was logged in with an email that did not match the database record ( vs. ), likely due to a case-sensitivity or exact-match issue in the Google OAuth user lookup flow. No code has been applied to fix this yet.
+- **Issue 1: Recurring Category Creation Error**
+    - **Attempted fixes:** This bug has been a persistent problem. The agent has attempted several fixes: (1) making user email lookups case-insensitive, (2) removing a restrictive content filter, and (3) fixing a body stream already read error in the frontend by refactoring the  call. Despite these fixes and successful tests by the agent, the user continues to report related errors. The root cause might be a subtle frontend state/token issue, a browser caching problem on the user's end, or another unidentified bug.
     - **Next debug checklist:**
-        1.  In , locate the Google OAuth callback logic and the user database lookup.
-        2.  Modify the MongoDB query for user lookup to be case-insensitive on the email field (e.g., using a regex with the  option).
-        3.  Ensure the logic correctly creates a new user record if a user logs in via Google for the first time.
-    - **Why fix this issue and what will be achieved with the fix?** This is a critical blocker preventing new users from using core application features. Fixing it is essential for user onboarding and retention.
+        1.  Instruct the user to perform a hard refresh (Ctrl+Shift+R) to clear their browser cache.
+        2.  If the error persists, add extensive  statements in the frontend  function in  to inspect the , the request , and the  right before the  call.
+        3.  Log the raw response and any errors caught in the  block to the console to get the exact error message from the user's browser.
+    - **Why fix this issue and what will be achieved with the fix?** This is a critical usability bug that prevents users from using a core feature of the application. Resolving it is essential for user satisfaction and retention.
     - **Status:** IN PROGRESS
     - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Backend
-    - **Blocked on other issue:** None. This is the highest priority.
+    - **Should Test frontend/backend/both after fix?** Both
+    - **Blocked on other issue:** None
 
-- **Issue 2: Insufficient Search Result Volume**
-    - **Attempted fixes:** The agent significantly improved the search by increasing result count, adding Bing scraping, implementing fuzzy matching, and fetching full-page content. This increased results from ~1-2 to ~10-16 per query.
+- **Issue 2: Admin Account Configuration**
+    - **Attempted fixes:** The user  requested admin access. The agent confirmed an admin badge exists in the UI and made a different user () an admin as a test. The agent could not make  an admin because the account did not exist in the database at the time.
     - **Next debug checklist:**
-        1.  Investigate adding more search APIs or scraping sources to  in .
-        2.  Further increase the  parameter and implement more robust handling for rate-limiting.
-        3.  Tune the  logic in  to be even more lenient.
-    - **Why fix this issue and what will be achieved with this?** The core value of the app is its powerful search. Meeting the user's expectation of results flowing like water by the hundred is crucial for their satisfaction.
-    - **Status:** IN PROGRESS
-    - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Backend
-    - **Blocked on other issue:** None.
+        1.  Instruct the user to log in at least once with  via Google OAuth. This will create the user record in the database.
+        2.  Once the user confirms they have logged in, run a script to find the user by that email and set the  flag to .
+        3.  Verify the admin badge appears for the user in the UI.
+    - **Why fix this issue and what will be achieved with this?** The user needs admin access to manage the application, especially to use the newly created setting for controlling search result pages.
+    - **Status:** NOT STARTED
+    - **Is recurring issue?** N
+    - **Should Test frontend/backend/both after fix?** Frontend (visual verification of badge)
+    - **Blocked on other issue:** User action required (user needs to log in first).
 
 **In progress Task List**:
-- **Task 1: Complete Interactive Map Implementation (P1)**
-    - **Where to resume:** The map component in  needs to be connected to the  backend endpoint. Logic must be added to fetch collated articles with location data and display them as clickable, color-coded markers.
-    - **What will be achieved with this?** A core feature from the user's requirements will become fully functional.
+- **Task 1: Complete Backend Refactoring (P0)**
+    - **Where to resume:** The file structure is ready. The next step is to migrate all logic from  into the newly created modular files (, , ). After moving the code, create a new  to import and register all the new routers. Finally, delete the old .
+    - **What will be achieved with this?** A more maintainable, scalable, and organized backend codebase, which is a prerequisite for adding complex new features like the Protocol Marketplace.
     - **Status:** IN PROGRESS
-    - **Should Test frontend/backend/both after fix?** Both
-    - **Blocked on something:** None.
-
-- **Task 2: Complete Social Features (Groups & Pages) (P1)**
-    - **Where to resume:** The UI in  and endpoints in  are shells. The full functionality (creating/joining groups, posting content, commenting, reacting) needs to be built out.
-    - **What will be achieved with this?** A major community feature requested by the user will be implemented.
-    - **Status:** IN PROGRESS
-    - **Should Test frontend/backend/both after fix?** Both
+    - **Should Test frontend/backend/both after fix?** Backend
     - **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
 **Upcoming Tasks:**
-- **(P0) Robust Admin Controls:** The user has repeatedly requested a robust admin panel. The next agent should review all of the user's past messages to ensure all requested admin features have been implemented.
-- **(P2) Implement Email Sending Scheduler:** The backend scheduler requires an external cron job to trigger it. The agent needs to provide clear instructions to the user on how to set this up.
+- **(P0) Frontend Refactoring:** After the backend is refactored, the monolithic  must be broken down into a modular structure (e.g., , , ).
+- **(P1) Protocol Marketplace Implementation:** Build the marketplace feature based on user specifications: PayPal integration for payments, a 90/10 revenue split, and a UI for users to list and purchase protocols.
+- **(P2) Complete Social Features:** Build out the full functionality for Groups and Pages (creating, joining, posting content, etc.). The backend routes and frontend components are currently just placeholders.
 
 **Future Tasks:**
-- **Protocol Marketplace:** A feature for users to sell access to their search protocols.
-- **Gamification:** A system for user achievements and badges.
-- **Code Refactoring:** Break down the monolithic  and  into a modular structure for better maintainability.
+- **Gamification:** Implement a system for user achievements and badges to increase engagement.
 
 **Completed work in this session**
-- **App Made Free:** The application was converted from a subscription model to be free for all users, with all paywalls removed from the UI.
-- **Book Promotion Overhaul:** Integrated the user's funny images and compelling marketing copy into prominent, rotating banners and other strategic locations throughout the app.
-- **Automated Newsletter System:** Implemented a full-featured newsletter system with Resend integration, automated weekly scheduling via an admin panel, and AI-generated content based on the user's book manuscript and marketing websites.
-- **Search and Collation Engine Fixed:** Addressed the stingy search issue by adding multiple search sources, full-content fetching, and lenient fuzzy matching, which significantly increased the quantity and quality of collated results.
-- **Category Creation Bug Investigation:** Diagnosed the root cause of the user's Network Error as a user authentication issue for new Google OAuth users and improved frontend feedback.
-- **Initial Implementation of Map & Social Features:** Built the foundational UI and backend endpoints for the Interactive Map and Social (Groups/Pages) features.
-
-**Earlier issues found/mentioned but not fixed**
-- None. All known issues are captured in the pending list.
+- **MongoDB Atlas Deployment Fix:** Resolved a  by updating the PyMongo connection logic in  with increased timeouts, TLS/SSL support, and retry mechanisms, making the application deployable with MongoDB Atlas.
+- **Interactive Map Overhaul:**
+    - Fixed a bug where map markers were stuck in place during zoom by replacing the iframe-based map with a proper  implementation.
+    - Made map markers clickable to open the source article in a new tab.
+    - Added hover tooltips to markers, displaying article details and hashtags.
+- **Hashtag Feature:** Implemented a function to generate and display 4-6 relevant, clickable hashtags for each search result on both the main search page and the map view.
+- **Content Filter Removal:** Completely removed the backend content/profanity filter as requested by the user, allowing all search terms.
+- **Admin Search Configuration:**
+    - Added a setting in the Admin Panel allowing the admin to configure the number of search result pages to fetch (up to 99).
+    - Updated the backend search endpoint to respect this new setting.
+- **Recurring Bug Fixes:** Addressed multiple reported Network Errors by fixing case-sensitive auth, content filtering, and frontend response handling.
 
 **Known issue recurrence from previous fork**
-- **Protocol Matching Logic:** This is a persistent theme. While greatly improved, the user's high expectations mean it will likely require ongoing tuning. **Status: IN PROGRESS**.
-- **Google OAuth Configuration:** The Network Error is a new manifestation of a recurring problem with the auth flow for new users. **Status: IN PROGRESS**.
+- **Category Creation Bug:** This issue has resurfaced multiple times with different symptoms (Network Error, JSON error). Despite several fixes, it remains a persistent point of failure for the user, indicating a complex underlying cause or a client-side caching issue. **Status: IN PROGRESS**.
 
 **Code Architecture**
+Target Backend Architecture (In Progress):
 
 
 **Key Technical Concepts**
-- **Frontend:** React, TailwindCSS, Leaflet
-- **Backend:** FastAPI, MongoDB, Pydantic, JWT, Resend (email), , ,  (scraping),  (string matching)
-- **Authentication:** JWT for email/password and a Google OAuth flow proxied through Emergent Auth.
+- **Frontend:** React, TailwindCSS, **React-Leaflet**, Leaflet
+- **Backend:** FastAPI, MongoDB (Motor), Pydantic, JWT
+- **Refactoring:** Migrating from a monolithic to a modular microservices-oriented architecture for the backend.
 
 **key DB schema**
 - **users:** 
 - **categories:** 
 - **articles:** 
-- **groups:**  (New)
-- **pages:**  (New)
-
-**changes in tech stack**
-- **Backend:** Added , , , , .
-- **Frontend:** Added , .
+- **settings:**  (New for admin controls)
+- **groups/pages:** (Schema defined but not fully implemented)
 
 **All files of reference**
-- : The single backend file containing all logic.
-- : The single frontend file containing all components and UI logic.
+- : The monolithic source file for the ongoing backend refactoring.
+- : The monolithic frontend file containing all UI components and logic.
+- , : The destination directories for the refactored backend code.
 - : The product requirements document.
 
 **Areas that need refactoring**:
-- **Critical:** Both  and  are now exceptionally large and must be broken down into smaller, feature-based modules (routers/services for backend, components/pages for frontend) to ensure future scalability and maintainability.
-
-**key api endpoints**
-- : Main search/collation endpoint.
-- : Manages the automated newsletter schedule.
-- : Provides geolocated data for the map.
-- , : New CRUD endpoints for social features.
+- **Backend:** The refactoring is currently in progress. The immediate task is to populate the new file structure with code from .
+- **Frontend:**  is over 3,000 lines long and urgently needs to be broken down into smaller, reusable components and pages for maintainability.
 
 **Critical Info for New Agent**
-- **Fix the Auth Bug First:** Your highest priority is to fix the Network Error the user is experiencing. This is a critical bug in the authentication flow for new Google users that prevents them from using the app. You must make the user lookup in  case-insensitive and ensure new OAuth users are created properly before they can perform any actions.
-- **Manage Search Expectations:** The user wants a very high volume of search results. While the system is improved, continue to look for ways to increase result count and manage the user's expectations.
-- **The App is FREE:** All monetization is currently disabled. Do not work on subscription features unless the user explicitly asks to re-enable them.
-- **Work in a Monolithic Codebase:** Be mindful that all code is in two large files (, ). Changes can have unexpected side effects. Suggesting a refactor as a future task is recommended.
+- **Prioritize Refactoring:** The user has approved code refactoring. Your first task is to **complete the backend refactoring** by moving all logic from  into the new modular structure. Do not start new features until this is done. The frontend refactoring should follow.
+- **Admin Account Setup:** The user's account  needs admin privileges. You must first guide the user to log in once (to create the database record), and only then can you execute a command to grant them admin rights.
+- **Persistent Category Bug:** Be aware that the Network Error during category creation is a recurring ghost bug. If the user reports it again, your first step should be to ask them to perform a hard cache clear (Ctrl+Shift+R) and provide browser console logs.
+- **Protocol Marketplace:** This is the next major feature after refactoring. The user has provided PayPal credentials and specified requirements.
 
 **documents and test reports created in this job**
 - 
 - 
 
 **Last 10 User Messages and any pending HUMAN messages**
-1. **User:** Reported a Network error when creating a category with a new account; also requested to proceed with the Interactive Map and Social Features. (Status: IN PROGRESS)
-2. **User:** Attached a screenshot of a Failed to create Category error toast. (Status: INVESTIGATED)
-3. **User:** Stated that fixing the stingy protocol recognition is the highest priority and that results should be flowing like water by the hundred. (Status: IN PROGRESS)
-4. **User:** Requested to make the app free and enhance book promotions with new funny images and content from several web links. (Status: COMPLETED)
-5. **User:** Asked to run a deployment readiness check. (Status: COMPLETED)
-6. **User:** Requested the agent to pause work and wait for them. (Status: COMPLETED)
-7. **User:** Confirmed they wanted UI elements from an old app replicated in the current one. (Status: COMPLETED)
-8. **User:** Provided their PayPal email and asked about app URLs. (Status: COMPLETED)
-9. **User:** Reported a PayPal error when trying to make a payment. (Status: RESOLVED)
-10. **User:** Requested automated weekly newsletters using content from their manuscript and marketing pages. (Status: COMPLETED)
+1. **User:** Requested code refactoring first, then the Protocol Marketplace, and specified marketplace requirements (90/10 split, etc.). (Status: IN PROGRESS)
+2. **User:** Asked about admin credentials, how to get 99 pages of search results, and how to get an admin badge for their account . (Status: COMPLETED/IN PROGRESS)
+3. **User:** Praised the working Google login and map, but requested thorough bug testing. (Status: COMPLETED)
+4. **User:** Requested removal of all content filters, clickable map markers that open in a new tab, hover popups on markers, and clickable hashtags in search results. (Status: COMPLETED)
+5. **User:** Reported that map dots were stuck when zooming. (Status: COMPLETED)
+6. **User:** Reported a JSON error when creating a category, providing a screenshot of a body stream already read error. (Status: COMPLETED)
+7. **User:** Repeatedly asked to call the deployer agent. (Status: COMPLETED)
+8. **User:** Reported a MongoDB connection error during deployment. (Status: COMPLETED)
+9. **User:** Reported a map error where markers were in the wrong location (polar regions). (Status: COMPLETED)
+10. **User:** Reported a recurring Network Error when creating a category. (Status: IN PROGRESS)
 
 **Project Health Check:**
-- **Broken:** The authentication flow for new Google users is broken, preventing them from using core features. This is a critical bug.
-- **Mocked:** The Interactive Map and Social Features are implemented as UI shells with basic backend endpoints but lack full functionality.
+- **Broken:**
+    - Category creation is still intermittently failing for the user.
+    - The user's primary account () does not have admin privileges.
+- **Mocked:**
+    - The Protocol Marketplace is not started.
+    - Social Features (Groups & Pages) are UI/API shells with no functionality.
 
 **3rd Party Integrations**
-- **OpenAI:** For AI newsletter generation (uses Emergent LLM Key).
-- **Google OAuth:** For user login (via Emergent Auth).
-- **PayPal:** Configured with user's email but currently disabled on the frontend.
-- **Resend:** For sending newsletters (requires a User API Key).
+- **OpenAI:** Used for AI newsletter generation (Emergent LLM Key).
+- **Google OAuth:** Used for user login (via Emergent Auth).
+- **PayPal:** Credentials provided by the user for the upcoming Protocol Marketplace feature. The integration itself is not yet built.
+- **Resend:** Used for sending newsletters (User API Key).
 
 **Testing status**
 - **Testing agent used after significant changes:** YES
 - **Troubleshoot agent used after agent stuck in loop:** NO
 - **Test files created:** []
-- **Known regressions:** The ability for new users to create categories is broken due to the authentication bug.
+- **Known regressions:** None, but the category creation bug is a persistent known issue.
 
 **Credentials to test flow:**
 - **Admin User:**  / 
-- **New User (for bug reproduction):** Log in via Google with  (username ).
+- **User's Account (needs admin):**  (no password, Google OAuth).
 
 **What agent forgot to execute**
-- The agent prioritized implementing new features (Map, Social) over fixing the critical authentication bug that the user had just reported. While the user also requested the features, the bug is a blocker for basic usability and should have been addressed first.</analysis>
+- The agent created the files for the backend refactor but did not proceed to move the code from  into them or create the new  entrypoint. This is the immediate next step to continue the refactoring task.</analysis>
