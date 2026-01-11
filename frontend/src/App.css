@@ -1540,6 +1540,36 @@ body::before {
    MAP - World View
 ============================================ */
 
+/* Custom Leaflet Marker */
+.custom-marker {
+  background: none;
+  border: none;
+}
+
+.leaflet-container {
+  background: var(--bg-void) !important;
+  font-family: 'Manrope', sans-serif;
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  color: var(--text-primary);
+}
+
+.leaflet-popup-tip {
+  background: var(--bg-card);
+}
+
+.leaflet-popup-content h4 {
+  color: var(--text-primary) !important;
+}
+
+.leaflet-popup-content div {
+  color: var(--text-secondary) !important;
+}
+
 .marker-card {
   display: flex;
   align-items: center;
