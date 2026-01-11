@@ -3703,9 +3703,9 @@ async def get_marketplace_categories():
 
 # ============== PAYPAL WEBHOOK INTEGRATION ==============
 
-# PayPal credentials from user
-PAYPAL_CLIENT_ID = "BAABmhMWqe1WrfJkqJ7RRzEZwoAfxSF2bclm8_HY2BuU9C-7pnakTdjFVCvSJyWh63-wUWmKN1cT1hdMIY"
-PAYPAL_HOSTED_BUTTON_ID = "765S46VPPEP5C"
+# PayPal credentials - read from environment variables
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
+PAYPAL_HOSTED_BUTTON_ID = os.environ.get('PAYPAL_HOSTED_BUTTON_ID')
 
 class PayPalWebhookEvent(BaseModel):
     event_type: str
