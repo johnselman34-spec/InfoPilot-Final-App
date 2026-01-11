@@ -1937,36 +1937,6 @@ Output ONLY the complete HTML email with inline styles. No markdown code blocks!
             "content": response,
             "generated_at": datetime.now().isoformat(),
             "ai_generated": True
-- Contains 50+ "hurricane force winds of laughter" jokes
-
-BOOK IMAGE TO INCLUDE:
-<img src="{selected_image}" alt="Letters to Evelyn" style="max-width: 300px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-
-Amazon Link: https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191
-
-===== INFOPILOT SUBSCRIPTION =====
-App subscription: Pay what you want! Starting at $0.75/year
-(That's less than a single gumball from those fancy machines!)
-
-===== STYLE REQUIREMENTS =====
-- Use gradient backgrounds: purple (#7c3aed), pink (#ec4899), blue (#3b82f6)
-- Make the book the HERO with a big featured section
-- Include the book image prominently
-- Create URGENCY ("Only a few people have discovered this gem!")
-- Be ABSURD and SURREAL (match the book's vibe)
-- Add a "Dad joke of the week" or similar recurring element
-- Make buttons big and colorful
-- Sign off as "Your Friends at InfoPilot"
-
-Output ONLY the complete HTML email with inline styles. No markdown code blocks!"""
-
-        user_message = UserMessage(text=prompt)
-        response = await chat.send_message(user_message)
-        
-        return {
-            "content": response,
-            "generated_at": datetime.now().isoformat(),
-            "ai_generated": True
         }
     except Exception as e:
         logger.error(f"Newsletter generation error: {e}")
