@@ -81,22 +81,16 @@ security = HTTPBearer(auto_error=False)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ============== BLOCKED WORDS FILTER ==============
-# Only block clearly inappropriate terms, not general words that have normal usage
-BLOCKED_WORDS = {
-    # Only the most concerning terms - removed words with legitimate common usage
-    'underage', 'preteen', 'adolescent',
-}
+# ============== CONTENT FILTER (DISABLED) ==============
+# Content filtering has been disabled per user request
+# All search terms and protocols are now allowed
 
-PROFANITY_WORDS = set()  # Admin can populate this
+BLOCKED_WORDS = set()  # Empty - no restrictions
+PROFANITY_WORDS = set()  # Empty - no restrictions
 
 def contains_blocked_content(text: str) -> bool:
-    """Check if text contains blocked words"""
-    if not text:
-        return False
-    text_lower = text.lower()
-    words = set(re.findall(r'\b\w+\b', text_lower))
-    return bool(words & BLOCKED_WORDS) or bool(words & PROFANITY_WORDS)
+    """Content filter disabled - always returns False"""
+    return False
 
 # ============== PYDANTIC MODELS ==============
 
