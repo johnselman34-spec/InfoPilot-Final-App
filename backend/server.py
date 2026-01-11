@@ -73,10 +73,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ============== BLOCKED WORDS FILTER ==============
+# Only block clearly inappropriate terms, not general words that have normal usage
 BLOCKED_WORDS = {
-    # Children-related (any language patterns)
-    'child', 'children', 'kid', 'kids', 'boy', 'girl', 'teen', 'teenager',
-    'young', 'minor', 'juvenile', 'youth', 'infant', 'toddler', 'baby',
+    # Only the most concerning terms - removed words with legitimate common usage
     'underage', 'preteen', 'adolescent',
 }
 
