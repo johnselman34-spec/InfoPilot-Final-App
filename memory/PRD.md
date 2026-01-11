@@ -74,6 +74,37 @@ InfoPilot is a web-based information search, categorization, and social networki
   - "Upgrade for Only $0.99" CTA button
   - Book promo displayed below upsell for cross-selling
 
+### 9. Pay-What-You-Want Subscription ✅
+- **Flexible Donation System** in Settings for non-premium users:
+  - Suggested amounts: $1.01, $1.25, $2.00, $3.00, $4.62 (Recommended)
+  - Custom amount input field
+  - PayPal integration for payments
+  - "Choose Your Contribution for 1 Year of Premium" heading
+
+### 10. Marketplace (Protocol Store) ✅
+- **Browse Protocols** - View public protocols from other users
+- **Sell Your Protocols** - Set prices $1.00 - $2.99 for your public categories
+- **Copy Protocol Feature** - Copy protocol text and name to clipboard
+- **Earning Potential Banner** - Mention of 100,000+ user milestone for significant income
+
+### 11. InfoNavigator 2.0 Protocol Guide ✅
+- **Enhanced New Category Modal** with:
+  - Dark-themed input fields with visible text
+  - Clear format guide: `(words)+ & (words) & (exclude)^`
+  - Color-coded operators:
+    - **+ (Green)** - INCLUDE ALL - Results MUST contain ALL words/phrases
+    - **^ (Red)** - EXCLUDE - Results must NOT contain any words/phrases
+    - **& (Purple)** - AND - Connect multiple conditions together
+    - **or (Blue)** - OR - Any word/phrase in parentheses matches
+  - Click-to-use example protocols
+
+### 12. Professional Review Integration ✅
+- **Divine Zape Quote** from Readers' Favorite displayed prominently:
+  - *"This memoir is a profound and unforgettable literary piece."*
+  - Appears on Dashboard book promo section
+  - Appears on Settings page pay-what-you-can section
+  - Gold/amber styling for authority and credibility
+
 ---
 
 ## Technical Architecture
