@@ -606,7 +606,7 @@ const AdminPanel = ({ showToast }) => {
       </div>
       <div className="admin-panel-content">
         <div className="tabs">
-          {['general', 'search', 'pricing', 'users', 'content'].map(tab => (
+          {['general', 'search', 'pricing', 'newsletter', 'users', 'content'].map(tab => (
             <div
               key={tab}
               className={`tab ${activeTab === tab ? 'active' : ''}`}
