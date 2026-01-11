@@ -2029,12 +2029,12 @@ const SubscribePage = ({ showToast, onBack }) => {
   );
 };
 
-// ==================== BOOK PROMOTION BANNER ====================
+// ==================== BOOK PROMOTION BANNER (Enhanced) ====================
 const BOOK_IMAGES = [
-  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/rtfq9tzg_Letters%20to%20Evelyn%20advertisement%201.jpg",
-  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/c525b6c3_Letters%20to%20Evelyn%20advertisement%202.jpg",
-  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/w9somusu_Letters%20to%20Evelyn%20advertisement%203.jpg",
-  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/km4oz6iz_Letters%20to%20Evelyn%20advertisement%204.jpg"
+  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/3wggnw99_Letters%20to%20Evelyn%20advertisement%201.jpg",
+  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/obecjep4_Letters%20to%20Evelyn%20advertisement%202.jpg",
+  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/63ydb5j8_Letters%20to%20Evelyn%20advertisement%203.jpg",
+  "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/8ss0c1fe_Letters%20to%20Evelyn%20advertisement%204.jpg"
 ];
 
 const BookPromoBanner = () => {
@@ -2049,138 +2049,236 @@ const BookPromoBanner = () => {
 
   return (
     <div data-testid="book-promo-banner" style={{
-      background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(236, 72, 153, 0.3), rgba(59, 130, 246, 0.2))',
-      borderRadius: 16,
-      padding: 20,
-      marginBottom: 20,
-      border: '2px solid rgba(236, 72, 153, 0.5)',
-      display: 'flex',
-      gap: 20,
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      position: 'relative',
-      overflow: 'hidden'
+      background: 'linear-gradient(135deg, rgba(20, 10, 40, 0.95), rgba(60, 20, 80, 0.9))',
+      borderRadius: 20,
+      padding: 0,
+      marginBottom: 25,
+      border: '3px solid rgba(236, 72, 153, 0.6)',
+      overflow: 'hidden',
+      boxShadow: '0 20px 60px rgba(124, 58, 237, 0.4)'
     }}>
-      {/* Animated background */}
+      {/* Header Banner */}
       <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'linear-gradient(45deg, transparent 0%, rgba(236, 72, 153, 0.1) 50%, transparent 100%)',
-        animation: 'shimmer 3s infinite',
-        pointerEvents: 'none'
-      }} />
-
-      {/* Image Carousel */}
-      <div style={{ 
-        flex: '0 0 auto',
-        width: 200, 
-        height: 200, 
-        borderRadius: 12, 
-        overflow: 'hidden',
-        boxShadow: '0 10px 40px rgba(236, 72, 153, 0.4)',
-        border: '3px solid rgba(255, 255, 255, 0.3)'
+        background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+        padding: '15px 20px',
+        textAlign: 'center',
+        position: 'relative'
       }}>
-        <img 
-          src={BOOK_IMAGES[currentImageIndex]} 
-          alt="Letters to Evelyn by John Selman"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity 0.5s' }}
-        />
-      </div>
-
-      {/* Content */}
-      <div style={{ flex: 1, minWidth: 280, zIndex: 1 }}>
-        <div style={{ 
-          background: 'linear-gradient(135deg, #f472b6, #ec4899)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          fontSize: '1.6rem',
+        <div style={{
+          position: 'absolute',
+          top: 10,
+          right: 15,
+          background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+          color: '#000',
+          padding: '5px 15px',
+          borderRadius: 20,
           fontWeight: 800,
-          marginBottom: 8
+          fontSize: '0.75rem',
+          boxShadow: '0 4px 15px rgba(251, 191, 36, 0.5)'
         }}>
-          "Letters to Evelyn"
+          19 FIVE-STAR REVIEWS
         </div>
-        <div style={{ color: '#fce7f3', fontWeight: 600, fontSize: '1rem', marginBottom: 8 }}>
-          A True Supernatural Thriller Comedy
-        </div>
-        <div style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: 8 }}>
-          by John Selman
-        </div>
-        
-        {/* Review Quote */}
-        <div style={{ 
-          background: 'rgba(16, 185, 129, 0.2)', 
-          padding: '12px 15px', 
-          borderRadius: 10, 
-          marginBottom: 12,
-          borderLeft: '4px solid #10b981'
+        <div style={{
+          fontSize: '1.8rem',
+          fontWeight: 900,
+          color: '#fff',
+          textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+          letterSpacing: '2px'
         }}>
-          <div style={{ color: '#10b981', fontStyle: 'italic', fontSize: '0.9rem', lineHeight: 1.5 }}>
-            "This memoir is a profound and unforgettable literary piece."
-          </div>
-          <div style={{ color: '#34d399', fontSize: '0.8rem', marginTop: 5, fontWeight: 600 }}>
-            — Divine Zape, Readers' Favorite
-          </div>
+          WROTE IT, UNIVERSE FACT-CHECKED IT
         </div>
-
-        {/* Stars and Reviews */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 15 }}>
-          <div style={{ color: '#fbbf24', fontSize: '1.2rem' }}>★★★★★</div>
-          <div style={{ color: '#fbbf24', fontWeight: 700, fontSize: '0.9rem' }}>
-            19 Five-Star Reviews
-          </div>
-          <div style={{ color: '#a1a1aa', fontSize: '0.8rem' }}>from Readers' Favorite</div>
+        <div style={{
+          fontSize: '0.9rem',
+          color: 'rgba(255,255,255,0.9)',
+          marginTop: 5,
+          fontWeight: 600
+        }}>
+          IT PASSED • LETTERS TO EVELYN • Available Now
         </div>
-
-        {/* CTA Button */}
-        <a 
-          href="https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191"
-          target="_blank"
-          rel="noopener noreferrer"
-          data-testid="book-buy-button"
-          style={{
-            display: 'inline-block',
-            background: 'linear-gradient(135deg, #ec4899, #f97316)',
-            color: 'white',
-            padding: '14px 28px',
-            borderRadius: 25,
-            fontWeight: 700,
-            fontSize: '1.1rem',
-            textDecoration: 'none',
-            boxShadow: '0 5px 25px rgba(236, 72, 153, 0.5)',
-            transition: 'all 0.3s ease',
-            border: '2px solid rgba(255, 255, 255, 0.3)'
-          }}
-        >
-          🎁 GET IT NOW - Only $2.99!
-        </a>
       </div>
 
-      {/* Image navigation dots */}
-      <div style={{ 
-        position: 'absolute', 
-        bottom: 15, 
-        left: '50%', 
-        transform: 'translateX(-50%)',
+      {/* Main Content */}
+      <div style={{
         display: 'flex',
-        gap: 8
+        gap: 25,
+        padding: 25,
+        flexWrap: 'wrap',
+        alignItems: 'flex-start'
       }}>
-        {BOOK_IMAGES.map((_, idx) => (
-          <div 
-            key={idx}
-            onClick={() => setCurrentImageIndex(idx)}
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: idx === currentImageIndex ? '#ec4899' : 'rgba(255,255,255,0.3)',
-              cursor: 'pointer',
-              transition: 'all 0.3s'
-            }}
-          />
-        ))}
+        {/* Book Image with Gallery */}
+        <div style={{ flex: '0 0 auto', position: 'relative' }}>
+          <div style={{
+            width: 220,
+            height: 280,
+            borderRadius: 12,
+            overflow: 'hidden',
+            boxShadow: '0 15px 50px rgba(236, 72, 153, 0.5)',
+            border: '4px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <img 
+              src={BOOK_IMAGES[currentImageIndex]} 
+              alt="Letters to Evelyn by John Selman"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity 0.5s' }}
+            />
+          </div>
+          {/* Thumbnail Gallery */}
+          <div style={{ 
+            display: 'flex', 
+            gap: 8, 
+            marginTop: 12,
+            justifyContent: 'center'
+          }}>
+            {BOOK_IMAGES.map((img, idx) => (
+              <div 
+                key={idx}
+                onClick={() => setCurrentImageIndex(idx)}
+                style={{
+                  width: 45,
+                  height: 45,
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  border: idx === currentImageIndex ? '3px solid #ec4899' : '2px solid rgba(255,255,255,0.3)',
+                  opacity: idx === currentImageIndex ? 1 : 0.6,
+                  transition: 'all 0.3s'
+                }}
+              >
+                <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Book Details */}
+        <div style={{ flex: 1, minWidth: 280 }}>
+          <h2 style={{
+            fontSize: '2rem',
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, #f472b6, #ec4899, #fbbf24)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: 8,
+            letterSpacing: '1px'
+          }}>
+            LETTERS TO EVELYN
+          </h2>
+          
+          <div style={{ 
+            color: '#a78bfa', 
+            fontSize: '1rem', 
+            marginBottom: 10,
+            fontWeight: 600
+          }}>
+            By World Record Aviation Holder <span style={{ color: '#fbbf24' }}>John Selman</span>
+          </div>
+
+          {/* Star Rating */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <span style={{ color: '#fbbf24', fontSize: '1.3rem' }}>★★★★★</span>
+            <span style={{ color: '#fbbf24', fontWeight: 700 }}>5.0 / 5.0</span>
+            <span style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>(19 Professional Reviews)</span>
+          </div>
+
+          {/* Tagline Quote */}
+          <div style={{
+            fontSize: '1.2rem',
+            fontStyle: 'italic',
+            color: '#f472b6',
+            marginBottom: 15,
+            fontWeight: 600,
+            lineHeight: 1.4
+          }}>
+            "The Navy Taught Me to Fly Jets. The Universe Taught Me Everything Else."
+          </div>
+
+          <div style={{ color: '#a1a1aa', marginBottom: 15, fontSize: '0.95rem' }}>
+            A True Supernatural Thriller Comedy • 13 Years of Cosmic Chaos
+          </div>
+
+          {/* Divine Zape Review */}
+          <div style={{
+            background: 'rgba(16, 185, 129, 0.15)',
+            padding: 15,
+            borderRadius: 12,
+            marginBottom: 20,
+            borderLeft: '4px solid #10b981'
+          }}>
+            <div style={{ color: '#10b981', fontStyle: 'italic', fontSize: '0.95rem', lineHeight: 1.5 }}>
+              "A profound and unforgettable literary piece... poetic prose and introspective storytelling create an immersive reading experience that is as enlightening as it is emotionally resonant."
+            </div>
+            <div style={{ 
+              color: '#34d399', 
+              fontSize: '0.85rem', 
+              marginTop: 8, 
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}>
+              — Divine Zape, Readers' Favorite
+              <span style={{ color: '#fbbf24' }}>★★★★★</span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <a 
+              href="https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="book-buy-amazon"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'linear-gradient(135deg, #ec4899, #f97316)',
+                color: 'white',
+                padding: '12px 24px',
+                borderRadius: 25,
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                textDecoration: 'none',
+                boxShadow: '0 5px 20px rgba(236, 72, 153, 0.4)',
+                border: '2px solid rgba(255,255,255,0.2)'
+              }}
+            >
+              🛒 BUY ON AMAZON
+            </a>
+            <a 
+              href="https://readersfavorite.com/book-review/letters-to-evelyn"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                background: 'rgba(124, 58, 237, 0.3)',
+                color: '#a78bfa',
+                padding: '12px 24px',
+                borderRadius: 25,
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                textDecoration: 'none',
+                border: '2px solid rgba(124, 58, 237, 0.5)'
+              }}
+            >
+              ⭐ READ REVIEWS
+            </a>
+          </div>
+
+          {/* Price Badge */}
+          <div style={{
+            marginTop: 15,
+            display: 'inline-block',
+            background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.2))',
+            padding: '10px 20px',
+            borderRadius: 20,
+            border: '2px solid rgba(251, 191, 36, 0.5)'
+          }}>
+            <span style={{ color: '#fbbf24', fontWeight: 800, fontSize: '1.3rem' }}>Only $2.99</span>
+            <span style={{ color: '#a1a1aa', marginLeft: 10, fontSize: '0.85rem' }}>Kindle Edition</span>
+          </div>
+        </div>
       </div>
     </div>
   );
