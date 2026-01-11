@@ -3063,9 +3063,16 @@ const MarketplacePage = ({ showToast }) => {
 
   const confirmPurchase = async () => {
     if (!purchaseModal) return;
+    
+    // Prompt for transaction ID
+    const transactionId = prompt('Please enter your PayPal Transaction ID (found in your PayPal receipt):');
+    if (!transactionId) {
+      showToast('Transaction ID is required', 'error');
+      return;
+    }
 
     try {
-      const res = await fetch(`${API}/marketplace/purchase`, {
+      const res = await fetch(`${API}/marketplace/confirm-payment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -3073,22 +3080,23 @@ const MarketplacePage = ({ showToast }) => {
         },
         body: JSON.stringify({
           protocol_id: purchaseModal.protocol.id,
-          payment_id: `paypal_${Date.now()}`
+          transaction_id: transactionId,
+          amount: purchaseModal.protocol.price
         })
       });
 
       const data = await res.json();
       
       if (res.ok) {
-        showToast('Protocol purchased successfully!', 'success');
+        showToast('🎉 Protocol purchased successfully! +10 XP', 'success');
         setPurchaseModal(null);
         fetchProtocols();
         fetchPurchases();
       } else {
-        showToast(data.detail || 'Purchase failed', 'error');
+        showToast(data.detail || 'Purchase confirmation failed', 'error');
       }
     } catch (e) {
-      showToast('Purchase failed', 'error');
+      showToast('Purchase confirmation failed', 'error');
     }
   };
 
