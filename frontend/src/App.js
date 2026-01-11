@@ -911,6 +911,13 @@ function InfoJetPage() {
             <p>Enter a search query above and press Search. Then click Collate to automatically categorize results using your InfoPilot 2.0 protocols.</p>
           </div>
         )}
+
+        {/* Book promotion when idle */}
+        {searchResults.length === 0 && !searching && (
+          <div style={{marginTop: 32}}>
+            <BookPromoSection variant="compact" />
+          </div>
+        )}
       </div>
     </>
   );
