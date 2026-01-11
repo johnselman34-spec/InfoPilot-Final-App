@@ -56,6 +56,16 @@ InfoPilot is a web-based information search, categorization, and social networki
 - Privacy toggles (show online status, show friend status)
 - Account security information
 
+### 7. Book Promotion - "Letters to Evelyn" ✅
+- **Full Promo Section** on Dashboard with:
+  - Beautiful book cover display
+  - Gradient title with cosmic styling
+  - Promotional taglines ("I FLEW JETS THEN REALITY BROKE", etc.)
+  - Image carousel rotating promotional images
+  - "Get Your Copy on Amazon" CTA button
+- **Compact Promo** on Settings page
+- Book images from customer assets
+
 ---
 
 ## Technical Architecture
