@@ -455,129 +455,145 @@ async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(
 
 class WebSearchService:
     """
-    Multi-source web search service for better coverage
-    Uses DuckDuckGo and additional sources for comprehensive results
+    Aggressive multi-source web search service for MAXIMUM results
+    The goal is to get as many results as possible for protocol matching
     """
     
     @staticmethod
-    async def search_duckduckgo(query: str, num_results: int = 30) -> List[Dict[str, Any]]:
-        """Search using DuckDuckGo HTML"""
+    async def search_duckduckgo(query: str, num_results: int = 50) -> List[Dict[str, Any]]:
+        """Search using DuckDuckGo HTML - multiple pages"""
         results = []
         try:
-            encoded_query = urllib.parse.quote(query)
-            url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
-            
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    url,
-                    headers={
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                    },
-                    timeout=20.0
-                )
+            # Search multiple pages for more results
+            for page in range(3):  # Get 3 pages of results
+                encoded_query = urllib.parse.quote(query)
+                start = page * 30
+                url = f"https://html.duckduckgo.com/html/?q={encoded_query}&s={start}"
                 
-                if response.status_code == 200:
-                    html = response.text
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(
+                        url,
+                        headers={
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                        },
+                        timeout=20.0
+                    )
                     
-                    # Parse results - improved regex
-                    result_pattern = r'<a rel="nofollow" class="result__a" href="([^"]+)"[^>]*>([^<]+)</a>'
-                    snippet_pattern = r'<a class="result__snippet"[^>]*>([^<]+)</a>'
-                    
-                    urls = re.findall(result_pattern, html)
-                    snippets = re.findall(snippet_pattern, html)
-                    
-                    for i, (url_match, title) in enumerate(urls[:num_results]):
-                        # Decode DuckDuckGo redirect URL
-                        actual_url = url_match
-                        if "//duckduckgo.com/l/?uddg=" in url_match:
+                    if response.status_code == 200:
+                        html = response.text
+                        
+                        # Parse results - improved regex
+                        result_pattern = r'<a rel="nofollow" class="result__a" href="([^"]+)"[^>]*>([^<]+)</a>'
+                        snippet_pattern = r'<a class="result__snippet"[^>]*>([^<]+)</a>'
+                        
+                        urls = re.findall(result_pattern, html)
+                        snippets = re.findall(snippet_pattern, html)
+                        
+                        for i, (url_match, title) in enumerate(urls):
+                            # Decode DuckDuckGo redirect URL
+                            actual_url = url_match
+                            if "//duckduckgo.com/l/?uddg=" in url_match:
+                                try:
+                                    actual_url = urllib.parse.unquote(url_match.split("uddg=")[1].split("&")[0])
+                                except:
+                                    pass
+                            
+                            # Skip ads and duplicates
+                            if "duckduckgo.com" in actual_url or any(r["url"] == actual_url for r in results):
+                                continue
+                            
+                            snippet = snippets[i] if i < len(snippets) else ""
+                            
+                            # Extract root domain
                             try:
-                                actual_url = urllib.parse.unquote(url_match.split("uddg=")[1].split("&")[0])
-                            except:
-                                pass
-                        
-                        snippet = snippets[i] if i < len(snippets) else ""
-                        
-                        # Extract root domain
-                        try:
-                            parsed = urllib.parse.urlparse(actual_url)
-                            root_domain = parsed.netloc
-                        except:
-                            root_domain = ""
-                        
-                        results.append({
-                            "url": actual_url,
-                            "title": title.strip(),
-                            "snippet": snippet.strip(),
-                            "content": snippet.strip(),
-                            "root_domain": root_domain,
-                            "source": "duckduckgo"
-                        })
-        except Exception as e:
-            logger.error(f"DuckDuckGo search error: {e}")
-        
-        return results
-    
-    @staticmethod
-    async def search_google_scrape(query: str, num_results: int = 20) -> List[Dict[str, Any]]:
-        """
-        Scrape Google search results (backup method)
-        Note: This may be rate-limited
-        """
-        results = []
-        try:
-            encoded_query = urllib.parse.quote(query)
-            url = f"https://www.google.com/search?q={encoded_query}&num={num_results}"
-            
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    url,
-                    headers={
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                        "Accept-Language": "en-US,en;q=0.5"
-                    },
-                    timeout=15.0,
-                    follow_redirects=True
-                )
-                
-                if response.status_code == 200:
-                    html = response.text
-                    
-                    # Extract links from Google results
-                    # Google uses various patterns for result links
-                    link_pattern = r'<a href="/url\?q=([^&"]+)&amp;'
-                    links = re.findall(link_pattern, html)
-                    
-                    # Also try direct links
-                    direct_pattern = r'<a href="(https?://(?!google|gstatic)[^"]+)"'
-                    direct_links = re.findall(direct_pattern, html)
-                    
-                    all_links = list(set([urllib.parse.unquote(l) for l in links] + direct_links))
-                    
-                    for link in all_links[:num_results]:
-                        if not any(x in link for x in ['google.com', 'gstatic.com', 'youtube.com/watch']):
-                            try:
-                                parsed = urllib.parse.urlparse(link)
+                                parsed = urllib.parse.urlparse(actual_url)
                                 root_domain = parsed.netloc
                             except:
                                 root_domain = ""
                             
                             results.append({
-                                "url": link,
-                                "title": f"Result from {root_domain}",
-                                "snippet": "",
-                                "content": "",
+                                "url": actual_url,
+                                "title": title.strip(),
+                                "snippet": snippet.strip(),
+                                "content": snippet.strip(),
                                 "root_domain": root_domain,
-                                "source": "google"
+                                "source": "duckduckgo"
                             })
+                
+                if len(results) >= num_results:
+                    break
+                    
         except Exception as e:
-            logger.error(f"Google scrape error: {e}")
+            logger.error(f"DuckDuckGo search error: {e}")
         
-        return results
+        return results[:num_results]
     
     @staticmethod
-    async def fetch_page_content(url: str, timeout: int = 10) -> Dict[str, str]:
-        """Fetch and extract content from a webpage"""
+    async def search_bing_scrape(query: str, num_results: int = 30) -> List[Dict[str, Any]]:
+        """Scrape Bing search results"""
+        results = []
+        try:
+            for page in range(2):  # Get 2 pages
+                encoded_query = urllib.parse.quote(query)
+                first = page * 10 + 1
+                url = f"https://www.bing.com/search?q={encoded_query}&first={first}"
+                
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(
+                        url,
+                        headers={
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                            "Accept-Language": "en-US,en;q=0.5"
+                        },
+                        timeout=15.0,
+                        follow_redirects=True
+                    )
+                    
+                    if response.status_code == 200:
+                        html = response.text
+                        
+                        # Extract Bing result links
+                        link_pattern = r'<a href="(https?://[^"]+)"[^>]*class="[^"]*tilk[^"]*"'
+                        links = re.findall(link_pattern, html)
+                        
+                        # Also try alternative pattern
+                        alt_pattern = r'<cite>([^<]+)</cite>'
+                        cites = re.findall(alt_pattern, html)
+                        
+                        # Try to get titles
+                        title_pattern = r'<h2[^>]*><a[^>]*href="([^"]+)"[^>]*>([^<]+)</a></h2>'
+                        titles = re.findall(title_pattern, html)
+                        
+                        for url, title in titles:
+                            if not any(x in url for x in ['bing.com', 'microsoft.com', 'msn.com']):
+                                if not any(r["url"] == url for r in results):
+                                    try:
+                                        parsed = urllib.parse.urlparse(url)
+                                        root_domain = parsed.netloc
+                                    except:
+                                        root_domain = ""
+                                    
+                                    results.append({
+                                        "url": url,
+                                        "title": title.strip(),
+                                        "snippet": "",
+                                        "content": "",
+                                        "root_domain": root_domain,
+                                        "source": "bing"
+                                    })
+                
+                if len(results) >= num_results:
+                    break
+                    
+        except Exception as e:
+            logger.error(f"Bing scrape error: {e}")
+        
+        return results[:num_results]
+    
+    @staticmethod
+    async def fetch_page_content(url: str, timeout: int = 8) -> Dict[str, str]:
+        """Fetch and extract FULL content from a webpage for better matching"""
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
@@ -602,22 +618,108 @@ class WebSearchService:
                         desc_match = re.search(r'<meta[^>]*content=["\']([^"\']+)["\'][^>]*name=["\']description["\']', html, re.IGNORECASE)
                     description = desc_match.group(1).strip() if desc_match else ""
                     
-                    # Extract body text (simplified)
+                    # Extract ALL text content for better matching
                     # Remove script and style tags
                     body_html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
                     body_html = re.sub(r'<style[^>]*>.*?</style>', '', body_html, flags=re.DOTALL | re.IGNORECASE)
+                    body_html = re.sub(r'<noscript[^>]*>.*?</noscript>', '', body_html, flags=re.DOTALL | re.IGNORECASE)
                     
-                    # Extract text from paragraphs
-                    paragraphs = re.findall(r'<p[^>]*>([^<]+)</p>', body_html, re.IGNORECASE)
-                    body_text = ' '.join(paragraphs)[:5000]  # Limit content length
+                    # Remove all HTML tags and get text
+                    text = re.sub(r'<[^>]+>', ' ', body_html)
+                    text = re.sub(r'\s+', ' ', text).strip()
+                    
+                    # Get first 10000 chars for matching
+                    body_text = text[:10000]
                     
                     return {
                         "title": title,
                         "description": description,
-                        "content": body_text or description
+                        "content": f"{title} {description} {body_text}"
                     }
         except Exception as e:
             logger.debug(f"Failed to fetch {url}: {e}")
+        
+        return {"title": "", "description": "", "content": ""}
+    
+    @staticmethod
+    async def search(query: str, num_results: int = 100) -> List[Dict[str, Any]]:
+        """
+        Perform AGGRESSIVE web search using multiple sources
+        Returns deduplicated results from all available sources
+        Goal: Get as many results as possible for protocol matching!
+        """
+        all_results = []
+        seen_urls = set()
+        
+        # Run searches in parallel from multiple sources
+        try:
+            ddg_task = WebSearchService.search_duckduckgo(query, num_results)
+            bing_task = WebSearchService.search_bing_scrape(query, num_results // 2)
+            
+            # Also search with related terms for broader results
+            words = query.split()
+            if len(words) >= 2:
+                alt_query = " ".join(words[:3])  # Use first 3 words for alt search
+                ddg_alt_task = WebSearchService.search_duckduckgo(alt_query, 30)
+            else:
+                ddg_alt_task = asyncio.sleep(0)  # No-op
+            
+            ddg_results, bing_results, ddg_alt = await asyncio.gather(
+                ddg_task, 
+                bing_task,
+                ddg_alt_task,
+                return_exceptions=True
+            )
+            
+            # Process DuckDuckGo results
+            if isinstance(ddg_results, list):
+                for result in ddg_results:
+                    if result["url"] not in seen_urls:
+                        seen_urls.add(result["url"])
+                        all_results.append(result)
+            
+            # Process Bing results
+            if isinstance(bing_results, list):
+                for result in bing_results:
+                    if result["url"] not in seen_urls:
+                        seen_urls.add(result["url"])
+                        all_results.append(result)
+            
+            # Process alternative search results
+            if isinstance(ddg_alt, list):
+                for result in ddg_alt:
+                    if result["url"] not in seen_urls:
+                        seen_urls.add(result["url"])
+                        all_results.append(result)
+            
+        except Exception as e:
+            logger.error(f"Search aggregation error: {e}")
+        
+        # Fetch content for ALL results to improve protocol matching
+        # This is critical - more content = better matching
+        if all_results:
+            # Fetch content in batches to avoid timeout
+            batch_size = 20
+            for i in range(0, min(len(all_results), 60), batch_size):
+                batch = all_results[i:i+batch_size]
+                tasks = [WebSearchService.fetch_page_content(r["url"]) for r in batch]
+                
+                try:
+                    contents = await asyncio.gather(*tasks, return_exceptions=True)
+                    for j, content in enumerate(contents):
+                        idx = i + j
+                        if isinstance(content, dict) and idx < len(all_results):
+                            if content.get("title"):
+                                all_results[idx]["title"] = content["title"]
+                            if content.get("content"):
+                                all_results[idx]["content"] = content["content"]
+                            if content.get("description"):
+                                all_results[idx]["snippet"] = content["description"]
+                except Exception as e:
+                    logger.debug(f"Content enrichment error: {e}")
+        
+        logger.info(f"Search for '{query}' returned {len(all_results)} results (with content enrichment)")
+        return all_results[:num_results]
         
         return {"title": "", "description": "", "content": ""}
     
