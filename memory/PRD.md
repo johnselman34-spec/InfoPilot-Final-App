@@ -149,12 +149,13 @@ Build a comprehensive information exchange social network application ("InfoPilo
 
 ### P0 - Critical
 - Interactive map with Leaflet (premium feature)
-- Full social features (Groups, Pages, comments)
+- Full social features (Groups, Pages, comments, reactions)
 - Protocol Marketplace (users sell protocols)
 
 ### P1 - High Priority
 - Better search API integration (SerpApi/DataForSEO) - Bing API retired
 - Internet Robot for automated classification
+- Access Google Doc manuscript content for newsletter (requires public sharing or content copy)
 
 ### P2 - Medium Priority
 - Global Research Database
