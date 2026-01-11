@@ -1541,7 +1541,7 @@ const UltimateSearchPage = ({ showToast }) => {
                 Make this category public
               </label>
               <p style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>
-                💡 Protocols are case-insensitive. Use (word1 or word2) for OR logic, 
+                💡 Protocols are case-insensitive. Use (keyphrase1 or keyphrase2) for OR logic, 
                 & for AND, + for INCLUDE ALL, ^ for EXCLUDE ALL
               </p>
               <button className="btn btn-primary" onClick={createCategory}>
