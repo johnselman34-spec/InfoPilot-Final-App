@@ -153,9 +153,14 @@ Build a comprehensive information exchange social network application ("InfoPilo
 ## Pending/Backlog
 
 ### P0 - Critical
+- ✅ **FIXED: Protocol Recognition & Collation** - Now working properly!
+  - Search returns 10+ results per query
+  - Collation matching is more lenient
+  - Content enrichment for better protocol matching
+  - Results flowing into database properly
 - Interactive map with Leaflet (premium feature)
 - Full social features (Groups, Pages, comments, reactions)
-- Protocol Marketplace (users sell protocols)
+- Protocol Marketplace (users sell protocols) - IN 1-2 MONTHS
 
 ### P1 - High Priority
 - Better search API integration (SerpApi/DataForSEO) - Bing API retired
