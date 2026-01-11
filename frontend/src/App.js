@@ -147,7 +147,8 @@ const UltimateSearchPage = ({ showToast }) => {
   useEffect(() => {
     fetchCategories();
     fetchSearchResults();
-  }, [fetchCategories, fetchSearchResults]);
+    fetchBatches();
+  }, [fetchCategories, fetchSearchResults, fetchBatches]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
