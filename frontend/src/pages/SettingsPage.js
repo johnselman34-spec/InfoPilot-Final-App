@@ -222,6 +222,11 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
           </div>
         )}
 
+        {/* Push Notifications Section */}
+        <div style={{ marginTop: 20 }}>
+          <PushNotifications showToast={showToast} />
+        </div>
+
         {/* Data Export Section */}
         <div style={{ marginTop: 20 }}>
           <DataExport showToast={showToast} />
