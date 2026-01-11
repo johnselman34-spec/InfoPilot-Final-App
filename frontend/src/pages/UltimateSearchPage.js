@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import { extractHashtags } from '../utils/hashtags';
-import { Icons, HashtagDisplay } from '../components/shared';
+import { Icons, HashtagDisplay, ProtocolDebugger } from '../components/shared';
 
 const UltimateSearchPage = ({ showToast }) => {
   const { token, user } = useAuth();
@@ -19,6 +19,7 @@ const UltimateSearchPage = ({ showToast }) => {
   const [lastBatchId, setLastBatchId] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editProtocol, setEditProtocol] = useState('');
+  const [showDebugger, setShowDebugger] = useState(false);
 
   // Fetch search batches for deletion
   const fetchBatches = useCallback(async () => {
