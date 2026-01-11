@@ -1075,13 +1075,19 @@ const UltimateSearchPage = ({ showToast }) => {
   const [newCategory, setNewCategory] = useState({ name: '', protocol: '', parent_id: null, is_public: false });
 
   const fetchCategories = useCallback(async () => {
+    if (!token) {
+      console.warn('No token available for fetchCategories');
+      return;
+    }
     try {
       const res = await fetch(`${API}/categories`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
         setCategories(data);
+      } else if (res.status === 401) {
+        console.error('Token expired or invalid');
       }
     } catch (e) {
       console.error('Failed to fetch categories:', e);
