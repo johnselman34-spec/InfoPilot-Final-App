@@ -1502,20 +1502,320 @@ const SocialPage = ({ showToast }) => {
       )}
 
       {activeTab === 'groups' && (
-        <div>
-          <button className="btn btn-primary" style={{ marginBottom: 20 }}>
-            <Icons.Plus /> Create Group
-          </button>
-          <p style={{ color: '#a1a1aa' }}>No groups yet. Create one to start collaborating!</p>
-        </div>
+        <GroupsSection showToast={showToast} token={token} />
       )}
 
       {activeTab === 'pages' && (
-        <div>
-          <button className="btn btn-primary" style={{ marginBottom: 20 }}>
-            <Icons.Plus /> Create Page
-          </button>
+        <PagesSection showToast={showToast} token={token} />
+      )}
+    </div>
+  );
+};
+
+// ==================== GROUPS SECTION ====================
+const GroupsSection = ({ showToast, token }) => {
+  const [groups, setGroups] = useState([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newGroup, setNewGroup] = useState({ name: '', description: '', is_public: true });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  const fetchGroups = async () => {
+    try {
+      const res = await fetch(`${API}/groups`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setGroups(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch groups');
+    }
+    setLoading(false);
+  };
+
+  const createGroup = async () => {
+    if (!newGroup.name) {
+      showToast('Group name is required', 'error');
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/groups`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(newGroup)
+      });
+      if (res.ok) {
+        showToast('Group created!', 'success');
+        setShowCreateModal(false);
+        setNewGroup({ name: '', description: '', is_public: true });
+        fetchGroups();
+      } else {
+        const err = await res.json();
+        showToast(err.detail || 'Failed to create group', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to create group', 'error');
+    }
+  };
+
+  if (loading) {
+    return <div className="loading-spinner"><div className="spinner"></div></div>;
+  }
+
+  return (
+    <div>
+      <button 
+        className="btn btn-primary" 
+        style={{ marginBottom: 20 }}
+        onClick={() => setShowCreateModal(true)}
+      >
+        <Icons.Plus /> Create Group
+      </button>
+
+      {groups.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: '3rem', marginBottom: 15 }}>👥</div>
+          <p style={{ color: '#a1a1aa' }}>No groups yet. Create one to start collaborating!</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+          {groups.map(group => (
+            <div 
+              key={group.id} 
+              style={{
+                padding: 20,
+                background: 'rgba(30, 20, 50, 0.5)',
+                borderRadius: 12,
+                border: '1px solid rgba(124, 58, 237, 0.3)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 10 }}>
+                <h3 style={{ color: '#f472b6', margin: 0 }}>{group.name}</h3>
+                <span style={{ 
+                  fontSize: '0.7rem', 
+                  padding: '3px 8px', 
+                  borderRadius: 10,
+                  background: group.is_public ? 'rgba(16, 185, 129, 0.2)' : 'rgba(124, 58, 237, 0.2)',
+                  color: group.is_public ? '#10b981' : '#a78bfa'
+                }}>
+                  {group.is_public ? '🌐 Public' : '🔒 Private'}
+                </span>
+              </div>
+              <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: 15 }}>
+                {group.description || 'No description'}
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6b7280', fontSize: '0.8rem' }}>
+                  👤 {group.member_count || 1} members
+                </span>
+                <button className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+                  View Group
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Create Group Modal */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginBottom: 20, color: '#f472b6' }}>Create New Group</h3>
+            <input
+              type="text"
+              placeholder="Group Name"
+              className="input-field"
+              value={newGroup.name}
+              onChange={e => setNewGroup({...newGroup, name: e.target.value})}
+              style={{ marginBottom: 15 }}
+            />
+            <textarea
+              placeholder="Description (optional)"
+              className="input-field"
+              value={newGroup.description}
+              onChange={e => setNewGroup({...newGroup, description: e.target.value})}
+              rows={3}
+              style={{ marginBottom: 15 }}
+            />
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, color: '#a1a1aa' }}>
+              <input
+                type="checkbox"
+                checked={newGroup.is_public}
+                onChange={e => setNewGroup({...newGroup, is_public: e.target.checked})}
+              />
+              Public group (anyone can join)
+            </label>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={createGroup}>Create Group</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==================== PAGES SECTION ====================
+const PagesSection = ({ showToast, token }) => {
+  const [pages, setPages] = useState([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newPage, setNewPage] = useState({ name: '', description: '', category: 'General' });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPages();
+  }, []);
+
+  const fetchPages = async () => {
+    try {
+      const res = await fetch(`${API}/pages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPages(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch pages');
+    }
+    setLoading(false);
+  };
+
+  const createPage = async () => {
+    if (!newPage.name) {
+      showToast('Page name is required', 'error');
+      return;
+    }
+    try {
+      const res = await fetch(`${API}/pages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(newPage)
+      });
+      if (res.ok) {
+        showToast('Page created!', 'success');
+        setShowCreateModal(false);
+        setNewPage({ name: '', description: '', category: 'General' });
+        fetchPages();
+      } else {
+        const err = await res.json();
+        showToast(err.detail || 'Failed to create page', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to create page', 'error');
+    }
+  };
+
+  if (loading) {
+    return <div className="loading-spinner"><div className="spinner"></div></div>;
+  }
+
+  const categories = ['General', 'Technology', 'Science', 'History', 'Entertainment', 'Sports', 'News', 'Other'];
+
+  return (
+    <div>
+      <button 
+        className="btn btn-primary" 
+        style={{ marginBottom: 20 }}
+        onClick={() => setShowCreateModal(true)}
+      >
+        <Icons.Plus /> Create Page
+      </button>
+
+      {pages.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 40 }}>
+          <div style={{ fontSize: '3rem', marginBottom: 15 }}>📄</div>
           <p style={{ color: '#a1a1aa' }}>No pages yet. Create one to share your content!</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+          {pages.map(page => (
+            <div 
+              key={page.id} 
+              style={{
+                padding: 20,
+                background: 'rgba(30, 20, 50, 0.5)',
+                borderRadius: 12,
+                border: '1px solid rgba(236, 72, 153, 0.3)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 10 }}>
+                <h3 style={{ color: '#ec4899', margin: 0 }}>{page.name}</h3>
+                <span style={{ 
+                  fontSize: '0.7rem', 
+                  padding: '3px 8px', 
+                  borderRadius: 10,
+                  background: 'rgba(59, 130, 246, 0.2)',
+                  color: '#3b82f6'
+                }}>
+                  {page.category}
+                </span>
+              </div>
+              <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: 15 }}>
+                {page.description || 'No description'}
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#6b7280', fontSize: '0.8rem' }}>
+                  ❤️ {page.likes || 0} likes
+                </span>
+                <button className="btn btn-secondary" style={{ fontSize: '0.8rem', padding: '6px 12px' }}>
+                  View Page
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Create Page Modal */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginBottom: 20, color: '#ec4899' }}>Create New Page</h3>
+            <input
+              type="text"
+              placeholder="Page Name"
+              className="input-field"
+              value={newPage.name}
+              onChange={e => setNewPage({...newPage, name: e.target.value})}
+              style={{ marginBottom: 15 }}
+            />
+            <textarea
+              placeholder="Description (optional)"
+              className="input-field"
+              value={newPage.description}
+              onChange={e => setNewPage({...newPage, description: e.target.value})}
+              rows={3}
+              style={{ marginBottom: 15 }}
+            />
+            <select
+              className="input-field"
+              value={newPage.category}
+              onChange={e => setNewPage({...newPage, category: e.target.value})}
+              style={{ marginBottom: 20 }}
+            >
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={createPage}>Create Page</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
