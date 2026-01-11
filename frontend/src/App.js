@@ -305,76 +305,62 @@ const AuthCallback = () => {
     hasRun.current = true;
 
     const doAuth = async () => {
-      // Get session_id from URL
-      const hashParts = window.location.hash.split('session_id=');
-      if (hashParts.length < 2) {
-        setErrorMsg('No session ID found');
-        setStatus('error');
-        return;
-      }
-      
-      const sessionId = hashParts[1].split('&')[0];
-      
-      // Use XMLHttpRequest to avoid fetch/Request cloning issues
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', 'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data', true);
-      xhr.setRequestHeader('X-Session-ID', sessionId);
-      
-      xhr.onload = async function() {
-        if (xhr.status === 200) {
-          try {
-            const userData = JSON.parse(xhr.responseText);
-            
-            // Now call our backend
-            const backendXhr = new XMLHttpRequest();
-            backendXhr.open('POST', `${API}/auth/google`, true);
-            backendXhr.setRequestHeader('Content-Type', 'application/json');
-            
-            backendXhr.onload = function() {
-              if (backendXhr.status === 200) {
-                try {
-                  const authData = JSON.parse(backendXhr.responseText);
-                  localStorage.setItem('token', authData.token);
-                  // Clear hash and reload to show logged in state
-                  window.location.href = window.location.origin + window.location.pathname;
-                } catch (e) {
-                  setErrorMsg('Failed to parse login response');
-                  setStatus('error');
-                }
-              } else {
-                setErrorMsg('Backend authentication failed');
-                setStatus('error');
-              }
-            };
-            
-            backendXhr.onerror = function() {
-              setErrorMsg('Network error during login');
-              setStatus('error');
-            };
-            
-            backendXhr.send(JSON.stringify({
-              email: userData.email,
-              google_id: userData.id,
-              name: userData.name,
-              picture: userData.picture || null
-            }));
-            
-          } catch (e) {
-            setErrorMsg('Failed to parse user data');
-            setStatus('error');
-          }
-        } else {
-          setErrorMsg('Failed to verify Google session');
+      try {
+        // Get session_id from URL hash
+        const hashParts = window.location.hash.split('session_id=');
+        if (hashParts.length < 2) {
+          setErrorMsg('No session ID found');
           setStatus('error');
+          return;
         }
-      };
-      
-      xhr.onerror = function() {
-        setErrorMsg('Network error during authentication');
+        
+        const sessionId = hashParts[1].split('&')[0];
+        console.log('Processing session ID:', sessionId);
+        
+        // Call our backend proxy to get session data (avoids CORS issues)
+        const sessionResponse = await fetch(`${API}/auth/google/session-data?session_id=${encodeURIComponent(sessionId)}`);
+        
+        if (!sessionResponse.ok) {
+          const errorData = await sessionResponse.json().catch(() => ({}));
+          throw new Error(errorData.detail || 'Failed to verify Google session');
+        }
+        
+        const userData = await sessionResponse.json();
+        console.log('Got user data:', userData);
+        
+        // Validate we have required fields
+        if (!userData.email || !userData.id) {
+          throw new Error('Invalid user data received');
+        }
+        
+        // Now authenticate with our backend
+        const authResponse = await fetch(`${API}/auth/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: userData.email,
+            google_id: userData.id,
+            name: userData.name,
+            picture: userData.picture || null
+          })
+        });
+        
+        if (!authResponse.ok) {
+          const errorData = await authResponse.json().catch(() => ({}));
+          throw new Error(errorData.detail || 'Login failed');
+        }
+        
+        const authData = await authResponse.json();
+        localStorage.setItem('token', authData.token);
+        
+        // Clear hash and redirect to clean URL
+        window.location.href = window.location.origin + window.location.pathname;
+        
+      } catch (err) {
+        console.error('Auth error:', err);
+        setErrorMsg(err.message || 'Authentication failed');
         setStatus('error');
-      };
-      
-      xhr.send();
+      }
     };
 
     doAuth();
