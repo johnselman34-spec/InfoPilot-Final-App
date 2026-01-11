@@ -263,6 +263,7 @@ const UltimateSearchPage = ({ showToast }) => {
     e.stopPropagation();
     setEditingCategory(cat);
     setEditProtocol(cat.protocol || '');
+    setEditIsPublic(cat.is_public || false);
   };
 
   const saveProtocol = async () => {
@@ -274,17 +275,30 @@ const UltimateSearchPage = ({ showToast }) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ protocol: editProtocol })
+        body: JSON.stringify({ 
+          protocol: editProtocol,
+          is_public: editIsPublic
+        })
       });
+      
+      // Read response text first to avoid "body stream already read" error
+      const responseText = await res.text();
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (e) {
+        throw new Error('Server returned invalid response');
+      }
+      
       if (res.ok) {
         showToast('Protocol updated!', 'success');
         fetchCategories();
         setEditingCategory(null);
       } else {
-        const data = await res.json();
         showToast(data.detail || 'Failed to update', 'error');
       }
     } catch (e) {
+      console.error('Update error:', e);
       showToast('Failed to update protocol', 'error');
     }
   };
