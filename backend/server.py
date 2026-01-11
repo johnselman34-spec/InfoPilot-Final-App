@@ -822,8 +822,13 @@ async def login(credentials: UserLogin):
 
 @api_router.post("/auth/google", response_model=dict)
 async def google_auth(data: GoogleAuthRequest):
-    # Check if user exists
-    user = await db.users.find_one({"$or": [{"email": data.email}, {"google_id": data.google_id}]})
+    # Check if user exists - use case-insensitive email matching
+    user = await db.users.find_one({
+        "$or": [
+            {"email": {"$regex": f"^{re.escape(data.email)}$", "$options": "i"}},
+            {"google_id": data.google_id}
+        ]
+    })
     
     if user:
         # Update google_id if needed
