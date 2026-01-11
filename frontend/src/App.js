@@ -1431,8 +1431,11 @@ const SubscribePage = ({ showToast, onBack }) => {
   const { token, refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [paymentClicked, setPaymentClicked] = useState(false);
+  const [selectedAmount, setSelectedAmount] = useState(null);
+  const [customAmount, setCustomAmount] = useState('');
   const [settings, setSettings] = useState({
     subscription_price: 0.99,
+    paypal_email: 'sb-h7vc448665634@business.example.com',
     paypal_link: 'https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ'
   });
 
@@ -1453,9 +1456,23 @@ const SubscribePage = ({ showToast, onBack }) => {
   }, []);
 
   const handlePayPalClick = (amount) => {
-    // Open PayPal payment link
-    window.open(settings.paypal_link, '_blank');
+    // Create PayPal payment URL with specific amount
+    // Using PayPal's standard payment link format
+    const paypalEmail = settings.paypal_email || 'sb-h7vc448665634@business.example.com';
+    const paymentUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${encodeURIComponent(paypalEmail)}&amount=${amount.toFixed(2)}&currency_code=USD&item_name=${encodeURIComponent('InfoPilot Premium Subscription (1 Year)')}&no_shipping=1&no_note=1`;
+    
+    window.open(paymentUrl, '_blank');
+    setSelectedAmount(amount);
     setPaymentClicked(true);
+  };
+
+  const handleCustomPayment = () => {
+    const amount = parseFloat(customAmount);
+    if (isNaN(amount) || amount < 0.01) {
+      showToast('Please enter a valid amount', 'error');
+      return;
+    }
+    handlePayPalClick(amount);
   };
 
   const handleActivateSubscription = async () => {
