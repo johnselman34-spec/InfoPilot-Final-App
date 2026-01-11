@@ -9,7 +9,7 @@ import { API } from './utils/api';
 import { extractHashtags } from './utils/hashtags';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Toast, Icons, HashtagDisplay, Sidebar } from './components/shared';
-import { LoginPage, RegisterPage, AuthCallback } from './pages';
+import { LoginPage, RegisterPage, AuthCallback, AdminPanel, SettingsPage, SubscribePage } from './pages';
 
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
@@ -21,15 +21,12 @@ L.Icon.Default.mergeOptions({
 
 // NOTE: The following components are still defined inline for stability
 // Future refactoring will move them to separate files:
-// - AdminPanel -> /pages/AdminPanel.js
 // - UltimateSearchPage -> /pages/UltimateSearchPage.js
 // - SocialPage -> /pages/SocialPage.js
 // - GroupsSection -> /components/social/GroupsSection.js
 // - PagesSection -> /components/social/PagesSection.js
 // - MapPage -> /pages/MapPage.js
 // - MessagesPage -> /pages/MessagesPage.js
-// - SettingsPage -> /pages/SettingsPage.js
-// - SubscribePage -> /pages/SubscribePage.js
 // - MarketplacePage -> /pages/MarketplacePage.js
 // - AchievementsPage -> /pages/AchievementsPage.js
 // - BookPromoBanner -> /components/shared/BookPromoBanner.js
