@@ -1364,6 +1364,39 @@ const UltimateSearchPage = ({ showToast }) => {
     }
   };
 
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [editProtocol, setEditProtocol] = useState('');
+
+  const handleEditCategory = (cat, e) => {
+    e.stopPropagation();
+    setEditingCategory(cat);
+    setEditProtocol(cat.protocol || '');
+  };
+
+  const saveProtocol = async () => {
+    if (!editingCategory) return;
+    try {
+      const res = await fetch(`${API}/categories/${editingCategory.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ protocol: editProtocol })
+      });
+      if (res.ok) {
+        showToast('Protocol updated!', 'success');
+        fetchCategories();
+        setEditingCategory(null);
+      } else {
+        const data = await res.json();
+        showToast(data.detail || 'Failed to update', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to update protocol', 'error');
+    }
+  };
+
   const buildCategoryTree = (cats, parentId = null, level = 0) => {
     return cats
       .filter(c => c.parent_id === parentId)
@@ -1371,10 +1404,46 @@ const UltimateSearchPage = ({ showToast }) => {
         <div key={cat.id}>
           <div 
             className={`category-item category-item-level-${level} ${selectedCategories.includes(cat.id) ? 'selected' : ''}`}
-            onClick={() => toggleCategorySelection(cat.id)}
+            style={{ flexDirection: 'column', alignItems: 'stretch' }}
           >
-            <span>{cat.name}</span>
-            {cat.is_public && <span style={{ fontSize: '0.7rem', color: '#10b981' }}>Public</span>}
+            <div 
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+              onClick={() => toggleCategorySelection(cat.id)}
+            >
+              <span>{cat.name}</span>
+              <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                {cat.is_public && <span style={{ fontSize: '0.65rem', color: '#10b981', padding: '2px 6px', background: 'rgba(16,185,129,0.2)', borderRadius: 4 }}>Public</span>}
+                <button 
+                  onClick={(e) => handleEditCategory(cat, e)}
+                  style={{ 
+                    background: 'transparent', 
+                    border: 'none', 
+                    color: '#a1a1aa', 
+                    cursor: 'pointer',
+                    padding: '2px 6px',
+                    fontSize: '0.75rem'
+                  }}
+                  title="Edit Protocol"
+                  data-testid={`edit-category-${cat.id}`}
+                >
+                  ✏️
+                </button>
+              </div>
+            </div>
+            {cat.protocol && (
+              <div style={{ 
+                fontSize: '0.7rem', 
+                color: '#71717a', 
+                marginTop: 4,
+                padding: '4px 8px',
+                background: 'rgba(124, 58, 237, 0.1)',
+                borderRadius: 4,
+                fontFamily: 'monospace',
+                wordBreak: 'break-all'
+              }}>
+                {cat.protocol.length > 60 ? cat.protocol.substring(0, 60) + '...' : cat.protocol}
+              </div>
+            )}
           </div>
           {buildCategoryTree(cats, cat.id, level + 1)}
         </div>
