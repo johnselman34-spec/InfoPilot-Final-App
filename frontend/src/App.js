@@ -1159,6 +1159,10 @@ const UltimateSearchPage = ({ showToast }) => {
       showToast('Name and protocol are required', 'error');
       return;
     }
+    
+    // Show loading state
+    showToast('Creating category...', 'success');
+    
     try {
       const res = await fetch(`${API}/categories`, {
         method: 'POST',
@@ -1168,17 +1172,21 @@ const UltimateSearchPage = ({ showToast }) => {
         },
         body: JSON.stringify(newCategory)
       });
+      
+      const data = await res.json();
+      
       if (res.ok) {
-        showToast('Category created!', 'success');
+        showToast(`Category "${newCategory.name}" created successfully!`, 'success');
         setShowCategoryModal(false);
         setNewCategory({ name: '', protocol: '', parent_id: null, is_public: false });
         fetchCategories();
       } else {
-        const err = await res.json();
-        showToast(err.detail || 'Failed to create category', 'error');
+        showToast(data.detail || 'Failed to create category. Please try again.', 'error');
+        console.error('Category creation error:', data);
       }
     } catch (e) {
-      showToast('Failed to create category', 'error');
+      console.error('Category creation exception:', e);
+      showToast('Network error. Please check your connection and try again.', 'error');
     }
   };
 
