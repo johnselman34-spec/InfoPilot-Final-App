@@ -303,24 +303,36 @@ class ProtocolParser:
     
     @staticmethod
     def matches_protocol(text: str, protocol: str) -> bool:
-        """Check if text matches the protocol requirements - VERY LENIENT for broad matching"""
+        """
+        Check if text matches the protocol requirements - MAXIMUM LENIENCY for broad matching
+        
+        For your protocol like:
+        (George W Bush or President Bush) & (aviation career or pilot or air force) & ...
+        
+        We want to match if:
+        1. The text contains ANY of the key subjects (George W Bush, President Bush)
+        2. AND contains ANY of the related topics (pilot, aviation, air force, F-102, etc.)
+        
+        This is INTENTIONALLY VERY LENIENT to maximize categorization.
+        """
         if not text or not protocol:
             return False
-            
-        parsed = ProtocolParser.parse_protocol(protocol)
+        
         text_lower = ProtocolParser.normalize_text(text)
+        parsed = ProtocolParser.parse_protocol(protocol)
         
         if not parsed["valid"]:
-            # If protocol parsing fails, try very lenient simple keyword matching
-            # Extract all words from protocol (minimum 2 characters)
-            keywords = re.findall(r'\w{2,}', protocol.lower())
-            # Match if ANY keyword is found
-            return any(kw in text_lower for kw in keywords)
+            # If protocol parsing fails, try simple keyword matching
+            keywords = re.findall(r'\w{3,}', protocol.lower())
+            # Match if at least 2 keywords are found
+            matches = sum(1 for kw in keywords if kw in text_lower)
+            return matches >= 2
         
-        # For valid protocols, be more lenient:
-        # Only require that at least ONE group matches (not all groups)
-        any_group_matched = False
+        # Count how many groups have at least one matching item
+        groups_with_matches = 0
+        total_non_exclude_groups = 0
         any_exclude_violated = False
+        total_keyword_matches = 0
         
         for group in parsed["groups"]:
             items = group["items"]
@@ -330,17 +342,44 @@ class ProtocolParser:
                 # EXCLUDE ALL - if any excluded word is found, mark violation
                 if any(ProtocolParser.text_contains_item(text_lower, item) for item in items):
                     any_exclude_violated = True
-            elif modifier == "+":
-                # INCLUDE ALL - all must be present for this group to match
-                if all(ProtocolParser.text_contains_item(text_lower, item) for item in items):
-                    any_group_matched = True
             else:
-                # OR logic - any one item matching counts as group match
-                if any(ProtocolParser.text_contains_item(text_lower, item) for item in items):
-                    any_group_matched = True
+                total_non_exclude_groups += 1
+                # Count individual keyword matches in this group
+                matches_in_group = sum(1 for item in items if ProtocolParser.text_contains_item(text_lower, item))
+                total_keyword_matches += matches_in_group
+                
+                if modifier == "+":
+                    # INCLUDE ALL - all must be present
+                    if all(ProtocolParser.text_contains_item(text_lower, item) for item in items):
+                        groups_with_matches += 1
+                else:
+                    # OR logic - any one item matching counts
+                    if any(ProtocolParser.text_contains_item(text_lower, item) for item in items):
+                        groups_with_matches += 1
         
-        # Return True if at least one non-exclude group matched AND no exclude rules violated
-        return any_group_matched and not any_exclude_violated
+        # Don't match if exclude rules were violated
+        if any_exclude_violated:
+            return False
+        
+        # VERY LENIENT MATCHING:
+        # Option 1: At least half the groups have matches
+        # Option 2: At least 3 total keyword matches across all groups
+        # Option 3: First group (usually the main subject) matches
+        
+        if total_non_exclude_groups == 0:
+            return False
+        
+        # Match if:
+        # - At least 50% of groups have matches, OR
+        # - At least 3 keywords matched overall, OR  
+        # - More than half the groups matched
+        half_groups = (total_non_exclude_groups + 1) // 2
+        
+        return (
+            groups_with_matches >= half_groups or
+            total_keyword_matches >= 3 or
+            (groups_with_matches >= 1 and total_keyword_matches >= 2)
+        )
     
     @staticmethod
     def get_match_details(text: str, protocol: str) -> Dict[str, Any]:
