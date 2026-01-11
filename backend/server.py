@@ -2290,6 +2290,8 @@ async def create_indexes_with_retry(max_retries=5, delay=3):
             await db.categories.create_index([("user_id", 1), ("name", 1)])
             await db.search_results.create_index([("user_id", 1), ("url", 1)])
             await db.newsletters.create_index([("generated_at", -1)])
+            await db.notifications.create_index([("user_id", 1), ("created_at", -1)])
+            await db.notifications.create_index([("user_id", 1), ("read", 1)])
             logger.info("Database indexes created successfully")
             return True
         except Exception as e:
