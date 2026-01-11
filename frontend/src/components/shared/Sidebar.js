@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import Icons from './Icons';
+import NotificationBell from './NotificationBell';
 
-const Sidebar = ({ currentPage, setCurrentPage }) => {
+const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
   const { user, logout } = useAuth();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
     { id: 'search', label: 'Ultimate Search', icon: Icons.Search },
@@ -16,12 +18,48 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
     { id: 'settings', label: 'Settings', icon: Icons.Settings },
   ];
 
+  const handleNavClick = (pageId) => {
+    setCurrentPage(pageId);
+    setIsMobileMenuOpen(false);
+  };
+
   return (
-    <div className="sidebar" data-testid="sidebar">
-      <div className="sidebar-logo">
-        <h1>InfoPilot</h1>
-        <p>Information Exchange Network</p>
+    <>
+      {/* Mobile Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-gray-900 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 text-gray-400 hover:text-white"
+          data-testid="mobile-menu-btn"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+          </svg>
+        </button>
+        <h1 className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">InfoPilot</h1>
+        <NotificationBell showToast={showToast} />
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`sidebar ${isMobileMenuOpen ? 'mobile-open' : ''}`} data-testid="sidebar">
+        <div className="sidebar-logo flex items-center justify-between">
+          <div>
+            <h1>InfoPilot</h1>
+            <p>Information Exchange Network</p>
+          </div>
+          {/* Desktop Notification Bell */}
+          <div className="hidden md:block">
+            <NotificationBell showToast={showToast} />
+          </div>
+        </div>
       
       <div className="sidebar-user">
         <div className="sidebar-user-avatar">
