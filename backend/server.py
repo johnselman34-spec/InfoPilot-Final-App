@@ -1771,6 +1771,43 @@ async def update_user_settings(
     
     return {"message": "Settings updated"}
 
+
+class PasswordChangeRequest(BaseModel):
+    current_password: Optional[str] = None
+    new_password: str
+
+
+@api_router.post("/users/change-password", response_model=dict)
+async def change_password(request: PasswordChangeRequest, user = Depends(get_current_user)):
+    """Change user password - works for both Google and email users"""
+    
+    # Validate new password
+    if len(request.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # If user has existing password, verify current password
+    if user.get("password_hash"):
+        if not request.current_password:
+            raise HTTPException(status_code=400, detail="Current password is required")
+        if hash_password(request.current_password) != user["password_hash"]:
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    # Update password
+    new_hash = hash_password(request.new_password)
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"password_hash": new_hash}}
+    )
+    
+    return {"message": "Password changed successfully"}
+
+
+@api_router.get("/users/has-password", response_model=dict)
+async def check_has_password(user = Depends(get_current_user)):
+    """Check if user has a password set (for Google users who want to add one)"""
+    return {"has_password": bool(user.get("password_hash"))}
+
+
 # ============== GROUPS ENDPOINTS ==============
 
 class GroupCreate(BaseModel):
