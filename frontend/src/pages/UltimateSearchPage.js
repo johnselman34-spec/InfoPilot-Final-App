@@ -362,7 +362,7 @@ const UltimateSearchPage = ({ showToast }) => {
         </div>
 
         {/* Aggregation Options */}
-        <div style={{ display: 'flex', gap: 20, marginBottom: 20, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 20, marginBottom: 20, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ color: '#a1a1aa' }}>Search Aggregation:</span>
           {['and_or', 'and', 'or'].map(agg => (
             <label key={agg} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
@@ -375,7 +375,18 @@ const UltimateSearchPage = ({ showToast }) => {
               {agg.toUpperCase().replace('_', '/')}
             </label>
           ))}
+          <button
+            className={`btn ${showDebugger ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setShowDebugger(!showDebugger)}
+            style={{ marginLeft: 'auto', padding: '8px 16px', fontSize: '0.85rem' }}
+            data-testid="toggle-debugger-btn"
+          >
+            🔧 {showDebugger ? 'Hide' : 'Show'} Protocol Debugger
+          </button>
         </div>
+
+        {/* Protocol Debugger */}
+        {showDebugger && <ProtocolDebugger showToast={showToast} />}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 20 }}>
