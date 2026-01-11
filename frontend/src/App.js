@@ -296,83 +296,106 @@ const RegisterPage = ({ onSwitch }) => {
 
 // ==================== AUTH CALLBACK (Google OAuth) ====================
 const AuthCallback = () => {
-  const { loginWithGoogle } = useAuth();
-  const hasProcessed = useRef(false);
-  const [error, setError] = useState(null);
+  const [status, setStatus] = useState('processing'); // 'processing', 'error', 'success'
+  const [errorMsg, setErrorMsg] = useState('');
+  const hasRun = useRef(false);
 
   useEffect(() => {
-    // Prevent double processing in StrictMode
-    if (hasProcessed.current) return;
-    hasProcessed.current = true;
+    if (hasRun.current) return;
+    hasRun.current = true;
 
-    const processAuth = async () => {
-      try {
-        // Get session_id from URL fragment
-        const hash = window.location.hash;
-        console.log('Processing OAuth callback, hash:', hash);
-        
-        const sessionId = hash.split('session_id=')[1]?.split('&')[0];
-        
-        if (!sessionId) {
-          throw new Error('No session ID found in URL');
-        }
-
-        console.log('Session ID:', sessionId);
-
-        // Fetch user data from Emergent Auth
-        const response = await fetch('https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data', {
-          method: 'GET',
-          headers: {
-            'X-Session-ID': sessionId
-          }
-        });
-
-        console.log('Session data response status:', response.status);
-
-        if (!response.ok) {
-          const errorText = await response.text().catch(() => 'Unknown error');
-          console.error('Session data fetch failed:', response.status, errorText);
-          throw new Error(`Failed to verify Google session (${response.status})`);
-        }
-
-        const userData = await response.json();
-        console.log('Got user data from Emergent:', userData);
-        
-        // Validate we have required fields
-        if (!userData.email || !userData.id) {
-          throw new Error('Invalid user data received from Google');
-        }
-        
-        // Login with our backend
-        await loginWithGoogle(userData);
-        
-        // Clear the hash - successful login will trigger re-render with user
-        window.history.replaceState(null, '', window.location.pathname);
-        
-      } catch (err) {
-        console.error('Auth callback error:', err);
-        // Safely extract error message as string
-        const errorMessage = typeof err === 'string' 
-          ? err 
-          : (err && err.message ? String(err.message) : 'Authentication failed');
-        setError(errorMessage);
-        // Clear hash and go back to login after delay
-        setTimeout(() => {
-          window.history.replaceState(null, '', window.location.pathname);
-          window.location.reload();
-        }, 3000);
+    const doAuth = async () => {
+      // Get session_id from URL
+      const hashParts = window.location.hash.split('session_id=');
+      if (hashParts.length < 2) {
+        setErrorMsg('No session ID found');
+        setStatus('error');
+        return;
       }
+      
+      const sessionId = hashParts[1].split('&')[0];
+      
+      // Use XMLHttpRequest to avoid fetch/Request cloning issues
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data', true);
+      xhr.setRequestHeader('X-Session-ID', sessionId);
+      
+      xhr.onload = async function() {
+        if (xhr.status === 200) {
+          try {
+            const userData = JSON.parse(xhr.responseText);
+            
+            // Now call our backend
+            const backendXhr = new XMLHttpRequest();
+            backendXhr.open('POST', `${API}/auth/google`, true);
+            backendXhr.setRequestHeader('Content-Type', 'application/json');
+            
+            backendXhr.onload = function() {
+              if (backendXhr.status === 200) {
+                try {
+                  const authData = JSON.parse(backendXhr.responseText);
+                  localStorage.setItem('token', authData.token);
+                  // Clear hash and reload to show logged in state
+                  window.location.href = window.location.origin + window.location.pathname;
+                } catch (e) {
+                  setErrorMsg('Failed to parse login response');
+                  setStatus('error');
+                }
+              } else {
+                setErrorMsg('Backend authentication failed');
+                setStatus('error');
+              }
+            };
+            
+            backendXhr.onerror = function() {
+              setErrorMsg('Network error during login');
+              setStatus('error');
+            };
+            
+            backendXhr.send(JSON.stringify({
+              email: userData.email,
+              google_id: userData.id,
+              name: userData.name,
+              picture: userData.picture || null
+            }));
+            
+          } catch (e) {
+            setErrorMsg('Failed to parse user data');
+            setStatus('error');
+          }
+        } else {
+          setErrorMsg('Failed to verify Google session');
+          setStatus('error');
+        }
+      };
+      
+      xhr.onerror = function() {
+        setErrorMsg('Network error during authentication');
+        setStatus('error');
+      };
+      
+      xhr.send();
     };
 
-    processAuth();
-  }, []); // Empty dependency array - only run once on mount
+    doAuth();
+  }, []);
 
-  if (error) {
+  // Redirect back to login after error
+  useEffect(() => {
+    if (status === 'error') {
+      const timer = setTimeout(() => {
+        window.location.href = window.location.origin + window.location.pathname;
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
+
+  if (status === 'error') {
     return (
       <div className="auth-container">
         <div className="auth-card" style={{ textAlign: 'center' }}>
           <h2 style={{ color: '#ef4444', marginBottom: 15 }}>Authentication Error</h2>
-          <p style={{ color: '#a1a1aa' }}>{error}</p>
+          <p style={{ color: '#a1a1aa' }}>{errorMsg}</p>
           <p style={{ color: '#a1a1aa', marginTop: 10 }}>Redirecting to login...</p>
         </div>
       </div>
