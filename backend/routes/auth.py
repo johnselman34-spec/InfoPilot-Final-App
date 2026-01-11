@@ -155,7 +155,8 @@ async def get_session_data(session_id: str):
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
-                f"https://emergentintegrations.ai/api/oauth/user/{session_id}"
+                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+                headers={"X-Session-ID": session_id}
             )
             if response.status_code == 200:
                 return response.json()
