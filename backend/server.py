@@ -1892,20 +1892,109 @@ async def get_seller_sales(user = Depends(get_current_user_local)):
 
 @api_router.get("/quotes/gallery")
 async def get_quote_gallery():
-    """Get quotes from the book for the gallery"""
+    """Get quotes from the book for the gallery with categories"""
     quotes = [
-        {"text": "Sometimes the most extraordinary journeys begin with the simplest questions.", "chapter": "Chapter 1"},
-        {"text": "In the silence between words, I found the loudest truths.", "chapter": "Chapter 3"},
-        {"text": "Evelyn taught me that love doesn't require understanding—just acceptance.", "chapter": "Chapter 7"},
-        {"text": "The supernatural isn't always about ghosts and spirits. Sometimes it's about the inexplicable bond between souls.", "chapter": "Chapter 12"},
-        {"text": "When you've seen what I've seen, comedy becomes a survival mechanism.", "chapter": "Chapter 15"},
-        {"text": "Every letter was a prayer, every response a miracle.", "chapter": "Chapter 18"},
-        {"text": "The truth is stranger than fiction, but funnier too if you look at it right.", "chapter": "Chapter 21"},
-        {"text": "In the end, it wasn't about proving anything. It was about living authentically.", "chapter": "Epilogue"},
+        # Hilarious quotes
+        {"quote": "I told my therapist about the alien. She said, 'That's a lot to unpack.' I said, 'You should see my garage.'", "category": "hilarious", "context": "John's first therapy session after the encounter"},
+        {"quote": "The extraterrestrial looked at my tax returns and said, 'Even we don't understand this.'", "category": "hilarious", "context": "When cosmic beings meet earthly bureaucracy"},
+        {"quote": "My wife asked if the alien was male or female. I said, 'Honey, it's from another dimension. It doesn't have a gender, it has a vibe.'", "category": "hilarious", "context": "Explaining interdimensional beings to your spouse"},
+        {"quote": "The Navy taught me to fly jets. Nothing prepares you for explaining to your kids why daddy talks to the ceiling.", "category": "hilarious", "context": "Parenting after supernatural experiences"},
+        {"quote": "I've flown 10 types of aircraft. The hardest landing? Telling my mother-in-law about Evelyn.", "category": "hilarious", "context": "Family dynamics meet the supernatural"},
+        {"quote": "The cosmic entity said I was chosen. I asked if there was a return policy.", "category": "hilarious", "context": "When destiny comes knocking"},
+        {"quote": "My dog saw the apparition before I did. He's been sleeping with one eye open ever since.", "category": "hilarious", "context": "Pets and the paranormal"},
+        {"quote": "I asked the universe for a sign. It sent me a 7-foot glowing being. Next time I'll be more specific.", "category": "hilarious", "context": "Be careful what you wish for"},
+        {"quote": "The alien's first words to me were 'We've been watching you.' I said, 'So has the IRS. Get in line.'", "category": "hilarious", "context": "First contact priorities"},
+        {"quote": "My psychiatrist retired after our sessions. Said he needed to 'reassess his understanding of reality.'", "category": "hilarious", "context": "The impact of truth on professionals"},
+        {"quote": "Evelyn communicates through dreams. My wife says I talk in my sleep. Apparently, I'm bilingual now.", "category": "hilarious", "context": "Supernatural side effects"},
+        {"quote": "The being said time is an illusion. I said, 'Tell that to my mortgage company.'", "category": "hilarious", "context": "Cosmic wisdom meets earthly obligations"},
+        {"quote": "I've seen things that would make a horror movie director quit. But nothing scarier than my wife when I forget our anniversary.", "category": "hilarious", "context": "Perspective on fear"},
+        {"quote": "The entity showed me the secrets of the universe. I still can't figure out why socks disappear in the dryer.", "category": "hilarious", "context": "The real mysteries of life"},
+        {"quote": "My neighbor thinks I'm crazy. I think he's crazy for paying $7 for coffee. We're both probably right.", "category": "hilarious", "context": "Suburban philosophy"},
+        
+        # Profound quotes
+        {"quote": "Sometimes the most extraordinary journeys begin with the simplest questions.", "category": "profound", "context": "The beginning of John's journey"},
+        {"quote": "In the silence between words, I found the loudest truths.", "category": "profound", "context": "Learning to listen to the universe"},
+        {"quote": "Evelyn taught me that love doesn't require understanding—just acceptance.", "category": "profound", "context": "The nature of unconditional love"},
+        {"quote": "The supernatural isn't always about ghosts and spirits. Sometimes it's about the inexplicable bond between souls.", "category": "profound", "context": "Redefining the paranormal"},
+        {"quote": "Every letter was a prayer, every response a miracle.", "category": "profound", "context": "The sacred nature of communication"},
+        {"quote": "In the end, it wasn't about proving anything. It was about living authentically.", "category": "profound", "context": "The ultimate lesson"},
+        {"quote": "We're either infinite Love or we're not. Can I say that one last time?", "category": "profound", "context": "John's philosophical repetition"},
+        {"quote": "The truth is stranger than fiction, but funnier too if you look at it right.", "category": "profound", "context": "Finding humor in the impossible"},
+        
+        # Dad jokes
+        {"quote": "Why did the alien go to therapy? Because it had too many space issues.", "category": "dad_joke", "context": "John's attempt at cosmic humor"},
+        {"quote": "I told Evelyn a joke about time travel. She didn't laugh. She will yesterday.", "category": "dad_joke", "context": "Interdimensional comedy"},
+        {"quote": "What do you call a supernatural being who tells bad jokes? A groan-ost.", "category": "dad_joke", "context": "Peak dad humor"},
+        {"quote": "Why don't aliens eat clowns? Because they taste funny.", "category": "dad_joke", "context": "Classic with a twist"},
+        {"quote": "I asked the cosmic entity for wisdom. It said, 'Don't eat yellow snow.' Even the universe has dad jokes.", "category": "dad_joke", "context": "Universal humor"},
+        {"quote": "What's an alien's favorite key on the keyboard? The space bar.", "category": "dad_joke", "context": "Tech-savvy extraterrestrials"},
+        {"quote": "Why did the ghost go to the bar? For the boos.", "category": "dad_joke", "context": "Supernatural refreshments"},
+        {"quote": "I told my wife I communicate with beings from another dimension. She said, 'That explains why you never hear me.'", "category": "dad_joke", "context": "Marriage humor"},
+        {"quote": "What do you call a lazy extraterrestrial? An unidentified lying object.", "category": "dad_joke", "context": "UFO wordplay"},
+        {"quote": "Why don't secrets work in space? Because there's no atmosphere.", "category": "dad_joke", "context": "Cosmic confidentiality"},
+        {"quote": "I asked Evelyn about the meaning of life. She said '42.' Even interdimensional beings read Douglas Adams.", "category": "dad_joke", "context": "Literary references across dimensions"},
+        {"quote": "What's a ghost's favorite dessert? I scream.", "category": "dad_joke", "context": "Supernatural sweets"},
+        
+        # Chapter teasers
+        {"quote": "Chapter 7 changed everything. Not because of what I saw, but because of what I finally understood.", "category": "chapter_teaser", "context": "A pivotal moment"},
+        {"quote": "The night of the first contact, I was just trying to fix a leaky faucet. The universe had other plans.", "category": "chapter_teaser", "context": "How it all began"},
+        {"quote": "When you've seen what I've seen, comedy becomes a survival mechanism.", "category": "chapter_teaser", "context": "Coping with the impossible"},
+        {"quote": "The letters started arriving before I sent them. That's when I knew time wasn't what I thought it was.", "category": "chapter_teaser", "context": "Temporal anomalies"},
+        {"quote": "My Navy training prepared me for combat. Nothing prepares you for a conversation with eternity.", "category": "chapter_teaser", "context": "Military meets metaphysical"},
+        {"quote": "The day I stopped trying to explain and started trying to understand—that's when the real journey began.", "category": "chapter_teaser", "context": "A shift in perspective"},
+        {"quote": "Evelyn's first message was three words. Those three words rewrote my entire existence.", "category": "chapter_teaser", "context": "The power of words"},
+        {"quote": "I've flown through storms that would terrify most pilots. But nothing compared to the storm inside my own mind.", "category": "chapter_teaser", "context": "Internal battles"},
+        {"quote": "The photograph changed everything. Not because of what it showed, but because of what it proved.", "category": "chapter_teaser", "context": "Evidence of the impossible"},
+        
+        # Wild elements
+        {"quote": "The being materialized in my living room at 3 AM. My first thought was, 'I should have vacuumed.'", "category": "wild_element", "context": "Priorities during first contact"},
+        {"quote": "It spoke in colors I'd never seen and sounds I'd never heard. My brain did its best.", "category": "wild_element", "context": "Sensory overload"},
+        {"quote": "The entity showed me the birth of stars. I showed it my stamp collection. Fair trade.", "category": "wild_element", "context": "Cultural exchange"},
+        {"quote": "Time folded like origami. I experienced my entire life in what felt like a sneeze.", "category": "wild_element", "context": "Temporal distortion"},
+        {"quote": "The cosmic being had no face, yet I knew it was smiling. Don't ask me how.", "category": "wild_element", "context": "Intuitive understanding"},
+        {"quote": "I touched infinity. It was warm and smelled like my grandmother's kitchen.", "category": "wild_element", "context": "The comfort of the cosmos"},
+        {"quote": "The alien showed me parallel universes. In one of them, I'm a dentist. I prefer this reality.", "category": "wild_element", "context": "Multiverse preferences"},
+        {"quote": "Evelyn exists outside of time. She's seen my birth and my death. She still thinks I'm funny.", "category": "wild_element", "context": "Eternal perspective"},
+        {"quote": "The being communicated through my dreams for months. My sleep schedule has never recovered.", "category": "wild_element", "context": "Supernatural side effects"},
+        {"quote": "I asked to see the future. It showed me a world where people are kind to each other. I cried.", "category": "wild_element", "context": "Hope for humanity"},
+        {"quote": "The entity's ship wasn't metal or light. It was made of pure intention. Try explaining that to the FAA.", "category": "wild_element", "context": "Unconventional aircraft"},
+        {"quote": "My consciousness left my body and toured the galaxy. The in-flight movie was my own memories.", "category": "wild_element", "context": "Astral travel"},
+        {"quote": "The being said humans are 'adorably confused.' I couldn't argue.", "category": "wild_element", "context": "Cosmic perspective on humanity"},
+        {"quote": "I've seen the edge of the universe. It's not what you'd expect. It's more like a suggestion.", "category": "wild_element", "context": "The nature of reality"},
+        {"quote": "Evelyn showed me that death isn't an ending. It's more like changing channels.", "category": "wild_element", "context": "Redefining mortality"},
+        {"quote": "The alien's goodbye gift was the ability to see auras. Now I know why my neighbor is always angry.", "category": "wild_element", "context": "Supernatural abilities"},
+        {"quote": "I asked the cosmic being about God. It laughed—not mockingly, but like a parent watching a child discover something obvious.", "category": "wild_element", "context": "Divine revelations"},
+        {"quote": "The entity folded space to show me Earth from a million light-years away. We looked so small. So precious.", "category": "wild_element", "context": "Perspective on our planet"},
+        {"quote": "My DNA was 'upgraded' during the encounter. I still can't do math, but I can feel emotions from plants.", "category": "wild_element", "context": "Unexpected enhancements"},
+        {"quote": "The being's final message was written in light across my ceiling. My wife thought I'd installed new fixtures.", "category": "wild_element", "context": "Supernatural home improvement"},
+        
+        # Marketing quotes
+        {"quote": "If you've ever wondered what happens when a Navy pilot meets an interdimensional being, this book has answers.", "category": "marketing", "context": "Book pitch"},
+        {"quote": "Part memoir, part cosmic adventure, all heart. This is the story I never planned to tell.", "category": "marketing", "context": "Genre description"},
+        {"quote": "19 five-star reviews can't be wrong. Unless they're all from parallel universes.", "category": "marketing", "context": "Review humor"},
+        {"quote": "The comical side is exceedingly brilliant... imagination off the charts. A true story that defies belief!", "category": "marketing", "context": "Professional review quote"},
+        {"quote": "This memoir is a profound and unforgettable literary piece.", "category": "marketing", "context": "Readers' Favorite review"},
+        {"quote": "Comedy that creeps into your mind and causes abrupt laughter.", "category": "marketing", "context": "Reader testimonial"},
+        {"quote": "Written by a Navy pilot who flew 10 aircraft types. Verified by the universe.", "category": "marketing", "context": "Author credentials"},
+        {"quote": "Available for $2.99. That's less than a coffee and infinitely more mind-expanding.", "category": "marketing", "context": "Value proposition"},
+        {"quote": "Hollywood couldn't resist. OPTIONED FOR FILM!", "category": "marketing", "context": "Industry recognition"},
+        {"quote": "Extraterrestrial encounters & cosmic visions. Also, really good dad jokes.", "category": "marketing", "context": "Content summary"},
+        {"quote": "The truth is out there. And it's hilarious.", "category": "marketing", "context": "Tagline"},
+    ]
+    
+    # Define categories with counts
+    categories = [
+        {"id": "hilarious", "name": "Hilarious", "count": len([q for q in quotes if q["category"] == "hilarious"])},
+        {"id": "profound", "name": "Profound", "count": len([q for q in quotes if q["category"] == "profound"])},
+        {"id": "dad_joke", "name": "Dad Jokes", "count": len([q for q in quotes if q["category"] == "dad_joke"])},
+        {"id": "chapter_teaser", "name": "Chapter Teasers", "count": len([q for q in quotes if q["category"] == "chapter_teaser"])},
+        {"id": "wild_element", "name": "Wild Elements", "count": len([q for q in quotes if q["category"] == "wild_element"])},
+        {"id": "marketing", "name": "Marketing", "count": len([q for q in quotes if q["category"] == "marketing"])},
     ]
     
     return {
         "quotes": quotes,
+        "categories": categories,
         "book": BOOK_PROMO
     }
 
