@@ -73,9 +73,9 @@ const AnalyticsPage = ({ showToast }) => {
       textAlign: 'center'
     }}>
       <div style={{ fontSize: '2rem', marginBottom: 8 }}>{icon}</div>
-      <div style={{ fontSize: '2rem', fontWeight: 700, color: color }}>{value.toLocaleString()}</div>
+      <div style={{ fontSize: '2rem', fontWeight: 700, color: color }}>{(value || 0).toLocaleString()}</div>
       <div style={{ color: '#a1a1aa', fontSize: '0.85rem' }}>{label}</div>
-      {trend !== undefined && (
+      {trend !== undefined && trend !== null && (
         <div style={{ 
           marginTop: 8, 
           fontSize: '0.8rem', 
@@ -87,7 +87,15 @@ const AnalyticsPage = ({ showToast }) => {
     </div>
   );
 
-  const maxSearches = Math.max(...trends.map(t => t.searches), 1);
+  // Safe access helpers
+  const users = analytics?.users || {};
+  const searches = analytics?.searches || {};
+  const protocols = analytics?.protocols || {};
+  const marketplace = analytics?.marketplace || {};
+  const engagement = analytics?.engagement || {};
+  const popularTerms = analytics?.popular_search_terms || [];
+
+  const maxSearches = Math.max(...(trends.length > 0 ? trends.map(t => t.searches || 0) : [1]), 1);
 
   return (
     <div className="card" data-testid="analytics-page">
