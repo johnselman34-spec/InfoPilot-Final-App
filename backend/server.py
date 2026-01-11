@@ -2882,10 +2882,10 @@ FEATURED IMAGE TO INCLUDE:
 💪 The author survived 12+ DAYS WITHOUT SLEEP after being poisoned! (Northeast US record!)
 
 ===== PROFESSIONAL REVIEWS TO FEATURE (Pick 2-3) =====
-{chr(10).join([f'★ "{r["quote"]}" - {r["reviewer"]}, Readers\' Favorite' for r in rf_reviews])}
+{rf_reviews_text}
 
 ===== AMAZON READER REVIEWS (Pick 1-2) =====
-{chr(10).join([f'★ "{r["quote"]}" - {r["reviewer"]}' for r in amazon_reviews])}
+{amazon_reviews_text}
 
 ===== DAD JOKE OF THE WEEK =====
 🎭 "{selected_joke}"
