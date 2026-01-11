@@ -2584,15 +2584,35 @@ app.add_middleware(
 
 # ============== DATABASE STARTUP ==============
 
-# Create indexes
+async def create_indexes_with_retry(max_retries=5, delay=3):
+    """Create database indexes with retry logic for Atlas connection"""
+    for attempt in range(max_retries):
+        try:
+            # Test connection first
+            await client.admin.command('ping')
+            logger.info(f"MongoDB connection successful (attempt {attempt + 1})")
+            
+            # Create indexes
+            await db.users.create_index("email", unique=True)
+            await db.users.create_index("username", unique=True)
+            await db.categories.create_index([("user_id", 1), ("name", 1)])
+            await db.search_results.create_index([("user_id", 1), ("url", 1)])
+            await db.newsletters.create_index([("generated_at", -1)])
+            logger.info("Database indexes created successfully")
+            return True
+        except Exception as e:
+            logger.warning(f"MongoDB connection attempt {attempt + 1}/{max_retries} failed: {e}")
+            if attempt < max_retries - 1:
+                await asyncio.sleep(delay)
+            else:
+                logger.error(f"Failed to connect to MongoDB after {max_retries} attempts")
+                # Don't crash the app - indexes might already exist
+                return False
+
+# Create indexes on startup
 @app.on_event("startup")
 async def startup_db_client():
-    await db.users.create_index("email", unique=True)
-    await db.users.create_index("username", unique=True)
-    await db.categories.create_index([("user_id", 1), ("name", 1)])
-    await db.search_results.create_index([("user_id", 1), ("url", 1)])
-    await db.newsletters.create_index([("generated_at", -1)])
-    logger.info("Database indexes created")
+    await create_indexes_with_retry()
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
