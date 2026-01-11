@@ -3240,6 +3240,8 @@ const MainApp = () => {
         return user?.is_admin ? <AdminPanel showToast={showToast} /> : <UltimateSearchPage showToast={showToast} />;
       case 'search':
         return <UltimateSearchPage showToast={showToast} />;
+      case 'marketplace':
+        return <MarketplacePage showToast={showToast} />;
       case 'social':
         return <SocialPage showToast={showToast} />;
       case 'map':
