@@ -1782,28 +1782,86 @@ const SubscribePage = ({ showToast, onBack }) => {
           </div>
         )}
 
-        {/* Book Promotion */}
+        {/* Book Promotion - More Prominent */}
         <div style={{ 
-          padding: 20, 
-          background: 'rgba(236, 72, 153, 0.1)', 
-          borderRadius: 12,
-          border: '1px solid rgba(236, 72, 153, 0.3)',
-          textAlign: 'center'
+          padding: 25, 
+          background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(124, 58, 237, 0.3))',
+          borderRadius: 16,
+          border: '3px solid rgba(236, 72, 153, 0.5)',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
-          <h4 style={{ color: '#f472b6', marginBottom: 10 }}>📚 Also Check Out</h4>
-          <p style={{ color: '#a1a1aa', marginBottom: 15 }}>
-            "Letters to Evelyn" - A Supernatural Thriller Comedy by John Selman
-          </p>
-          <p style={{ color: '#a1a1aa', fontSize: '0.85rem', marginBottom: 15, fontStyle: 'italic' }}>
-            "This memoir is a profound and unforgettable literary piece." - Dvine Zape, Readers' Favorite
-          </p>
+          <div style={{
+            position: 'absolute',
+            top: -10,
+            right: -10,
+            background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+            color: '#000',
+            padding: '8px 20px',
+            borderRadius: 20,
+            fontWeight: 800,
+            fontSize: '0.8rem',
+            transform: 'rotate(15deg)',
+            boxShadow: '0 4px 15px rgba(251, 191, 36, 0.4)'
+          }}>
+            BESTSELLER!
+          </div>
+          
+          <h3 style={{ color: '#f472b6', marginBottom: 15, fontSize: '1.3rem' }}>📚 While You're Here...</h3>
+          
+          <div style={{ marginBottom: 15 }}>
+            <img 
+              src="https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/rtfq9tzg_Letters%20to%20Evelyn%20advertisement%201.jpg"
+              alt="Letters to Evelyn"
+              style={{ width: 150, height: 150, objectFit: 'cover', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}
+            />
+          </div>
+          
+          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fce7f3', marginBottom: 10 }}>
+            "Letters to Evelyn"
+          </div>
+          <div style={{ color: '#f472b6', marginBottom: 10, fontWeight: 600 }}>
+            A True Supernatural Thriller Comedy by John Selman
+          </div>
+          
+          <div style={{ 
+            background: 'rgba(16, 185, 129, 0.2)', 
+            padding: 15, 
+            borderRadius: 12, 
+            marginBottom: 15,
+            borderLeft: '4px solid #10b981'
+          }}>
+            <div style={{ color: '#10b981', fontStyle: 'italic', marginBottom: 8 }}>
+              "This memoir is a profound and unforgettable literary piece."
+            </div>
+            <div style={{ color: '#34d399', fontSize: '0.85rem', fontWeight: 600 }}>
+              — Divine Zape, Readers' Favorite
+            </div>
+          </div>
+          
+          <div style={{ color: '#fbbf24', marginBottom: 15, fontWeight: 700 }}>
+            ⭐⭐⭐⭐⭐ 19 Five-Star Professional Reviews
+          </div>
+          
           <a 
             href="https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-secondary"
+            style={{
+              display: 'inline-block',
+              background: 'linear-gradient(135deg, #ec4899, #f97316)',
+              color: 'white',
+              padding: '15px 35px',
+              borderRadius: 30,
+              fontWeight: 700,
+              fontSize: '1.1rem',
+              textDecoration: 'none',
+              boxShadow: '0 8px 30px rgba(236, 72, 153, 0.5)',
+              border: '2px solid rgba(255,255,255,0.3)'
+            }}
           >
-            View on Amazon - $2.99
+            🎁 GET IT NOW - Only $2.99!
           </a>
         </div>
       </div>
