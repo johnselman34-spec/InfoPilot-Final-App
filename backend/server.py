@@ -2663,73 +2663,149 @@ AUTHOR_HIGHLIGHTS = {
     "book_promise": "50+ finely-crafted deafening, zany, zesty, zoo zingers... JOKES!"
 }
 
-# NEW: HILARIOUS MANUSCRIPT CONTENT - Direct quotes and wild plot elements
-MANUSCRIPT_GOLD = {
-    "copyright_warning": """This novel is only meant for readers who are not operating a vehicle or any type of heavy equipment. 
-If you are pregnant or breastfeeding, reading this book could evoke uncontrollable hysterics and fits of laughter; 
-it is recommended for people in pregnancy to avoid reading Letters to Evelyn as it may induce unexpected labor. 
+# COMPREHENSIVE MANUSCRIPT CONTENT - From "Letters to Evelyn" by John Selman
+# Full analysis of the manuscript for newsletter generation
+MANUSCRIPT_CONTENT = {
+    "book_meta": {
+        "title": "Letters to Evelyn",
+        "author": "John Selman",
+        "genre": "A True Supernatural Thriller Comedy",
+        "dedication": "This book is dedicated to the reader. This is for you, whoever you are.",
+        "copyright_warning": """This novel is only meant for readers who are not operating a vehicle or heavy equipment. 
+If you are pregnant or breastfeeding, reading could evoke uncontrollable hysterics and fits of laughter; 
+it is recommended for people in pregnancy to avoid reading as it may induce unexpected labor. 
 This book is intended for adults only 26 years and older!""",
+        "summary": "A deeply personal and often surreal narrative of love, naval service, traumatic childhood experiences, and profound mystical connections - blending memoir, spirituality, and encounters with extraterrestrial beings.",
+    },
+    
+    "key_characters": {
+        "John Selman": "The protagonist - Navy pilot, Top ROTC student, and a man whose life defies physics and logic",
+        "Evelyn Tuskegee": "The central, almost spiritual figure - his destined soulmate who appeared in his imagination before they met",
+        "Lauren Selman": "The abusive stepmother who poisoned John's food, triggering ten months of hallucinations",
+        "The Captain": "The enigmatic USS Enterprise/Nimitz figure who kept calling John 'Jesus'",
+        "Durham": "The bizarre rival scientist with purple eyes who claimed to solve the 'Grand Unifying Theory'",
+        "Maria Anastasia": "A past love interest in whom John saw the entire universe",
+        "The Gray Aliens": "Extraterrestrial visitors who communicated 'Drink water, good boy'",
+    },
     
     "wild_plot_elements": [
         "Navy pilot's stepmother Lauren POISONED his eggs with LSD equivalent to 200-500 doses!",
         "He hallucinated aliens for TEN MONTHS straight!",
-        "A Captain kept calling him 'Jesus' on USS Enterprise - he denied it every time!",
+        "A Captain kept calling him 'Jesus' on USS Enterprise - he denied it every time with 'Fack off!' (Monty Python style)",
         "He saw the entire universe and God while looking at a woman named Maria!",
         "He imagined his future wife 'Evelyn' into existence while on a nuclear aircraft carrier!",
         "He twisted her right big toe CLOCKWISE in his imagination to 'save everyone from being left-handed'!",
         "He pulled an imaginary rib from his chest and offered it to the imaginary Eve!",
-        "He created athletes Usain Bolt and Michael Phelps by 'waving his arms wildly'!",
+        "He claims to have created athletes Usain Bolt and Michael Phelps by 'waving his arms wildly'!",
         "He gave a captain a glass of water with 10 drops of his blood from his middle finger!",
         "He predicted the Twin Towers disaster and a tsunami the day after Christmas!",
-        "He bent a penny barehanded in front of sailors and went crowd surfing!",
+        "He bent a penny barehanded in front of sailors and went crowd surfing on their applause!",
         "He saw an invisible extraterrestrial in Texas wearing a 'biomechanical suit'!",
         "Gray aliens told him to 'Drink waaaater, good boy' while he was driving in Arizona!",
         "He did an 83-degree nearly VERTICAL dive in a T-34C and survived with 430 PICOSECONDS to spare!",
-        "He hid his spacecraft inside a 2,600-foot-wide extraterrestrial dinosaur's reproductive organs!",
+        "He hid a spacecraft inside a 2,600-foot-wide extraterrestrial dinosaur's reproductive organs!",
+        "He survived 12+ days without sleep after being poisoned - Northeast US record!",
+        "He was demoted to 'Trash-O' - the ship's garbage collector - after the Jesus incidents",
+        "He flew 10 different aircraft types and holds the world record for steepest Sarajevo Approach",
+        "The aliens wore robes with crosses and told him 'Only life, no more hurt' before leaving",
+        "Durham broadcast 'The sky! This guy!' to the entire universe as some kind of cosmic insult",
     ],
     
     "hilarious_quotes": [
-        "I said fly to the sun, not IN it!",
-        "These eggs are so good! Are they cage free?",
-        "Fack off! - (imitating Monty Python's Life of Brian)",
-        "I'm not even afraid of saving my pet gerbil.",
-        "La-la-la-la! (Captain plugging his ears like Lloyd Christmas)",
-        "You're Jesus. - No I'm not! - You're Jesus. - STOP IT!",
-        "I bent a penny barehanded... everyone came to lift me up and I went crowd surfing!",
-        "Drink waaaater, drink waaaaaater, good boy. - Gray Aliens",
-        "Only life, no more hurt. - Gray Aliens before leaving",
-        "The sky! This guy! - Durham's universal broadcast",
-        "We queefed our way out of the undulating gargantuan reproductive organs at maximum power!",
-    ],
-    
-    "dad_jokes_from_book": [
-        "Why did the Navy pilot write a book? Because his stories were PLANE amazing!",
-        "What's the difference between this book and therapy? The book is cheaper AND funnier!",
-        "How do you hide from God on an alien planet? Inside a dinosaur. Obviously.",
-        "Why did the Captain keep calling him Jesus? Because he couldn't stop turning OTHER cheeks!",
-        "What do aliens and this book have in common? They're both OUT OF THIS WORLD!",
-        "Why did the universe fact-check the book? Even black holes couldn't contain these plot twists!",
-        "How many Gz did the pilot pull? Enough to make physics question its life choices!",
+        {"quote": "I said fly to the sun, not IN it!", "context": "Pilot instruction mishap"},
+        {"quote": "These eggs are so good! Are they cage free?", "context": "Unknowingly eating poisoned eggs"},
+        {"quote": "Fack off!", "context": "John's Monty Python response to being called Jesus"},
+        {"quote": "I'm not even afraid of saving my pet gerbil.", "context": "Random hallucination moment"},
+        {"quote": "La-la-la-la!", "context": "Captain plugging ears like Lloyd Christmas from Dumb & Dumber"},
+        {"quote": "You're Jesus. - No I'm not! - You're Jesus. - STOP IT!", "context": "Repeated 9-12 times per encounter"},
+        {"quote": "I bent a penny barehanded... everyone came to lift me up and I went crowd surfing!", "context": "Post-hallucination feat"},
+        {"quote": "Drink waaaater, drink waaaaaater, good boy.", "context": "Gray Aliens' only message"},
+        {"quote": "Only life, no more hurt.", "context": "Aliens' farewell message"},
+        {"quote": "The sky! This guy!", "context": "Durham's universal broadcast to insult John"},
+        {"quote": "We queefed our way out of the undulating gargantuan reproductive organs at maximum power!", "context": "The dinosaur escape scene"},
+        {"quote": "I'm not the best extraterrestrial dinosaur vagina pilot! You're the woman! Take the controls!", "context": "Peak absurdity"},
+        {"quote": "I'm not Jesus! Why do you keep saying that I'm Jesus?", "context": "John's frustration with the Captain"},
+        {"quote": "We're either infinite Love or we're not. Can I say that one last time?", "context": "John's philosophical repetition"},
+        {"quote": "I'm so sorry, Evelyn. I love you, and I venerate every man you've ever loved too.", "context": "Bizarrely earnest love declaration"},
     ],
     
     "chapter_teasers": [
-        "Chapter 2: The Encounter - 'The same father who knocked me out for wanting to fly through a cloud when I was THREE'",
-        "Chapter 4: Muster the Strength - 'I said I love pain at least TEN THOUSAND TIMES that weekend'",
-        "Chapter 7: The Sweltering Speech - 'A 600-sailor standing ovation... then they started calling me JESUS'",
-        "Chapter 9: Flight School - 'I got out to a slow start... my on-wing instructor was like an Air Traffic Controller with a TV remote'",
-        "Chapter 22: The Intergalactic Superhighway - 'We flew our Chevrolet Zion spacecraft to Neptune for DINNER'",
-        "Chapter 25: Caught Elsewhere - 'We hid inside a dinosaur's lady parts. It... flatulated extensively.'",
+        {"chapter": 2, "title": "The Encounter", "teaser": "The same father who knocked me out for wanting to fly through a cloud when I was THREE"},
+        {"chapter": 4, "title": "Muster the Strength", "teaser": "I said I love pain at least TEN THOUSAND TIMES that weekend"},
+        {"chapter": 5, "title": "The Sweltering Speech", "teaser": "The captain used the PERIODIC TABLE to mathematically prove I was Jesus. I still said no."},
+        {"chapter": 7, "title": "Standing Ovation", "teaser": "A 600-sailor standing ovation... then they started calling me JESUS"},
+        {"chapter": 9, "title": "Flight School", "teaser": "My on-wing instructor was like an Air Traffic Controller with a TV remote - confused and overly confident"},
+        {"chapter": 10, "title": "The Penny", "teaser": "I bent a penny barehanded. Physics hasn't returned my calls since."},
+        {"chapter": 15, "title": "Good Boy", "teaser": "Gray aliens showed up. Their entire vocabulary? 'Drink water, good boy.' Helpful, I guess?"},
+        {"chapter": 22, "title": "The Intergalactic Superhighway", "teaser": "We flew our Chevrolet Zion spacecraft to Neptune for DINNER. Tuesday special."},
+        {"chapter": 25, "title": "Caught Elsewhere", "teaser": "We hid inside a dinosaur's lady parts. It... flatulated extensively. At maximum power."},
     ],
     
-    "review_worthy_lines": [
+    "profound_lines": [
         "My life for the last few years has been occupied by you in my heart.",
         "The universe is inside each and every one of us.",
         "Have a sense of humor, even when no one is looking.",
         "Intelligence is Love.",
         "Every person has infinite value for their graciousness, kindness, mercifulness, and friendly enthusiasm to help.",
         "Keep loving people to keep loving people.",
-    ]
+        "I found God in space. I found God in you. I found God in myself. Same difference, really.",
+        "This is a love story. It just happens to involve aliens, dinosaurs, and a lot of LSD I didn't consent to.",
+    ],
+    
+    "dad_jokes": [
+        "Why did the Navy pilot write a book? Because his stories were PLANE amazing! ✈️",
+        "What's the difference between this book and therapy? The book is cheaper AND funnier! 🛋️",
+        "How do you hide from God on an alien planet? Inside a dinosaur. Obviously. 🦕",
+        "Why did the Captain keep calling him Jesus? Because he couldn't stop turning OTHER cheeks! ✋",
+        "What do aliens and this book have in common? They're both OUT OF THIS WORLD! 👽",
+        "Why did the universe fact-check the book? Even black holes couldn't contain these plot twists! 🕳️",
+        "How many Gs did the pilot pull? Enough to make physics question its life choices! 🎢",
+        "Why bring snacks while reading? Because the laughs will burn ALL your calories! 🍿",
+        "What did the dinosaur say about John's spacecraft? 'That tickles!' 🦖",
+        "Why is this book rated for 26+? Because younger people's minds might literally explode! 🤯",
+        "What's John's dating strategy? Imagine your soulmate into existence. Worked for him! 💭",
+        "Why did aliens recommend drinking water? Because they couldn't figure out coffee makers! ☕",
+    ],
+    
+    "marketing_hooks": [
+        "From Navy Pilot Dreams to Intergalactic Dinosaur Encounters: John Selman's Wild Ride!",
+        "My Step-Mom Poisoned My Eggs... and Then the Aliens Showed Up!",
+        "You Won't BELIEVE What This Navy Officer Saw in His Hallucinations!",
+        "The Day the Captain Called Me Jesus (And My Gerbil Became a Mouse King)",
+        "Is John Selman the Universe's Personal Jesus? Or Just REALLY Good at Chemistry?",
+        "We Filmed a UFO, Then Met Aliens Who Wear ROBES WITH CROSSES?!?",
+        "Forget Space Travel; This Guy Found the Universe INSIDE Himself (And It's Also His Girlfriend)",
+        "The Most UNHINGED Navy Story You Will EVER Read (Warning: May Contain Dinosaurs)",
+        "Is Durham the REAL Messiah? Or Just a Short Guy with Purple Eyes and a Diamond Castle?",
+        "From 'Trash-O' to Interstellar Hero: John Selman's Journey to the Stars (and Dinosaur Vaginas)",
+        "The Secret to Universal Harmony? Apparently, It's a Chemistry Textbook and Perfect Toes",
+    ],
+    
+    "themes_for_newsletters": [
+        {"theme": "love_story", "angle": "The most unconventional love story ever - imagined into existence on an aircraft carrier"},
+        {"theme": "survival", "angle": "Surviving poisoning, hallucinations, and military hierarchy with humor intact"},
+        {"theme": "cosmic", "angle": "When aliens tell you to drink water, you LISTEN"},
+        {"theme": "absurdist", "angle": "Inside a dinosaur? Sure, why not. It's Tuesday."},
+        {"theme": "spiritual", "angle": "Finding God in space, in love, and in being called Jesus by your commanding officer"},
+        {"theme": "resilience", "angle": "12 days without sleep, 10 months of hallucinations, still graduated with honors"},
+    ],
+    
+    "email_subject_lines": [
+        "🚀 I Hid Inside a Dinosaur to Escape Aliens. Here's What I Learned.",
+        "👽 My Captain Called Me Jesus 12 Times. I Counted.",
+        "🥚 My Step-Mom Poisoned My Eggs. The Universe Had Other Plans.",
+        "✈️ I Did an 83° Nose Dive and LIVED. My Book Tells You How.",
+        "🦕 What Dinosaurs Teach Us About Love (No, Really)",
+        "💊 10 Months of Hallucinations Made Me Write This Book",
+        "🌌 The Universe Fact-Checked My Life. It Passed.",
+        "🛸 Aliens Only Said 5 Words to Me. I Made a Book Out of It.",
+        "⭐ 57 Amazon Reviews, 5 Stars, Zero Dinosaur Complaints",
+        "🧠 THERAPIST: 'This Is a Lot to Unpack.' ME: 'I wrote a book about it.'",
+    ],
 }
+
+# Legacy alias for backwards compatibility
+MANUSCRIPT_GOLD = MANUSCRIPT_CONTENT
 
 APP_INFO = {
     "name": "InfoPilot",
