@@ -601,6 +601,29 @@ async def activate_premium(user = Depends(get_current_user)):
     )
     return {"message": "Premium activated", "is_paid": True}
 
+@api_router.get("/subscription-info")
+async def get_subscription_info():
+    """Get subscription information for public display"""
+    # Get settings from database
+    settings_cursor = db.settings.find({})
+    settings_dict = {}
+    async for setting in settings_cursor:
+        settings_dict[setting["key"]] = setting["value"]
+    
+    return {
+        "subscription_price": settings_dict.get("subscription_price", 0.99),
+        "paypal_link": settings_dict.get("paypal_link", PAYPAL_PAYMENT_LINK)
+    }
+
+@api_router.post("/subscriptions/activate")
+async def activate_subscription(user = Depends(get_current_user)):
+    """Activate subscription after payment"""
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"is_paid": True, "payment_date": datetime.utcnow()}}
+    )
+    return {"message": "Subscription activated successfully", "is_paid": True}
+
 # ============== CATEGORY ENDPOINTS ==============
 
 @api_router.post("/categories", response_model=dict)
