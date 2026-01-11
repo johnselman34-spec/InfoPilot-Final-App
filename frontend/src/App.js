@@ -1175,7 +1175,7 @@ const SocialPage = ({ showToast }) => {
 };
 
 // ==================== MAP PAGE ====================
-const MapPage = ({ showToast }) => {
+const MapPage = ({ showToast, setCurrentPage }) => {
   const { user } = useAuth();
 
   if (!user?.is_paid && !user?.is_admin) {
