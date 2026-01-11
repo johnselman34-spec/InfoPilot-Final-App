@@ -182,6 +182,21 @@ Build a comprehensive information exchange social network application ("InfoPilo
    - Manual payment confirmation option
    - Seller sales history
 6. ✅ Admin access granted to JJSPilot24@gmail.com
+7. ✅ **SOCIAL FEATURES COMPLETE:**
+   - Feed: Create posts, view posts from groups
+   - Groups: Create, join, leave, post to groups, like posts
+   - Pages: Create, follow, like, post updates (page owners)
+   - Friends list view
+8. ✅ **SEARCH IMPROVEMENTS:**
+   - Protocol hint text updated to "keyphrase1 or keyphrase2"
+   - Category protocol editing via ✏️ button
+   - DDGS library integration for better search results
+   - More lenient protocol matching (50%+ groups OR 3+ keywords)
+9. ✅ **CODE REFACTORING (Partial):**
+   - Created /backend/utils/ module
+   - database.py - DB connection utilities
+   - auth.py - Authentication utilities
+   - Main server.py still in use (supervisor read-only)
 
 ## Pending/Backlog
 
