@@ -4961,6 +4961,206 @@ async def get_search_trends(days: int = Query(7, ge=1, le=30), user = Depends(ge
     }
 
 
+# ============== PROTOCOL TEMPLATES ==============
+
+class ProtocolTemplate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    protocol: str
+    category: Optional[str] = "General"
+    tags: Optional[List[str]] = []
+    is_public: Optional[bool] = False
+
+@api_router.get("/protocol-templates")
+async def get_protocol_templates(
+    public_only: bool = Query(False),
+    category: Optional[str] = None,
+    user = Depends(get_current_user)
+):
+    """Get user's protocol templates and optionally public templates"""
+    query = {}
+    
+    if public_only:
+        query["is_public"] = True
+    else:
+        # Get user's own templates and public ones
+        query["$or"] = [
+            {"user_id": str(user["_id"])},
+            {"is_public": True}
+        ]
+    
+    if category:
+        query["category"] = category
+    
+    templates = await db.protocol_templates.find(query).sort("created_at", -1).to_list(100)
+    
+    result = []
+    for t in templates:
+        is_owner = str(t.get("user_id")) == str(user["_id"])
+        result.append({
+            "id": str(t["_id"]),
+            "name": t["name"],
+            "description": t.get("description", ""),
+            "protocol": t["protocol"],
+            "category": t.get("category", "General"),
+            "tags": t.get("tags", []),
+            "is_public": t.get("is_public", False),
+            "is_owner": is_owner,
+            "creator_name": t.get("creator_name", "Unknown"),
+            "use_count": t.get("use_count", 0),
+            "created_at": t.get("created_at", datetime.utcnow()).isoformat()
+        })
+    
+    return {"templates": result, "total": len(result)}
+
+@api_router.post("/protocol-templates")
+async def create_protocol_template(template: ProtocolTemplate, user = Depends(get_current_user)):
+    """Create a new protocol template"""
+    # Validate protocol syntax
+    parsed = ProtocolParser.parse_protocol(template.protocol)
+    if not parsed["valid"]:
+        raise HTTPException(status_code=400, detail="Invalid protocol syntax")
+    
+    username = user.get("username", user.get("callsign", "Unknown"))
+    
+    new_template = {
+        "user_id": str(user["_id"]),
+        "creator_name": username,
+        "name": template.name,
+        "description": template.description,
+        "protocol": template.protocol,
+        "category": template.category,
+        "tags": template.tags or [],
+        "is_public": template.is_public,
+        "use_count": 0,
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.protocol_templates.insert_one(new_template)
+    
+    return {
+        "id": str(result.inserted_id),
+        "message": "Template created successfully"
+    }
+
+@api_router.put("/protocol-templates/{template_id}")
+async def update_protocol_template(
+    template_id: str,
+    template: ProtocolTemplate,
+    user = Depends(get_current_user)
+):
+    """Update a protocol template (owner only)"""
+    existing = await db.protocol_templates.find_one({"_id": ObjectId(template_id)})
+    
+    if not existing:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    if existing["user_id"] != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="You can only edit your own templates")
+    
+    # Validate protocol syntax
+    parsed = ProtocolParser.parse_protocol(template.protocol)
+    if not parsed["valid"]:
+        raise HTTPException(status_code=400, detail="Invalid protocol syntax")
+    
+    update_data = {
+        "name": template.name,
+        "description": template.description,
+        "protocol": template.protocol,
+        "category": template.category,
+        "tags": template.tags or [],
+        "is_public": template.is_public,
+        "updated_at": datetime.utcnow()
+    }
+    
+    await db.protocol_templates.update_one(
+        {"_id": ObjectId(template_id)},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Template updated successfully"}
+
+@api_router.delete("/protocol-templates/{template_id}")
+async def delete_protocol_template(template_id: str, user = Depends(get_current_user)):
+    """Delete a protocol template (owner only)"""
+    existing = await db.protocol_templates.find_one({"_id": ObjectId(template_id)})
+    
+    if not existing:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    if existing["user_id"] != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="You can only delete your own templates")
+    
+    await db.protocol_templates.delete_one({"_id": ObjectId(template_id)})
+    
+    return {"message": "Template deleted successfully"}
+
+@api_router.post("/protocol-templates/{template_id}/use")
+async def use_protocol_template(template_id: str, user = Depends(get_current_user)):
+    """Record that a template was used and return the protocol"""
+    template = await db.protocol_templates.find_one({"_id": ObjectId(template_id)})
+    
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    # Check access - must be owner or template must be public
+    if template["user_id"] != str(user["_id"]) and not template.get("is_public"):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Increment use count
+    await db.protocol_templates.update_one(
+        {"_id": ObjectId(template_id)},
+        {"$inc": {"use_count": 1}}
+    )
+    
+    return {
+        "protocol": template["protocol"],
+        "name": template["name"],
+        "message": "Template applied successfully"
+    }
+
+@api_router.get("/protocol-templates/categories")
+async def get_template_categories():
+    """Get list of template categories with counts"""
+    pipeline = [
+        {"$group": {
+            "_id": "$category",
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"count": -1}}
+    ]
+    
+    categories = await db.protocol_templates.aggregate(pipeline).to_list(50)
+    
+    return {
+        "categories": [
+            {"name": c["_id"] or "General", "count": c["count"]}
+            for c in categories
+        ]
+    }
+
+@api_router.get("/protocol-templates/popular")
+async def get_popular_templates(limit: int = Query(10, ge=1, le=50)):
+    """Get most used public templates"""
+    templates = await db.protocol_templates.find(
+        {"is_public": True}
+    ).sort("use_count", -1).limit(limit).to_list(limit)
+    
+    result = []
+    for t in templates:
+        result.append({
+            "id": str(t["_id"]),
+            "name": t["name"],
+            "description": t.get("description", ""),
+            "protocol": t["protocol"],
+            "category": t.get("category", "General"),
+            "creator_name": t.get("creator_name", "Unknown"),
+            "use_count": t.get("use_count", 0)
+        })
+    
+    return {"templates": result}
+
+
 # ============== HEALTH CHECK ==============
 
 @api_router.get("/")
