@@ -1620,6 +1620,91 @@ const UltimateSearchPage = ({ showToast }) => {
           </div>
         </div>
       )}
+
+      {/* Edit Category Protocol Modal */}
+      {editingCategory && (
+        <div className="modal-overlay" onClick={() => setEditingCategory(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
+            <div className="modal-header">
+              <h2>Edit Protocol: {editingCategory.name}</h2>
+              <button className="modal-close" onClick={() => setEditingCategory(null)}>×</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+              <div style={{ 
+                background: 'rgba(124, 58, 237, 0.1)', 
+                padding: 15, 
+                borderRadius: 10,
+                borderLeft: '4px solid #7c3aed'
+              }}>
+                <p style={{ color: '#a1a1aa', fontSize: '0.85rem', marginBottom: 8 }}>
+                  <strong>Category:</strong> {editingCategory.name}
+                </p>
+                <p style={{ color: '#a1a1aa', fontSize: '0.85rem' }}>
+                  <strong>Current Protocol:</strong>
+                </p>
+                <code style={{ 
+                  display: 'block',
+                  background: 'rgba(0,0,0,0.3)', 
+                  padding: 10, 
+                  borderRadius: 6,
+                  color: '#10b981',
+                  fontSize: '0.8rem',
+                  wordBreak: 'break-all',
+                  marginTop: 5
+                }}>
+                  {editingCategory.protocol || '(no protocol set)'}
+                </code>
+              </div>
+              
+              <label style={{ color: '#f472b6', fontWeight: 600 }}>New Protocol:</label>
+              <textarea
+                className="input"
+                placeholder="Enter new protocol (e.g., (keyphrase1 or keyphrase2) & (keyphrase3)+)"
+                rows={5}
+                value={editProtocol}
+                onChange={(e) => setEditProtocol(e.target.value)}
+                style={{ resize: 'vertical', fontFamily: 'monospace' }}
+                data-testid="edit-protocol-input"
+              />
+              
+              <div style={{ 
+                background: 'rgba(16, 185, 129, 0.1)', 
+                padding: 12, 
+                borderRadius: 8,
+                fontSize: '0.8rem',
+                color: '#a1a1aa'
+              }}>
+                <p style={{ marginBottom: 8 }}><strong>Protocol Syntax Guide:</strong></p>
+                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                  <li><code>(word1 or word2)</code> - Match ANY word (OR logic)</li>
+                  <li><code>(word1 or word2)+</code> - Match ALL words (INCLUDE ALL)</li>
+                  <li><code>(word1 or word2)^</code> - Exclude ALL words (EXCLUDE ALL)</li>
+                  <li><code>&</code> - Combine groups (AND between groups)</li>
+                  <li><code>"multi word phrase"</code> - Match exact phrase</li>
+                </ul>
+              </div>
+              
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => setEditingCategory(null)}
+                  style={{ flex: 1 }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={saveProtocol}
+                  style={{ flex: 1 }}
+                  data-testid="save-protocol-btn"
+                >
+                  Save Protocol
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
