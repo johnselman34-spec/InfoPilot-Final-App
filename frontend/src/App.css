@@ -1215,3 +1215,205 @@ body {
 .mobile-menu-toggle {
   display: none;
 }
+
+/* ==================== ENHANCED MOBILE RESPONSIVENESS ==================== */
+
+/* Mobile Sidebar */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    width: 280px;
+    top: 56px;
+    height: calc(100vh - 56px);
+    z-index: 45;
+  }
+  
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    padding-top: 70px !important;
+  }
+  
+  /* Hide book promo in sidebar on mobile */
+  .sidebar > div:last-child {
+    display: none;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .btn, .sidebar-nav-item, .card {
+    min-height: 44px;
+  }
+  
+  .sidebar-nav-item {
+    padding: 14px 16px;
+  }
+  
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+}
+
+/* ==================== PWA STYLES ==================== */
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  .app-container {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+  
+  .main-content {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Standalone mode (when installed as PWA) */
+@media all and (display-mode: standalone) {
+  .sidebar {
+    padding-top: max(20px, env(safe-area-inset-top));
+  }
+}
+
+/* ==================== NOTIFICATION STYLES ==================== */
+
+/* Notification dropdown animation */
+.notification-dropdown-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.notification-dropdown-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.notification-dropdown-exit {
+  opacity: 1;
+}
+
+.notification-dropdown-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 150ms ease-in, transform 150ms ease-in;
+}
+
+/* Unread notification indicator pulse */
+@keyframes notification-pulse {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.4);
+  }
+  50% { 
+    transform: scale(1.05);
+    box-shadow: 0 0 0 6px rgba(236, 72, 153, 0);
+  }
+}
+
+.notification-badge-pulse {
+  animation: notification-pulse 2s infinite;
+}
+
+/* ==================== DATA EXPORT STYLES ==================== */
+
+.export-card {
+  background: linear-gradient(135deg, rgba(30, 20, 50, 0.9), rgba(15, 10, 30, 0.95));
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.export-stat {
+  background: rgba(124, 58, 237, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.export-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--blazing-pink), var(--primary-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==================== IMPROVED TABLET LAYOUT ==================== */
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar {
+    width: 240px;
+    padding: 15px;
+  }
+  
+  .main-content {
+    margin-left: 240px;
+    padding: 20px;
+  }
+  
+  .sidebar-logo h1 {
+    font-size: 1.5rem;
+  }
+  
+  .sidebar-nav-item {
+    font-size: 0.85rem;
+    padding: 10px 12px;
+  }
+}
+
+/* ==================== LANDSCAPE MOBILE ==================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .sidebar {
+    padding: 10px;
+  }
+  
+  .sidebar-logo {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+  }
+  
+  .sidebar-logo h1 {
+    font-size: 1.3rem;
+  }
+  
+  .sidebar-nav-item {
+    padding: 8px 12px;
+  }
+}
+
+/* ==================== ACCESSIBILITY ==================== */
+
+/* Focus visible styles for keyboard navigation */
+.btn:focus-visible,
+.sidebar-nav-item:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--blazing-pink);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark mode support (already dark, but explicit) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
