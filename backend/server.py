@@ -21,10 +21,14 @@ import resend
 
 # DuckDuckGo Search library for better results
 try:
-    from duckduckgo_search import DDGS
+    from ddgs import DDGS
     DDGS_AVAILABLE = True
 except ImportError:
-    DDGS_AVAILABLE = False
+    try:
+        from duckduckgo_search import DDGS
+        DDGS_AVAILABLE = True
+    except ImportError:
+        DDGS_AVAILABLE = False
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
