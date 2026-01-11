@@ -467,3 +467,99 @@ async def get_online_status(user_ids: str = None):
     return {
         "online_users": [uid for uid in requested_ids if uid in online_ids]
     }
+
+
+# ==================== PUSH NOTIFICATION ENDPOINTS ====================
+
+class PushSubscriptionData(BaseModel):
+    """Push subscription data from browser"""
+    subscription: dict
+
+@router.post("/push/subscribe")
+async def subscribe_push(
+    data: PushSubscriptionData,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Subscribe to push notifications"""
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    user = await get_user_from_token(credentials.credentials)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    user_id = str(user["_id"])
+    
+    # Store or update push subscription
+    await db.push_subscriptions.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "user_id": user_id,
+                "subscription": data.subscription,
+                "updated_at": datetime.utcnow()
+            }
+        },
+        upsert=True
+    )
+    
+    return {"success": True, "message": "Push subscription saved"}
+
+
+@router.post("/push/unsubscribe")
+async def unsubscribe_push(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Unsubscribe from push notifications"""
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    user = await get_user_from_token(credentials.credentials)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    await db.push_subscriptions.delete_one({"user_id": str(user["_id"])})
+    
+    return {"success": True, "message": "Push subscription removed"}
+
+
+@router.post("/push/test")
+async def send_test_push(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Send a test push notification to the user"""
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    user = await get_user_from_token(credentials.credentials)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    # Create a test notification in the database
+    await create_notification(
+        user_id=str(user["_id"]),
+        notification_type="test",
+        title="Test Notification",
+        message="Push notifications are working! You'll receive alerts for important updates.",
+        link="/settings",
+        data={"test": True}
+    )
+    
+    return {"success": True, "message": "Test notification sent"}
+
+
+@router.get("/push/status")
+async def get_push_status(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get user's push notification subscription status"""
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    user = await get_user_from_token(credentials.credentials)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    subscription = await db.push_subscriptions.find_one({"user_id": str(user["_id"])})
+    
+    return {
+        "subscribed": subscription is not None,
+        "updated_at": subscription["updated_at"].isoformat() if subscription else None
+    }
+
+
+from pydantic import BaseModel
