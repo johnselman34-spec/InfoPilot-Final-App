@@ -221,6 +221,11 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
             <button className="btn btn-primary" onClick={() => setCurrentPage('subscribe')} data-testid="upgrade-premium-btn">Subscribe - Pay What You Want</button>
           </div>
         )}
+
+        {/* Data Export Section */}
+        <div style={{ marginTop: 20 }}>
+          <DataExport showToast={showToast} />
+        </div>
       </div>
     </div>
   );
