@@ -904,15 +904,25 @@ class WebSearchService:
         """
         Perform web search using MULTIPLE sources with PAGINATION
         Returns deduplicated results with content enrichment
-        Now supports up to 99 pages of results - targeting HUNDREDS of results
+        Now uses DDGS library as primary source for MAXIMUM results
         """
         all_results = []
         seen_urls = set()
         
         try:
-            # Run ALL search sources in parallel for maximum coverage
             logger.info(f"Starting aggressive search for: {query}")
             
+            # Primary: Use DDGS library (most reliable)
+            if DDGS_AVAILABLE:
+                ddgs_results = await WebSearchService.search_ddgs_library(query, min(200, num_results))
+                for result in ddgs_results:
+                    url = result.get("url", "")
+                    if url and url not in seen_urls:
+                        seen_urls.add(url)
+                        all_results.append(result)
+                logger.info(f"DDGS library contributed {len(ddgs_results)} results")
+            
+            # Secondary: Run scrapers for additional results
             ddg_task = WebSearchService.search_duckduckgo(query, min(200, num_results))
             bing_task = WebSearchService.search_bing_scrape(query, min(150, num_results))
             google_task = WebSearchService.search_google_scrape(query, min(100, num_results))
@@ -924,10 +934,25 @@ class WebSearchService:
                 return_exceptions=True
             )
             
-            # Process all results
-            source_names = ["DuckDuckGo", "Bing", "Google"]
+            # Process all scraper results
+            source_names = ["DuckDuckGo Scrape", "Bing", "Google"]
             for i, source_results in enumerate(results):
                 if isinstance(source_results, list):
+                    added = 0
+                    for result in source_results:
+                        url = result.get("url", "")
+                        if url and url not in seen_urls:
+                            seen_urls.add(url)
+                            all_results.append(result)
+                            added += 1
+                    logger.info(f"{source_names[i]} contributed {added} unique results")
+                else:
+                    logger.error(f"{source_names[i]} error: {source_results}")
+            
+            logger.info(f"Total unique results from all sources: {len(all_results)}")
+            
+        except Exception as e:
+            logger.error(f"Search aggregation error: {e}")
                     for result in source_results:
                         url = result.get("url", "")
                         if url and url not in seen_urls:
