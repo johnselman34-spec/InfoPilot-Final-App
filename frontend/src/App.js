@@ -535,7 +535,31 @@ const UltimateSearchPage = ({ showToast }) => {
               </p>
             ) : (
               searchResults.map(result => (
-                <div key={result.id} className="result-card">
+                <div key={result.id} className="result-card" style={{ position: 'relative' }}>
+                  {/* Delete button - visible for user's own results or admin */}
+                  <button
+                    onClick={() => deleteResult(result.id)}
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      borderRadius: 6,
+                      padding: '4px 8px',
+                      color: '#f87171',
+                      fontSize: '0.7rem',
+                      cursor: 'pointer',
+                      opacity: 0.7,
+                      transition: 'opacity 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.opacity = 1}
+                    onMouseLeave={(e) => e.target.style.opacity = 0.7}
+                    title="Delete this result"
+                    data-testid={`delete-result-${result.id}`}
+                  >
+                    ✕
+                  </button>
                   <h3>
                     <a href={result.url} target="_blank" rel="noopener noreferrer">
                       {result.title}
