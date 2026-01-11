@@ -2603,6 +2603,232 @@ async def validate_protocol(protocol: str = Body(..., embed=True)):
         "explanation": "Each group contains items that will be matched. Modifiers: + = ALL must match, ^ = NONE must match, none = ANY must match"
     }
 
+# ============== PROTOCOL MARKETPLACE ==============
+
+# Marketplace settings
+MARKETPLACE_PLATFORM_FEE = 0.10  # 10% platform fee, 90% to creators
+MARKETPLACE_MIN_PRICE = 0.99
+MARKETPLACE_MAX_PRICE = 99.99
+
+class MarketplaceProtocolCreate(BaseModel):
+    name: str
+    description: str
+    protocol: str
+    price: float = 0.99
+    category: str = "General"
+    tags: List[str] = []
+
+class MarketplacePurchase(BaseModel):
+    protocol_id: str
+    payment_id: str
+
+class ProtocolReviewCreate(BaseModel):
+    protocol_id: str
+    rating: int
+    review: Optional[str] = None
+
+@api_router.get("/marketplace/protocols")
+async def list_marketplace_protocols(
+    category: Optional[str] = None,
+    sort: str = Query("popular"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    user = Depends(get_optional_user)
+):
+    """List all available protocols in the marketplace"""
+    query = {"status": "active"}
+    
+    if category:
+        query["category"] = category
+    
+    sort_options = {
+        "popular": [("total_sales", -1), ("created_at", -1)],
+        "newest": [("created_at", -1)],
+        "price_low": [("price", 1)],
+        "price_high": [("price", -1)],
+        "rating": [("rating", -1), ("review_count", -1)]
+    }
+    
+    sort_by = sort_options.get(sort, [("total_sales", -1)])
+    skip = (page - 1) * limit
+    
+    protocols = await db.marketplace_protocols.find(query).sort(sort_by).skip(skip).limit(limit).to_list(limit)
+    total = await db.marketplace_protocols.count_documents(query)
+    
+    user_purchases = set()
+    if user:
+        purchases = await db.marketplace_purchases.find({"user_id": str(user["_id"])}).to_list(1000)
+        user_purchases = {p["protocol_id"] for p in purchases}
+    
+    formatted = []
+    for p in protocols:
+        formatted.append({
+            "id": str(p["_id"]),
+            "name": p["name"],
+            "description": p["description"],
+            "protocol": p["protocol"] if str(p["_id"]) in user_purchases or (user and str(user["_id"]) == p.get("creator_id")) else None,
+            "price": p["price"],
+            "category": p["category"],
+            "tags": p.get("tags", []),
+            "creator_id": p.get("creator_id"),
+            "creator_name": p.get("creator_name", "Anonymous"),
+            "total_sales": p.get("total_sales", 0),
+            "rating": p.get("rating", 0),
+            "review_count": p.get("review_count", 0),
+            "created_at": p["created_at"].isoformat() if p.get("created_at") else None,
+            "is_featured": p.get("is_featured", False),
+            "is_owned": str(p["_id"]) in user_purchases or (user and str(user["_id"]) == p.get("creator_id"))
+        })
+    
+    return {"protocols": formatted, "total": total, "page": page, "pages": (total + limit - 1) // limit}
+
+@api_router.post("/marketplace/protocols")
+async def create_marketplace_protocol(protocol: MarketplaceProtocolCreate, user = Depends(get_current_user)):
+    """List a new protocol for sale"""
+    if protocol.price < MARKETPLACE_MIN_PRICE or protocol.price > MARKETPLACE_MAX_PRICE:
+        raise HTTPException(status_code=400, detail=f"Price must be between ${MARKETPLACE_MIN_PRICE} and ${MARKETPLACE_MAX_PRICE}")
+    
+    parsed = ProtocolParser.parse_protocol(protocol.protocol)
+    if not parsed["valid"]:
+        raise HTTPException(status_code=400, detail="Invalid protocol format")
+    
+    listing = {
+        "name": protocol.name,
+        "description": protocol.description,
+        "protocol": protocol.protocol,
+        "price": protocol.price,
+        "category": protocol.category,
+        "tags": protocol.tags,
+        "creator_id": str(user["_id"]),
+        "creator_name": user.get("username", "Anonymous"),
+        "total_sales": 0,
+        "total_revenue": 0,
+        "creator_earnings": 0,
+        "rating": 0,
+        "review_count": 0,
+        "status": "active",
+        "is_featured": False,
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.marketplace_protocols.insert_one(listing)
+    
+    return {"id": str(result.inserted_id), "message": "Protocol listed successfully!", "name": listing["name"], "price": listing["price"]}
+
+@api_router.post("/marketplace/purchase")
+async def purchase_protocol(purchase: MarketplacePurchase, user = Depends(get_current_user)):
+    """Purchase a protocol"""
+    protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(purchase.protocol_id)})
+    
+    if not protocol:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    
+    if protocol.get("creator_id") == str(user["_id"]):
+        raise HTTPException(status_code=400, detail="You cannot purchase your own protocol")
+    
+    existing = await db.marketplace_purchases.find_one({
+        "protocol_id": purchase.protocol_id,
+        "user_id": str(user["_id"])
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="You already own this protocol")
+    
+    price = protocol["price"]
+    creator_earnings = price * (1 - MARKETPLACE_PLATFORM_FEE)
+    
+    purchase_record = {
+        "protocol_id": purchase.protocol_id,
+        "user_id": str(user["_id"]),
+        "payment_id": purchase.payment_id,
+        "price": price,
+        "creator_earnings": creator_earnings,
+        "status": "completed",
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.marketplace_purchases.insert_one(purchase_record)
+    
+    await db.marketplace_protocols.update_one(
+        {"_id": ObjectId(purchase.protocol_id)},
+        {"$inc": {"total_sales": 1, "total_revenue": price, "creator_earnings": creator_earnings}}
+    )
+    
+    return {"success": True, "message": "Protocol purchased!", "protocol": protocol["protocol"], "name": protocol["name"]}
+
+@api_router.get("/marketplace/purchases")
+async def get_my_purchases(user = Depends(get_current_user)):
+    """Get purchased protocols"""
+    purchases = await db.marketplace_purchases.find({"user_id": str(user["_id"])}).to_list(1000)
+    
+    protocols = []
+    for p in purchases:
+        protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(p["protocol_id"])})
+        if protocol:
+            protocols.append({
+                "id": str(protocol["_id"]),
+                "name": protocol["name"],
+                "protocol": protocol["protocol"],
+                "category": protocol["category"],
+                "purchased_at": p["created_at"].isoformat(),
+                "price_paid": p["price"]
+            })
+    
+    return {"purchases": protocols, "count": len(protocols)}
+
+@api_router.get("/marketplace/seller/dashboard")
+async def get_seller_dashboard(user = Depends(get_current_user)):
+    """Get seller stats"""
+    protocols = await db.marketplace_protocols.find({"creator_id": str(user["_id"])}).to_list(1000)
+    
+    total_sales = 0
+    total_revenue = 0
+    total_earnings = 0
+    
+    listings = []
+    for p in protocols:
+        sales = p.get("total_sales", 0)
+        revenue = p.get("total_revenue", 0)
+        earnings = p.get("creator_earnings", 0)
+        
+        total_sales += sales
+        total_revenue += revenue
+        total_earnings += earnings
+        
+        listings.append({
+            "id": str(p["_id"]),
+            "name": p["name"],
+            "price": p["price"],
+            "sales": sales,
+            "revenue": revenue,
+            "earnings": earnings,
+            "rating": p.get("rating", 0),
+            "status": p.get("status", "active"),
+            "created_at": p["created_at"].isoformat() if p.get("created_at") else None
+        })
+    
+    return {
+        "total_listings": len(protocols),
+        "total_sales": total_sales,
+        "total_revenue": total_revenue,
+        "total_earnings": total_earnings,
+        "platform_fee_rate": MARKETPLACE_PLATFORM_FEE * 100,
+        "listings": listings
+    }
+
+@api_router.get("/marketplace/categories")
+async def get_marketplace_categories():
+    """Get marketplace categories with counts"""
+    pipeline = [
+        {"$match": {"status": "active"}},
+        {"$group": {"_id": "$category", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]
+    
+    result = await db.marketplace_protocols.aggregate(pipeline).to_list(100)
+    
+    return {"categories": [{"name": r["_id"], "count": r["count"]} for r in result]}
+
 # ============== HEALTH CHECK ==============
 
 @api_router.get("/")
