@@ -206,14 +206,12 @@ const UltimateSearchPage = ({ showToast }) => {
         body: JSON.stringify(requestBody)
       });
       
-      const resClone = res.clone();
-      
+      const responseText = await res.text();
       let data;
       try {
-        data = await res.json();
+        data = responseText ? JSON.parse(responseText) : {};
       } catch (jsonError) {
-        const text = await resClone.text();
-        console.error('Response parsing error:', text);
+        console.error('Response parsing error:', responseText);
         throw new Error(`Server returned invalid response: ${res.status}`);
       }
       
