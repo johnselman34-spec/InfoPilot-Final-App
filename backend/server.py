@@ -1597,12 +1597,13 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
             ]
             collated_results.append(search_result_doc)
     
-    logger.info(f"Collated {len(collated_results)} of {len(request.search_results)} results for user {user['_id']}")
+    logger.info(f"Collated {len(collated_results)} of {len(request.search_results)} results for user {user['_id']} (batch: {batch_id})")
     
     return {
         "collated_count": len(collated_results),
         "total_searched": len(request.search_results),
-        "results": collated_results
+        "results": collated_results,
+        "batch_id": batch_id  # Return batch_id for deletion tracking
     }
 
 # ============== ULTIMATE SEARCH PAGE ENDPOINTS ==============
