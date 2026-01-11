@@ -299,7 +299,6 @@ const AuthCallback = () => {
   const { loginWithGoogle } = useAuth();
   const hasProcessed = useRef(false);
   const [error, setError] = useState(null);
-  const [processing, setProcessing] = useState(true);
 
   useEffect(() => {
     // Prevent double processing in StrictMode
@@ -310,54 +309,54 @@ const AuthCallback = () => {
       try {
         // Get session_id from URL fragment
         const hash = window.location.hash;
+        console.log('Processing OAuth callback, hash:', hash);
+        
         const sessionId = hash.split('session_id=')[1]?.split('&')[0];
         
         if (!sessionId) {
-          setError('No session ID found in URL');
-          setProcessing(false);
-          setTimeout(() => {
-            window.history.replaceState(null, '', window.location.pathname);
-            window.location.reload();
-          }, 2000);
-          return;
+          throw new Error('No session ID found in URL');
         }
 
-        console.log('Processing session ID:', sessionId);
+        console.log('Session ID:', sessionId);
 
         // Fetch user data from Emergent Auth
         const response = await fetch('https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data', {
           method: 'GET',
           headers: {
-            'X-Session-ID': sessionId,
-            'Content-Type': 'application/json'
+            'X-Session-ID': sessionId
           }
         });
 
+        console.log('Session data response status:', response.status);
+
         if (!response.ok) {
-          const errorText = await response.text();
+          const errorText = await response.text().catch(() => 'Unknown error');
           console.error('Session data fetch failed:', response.status, errorText);
-          throw new Error(`Failed to get session data: ${response.status}`);
+          throw new Error(`Failed to verify Google session (${response.status})`);
         }
 
         const userData = await response.json();
-        console.log('Got user data:', userData);
+        console.log('Got user data from Emergent:', userData);
+        
+        // Validate we have required fields
+        if (!userData.email || !userData.id) {
+          throw new Error('Invalid user data received from Google');
+        }
         
         // Login with our backend
         await loginWithGoogle(userData);
         
-        // Clear the hash and redirect - successful login
+        // Clear the hash - successful login will trigger re-render with user
         window.history.replaceState(null, '', window.location.pathname);
-        window.location.reload();
         
       } catch (err) {
         console.error('Auth callback error:', err);
         // Safely extract error message as string
-        const errorMessage = err && typeof err === 'object' && err.message 
-          ? String(err.message) 
-          : 'Authentication failed';
+        const errorMessage = typeof err === 'string' 
+          ? err 
+          : (err && err.message ? String(err.message) : 'Authentication failed');
         setError(errorMessage);
-        setProcessing(false);
-        // Clear hash and go back to login
+        // Clear hash and go back to login after delay
         setTimeout(() => {
           window.history.replaceState(null, '', window.location.pathname);
           window.location.reload();
@@ -366,7 +365,7 @@ const AuthCallback = () => {
     };
 
     processAuth();
-  }, []); // Empty dependency array - only run once
+  }, []); // Empty dependency array - only run once on mount
 
   if (error) {
     return (
