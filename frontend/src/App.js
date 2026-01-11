@@ -1902,7 +1902,10 @@ function SettingsPage() {
           <p>We encourage you to keep your Ultimate Search Page private for security.</p>
         </div>
 
-        <div className="section-title" style={{marginTop: 24}}>About</div>
+        <div className="section-title" style={{marginTop: 24}}>From the Creator</div>
+        <BookPromoSection variant="compact" />
+
+        <div className="section-title">About</div>
         <div className="about-item"><Icons.Info /><span>About InfoPilot</span><Icons.ChevronRight /></div>
         <div className="about-item"><Icons.Globe /><span>Tutorial Video</span><Icons.ChevronRight /></div>
         <div className="about-item"><Icons.Shield /><span>Privacy Policy</span><Icons.ChevronRight /></div>
