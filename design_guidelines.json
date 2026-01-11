@@ -1,0 +1,123 @@
+{
+  "brand_identity": {
+    "name": "InfoPilot",
+    "tagline": "Navigate the Infinite Information Universe",
+    "voice": "Prodigious, Marvelous, Dazzling, Futuristic, Authoritative yet Magical",
+    "emotional_tone": "A fusion of high-tech precision and deep, mysterious wonder. Think 'Interstellar' meets 'Cyberpunk' but with a romantic, literary soul.",
+    "design_archetype": "The Galactic Archivist",
+    "key_visual_metaphor": "The Cockpit of a Starship navigating a Nebula of Knowledge"
+  },
+  "color_palette": {
+    "primary": {
+      "blazing_pink": "#F43F5E",
+      "cool_pink": "#EC4899",
+      "electric_purple": "#8B5CF6",
+      "deep_red": "#9F1239",
+      "cool_blue": "#3B82F6"
+    },
+    "background": {
+      "void_black": "#050510",
+      "deep_indigo": "#0F172A",
+      "glass_panel": "rgba(15, 23, 42, 0.6)"
+    },
+    "text": {
+      "primary": "#F8FAFC",
+      "secondary": "#94A3B8",
+      "accent": "#F472B6"
+    },
+    "gradients": {
+      "primary_action": "linear-gradient(135deg, #F43F5E 0%, #8B5CF6 100%)",
+      "hero_glow": "radial-gradient(circle at center, rgba(139, 92, 246, 0.3) 0%, rgba(5, 5, 16, 0) 70%)",
+      "card_border": "linear-gradient(to bottom right, rgba(255,255,255,0.2), rgba(255,255,255,0.05))"
+    }
+  },
+  "typography": {
+    "headings": {
+      "font_family": "Outfit, sans-serif",
+      "weights": ["600", "700", "800"],
+      "usage": "All section titles, hero text, and major labels. Use tight tracking."
+    },
+    "body": {
+      "font_family": "Manrope, sans-serif",
+      "weights": ["400", "500"],
+      "usage": "Paragraphs, data tables, inputs."
+    },
+    "logo": {
+      "font_family": "Unbounded, display",
+      "weights": ["700"],
+      "usage": "The 'InfoPilot' brand name only."
+    }
+  },
+  "layout_strategy": {
+    "global": "Mobile-first responsive. Use 'Bento Grid' layouts for dashboards. Avoid standard vertical scrolling lists where possible; use masonry or grid layouts.",
+    "container_style": "Glassmorphism is MANDATORY. Every card should look like a piece of high-tech glass floating in space.",
+    "spacing": "Generous. Use p-6 or p-8 for cards. Gap-6 or Gap-8 for grids.",
+    "navigation": "Floating Sidebar (Glass) on Desktop, Bottom Bar (Glass) on Mobile."
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-gradient-to-r from-rose-500 to-purple-600 text-white rounded-full shadow-[0_0_20px_rgba(244,63,94,0.5)] hover:shadow-[0_0_30px_rgba(244,63,94,0.7)] transition-all duration-300 font-bold tracking-wide uppercase text-sm py-3 px-8",
+      "secondary": "bg-white/5 border border-white/10 text-white rounded-full hover:bg-white/10 transition-all backdrop-blur-md"
+    },
+    "cards": {
+      "base": "bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl overflow-hidden relative group",
+      "hover_effect": "group-hover:border-purple-500/50 transition-colors duration-300"
+    },
+    "inputs": {
+      "style": "bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+    },
+    "search_bar": {
+      "style": "bg-slate-900/80 border border-purple-500/30 rounded-full px-6 py-4 text-lg shadow-[0_0_30px_rgba(139,92,246,0.2)] focus-within:shadow-[0_0_50px_rgba(139,92,246,0.4)] focus-within:border-purple-500 transition-all w-full max-w-2xl mx-auto"
+    }
+  },
+  "visual_enhancers": {
+    "background_image": "https://images.unsplash.com/photo-1650365449083-b3113ff48337?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "textures": "Add a subtle noise texture overlay (opacity 0.03) to the entire app to give it a 'film' grain look.",
+    "glows": "Use colored blurs behind major elements (Hero, Active Cards) to create depth."
+  },
+  "assets": {
+    "hero_bg": "https://images.unsplash.com/photo-1650365449083-b3113ff48337?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "book_cover_placeholder": "https://images.unsplash.com/photo-1726124616200-8cdf502b4f60?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "map_preview": "https://images.unsplash.com/photo-1639060015191-9d83063eab2a?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "user_avatar_default": "https://images.unsplash.com/photo-1740252117027-4275d3f84385?crop=entropy&cs=srgb&fm=jpg&q=85"
+  },
+  "tailwind_config": {
+    "theme": {
+      "extend": {
+        "colors": {
+          "brand": {
+            "pink": "#F43F5E",
+            "purple": "#8B5CF6",
+            "dark": "#050510",
+            "glass": "rgba(255, 255, 255, 0.05)"
+          }
+        },
+        "fontFamily": {
+          "sans": ["Manrope", "sans-serif"],
+          "heading": ["Outfit", "sans-serif"],
+          "display": ["Unbounded", "sans-serif"]
+        },
+        "backgroundImage": {
+          "nebula": "url('https://images.unsplash.com/photo-1650365449083-b3113ff48337?crop=entropy&cs=srgb&fm=jpg&q=85')"
+        }
+      }
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. INSTALL TAILWIND: Ensure Tailwind CSS is properly configured. If tailwind.config.js is missing, create it with the config provided above.",
+    "2. GLOBAL CSS: Replace the contents of 'App.css' and 'index.css' to remove all legacy white/gray styles. Set the body background to #050510 and text to white.",
+    "3. FONTS: Import 'Outfit', 'Manrope', and 'Unbounded' from Google Fonts in index.css.",
+    "4. GLASSMORPHISM: Apply the 'glass-panel' style to the Sidebar, Header, and all Cards.",
+    "5. BOOK PROMO: Create a dedicated, high-impact section for 'Letters to Evelyn' using the placeholder cover and a 'Glowing Shrine' effect.",
+    "6. MAP: For the Map page, use a dark-mode map tile provider (e.g., CartoDB Dark Matter) to match the theme.",
+    "7. SOCIAL: Redesign the feed to look like a futuristic HUD (Heads Up Display).",
+    "8. DATA-TESTID: Ensure all interactive elements have data-testid attributes."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Do not use default 'SaaS Blue'. Use the Brand Pink/Purple gradients.",
+    "Do not use pure white backgrounds. Use dark slate/indigo with glass effects.",
+    "Animations are mandatory for hover states (scale up, glow intensity increase).",
+    "Use 'sonner' for notifications.",
+    "Keep the UI 'Dazzling' - err on the side of too much visual interest rather than too little."
+  ]
+}
