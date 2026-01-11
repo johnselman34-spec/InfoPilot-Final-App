@@ -28,14 +28,14 @@ Build a comprehensive information exchange social network application ("InfoPilo
 ├── server.py          # Main FastAPI app (2303 lines - reduced from 5219)
 ├── config.py          # Central configuration & DB connection
 ├── routes/            # Modular API routers
-│   ├── auth.py        # Authentication endpoints
+│   ├── auth.py        # Authentication endpoints (Google OAuth fixed)
 │   ├── admin.py       # Admin panel endpoints
 │   ├── categories.py  # Category CRUD
 │   ├── marketplace.py # Protocol marketplace
 │   ├── search.py      # Search & collation
 │   ├── social.py      # Groups, Pages, Posts
-│   ├── notifications.py  # **NEW** Real-time WebSocket notifications
-│   └── export.py         # **NEW** User data export (JSON/CSV)
+│   ├── notifications.py  # Real-time WebSocket + Push notifications
+│   └── export.py         # User data export (JSON/CSV)
 ├── services/          # Business logic services
 │   ├── auth_service.py
 │   ├── email_service.py
@@ -52,16 +52,14 @@ Build a comprehensive information exchange social network application ("InfoPilo
 ├── pages/             # All page components
 ├── components/        # Reusable UI components
 │   └── shared/
-│       ├── NotificationBell.js  # **NEW** Real-time notification UI
-│       └── DataExport.js        # **NEW** Data export panel
+│       ├── NotificationBell.js   # Real-time notification UI
+│       ├── DataExport.js         # Data export panel
+│       └── PushNotifications.js  # **NEW** Push notification settings
 ├── contexts/          # React contexts
 └── utils/             # Utilities
 /app/frontend/public/
-├── manifest.json      # **NEW** PWA Web App Manifest
-└── sw.js              # **NEW** Service Worker for offline support
-```
-├── contexts/          # React contexts
-└── utils/             # Utilities
+├── manifest.json      # PWA Web App Manifest
+└── sw.js              # Service Worker (v2 with push support)
 ```
 
 ## Key Features Implemented
