@@ -748,68 +748,6 @@ class WebSearchService:
         
         return {"title": "", "description": "", "content": ""}
     
-    @staticmethod
-    async def search(query: str, num_results: int = 30) -> List[Dict[str, Any]]:
-        """
-        Perform comprehensive web search using multiple sources
-        Returns deduplicated results from all available sources
-        """
-        all_results = []
-        seen_urls = set()
-        
-        # Run searches in parallel
-        try:
-            ddg_task = WebSearchService.search_duckduckgo(query, num_results)
-            google_task = WebSearchService.search_google_scrape(query, num_results // 2)
-            
-            ddg_results, google_results = await asyncio.gather(
-                ddg_task, 
-                google_task,
-                return_exceptions=True
-            )
-            
-            # Process DuckDuckGo results
-            if isinstance(ddg_results, list):
-                for result in ddg_results:
-                    if result["url"] not in seen_urls:
-                        seen_urls.add(result["url"])
-                        all_results.append(result)
-            
-            # Process Google results
-            if isinstance(google_results, list):
-                for result in google_results:
-                    if result["url"] not in seen_urls:
-                        seen_urls.add(result["url"])
-                        all_results.append(result)
-            
-        except Exception as e:
-            logger.error(f"Search aggregation error: {e}")
-        
-        # If we got results, try to enrich some with content
-        if all_results:
-            # Fetch content for top results (limit to avoid timeout)
-            tasks = []
-            for result in all_results[:10]:
-                if not result.get("content"):
-                    tasks.append(WebSearchService.fetch_page_content(result["url"]))
-            
-            if tasks:
-                try:
-                    contents = await asyncio.gather(*tasks, return_exceptions=True)
-                    for i, content in enumerate(contents):
-                        if isinstance(content, dict) and i < len(all_results):
-                            if content.get("title"):
-                                all_results[i]["title"] = content["title"]
-                            if content.get("content"):
-                                all_results[i]["content"] = content["content"]
-                            if content.get("description"):
-                                all_results[i]["snippet"] = content["description"]
-                except Exception as e:
-                    logger.debug(f"Content enrichment error: {e}")
-        
-        logger.info(f"Search for '{query}' returned {len(all_results)} results")
-        return all_results[:num_results]
-
 # ============== AUTH ENDPOINTS ==============
 
 @api_router.post("/auth/register", response_model=dict)
