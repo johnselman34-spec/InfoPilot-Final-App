@@ -238,6 +238,12 @@ const RegisterPage = ({ onSwitch }) => {
     setLoading(false);
   };
 
+  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+  const handleGoogleLogin = () => {
+    const redirectUrl = window.location.origin;
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -276,13 +282,92 @@ const RegisterPage = ({ onSwitch }) => {
           </button>
         </form>
         <div className="auth-divider"><span>or</span></div>
-        <button className="google-btn">
+        <button className="google-btn" onClick={handleGoogleLogin}>
           <img src="https://www.google.com/favicon.ico" alt="Google" style={{ width: 20 }} />
           Continue with Google
         </button>
         <div className="auth-footer">
           Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); onSwitch(); }}>Sign In</a>
         </div>
+      </div>
+    </div>
+  );
+};
+
+// ==================== AUTH CALLBACK (Google OAuth) ====================
+const AuthCallback = () => {
+  const { loginWithGoogle, setUser, setToken, setLoading } = useAuth();
+  const hasProcessed = useRef(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Prevent double processing in StrictMode
+    if (hasProcessed.current) return;
+    hasProcessed.current = true;
+
+    const processAuth = async () => {
+      try {
+        // Get session_id from URL fragment
+        const hash = window.location.hash;
+        const sessionId = hash.split('session_id=')[1]?.split('&')[0];
+        
+        if (!sessionId) {
+          setError('No session ID found');
+          return;
+        }
+
+        // Fetch user data from Emergent Auth
+        const response = await fetch('https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data', {
+          headers: {
+            'X-Session-ID': sessionId
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get session data');
+        }
+
+        const userData = await response.json();
+        
+        // Login with our backend
+        await loginWithGoogle(userData);
+        
+        // Clear the hash and redirect
+        window.history.replaceState(null, '', window.location.pathname);
+        
+      } catch (err) {
+        console.error('Auth callback error:', err);
+        setError(err.message);
+        // Clear hash and go back to login
+        setTimeout(() => {
+          window.history.replaceState(null, '', window.location.pathname);
+          window.location.reload();
+        }, 2000);
+      }
+    };
+
+    processAuth();
+  }, [loginWithGoogle]);
+
+  if (error) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card" style={{ textAlign: 'center' }}>
+          <h2 style={{ color: '#ef4444', marginBottom: 15 }}>Authentication Error</h2>
+          <p style={{ color: '#a1a1aa' }}>{error}</p>
+          <p style={{ color: '#a1a1aa', marginTop: 10 }}>Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="auth-container">
+      <div className="auth-card" style={{ textAlign: 'center' }}>
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+        </div>
+        <p style={{ marginTop: 20, color: '#a1a1aa' }}>Completing sign in...</p>
       </div>
     </div>
   );
