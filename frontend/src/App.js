@@ -45,6 +45,8 @@ const MainApp = () => {
     switch (currentPage) {
       case 'admin':
         return user?.is_admin ? <AdminPanel showToast={showToast} /> : <UltimateSearchPage showToast={showToast} />;
+      case 'analytics':
+        return user?.is_admin ? <AnalyticsPage showToast={showToast} /> : <UltimateSearchPage showToast={showToast} />;
       case 'search':
         return <UltimateSearchPage showToast={showToast} />;
       case 'marketplace':
