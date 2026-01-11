@@ -10,3 +10,4 @@ export { default as SocialPage } from './SocialPage';
 export { default as MapPage } from './MapPage';
 export { default as MarketplacePage } from './MarketplacePage';
 export { default as AchievementsPage } from './AchievementsPage';
+export { default as QuoteGalleryPage } from './QuoteGalleryPage';
