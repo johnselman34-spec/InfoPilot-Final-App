@@ -2663,6 +2663,74 @@ AUTHOR_HIGHLIGHTS = {
     "book_promise": "50+ finely-crafted deafening, zany, zesty, zoo zingers... JOKES!"
 }
 
+# NEW: HILARIOUS MANUSCRIPT CONTENT - Direct quotes and wild plot elements
+MANUSCRIPT_GOLD = {
+    "copyright_warning": """This novel is only meant for readers who are not operating a vehicle or any type of heavy equipment. 
+If you are pregnant or breastfeeding, reading this book could evoke uncontrollable hysterics and fits of laughter; 
+it is recommended for people in pregnancy to avoid reading Letters to Evelyn as it may induce unexpected labor. 
+This book is intended for adults only 26 years and older!""",
+    
+    "wild_plot_elements": [
+        "Navy pilot's stepmother Lauren POISONED his eggs with LSD equivalent to 200-500 doses!",
+        "He hallucinated aliens for TEN MONTHS straight!",
+        "A Captain kept calling him 'Jesus' on USS Enterprise - he denied it every time!",
+        "He saw the entire universe and God while looking at a woman named Maria!",
+        "He imagined his future wife 'Evelyn' into existence while on a nuclear aircraft carrier!",
+        "He twisted her right big toe CLOCKWISE in his imagination to 'save everyone from being left-handed'!",
+        "He pulled an imaginary rib from his chest and offered it to the imaginary Eve!",
+        "He created athletes Usain Bolt and Michael Phelps by 'waving his arms wildly'!",
+        "He gave a captain a glass of water with 10 drops of his blood from his middle finger!",
+        "He predicted the Twin Towers disaster and a tsunami the day after Christmas!",
+        "He bent a penny barehanded in front of sailors and went crowd surfing!",
+        "He saw an invisible extraterrestrial in Texas wearing a 'biomechanical suit'!",
+        "Gray aliens told him to 'Drink waaaater, good boy' while he was driving in Arizona!",
+        "He did an 83-degree nearly VERTICAL dive in a T-34C and survived with 430 PICOSECONDS to spare!",
+        "He hid his spacecraft inside a 2,600-foot-wide extraterrestrial dinosaur's reproductive organs!",
+    ],
+    
+    "hilarious_quotes": [
+        "I said fly to the sun, not IN it!",
+        "These eggs are so good! Are they cage free?",
+        "Fack off! - (imitating Monty Python's Life of Brian)",
+        "I'm not even afraid of saving my pet gerbil.",
+        "La-la-la-la! (Captain plugging his ears like Lloyd Christmas)",
+        "You're Jesus. - No I'm not! - You're Jesus. - STOP IT!",
+        "I bent a penny barehanded... everyone came to lift me up and I went crowd surfing!",
+        "Drink waaaater, drink waaaaaater, good boy. - Gray Aliens",
+        "Only life, no more hurt. - Gray Aliens before leaving",
+        "The sky! This guy! - Durham's universal broadcast",
+        "We queefed our way out of the undulating gargantuan reproductive organs at maximum power!",
+    ],
+    
+    "dad_jokes_from_book": [
+        "Why did the Navy pilot write a book? Because his stories were PLANE amazing!",
+        "What's the difference between this book and therapy? The book is cheaper AND funnier!",
+        "How do you hide from God on an alien planet? Inside a dinosaur. Obviously.",
+        "Why did the Captain keep calling him Jesus? Because he couldn't stop turning OTHER cheeks!",
+        "What do aliens and this book have in common? They're both OUT OF THIS WORLD!",
+        "Why did the universe fact-check the book? Even black holes couldn't contain these plot twists!",
+        "How many Gz did the pilot pull? Enough to make physics question its life choices!",
+    ],
+    
+    "chapter_teasers": [
+        "Chapter 2: The Encounter - 'The same father who knocked me out for wanting to fly through a cloud when I was THREE'",
+        "Chapter 4: Muster the Strength - 'I said I love pain at least TEN THOUSAND TIMES that weekend'",
+        "Chapter 7: The Sweltering Speech - 'A 600-sailor standing ovation... then they started calling me JESUS'",
+        "Chapter 9: Flight School - 'I got out to a slow start... my on-wing instructor was like an Air Traffic Controller with a TV remote'",
+        "Chapter 22: The Intergalactic Superhighway - 'We flew our Chevrolet Zion spacecraft to Neptune for DINNER'",
+        "Chapter 25: Caught Elsewhere - 'We hid inside a dinosaur's lady parts. It... flatulated extensively.'",
+    ],
+    
+    "review_worthy_lines": [
+        "My life for the last few years has been occupied by you in my heart.",
+        "The universe is inside each and every one of us.",
+        "Have a sense of humor, even when no one is looking.",
+        "Intelligence is Love.",
+        "Every person has infinite value for their graciousness, kindness, mercifulness, and friendly enthusiasm to help.",
+        "Keep loving people to keep loving people.",
+    ]
+}
+
 APP_INFO = {
     "name": "InfoPilot",
     "tagline": "Your 3D View of the Internet",
