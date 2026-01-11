@@ -798,17 +798,53 @@ function MapPage() {
 
         {loading ? <div className="loading"><div className="spinner"/></div> : (
           <>
-            {/* Interactive Map using OpenStreetMap embed */}
-            <div style={{ height: '400px', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px', border: '1px solid #E0E0E0', background: '#E3F2FD', position: 'relative' }}>
-              <iframe
-                title="World Map"
-                src="https://www.openstreetmap.org/export/embed.html?bbox=-180%2C-60%2C180%2C80&layer=mapnik"
-                style={{ width: '100%', height: '100%', border: 'none' }}
-              />
-              {/* Marker overlay */}
-              <div style={{ position: 'absolute', top: 10, left: 10, background: 'white', padding: '8px 12px', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', fontSize: 13 }}>
-                <strong>{markers.filter(m => m.latitude).length}</strong> locations on map
-              </div>
+            {/* Interactive Leaflet Map */}
+            <div style={{ height: '450px', borderRadius: '16px', overflow: 'hidden', marginBottom: '24px', border: '1px solid rgba(139, 92, 246, 0.3)', boxShadow: '0 0 30px rgba(139, 92, 246, 0.1)' }}>
+              <MapContainer
+                center={[20, 0]}
+                zoom={2}
+                style={{ height: '100%', width: '100%' }}
+                scrollWheelZoom={true}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                />
+                {markers.filter(m => m.latitude && m.longitude).map((marker, idx) => (
+                  <Marker 
+                    key={marker.id || idx}
+                    position={[marker.latitude, marker.longitude]}
+                    icon={createColoredIcon(getCategoryColor(marker.categories?.[0]))}
+                    eventHandlers={{
+                      click: () => {
+                        window.open(marker.url, '_blank');
+                      }
+                    }}
+                  >
+                    <Popup>
+                      <div style={{minWidth: '200px'}}>
+                        <h4 style={{margin: '0 0 8px 0', fontSize: '14px', color: '#333'}}>{marker.title}</h4>
+                        <div style={{fontSize: '12px', color: '#666', marginBottom: '8px'}}>
+                          {marker.categories?.map((cat, i) => (
+                            <span key={i} style={{
+                              display: 'inline-block',
+                              background: getCategoryColor(cat),
+                              color: 'white',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              marginRight: '4px',
+                              fontSize: '10px'
+                            }}>{cat}</span>
+                          ))}
+                        </div>
+                        <a href={marker.url} target="_blank" rel="noopener noreferrer" style={{color: '#8B5CF6', fontSize: '12px'}}>
+                          Open Article →
+                        </a>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
             </div>
 
             {/* Stats */}
