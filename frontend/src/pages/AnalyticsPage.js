@@ -240,13 +240,13 @@ const AnalyticsPage = ({ showToast }) => {
         marginBottom: 25
       }}>
         <h3 style={{ color: '#f472b6', marginBottom: 15 }}>🔥 Popular Search Terms</h3>
-        {analytics.popular_search_terms.length === 0 ? (
+        {popularTerms.length === 0 ? (
           <p style={{ color: '#a1a1aa' }}>No recent search data available.</p>
         ) : (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-            {analytics.popular_search_terms.map((term, idx) => (
+            {popularTerms.map((term, idx) => (
               <div
-                key={term.term}
+                key={term.term || idx}
                 style={{
                   background: `rgba(244, 114, 182, ${0.3 - idx * 0.02})`,
                   border: '1px solid rgba(244, 114, 182, 0.3)',
@@ -284,11 +284,11 @@ const AnalyticsPage = ({ showToast }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#a1a1aa' }}>New Users</span>
-              <span style={{ color: '#fff', fontWeight: 600 }}>{analytics.users.new_today}</span>
+              <span style={{ color: '#fff', fontWeight: 600 }}>{users.new_today || 0}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#a1a1aa' }}>Searches</span>
-              <span style={{ color: '#fff', fontWeight: 600 }}>{analytics.searches.today}</span>
+              <span style={{ color: '#fff', fontWeight: 600 }}>{searches.today || 0}</span>
             </div>
           </div>
         </div>
@@ -302,15 +302,15 @@ const AnalyticsPage = ({ showToast }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#a1a1aa' }}>Public Protocols</span>
-              <span style={{ color: '#fff', fontWeight: 600 }}>{analytics.protocols.public}</span>
+              <span style={{ color: '#fff', fontWeight: 600 }}>{protocols.public || 0}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#a1a1aa' }}>Total Posts</span>
-              <span style={{ color: '#fff', fontWeight: 600 }}>{analytics.engagement.total_posts}</span>
+              <span style={{ color: '#fff', fontWeight: 600 }}>{engagement.total_posts || 0}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ color: '#a1a1aa' }}>Total Pages</span>
-              <span style={{ color: '#fff', fontWeight: 600 }}>{analytics.engagement.total_pages}</span>
+              <span style={{ color: '#fff', fontWeight: 600 }}>{engagement.total_pages || 0}</span>
             </div>
           </div>
         </div>
