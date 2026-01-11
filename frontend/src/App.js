@@ -296,9 +296,10 @@ const RegisterPage = ({ onSwitch }) => {
 
 // ==================== AUTH CALLBACK (Google OAuth) ====================
 const AuthCallback = () => {
-  const { loginWithGoogle, setUser, setToken, setLoading } = useAuth();
+  const { loginWithGoogle } = useAuth();
   const hasProcessed = useRef(false);
   const [error, setError] = useState(null);
+  const [processing, setProcessing] = useState(true);
 
   useEffect(() => {
     // Prevent double processing in StrictMode
@@ -312,42 +313,60 @@ const AuthCallback = () => {
         const sessionId = hash.split('session_id=')[1]?.split('&')[0];
         
         if (!sessionId) {
-          setError('No session ID found');
+          setError('No session ID found in URL');
+          setProcessing(false);
+          setTimeout(() => {
+            window.history.replaceState(null, '', window.location.pathname);
+            window.location.reload();
+          }, 2000);
           return;
         }
 
+        console.log('Processing session ID:', sessionId);
+
         // Fetch user data from Emergent Auth
         const response = await fetch('https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data', {
+          method: 'GET',
           headers: {
-            'X-Session-ID': sessionId
+            'X-Session-ID': sessionId,
+            'Content-Type': 'application/json'
           }
         });
 
         if (!response.ok) {
-          throw new Error('Failed to get session data');
+          const errorText = await response.text();
+          console.error('Session data fetch failed:', response.status, errorText);
+          throw new Error(`Failed to get session data: ${response.status}`);
         }
 
         const userData = await response.json();
+        console.log('Got user data:', userData);
         
         // Login with our backend
         await loginWithGoogle(userData);
         
-        // Clear the hash and redirect
+        // Clear the hash and redirect - successful login
         window.history.replaceState(null, '', window.location.pathname);
+        window.location.reload();
         
       } catch (err) {
         console.error('Auth callback error:', err);
-        setError(err.message);
+        // Safely extract error message as string
+        const errorMessage = err && typeof err === 'object' && err.message 
+          ? String(err.message) 
+          : 'Authentication failed';
+        setError(errorMessage);
+        setProcessing(false);
         // Clear hash and go back to login
         setTimeout(() => {
           window.history.replaceState(null, '', window.location.pathname);
           window.location.reload();
-        }, 2000);
+        }, 3000);
       }
     };
 
     processAuth();
-  }, [loginWithGoogle]);
+  }, []); // Empty dependency array - only run once
 
   if (error) {
     return (
