@@ -11,3 +11,4 @@ export { default as MapPage } from './MapPage';
 export { default as MarketplacePage } from './MarketplacePage';
 export { default as AchievementsPage } from './AchievementsPage';
 export { default as QuoteGalleryPage } from './QuoteGalleryPage';
+export { default as AnalyticsPage } from './AnalyticsPage';
