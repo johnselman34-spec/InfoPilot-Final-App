@@ -1843,186 +1843,172 @@ const SubscribePage = ({ showToast, onBack }) => {
   return (
     <div className="card">
       <div className="card-header">
-        <h2>Subscribe to InfoPilot Premium</h2>
+        <h2>🎉 InfoPilot is FREE!</h2>
         <button className="btn btn-secondary" onClick={onBack}>← Back</button>
       </div>
 
-      <div style={{ maxWidth: 600, margin: '0 auto' }}>
-        {/* Benefits */}
+      <div style={{ maxWidth: 700, margin: '0 auto' }}>
+        {/* FREE Announcement */}
+        <div style={{ 
+          marginBottom: 30, 
+          padding: 25, 
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.2))', 
+          borderRadius: 16,
+          border: '3px solid rgba(16, 185, 129, 0.5)',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: 10 }}>🎊</div>
+          <h3 style={{ color: '#10b981', marginBottom: 15, fontSize: '1.8rem' }}>Good News!</h3>
+          <p style={{ color: '#fff', fontSize: '1.2rem', marginBottom: 10 }}>
+            InfoPilot is <span style={{ color: '#10b981', fontWeight: 800, fontSize: '1.5rem' }}>100% FREE</span> for everyone!
+          </p>
+          <p style={{ color: '#a1a1aa', fontSize: '0.95rem' }}>
+            Enjoy all premium features at no cost. If you love InfoPilot, please support us by checking out our amazing book below! 📚
+          </p>
+        </div>
+
+        {/* Premium Benefits - Now FREE */}
         <div style={{ marginBottom: 30, padding: 20, background: 'rgba(124, 58, 237, 0.1)', borderRadius: 12 }}>
-          <h3 style={{ color: '#f472b6', marginBottom: 15 }}>Premium Benefits</h3>
+          <h3 style={{ color: '#f472b6', marginBottom: 15 }}>✅ All Features Included FREE</h3>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {[
               '✨ Unlimited search results',
               '🗺️ Access to interactive world map',
               '📊 Advanced statistics and analytics',
               '🚀 Priority support',
-              '💾 Unlimited categories and protocols'
+              '💾 Unlimited categories and protocols',
+              '🤖 AI-powered collation'
             ].map((benefit, i) => (
-              <li key={i} style={{ padding: '8px 0', borderBottom: '1px solid rgba(124, 58, 237, 0.2)' }}>
+              <li key={i} style={{ padding: '8px 0', borderBottom: '1px solid rgba(124, 58, 237, 0.2)', color: '#10b981' }}>
                 {benefit}
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Pay What You Want */}
-        <div style={{ marginBottom: 30 }}>
-          <h3 style={{ color: '#f472b6', marginBottom: 15, textAlign: 'center' }}>
-            💝 Pay What You Want
-          </h3>
-          <p style={{ color: '#a1a1aa', textAlign: 'center', marginBottom: 20 }}>
-            Choose the amount that works for you - every contribution helps!
-          </p>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
-            {[
-              { amount: 0.75, label: '$0.75' },
-              { amount: 1.00, label: '$1.00' },
-              { amount: 2.00, label: '$2.00' },
-              { amount: 3.00, label: '$3.00' },
-              { amount: 4.62, label: '$4.62' },
-              { amount: 5.00, label: '$5.00' }
-            ].map(({ amount, label }) => (
-              <button
-                key={amount}
-                className="btn btn-primary"
-                onClick={() => handlePayPalClick(amount)}
-                style={{ padding: '15px 10px', fontSize: '1rem' }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Custom Amount */}
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#a1a1aa' }}>Or enter custom amount: $</span>
-            <input
-              type="number"
-              step="0.01"
-              min="0.01"
-              placeholder="0.00"
-              value={customAmount}
-              onChange={(e) => setCustomAmount(e.target.value)}
-              className="input-field"
-              style={{ width: 100, textAlign: 'center' }}
-            />
-            <button 
-              className="btn btn-secondary"
-              onClick={handleCustomPayment}
-              disabled={!customAmount}
-            >
-              Pay Custom
-            </button>
-          </div>
-        </div>
-
-        {/* After Payment */}
-        {paymentClicked && (
-          <div style={{ 
-            marginBottom: 30, 
-            padding: 25, 
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(124, 58, 237, 0.2))', 
-            borderRadius: 12,
-            border: '2px solid rgba(16, 185, 129, 0.5)'
-          }}>
-            <h3 style={{ color: '#10b981', marginBottom: 15 }}>Step 2: Activate Your Subscription</h3>
-            <p style={{ color: '#a1a1aa', marginBottom: 20 }}>
-              After completing your PayPal payment, click the button below to activate your premium access.
-            </p>
-            <button 
-              className="btn btn-success" 
-              onClick={handleActivateSubscription}
-              disabled={loading}
-              style={{ width: '100%', padding: '15px', fontSize: '1.1rem' }}
-            >
-              {loading ? 'Activating...' : "I've Completed Payment - Activate Now!"}
-            </button>
-          </div>
-        )}
-
-        {/* Book Promotion - More Prominent */}
+        {/* HUGE Book Promotion */}
         <div style={{ 
-          padding: 25, 
+          padding: 30, 
           background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(124, 58, 237, 0.3))',
-          borderRadius: 16,
-          border: '3px solid rgba(236, 72, 153, 0.5)',
+          borderRadius: 20,
+          border: '3px solid rgba(236, 72, 153, 0.6)',
           textAlign: 'center',
           position: 'relative',
           overflow: 'hidden'
         }}>
+          {/* Film Badge */}
           <div style={{
             position: 'absolute',
-            top: -10,
-            right: -10,
+            top: 15,
+            right: -35,
             background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
             color: '#000',
-            padding: '8px 20px',
-            borderRadius: 20,
+            padding: '8px 50px',
             fontWeight: 800,
-            fontSize: '0.8rem',
-            transform: 'rotate(15deg)',
-            boxShadow: '0 4px 15px rgba(251, 191, 36, 0.4)'
+            fontSize: '0.75rem',
+            transform: 'rotate(45deg)',
+            boxShadow: '0 4px 15px rgba(251, 191, 36, 0.5)'
           }}>
-            BESTSELLER!
+            OPTIONED FOR FILM!
           </div>
           
-          <h3 style={{ color: '#f472b6', marginBottom: 15, fontSize: '1.3rem' }}>📚 While You're Here...</h3>
+          <h3 style={{ color: '#f472b6', marginBottom: 20, fontSize: '1.5rem' }}>
+            💝 Want to Support the Developer?
+          </h3>
           
-          <div style={{ marginBottom: 15 }}>
+          {/* Book Images Grid */}
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
             <img 
-              src="https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/rtfq9tzg_Letters%20to%20Evelyn%20advertisement%201.jpg"
+              src="https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/024v1r34_Letters%20to%20Evelyn%20advertisement%201.jpg"
               alt="Letters to Evelyn"
-              style={{ width: 150, height: 150, objectFit: 'cover', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}
+              style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}
+            />
+            <img 
+              src="https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/e90a1rlq_Letters%20to%20Evelyn%20advertisement%202.jpg"
+              alt="Letters to Evelyn"
+              style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}
+            />
+            <img 
+              src="https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/ccdegcr8_Letters%20to%20Evelyn%20advertisement%203.jpg"
+              alt="Letters to Evelyn"
+              style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}
+            />
+            <img 
+              src="https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/3gqu0i0v_Letters%20to%20Evelyn%20advertisement%204.jpg"
+              alt="Letters to Evelyn"
+              style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}
             />
           </div>
           
-          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fce7f3', marginBottom: 10 }}>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fce7f3', marginBottom: 10 }}>
             "Letters to Evelyn"
           </div>
-          <div style={{ color: '#f472b6', marginBottom: 10, fontWeight: 600 }}>
-            A True Supernatural Thriller Comedy by John Selman
+          <div style={{ color: '#a78bfa', marginBottom: 8, fontWeight: 600 }}>
+            A Supernatural Thriller Comedy Memoir by John Selman
+          </div>
+          <div style={{ color: '#fbbf24', marginBottom: 8, fontWeight: 700 }}>
+            By World Record Aviation Holder & Navy Pilot
+          </div>
+          
+          {/* Key Points */}
+          <div style={{ marginBottom: 15, color: '#a1a1aa', fontSize: '0.9rem' }}>
+            ✈️ Navy pilot flew 10 aircraft types • 👽 Extraterrestrial encounters • 😂 "Exceedingly brilliant comedy"
           </div>
           
           <div style={{ 
             background: 'rgba(16, 185, 129, 0.2)', 
             padding: 15, 
             borderRadius: 12, 
-            marginBottom: 15,
+            marginBottom: 20,
             borderLeft: '4px solid #10b981'
           }}>
             <div style={{ color: '#10b981', fontStyle: 'italic', marginBottom: 8 }}>
-              "This memoir is a profound and unforgettable literary piece."
+              "A true story that defies belief... readers keep asking: 'WOW, is it all true?'"
             </div>
             <div style={{ color: '#34d399', fontSize: '0.85rem', fontWeight: 600 }}>
-              — Divine Zape, Readers' Favorite
+              — Readers' Favorite ★★★★★ (19 Five-Star Reviews)
             </div>
           </div>
           
-          <div style={{ color: '#fbbf24', marginBottom: 15, fontWeight: 700 }}>
-            ⭐⭐⭐⭐⭐ 19 Five-Star Professional Reviews
+          <div style={{ display: 'flex', gap: 15, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a 
+              href="https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-block',
+                background: 'linear-gradient(135deg, #ec4899, #f97316)',
+                color: 'white',
+                padding: '18px 40px',
+                borderRadius: 30,
+                fontWeight: 800,
+                fontSize: '1.2rem',
+                textDecoration: 'none',
+                boxShadow: '0 10px 40px rgba(236, 72, 153, 0.5)',
+                border: '2px solid rgba(255,255,255,0.3)'
+              }}
+            >
+              🛒 BUY NOW - Only $2.99!
+            </a>
+            <a 
+              href="https://letters-to-evelyn.sintra.site"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-block',
+                background: 'rgba(124, 58, 237, 0.3)',
+                color: '#a78bfa',
+                padding: '18px 30px',
+                borderRadius: 30,
+                fontWeight: 700,
+                fontSize: '1rem',
+                textDecoration: 'none',
+                border: '2px solid rgba(124, 58, 237, 0.5)'
+              }}
+            >
+              🌐 Official Website
+            </a>
           </div>
-          
-          <a 
-            href="https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-block',
-              background: 'linear-gradient(135deg, #ec4899, #f97316)',
-              color: 'white',
-              padding: '15px 35px',
-              borderRadius: 30,
-              fontWeight: 700,
-              fontSize: '1.1rem',
-              textDecoration: 'none',
-              boxShadow: '0 8px 30px rgba(236, 72, 153, 0.5)',
-              border: '2px solid rgba(255,255,255,0.3)'
-            }}
-          >
-            🎁 GET IT NOW - Only $2.99!
-          </a>
         </div>
       </div>
     </div>
