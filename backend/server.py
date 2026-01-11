@@ -24,10 +24,10 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'infopilot_db')]
+db = client[os.environ['DB_NAME']]
 
 # PayPal Configuration
-PAYPAL_PAYMENT_LINK = "https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ"
+PAYPAL_PAYMENT_LINK = os.environ.get('PAYPAL_PAYMENT_LINK', 'https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ')
 
 # SerpAPI Configuration
 SERPAPI_KEY = os.environ.get('SERPAPI_KEY', '')
