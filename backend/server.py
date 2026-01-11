@@ -2831,6 +2831,10 @@ Think: What if Douglas Adams wrote marketing emails while on a spaceship?"""
         rf_reviews = random.sample(BOOK_REVIEWS["readers_favorite"]["reviews"], min(3, len(BOOK_REVIEWS["readers_favorite"]["reviews"])))
         amazon_reviews = random.sample(BOOK_REVIEWS["amazon"]["reviews"], min(2, len(BOOK_REVIEWS["amazon"]["reviews"])))
         
+        # Build review strings before the f-string (can't use backslash in f-string)
+        rf_reviews_text = "\n".join([f'★ "{r["quote"]}" - {r["reviewer"]}, Readers\' Favorite' for r in rf_reviews])
+        amazon_reviews_text = "\n".join([f'★ "{r["quote"]}" - {r["reviewer"]}' for r in amazon_reviews])
+        
         # Funny recurring elements
         dad_jokes = [
             "Why did the Navy pilot write a book? Because his stories were PLANE amazing! ✈️",
