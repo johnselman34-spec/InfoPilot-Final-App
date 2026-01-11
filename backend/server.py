@@ -2378,6 +2378,358 @@ async def send_newsletter(credentials: HTTPAuthorizationCredentials = Depends(se
         "message": f"Newsletter sent to {sent_count} users" + (f", failed for {failed_count}" if failed_count else "")
     }
 
+# ============== GAMIFICATION SYSTEM ==============
+
+# Badge definitions
+BADGES = {
+    "pioneer": {
+        "id": "pioneer",
+        "name": "Pioneer",
+        "description": "One of the first 100 users to join InfoPilot",
+        "icon": "🚀",
+        "color": "#f472b6",
+        "rarity": "legendary"
+    },
+    "first_search": {
+        "id": "first_search",
+        "name": "Explorer",
+        "description": "Completed your first search",
+        "icon": "🔍",
+        "color": "#60a5fa",
+        "rarity": "common"
+    },
+    "power_searcher": {
+        "id": "power_searcher",
+        "name": "Power Searcher",
+        "description": "Completed 100 searches",
+        "icon": "⚡",
+        "color": "#fbbf24",
+        "rarity": "rare"
+    },
+    "protocol_creator": {
+        "id": "protocol_creator",
+        "name": "Protocol Creator",
+        "description": "Created your first search protocol",
+        "icon": "📝",
+        "color": "#34d399",
+        "rarity": "common"
+    },
+    "protocol_master": {
+        "id": "protocol_master",
+        "name": "Protocol Master",
+        "description": "Created 10 search protocols",
+        "icon": "🎯",
+        "color": "#a78bfa",
+        "rarity": "rare"
+    },
+    "first_sale": {
+        "id": "first_sale",
+        "name": "Entrepreneur",
+        "description": "Made your first protocol sale",
+        "icon": "💰",
+        "color": "#10b981",
+        "rarity": "uncommon"
+    },
+    "top_seller": {
+        "id": "top_seller",
+        "name": "Top Seller",
+        "description": "Sold 50+ protocols",
+        "icon": "🏆",
+        "color": "#f59e0b",
+        "rarity": "legendary"
+    },
+    "big_spender": {
+        "id": "big_spender",
+        "name": "Collector",
+        "description": "Purchased 10+ protocols",
+        "icon": "🛒",
+        "color": "#ec4899",
+        "rarity": "rare"
+    },
+    "social_butterfly": {
+        "id": "social_butterfly",
+        "name": "Social Butterfly",
+        "description": "Made 10 friends",
+        "icon": "🦋",
+        "color": "#06b6d4",
+        "rarity": "uncommon"
+    },
+    "map_explorer": {
+        "id": "map_explorer",
+        "name": "Map Explorer",
+        "description": "Viewed 50 locations on the map",
+        "icon": "🗺️",
+        "color": "#84cc16",
+        "rarity": "uncommon"
+    },
+    "reviewer": {
+        "id": "reviewer",
+        "name": "Critic",
+        "description": "Left 5 protocol reviews",
+        "icon": "⭐",
+        "color": "#eab308",
+        "rarity": "uncommon"
+    },
+    "streak_7": {
+        "id": "streak_7",
+        "name": "Weekly Warrior",
+        "description": "Logged in 7 days in a row",
+        "icon": "🔥",
+        "color": "#ef4444",
+        "rarity": "rare"
+    },
+    "streak_30": {
+        "id": "streak_30",
+        "name": "Dedicated User",
+        "description": "Logged in 30 days in a row",
+        "icon": "💎",
+        "color": "#8b5cf6",
+        "rarity": "legendary"
+    }
+}
+
+# Achievement thresholds
+ACHIEVEMENTS = {
+    "searches": [1, 10, 50, 100, 500],
+    "protocols_created": [1, 5, 10, 25, 50],
+    "protocols_sold": [1, 10, 25, 50, 100],
+    "protocols_purchased": [1, 5, 10, 25],
+    "friends": [1, 5, 10, 25, 50],
+    "reviews": [1, 5, 10, 25],
+    "login_streak": [3, 7, 14, 30]
+}
+
+# XP rewards
+XP_REWARDS = {
+    "search": 5,
+    "create_protocol": 25,
+    "sell_protocol": 50,
+    "purchase_protocol": 10,
+    "add_friend": 15,
+    "leave_review": 20,
+    "daily_login": 10,
+    "badge_earned": 100
+}
+
+def calculate_level(xp: int) -> dict:
+    """Calculate user level from XP"""
+    level = 1
+    xp_for_next = 100
+    remaining_xp = xp
+    
+    while remaining_xp >= xp_for_next:
+        remaining_xp -= xp_for_next
+        level += 1
+        xp_for_next = int(xp_for_next * 1.5)
+    
+    return {
+        "level": level,
+        "current_xp": remaining_xp,
+        "xp_for_next_level": xp_for_next,
+        "total_xp": xp,
+        "progress_percent": int((remaining_xp / xp_for_next) * 100)
+    }
+
+async def check_and_award_badges(user_id: str, stats: dict) -> List[str]:
+    """Check if user qualifies for new badges and award them"""
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        return []
+    
+    current_badges = set(user.get("badges", []))
+    new_badges = []
+    
+    # Check each badge condition
+    if stats.get("searches", 0) >= 1 and "first_search" not in current_badges:
+        new_badges.append("first_search")
+    
+    if stats.get("searches", 0) >= 100 and "power_searcher" not in current_badges:
+        new_badges.append("power_searcher")
+    
+    if stats.get("protocols_created", 0) >= 1 and "protocol_creator" not in current_badges:
+        new_badges.append("protocol_creator")
+    
+    if stats.get("protocols_created", 0) >= 10 and "protocol_master" not in current_badges:
+        new_badges.append("protocol_master")
+    
+    if stats.get("protocols_sold", 0) >= 1 and "first_sale" not in current_badges:
+        new_badges.append("first_sale")
+    
+    if stats.get("protocols_sold", 0) >= 50 and "top_seller" not in current_badges:
+        new_badges.append("top_seller")
+    
+    if stats.get("protocols_purchased", 0) >= 10 and "big_spender" not in current_badges:
+        new_badges.append("big_spender")
+    
+    if stats.get("friends", 0) >= 10 and "social_butterfly" not in current_badges:
+        new_badges.append("social_butterfly")
+    
+    if stats.get("reviews", 0) >= 5 and "reviewer" not in current_badges:
+        new_badges.append("reviewer")
+    
+    if stats.get("login_streak", 0) >= 7 and "streak_7" not in current_badges:
+        new_badges.append("streak_7")
+    
+    if stats.get("login_streak", 0) >= 30 and "streak_30" not in current_badges:
+        new_badges.append("streak_30")
+    
+    # Award new badges
+    if new_badges:
+        xp_bonus = len(new_badges) * XP_REWARDS["badge_earned"]
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$addToSet": {"badges": {"$each": new_badges}},
+                "$inc": {"xp": xp_bonus}
+            }
+        )
+    
+    return new_badges
+
+@api_router.get("/gamification/profile")
+async def get_gamification_profile(user = Depends(get_current_user)):
+    """Get user's gamification profile with badges, XP, and stats"""
+    user_id = str(user["_id"])
+    
+    # Get user stats
+    searches_count = await db.search_history.count_documents({"user_id": user_id})
+    protocols_created = await db.categories.count_documents({"user_id": user_id})
+    protocols_sold = await db.marketplace_protocols.aggregate([
+        {"$match": {"creator_id": user_id}},
+        {"$group": {"_id": None, "total": {"$sum": "$total_sales"}}}
+    ]).to_list(1)
+    total_sold = protocols_sold[0]["total"] if protocols_sold else 0
+    
+    protocols_purchased = await db.marketplace_purchases.count_documents({"user_id": user_id})
+    friends_count = len(user.get("friends", []))
+    reviews_count = await db.protocol_reviews.count_documents({"user_id": user_id})
+    
+    stats = {
+        "searches": searches_count,
+        "protocols_created": protocols_created,
+        "protocols_sold": total_sold,
+        "protocols_purchased": protocols_purchased,
+        "friends": friends_count,
+        "reviews": reviews_count,
+        "login_streak": user.get("login_streak", 0)
+    }
+    
+    # Check for new badges
+    new_badges = await check_and_award_badges(user_id, stats)
+    
+    # Refresh user data
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    
+    # Get badge details
+    user_badges = user.get("badges", [])
+    badge_details = [BADGES[b] for b in user_badges if b in BADGES]
+    
+    # Calculate level
+    xp = user.get("xp", 0)
+    level_info = calculate_level(xp)
+    
+    return {
+        "user_id": user_id,
+        "username": user.get("username"),
+        "badges": badge_details,
+        "new_badges": [BADGES[b] for b in new_badges if b in BADGES],
+        "level": level_info,
+        "stats": stats,
+        "rank": await get_user_rank(user_id, xp)
+    }
+
+async def get_user_rank(user_id: str, xp: int) -> dict:
+    """Get user's rank on the leaderboard"""
+    higher_xp_count = await db.users.count_documents({"xp": {"$gt": xp}})
+    total_users = await db.users.count_documents({})
+    
+    return {
+        "position": higher_xp_count + 1,
+        "total_users": total_users,
+        "percentile": int(((total_users - higher_xp_count) / total_users) * 100) if total_users > 0 else 100
+    }
+
+@api_router.get("/gamification/leaderboard")
+async def get_leaderboard(limit: int = Query(20, ge=1, le=100)):
+    """Get top users by XP"""
+    users = await db.users.find(
+        {},
+        {"_id": 1, "username": 1, "xp": 1, "badges": 1, "profile_picture": 1}
+    ).sort("xp", -1).limit(limit).to_list(limit)
+    
+    leaderboard = []
+    for i, u in enumerate(users):
+        level_info = calculate_level(u.get("xp", 0))
+        badge_count = len(u.get("badges", []))
+        
+        leaderboard.append({
+            "rank": i + 1,
+            "user_id": str(u["_id"]),
+            "username": u.get("username", "Anonymous"),
+            "xp": u.get("xp", 0),
+            "level": level_info["level"],
+            "badge_count": badge_count,
+            "profile_picture": u.get("profile_picture")
+        })
+    
+    return {"leaderboard": leaderboard}
+
+@api_router.get("/gamification/badges")
+async def get_all_badges():
+    """Get all available badges"""
+    return {"badges": list(BADGES.values())}
+
+@api_router.post("/gamification/award-xp")
+async def award_xp(
+    action: str = Body(...),
+    user = Depends(get_current_user)
+):
+    """Award XP for an action (internal use)"""
+    if action not in XP_REWARDS:
+        return {"xp_awarded": 0}
+    
+    xp = XP_REWARDS[action]
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$inc": {"xp": xp}}
+    )
+    
+    return {"xp_awarded": xp, "action": action}
+
+@api_router.post("/gamification/track-login")
+async def track_daily_login(user = Depends(get_current_user)):
+    """Track daily login for streak calculation"""
+    today = datetime.utcnow().date()
+    last_login = user.get("last_login_date")
+    
+    if last_login:
+        last_login_date = last_login.date() if hasattr(last_login, 'date') else last_login
+        days_diff = (today - last_login_date).days
+        
+        if days_diff == 0:
+            # Already logged in today
+            return {"streak": user.get("login_streak", 1), "xp_awarded": 0}
+        elif days_diff == 1:
+            # Consecutive day
+            new_streak = user.get("login_streak", 0) + 1
+        else:
+            # Streak broken
+            new_streak = 1
+    else:
+        new_streak = 1
+    
+    # Update user
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {
+            "$set": {"last_login_date": datetime.utcnow(), "login_streak": new_streak},
+            "$inc": {"xp": XP_REWARDS["daily_login"]}
+        }
+    )
+    
+    return {"streak": new_streak, "xp_awarded": XP_REWARDS["daily_login"]}
+
+
 # ============== BOOK PROMOTION ENDPOINT ==============
 
 @api_router.get("/book-promo")
