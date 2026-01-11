@@ -2420,6 +2420,93 @@ async def follow_page(page_id: str, user = Depends(get_current_user)):
         )
         return {"following": True}
 
+
+@api_router.get("/pages/{page_id}")
+async def get_page_details(page_id: str, user = Depends(get_current_user)):
+    """Get detailed page info including posts"""
+    page = await db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    user_id = str(user["_id"])
+    
+    # Get page posts
+    posts = await db.page_posts.find({"page_id": page_id}).sort("created_at", -1).limit(50).to_list(50)
+    
+    enriched_posts = []
+    for post in posts:
+        enriched_posts.append({
+            "id": str(post["_id"]),
+            "content": post["content"],
+            "likes": len(post.get("likes", [])),
+            "is_liked": user_id in post.get("likes", []),
+            "comments": post.get("comments", []),
+            "created_at": post["created_at"].isoformat()
+        })
+    
+    return {
+        "id": str(page["_id"]),
+        "name": page["name"],
+        "description": page.get("description"),
+        "category": page.get("category", "General"),
+        "creator_id": page.get("creator_id"),
+        "likes": len(page.get("likes", [])),
+        "is_liked": user_id in page.get("likes", []),
+        "followers": len(page.get("followers", [])),
+        "is_following": user_id in page.get("followers", []),
+        "is_creator": page.get("creator_id") == user_id,
+        "posts": enriched_posts,
+        "created_at": page.get("created_at").isoformat() if page.get("created_at") else None
+    }
+
+
+class PagePostCreate(BaseModel):
+    content: str
+
+
+@api_router.post("/pages/{page_id}/posts")
+async def create_page_post(page_id: str, post: PagePostCreate, user = Depends(get_current_user)):
+    """Create a post on a page (only page creator)"""
+    page = await db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    if page.get("creator_id") != str(user["_id"]):
+        raise HTTPException(status_code=403, detail="Only page owner can post")
+    
+    post_doc = {
+        "page_id": page_id,
+        "content": post.content,
+        "likes": [],
+        "comments": [],
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.page_posts.insert_one(post_doc)
+    
+    return {
+        "id": str(result.inserted_id),
+        "content": post.content,
+        "created_at": post_doc["created_at"].isoformat()
+    }
+
+
+@api_router.post("/pages/{page_id}/posts/{post_id}/like")
+async def like_page_post(page_id: str, post_id: str, user = Depends(get_current_user)):
+    """Like/unlike a page post"""
+    post = await db.page_posts.find_one({"_id": ObjectId(post_id), "page_id": page_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    user_id = str(user["_id"])
+    if user_id in post.get("likes", []):
+        await db.page_posts.update_one({"_id": ObjectId(post_id)}, {"$pull": {"likes": user_id}})
+        return {"liked": False}
+    else:
+        await db.page_posts.update_one({"_id": ObjectId(post_id)}, {"$addToSet": {"likes": user_id}})
+        return {"liked": True}
+
+
 # ============== ADMIN ENDPOINTS ==============
 
 @api_router.get("/admin/settings", response_model=List[dict])
