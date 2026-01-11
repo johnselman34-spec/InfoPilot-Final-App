@@ -555,6 +555,77 @@ class WebSearchService:
     """
     
     @staticmethod
+    async def search_serpapi(query: str, num_results: int = 100) -> List[Dict[str, Any]]:
+        """Use SerpAPI for premium Google search results - 1000 searches/month limit"""
+        results = []
+        
+        if not SERPAPI_KEY:
+            logger.warning("SerpAPI key not configured")
+            return results
+        
+        try:
+            # Run in thread pool since serpapi is synchronous
+            def _search():
+                all_results = []
+                # SerpAPI returns ~10 results per page, get multiple pages
+                pages_needed = min(7, (num_results // 10) + 1)  # Max 7 pages (70 results) to conserve quota
+                
+                for page in range(pages_needed):
+                    params = {
+                        "engine": "google",
+                        "q": query,
+                        "api_key": SERPAPI_KEY,
+                        "num": 10,
+                        "start": page * 10,
+                        "gl": "us",
+                        "hl": "en"
+                    }
+                    
+                    try:
+                        search = GoogleSearch(params)
+                        data = search.get_dict()
+                        
+                        organic = data.get("organic_results", [])
+                        for r in organic:
+                            url = r.get("link", "")
+                            if not url:
+                                continue
+                            
+                            try:
+                                parsed = urllib.parse.urlparse(url)
+                                root_domain = parsed.netloc
+                            except:
+                                root_domain = ""
+                            
+                            all_results.append({
+                                "url": url,
+                                "title": r.get("title", ""),
+                                "snippet": r.get("snippet", ""),
+                                "content": r.get("snippet", ""),
+                                "root_domain": root_domain,
+                                "source": "serpapi",
+                                "position": r.get("position", 0)
+                            })
+                        
+                        # If we got fewer than expected, stop
+                        if len(organic) < 8:
+                            break
+                            
+                    except Exception as e:
+                        logger.warning(f"SerpAPI page {page} error: {e}")
+                        break
+                
+                return all_results
+            
+            results = await asyncio.get_event_loop().run_in_executor(None, _search)
+            logger.info(f"SerpAPI returned {len(results)} results")
+            
+        except Exception as e:
+            logger.error(f"SerpAPI search error: {e}")
+        
+        return results
+    
+    @staticmethod
     async def search_ddgs_library(query: str, num_results: int = 200) -> List[Dict[str, Any]]:
         """Use the duckduckgo-search library for better results"""
         results = []
