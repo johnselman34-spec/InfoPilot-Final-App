@@ -2814,11 +2814,18 @@ APP_INFO = {
 }
 
 def get_fallback_newsletter():
-    """Fallback newsletter if AI generation fails - NOW WITH HILARIOUS CONTENT!"""
+    """Fallback newsletter if AI generation fails - NOW WITH FULL MANUSCRIPT CONTENT!"""
     import random
     promo = random.choice(BOOK_PROMO_IMAGES)
     review = random.choice(BOOK_REVIEWS["readers_favorite"]["reviews"])
     amazon_review = random.choice(BOOK_REVIEWS["amazon"]["reviews"])
+    
+    # Get random content from the full manuscript
+    wild_element = random.choice(MANUSCRIPT_CONTENT["wild_plot_elements"])
+    quote = random.choice(MANUSCRIPT_CONTENT["hilarious_quotes"])
+    dad_joke = random.choice(MANUSCRIPT_CONTENT["dad_jokes"])
+    chapter = random.choice(MANUSCRIPT_CONTENT["chapter_teasers"])
+    profound = random.choice(MANUSCRIPT_CONTENT["profound_lines"])
     
     return {
         "content": f"""
@@ -2843,6 +2850,19 @@ Hey there, Cosmic Explorer! 🌌
 <p style="font-size: 16px; line-height: 1.8; color: #555;">
 While you were busy questioning the nature of reality (we've all been there), our search robots were collating the ENTIRE internet for you! That's right - we're doing the heavy lifting while you contemplate whether your therapist needs a therapist! 🧠💫
 </p>
+
+<!-- MANUSCRIPT QUOTE BOX -->
+<div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 15px; margin: 20px 0; border-left: 5px solid #f59e0b;">
+<p style="color: #92400e; font-size: 16px; margin: 0; font-style: italic;">
+💬 <strong>Actual Quote from the Book:</strong>
+</p>
+<p style="color: #78350f; font-size: 18px; margin: 10px 0 5px 0; font-style: italic;">
+"{quote['quote']}"
+</p>
+<p style="color: #a16207; font-size: 14px; margin: 0;">
+— Context: {quote['context']}
+</p>
+</div>
 
 <div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 25px; border-radius: 20px; margin: 25px 0; border: 2px solid #7c3aed;">
 
@@ -2869,6 +2889,16 @@ While you were busy questioning the nature of reality (we've all been there), ou
 <p style="color: #10b981; text-align: center; font-size: 18px; margin: 10px 0; font-weight: bold;">
 ⭐⭐⭐⭐⭐ 57 Amazon Reviews - ALL 5 STARS!
 </p>
+
+<!-- WILD PLOT ELEMENT -->
+<div style="background: rgba(236,72,153,0.2); border-radius: 10px; padding: 15px; margin: 15px 0; border: 1px solid #ec4899;">
+<p style="color: #fbbf24; text-align: center; font-size: 14px; margin: 0 0 5px 0; text-transform: uppercase;">
+🤯 Wild Plot Element of the Week:
+</p>
+<p style="color: white; text-align: center; font-size: 16px; margin: 0; font-weight: bold;">
+{wild_element}
+</p>
+</div>
 
 <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; margin: 15px 0;">
 <p style="color: #fbbf24; text-align: center; font-size: 16px; margin: 0; font-style: italic;">
