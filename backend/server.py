@@ -2011,16 +2011,29 @@ async def get_analytics_dashboard(user = Depends(get_current_user_local)):
     active_users_24h = await db.sessions.count_documents({
         "created_at": {"$gte": datetime.utcnow() - timedelta(hours=24)}
     })
+    new_users_today = await db.users.count_documents({
+        "created_at": {"$gte": datetime.utcnow().replace(hour=0, minute=0, second=0)}
+    })
+    new_users_week = await db.users.count_documents({
+        "created_at": {"$gte": datetime.utcnow() - timedelta(days=7)}
+    })
     
     # Search stats
     total_searches = await db.search_results.count_documents({})
     searches_today = await db.search_results.count_documents({
         "created_at": {"$gte": datetime.utcnow().replace(hour=0, minute=0, second=0)}
     })
+    searches_week = await db.search_results.count_documents({
+        "created_at": {"$gte": datetime.utcnow() - timedelta(days=7)}
+    })
+    
+    # Protocol stats
+    total_protocols = await db.categories.count_documents({})
+    public_protocols = await db.categories.count_documents({"is_public": True})
     
     # Marketplace stats
-    total_protocols = await db.marketplace_protocols.count_documents({"status": "active"})
-    total_sales = await db.marketplace_purchases.count_documents({})
+    active_listings = await db.marketplace_protocols.count_documents({"status": "active"})
+    total_purchases = await db.marketplace_purchases.count_documents({})
     
     # Revenue
     revenue_pipeline = [
@@ -2029,28 +2042,53 @@ async def get_analytics_dashboard(user = Depends(get_current_user_local)):
     revenue_result = await db.marketplace_purchases.aggregate(revenue_pipeline).to_list(1)
     total_revenue = revenue_result[0]["total"] if revenue_result else 0
     
-    # Social stats
+    # Social/Engagement stats
     total_groups = await db.groups.count_documents({})
     total_pages = await db.pages.count_documents({})
+    total_posts = await db.group_posts.count_documents({}) + await db.feed_posts.count_documents({})
+    
+    # Popular search terms (from recent searches)
+    popular_terms = []
+    try:
+        terms_pipeline = [
+            {"$match": {"created_at": {"$gte": datetime.utcnow() - timedelta(days=7)}}},
+            {"$group": {"_id": "$query", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+            {"$limit": 10}
+        ]
+        terms_result = await db.search_queries.aggregate(terms_pipeline).to_list(10)
+        popular_terms = [{"term": t["_id"], "count": t["count"]} for t in terms_result if t["_id"]]
+    except:
+        pass
     
     return {
+        "generated_at": datetime.utcnow().isoformat(),
         "users": {
             "total": total_users,
-            "active_24h": active_users_24h
+            "active_24h": active_users_24h,
+            "new_today": new_users_today,
+            "new_this_week": new_users_week
         },
         "searches": {
             "total": total_searches,
-            "today": searches_today
+            "today": searches_today,
+            "this_week": searches_week
+        },
+        "protocols": {
+            "total": total_protocols,
+            "public": public_protocols
         },
         "marketplace": {
-            "protocols": total_protocols,
-            "sales": total_sales,
+            "active_listings": active_listings,
+            "total_purchases": total_purchases,
             "revenue": total_revenue
         },
-        "social": {
-            "groups": total_groups,
-            "pages": total_pages
-        }
+        "engagement": {
+            "total_groups": total_groups,
+            "total_pages": total_pages,
+            "total_posts": total_posts
+        },
+        "popular_search_terms": popular_terms
     }
 
 @api_router.get("/analytics/search-trends")
