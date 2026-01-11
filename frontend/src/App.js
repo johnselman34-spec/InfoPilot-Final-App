@@ -1535,14 +1535,14 @@ const SubscribePage = ({ showToast, onBack }) => {
             Choose the amount that works for you - every contribution helps!
           </p>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
             {[
               { amount: 0.75, label: '$0.75' },
               { amount: 1.00, label: '$1.00' },
               { amount: 2.00, label: '$2.00' },
               { amount: 3.00, label: '$3.00' },
               { amount: 4.62, label: '$4.62' },
-              { amount: 5.00, label: '$5.00+' }
+              { amount: 5.00, label: '$5.00' }
             ].map(({ amount, label }) => (
               <button
                 key={amount}
@@ -1553,6 +1553,28 @@ const SubscribePage = ({ showToast, onBack }) => {
                 {label}
               </button>
             ))}
+          </div>
+
+          {/* Custom Amount */}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ color: '#a1a1aa' }}>Or enter custom amount: $</span>
+            <input
+              type="number"
+              step="0.01"
+              min="0.01"
+              placeholder="0.00"
+              value={customAmount}
+              onChange={(e) => setCustomAmount(e.target.value)}
+              className="input-field"
+              style={{ width: 100, textAlign: 'center' }}
+            />
+            <button 
+              className="btn btn-secondary"
+              onClick={handleCustomPayment}
+              disabled={!customAmount}
+            >
+              Pay Custom
+            </button>
           </div>
         </div>
 
