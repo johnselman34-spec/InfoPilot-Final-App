@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import { Icons } from '../components/shared';
 
 const MarketplacePage = ({ showToast }) => {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [protocols, setProtocols] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('browse'); // browse, sell, purchases, dashboard
@@ -22,16 +22,7 @@ const MarketplacePage = ({ showToast }) => {
   const [purchases, setPurchases] = useState([]);
   const [dashboard, setDashboard] = useState(null);
 
-  useEffect(() => {
-    fetchProtocols();
-    fetchCategories();
-    if (token) {
-      fetchPurchases();
-      fetchDashboard();
-    }
-  }, [token, selectedCategory, sortBy]);
-
-  const fetchProtocols = async () => {
+  const fetchProtocols = useCallback(async () => {
     try {
       let url = `${API}/marketplace/protocols?sort=${sortBy}`;
       if (selectedCategory) url += `&category=${selectedCategory}`;
@@ -45,9 +36,9 @@ const MarketplacePage = ({ showToast }) => {
       console.error('Failed to fetch protocols:', e);
     }
     setLoading(false);
-  };
+  }, [token, sortBy, selectedCategory]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await fetch(`${API}/marketplace/categories`);
       const data = await res.json();
@@ -55,9 +46,9 @@ const MarketplacePage = ({ showToast }) => {
     } catch (e) {
       console.error('Failed to fetch categories:', e);
     }
-  };
+  }, []);
 
-  const fetchPurchases = async () => {
+  const fetchPurchases = useCallback(async () => {
     try {
       const res = await fetch(`${API}/marketplace/purchases`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -67,9 +58,9 @@ const MarketplacePage = ({ showToast }) => {
     } catch (e) {
       console.error('Failed to fetch purchases:', e);
     }
-  };
+  }, [token]);
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = useCallback(async () => {
     try {
       const res = await fetch(`${API}/marketplace/seller/dashboard`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -79,7 +70,16 @@ const MarketplacePage = ({ showToast }) => {
     } catch (e) {
       console.error('Failed to fetch dashboard:', e);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchProtocols();
+    fetchCategories();
+    if (token) {
+      fetchPurchases();
+      fetchDashboard();
+    }
+  }, [fetchProtocols, fetchCategories, fetchPurchases, fetchDashboard, token]);
 
   const handleListProtocol = async () => {
     if (!newProtocol.name || !newProtocol.protocol || !newProtocol.description) {
