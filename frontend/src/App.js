@@ -1335,7 +1335,7 @@ const MessagesPage = ({ showToast }) => {
 };
 
 // ==================== SETTINGS PAGE ====================
-const SettingsPage = ({ showToast }) => {
+const SettingsPage = ({ showToast, setCurrentPage }) => {
   const { token, user, refreshUser } = useAuth();
   const [settings, setSettings] = useState({
     ultimate_search_public: user?.ultimate_search_public || false,
