@@ -953,19 +953,6 @@ class WebSearchService:
             
         except Exception as e:
             logger.error(f"Search aggregation error: {e}")
-                    for result in source_results:
-                        url = result.get("url", "")
-                        if url and url not in seen_urls:
-                            seen_urls.add(url)
-                            all_results.append(result)
-                    logger.info(f"{source_names[i]} contributed {len(source_results)} results")
-                else:
-                    logger.error(f"{source_names[i]} error: {source_results}")
-            
-            logger.info(f"Total unique results from all sources: {len(all_results)}")
-            
-        except Exception as e:
-            logger.error(f"Search aggregation error: {e}")
         
         # Fetch content for ALL results to improve protocol matching
         if all_results:
