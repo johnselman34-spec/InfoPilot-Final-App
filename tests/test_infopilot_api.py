@@ -231,8 +231,9 @@ class TestSocialEndpoints:
         )
         assert response.status_code == 200
         data = response.json()
-        assert "posts" in data
-        print(f"Social feed: {len(data['posts'])} posts")
+        # Feed returns a list directly
+        assert isinstance(data, list)
+        print(f"Social feed: {len(data)} posts")
     
     def test_get_friends(self, auth_token):
         """Test friends list endpoint"""
@@ -251,8 +252,9 @@ class TestSocialEndpoints:
         )
         assert response.status_code == 200
         data = response.json()
-        assert "posts" in data
-        print(f"Posts: {len(data['posts'])} posts found")
+        # Posts returns a list directly
+        assert isinstance(data, list)
+        print(f"Posts: {len(data)} posts found")
 
 
 class TestPaymentEndpoints:
