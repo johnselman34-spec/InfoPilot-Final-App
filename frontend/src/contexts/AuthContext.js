@@ -55,7 +55,16 @@ export const AuthProvider = ({ children }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    const data = await res.json();
+    
+    // Read response text first to avoid "body stream already read" error
+    const responseText = await res.text();
+    let data;
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch (e) {
+      throw new Error('Server returned invalid response');
+    }
+    
     if (!res.ok) throw new Error(data.detail || 'Login failed');
     localStorage.setItem('token', data.token);
     setToken(data.token);
@@ -69,7 +78,16 @@ export const AuthProvider = ({ children }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, username, password })
     });
-    const data = await res.json();
+    
+    // Read response text first to avoid "body stream already read" error
+    const responseText = await res.text();
+    let data;
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch (e) {
+      throw new Error('Server returned invalid response');
+    }
+    
     if (!res.ok) throw new Error(data.detail || 'Registration failed');
     localStorage.setItem('token', data.token);
     setToken(data.token);
@@ -89,7 +107,16 @@ export const AuthProvider = ({ children }) => {
         picture: googleUserData.picture
       })
     });
-    const data = await res.json();
+    
+    // Read response text first to avoid "body stream already read" error
+    const responseText = await res.text();
+    let data;
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch (e) {
+      throw new Error('Server returned invalid response');
+    }
+    
     if (!res.ok) throw new Error(data.detail || 'Google login failed');
     localStorage.setItem('token', data.token);
     setToken(data.token);
