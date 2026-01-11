@@ -1807,7 +1807,7 @@ InfoPilot - Your 3D View of the Internet
     }
 
 async def generate_newsletter_content():
-    """Generate AI-powered funny newsletter content using rich book data"""
+    """Generate AI-powered funny newsletter content using rich book data from manuscript"""
     try:
         from emergentintegrations.llm.chat import LlmChat, UserMessage
         
@@ -1823,12 +1823,13 @@ async def generate_newsletter_content():
 Your job is to create EXTREMELY FUNNY, laugh-out-loud emails that:
 1. Make people laugh so hard they snort their coffee
 2. Use absurd jokes, witty puns, and clever wordplay  
-3. Sell the book "Letters to Evelyn" using the ACTUAL review quotes provided
+3. Sell the book "Letters to Evelyn" using the ACTUAL review quotes and manuscript content provided
 4. Promote InfoPilot subscriptions
 5. Be so entertaining people FORWARD it to friends
 6. Use emojis liberally to make text POP
 7. Create urgency and FOMO (Fear Of Missing Out)
 8. Reference the book's wild plot: Navy pilot, hallucinations, aliens, love story, supernatural comedy
+9. The humor should be WARM, WITTY, and WELCOMING - not mean-spirited
 You must output complete HTML email with inline styles. Be WILD and CREATIVE!"""
         ).with_model("openai", "gpt-4o")
         
@@ -1847,6 +1848,18 @@ You must output complete HTML email with inline styles. Be WILD and CREATIVE!"""
         ]
         selected_image = random.choice(book_images)
         
+        # Funny taglines to rotate
+        funny_taglines = [
+            "The book that makes your therapist jealous!",
+            "50+ jokes that hit harder than a Navy jet landing!",
+            "Warning: May cause uncontrollable giggling in public places",
+            "Finally, a love story with ACTUAL aliens! Take that, romance novels!",
+            "Part Navy memoir, part alien encounter, ALL hilarious!",
+            "The only book where you'll laugh, cry, AND question reality!",
+            "Dave Chappelle wishes he wrote this! (The author's words, not ours... okay maybe ours too)",
+        ]
+        selected_tagline = random.choice(funny_taglines)
+        
         prompt = f"""Write an absolutely HILARIOUS weekly newsletter HTML email for InfoPilot users!
 
 STATS THIS WEEK:
@@ -1856,28 +1869,74 @@ STATS THIS WEEK:
 
 ===== BOOK PROMOTION (THIS IS THE STAR!) =====
 📚 "LETTERS TO EVELYN" by John Selman
-- A True Supernatural Thriller Comedy
+- A True Supernatural Thriller Comedy Memoir
 - Price: ONLY $2.99 on Amazon Kindle (cheaper than a fancy coffee!)
 - Has 57 reviews on Amazon, 5.0 out of 5 stars!
 - 19 PROFESSIONAL Five-Star Reviews from Readers' Favorite
+- "{selected_tagline}"
 
-ACTUAL REVIEW QUOTES TO USE (pick 2-3):
-★ "This memoir is a profound and unforgettable literary piece." - Divine Zape
-★ "Mind-bending." - Luwi Nyakansaila  
-★ "Exceedingly brilliant." - Paul Zeitsman
-★ "The author's imagination is off the charts." - Leslie Jones
-★ "Mind-blowing." - Doreen Chombu
+FROM THE ACTUAL MANUSCRIPT (use these for authenticity!):
+- The author was a Navy ROTC top student who dreamed of flying like his father
+- His stepmother Lauren poisoned his food with LSD, causing 10+ months of hallucinations
+- He holds a WORLD RECORD for the steepest Sarajevo Approach in a T-34C aircraft!
+- He writes beautiful love letters to a mysterious woman named Evelyn Tuskegee
+- The book contains "upwards of 50 finely-crafted deafening, zany, zesty, zoo zingers... JOKES!"
+- Author's own claim: "More funny than Dave Chappelle or your money back!"
+- Contains extraterrestrial encounters and a "phantasmagoria of disconnected thoughts"
+- The author survived a U.S. Northeast endurance record of 12+ days without sleep after being poisoned!
+
+ACTUAL PROFESSIONAL REVIEW QUOTES (use 2-3):
+★ "This memoir is a profound and unforgettable literary piece." - Divine Zape, Readers' Favorite
+★ "Mind-bending." - Luwi Nyakansaila, Readers' Favorite
+★ "Exceedingly brilliant." - Paul Zeitsman, Readers' Favorite
+★ "The author's imagination is off the charts." - Leslie Jones, Readers' Favorite
+★ "Mind-blowing." - Doreen Chombu, Readers' Favorite
 ★ "Resonates on a visceral level." - Divine Zape
 ★ "Bold, strange, and very human." - Kindle Customer
-★ "It can give many reasons for exhilarating exuberance!" - Amazon description
+★ "A captivating and thought-provoking memoir that defies genre conventions." - Ruffina Oserio
+★ "A symphony of love and madness that transports readers to the furthest reaches of the human psyche." - Christian Sia
 
-BOOK PLOT ELEMENTS TO JOKE ABOUT:
-- Navy pilot has his food poisoned with LSD by his stepmother (yes, really!)
-- Hallucinations for 10+ months (imagine calling in sick for THAT)
-- Encounters with extraterrestrial beings 
-- Letters written to a mysterious woman named Evelyn
-- A love story that spans the cosmos
-- More funny than Dave Chappelle (the author's own bold claim!)
+READER TESTIMONIALS FROM AMAZON:
+★ "This book evoked a mixture of surprise and amusement... I felt lighter and reminded of the importance of not taking life too seriously." - Peter gale Carty
+★ "I laughed, I paused to think, and at times I had to reread sections just to take it all in." - Kindle Customer
+★ "Prepare to have a laugh every chapter, as betrayal unfolds maybe love." - Roshannae Dougal
+
+BOOK THEMES TO REFERENCE:
+- Love and cosmic connection to Evelyn
+- Military service and following dreams
+- Overcoming trauma with humor
+- The search for meaning in a chaotic world
+- Blending reality with the extraordinary
+
+BOOK IMAGE TO INCLUDE:
+<img src="{selected_image}" alt="Letters to Evelyn" style="max-width: 300px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+
+Amazon Link: https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191
+
+===== INFOPILOT SUBSCRIPTION =====
+App subscription: Pay what you want! Starting at $0.75/year
+(That's less than a single gumball from those fancy machines!)
+
+===== STYLE REQUIREMENTS =====
+- Use gradient backgrounds: purple (#7c3aed), pink (#ec4899), blue (#3b82f6)
+- Make the book the HERO with a big featured section
+- Include the book image prominently
+- Create URGENCY ("Only a few people have discovered this gem!")
+- Be ABSURD and SURREAL (match the book's vibe)
+- Add a "Dad joke of the week" or fun recurring element
+- Make buttons big and colorful
+- Sign off as "Your Friends at InfoPilot"
+- Keep it fun and warm - we want people to ENJOY opening these emails!
+
+Output ONLY the complete HTML email with inline styles. No markdown code blocks!"""
+
+        user_message = UserMessage(text=prompt)
+        response = await chat.send_message(user_message)
+        
+        return {
+            "content": response,
+            "generated_at": datetime.now().isoformat(),
+            "ai_generated": True
 - Contains 50+ "hurricane force winds of laughter" jokes
 
 BOOK IMAGE TO INCLUDE:
