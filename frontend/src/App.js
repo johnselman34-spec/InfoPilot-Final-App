@@ -169,6 +169,12 @@ const LoginPage = ({ onSwitch }) => {
     setLoading(false);
   };
 
+  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+  const handleGoogleLogin = () => {
+    const redirectUrl = window.location.origin;
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -199,7 +205,7 @@ const LoginPage = ({ onSwitch }) => {
           </button>
         </form>
         <div className="auth-divider"><span>or</span></div>
-        <button className="google-btn">
+        <button className="google-btn" onClick={handleGoogleLogin}>
           <img src="https://www.google.com/favicon.ico" alt="Google" style={{ width: 20 }} />
           Continue with Google
         </button>
