@@ -528,6 +528,73 @@ const AdminPanel = ({ showToast }) => {
 
   const getSetting = (key) => settings.find(s => s.key === key)?.value || '';
 
+  // Newsletter state
+  const [newsletterPreview, setNewsletterPreview] = useState(null);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterHistory, setNewsletterHistory] = useState([]);
+
+  const generateNewsletter = async () => {
+    setNewsletterLoading(true);
+    try {
+      const res = await fetch(`${API}/newsletter/generate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNewsletterPreview(data.content);
+        showToast('Newsletter generated!', 'success');
+        fetchNewsletterHistory();
+      } else {
+        showToast('Failed to generate newsletter', 'error');
+      }
+    } catch (e) {
+      showToast('Error generating newsletter', 'error');
+    }
+    setNewsletterLoading(false);
+  };
+
+  const sendNewsletter = async () => {
+    if (!window.confirm('Send newsletter to all subscribed users?')) return;
+    setNewsletterLoading(true);
+    try {
+      const res = await fetch(`${API}/newsletter/send`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`Newsletter sent to ${data.sent_count} users!`, 'success');
+        fetchNewsletterHistory();
+      } else {
+        showToast('Failed to send newsletter', 'error');
+      }
+    } catch (e) {
+      showToast('Error sending newsletter', 'error');
+    }
+    setNewsletterLoading(false);
+  };
+
+  const fetchNewsletterHistory = async () => {
+    try {
+      const res = await fetch(`${API}/newsletter/history`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNewsletterHistory(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch newsletter history');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'newsletter') {
+      fetchNewsletterHistory();
+    }
+  }, [activeTab]);
+
   if (loading) {
     return <div className="loading-spinner"><div className="spinner"></div></div>;
   }
