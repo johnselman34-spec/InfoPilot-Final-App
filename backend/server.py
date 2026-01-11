@@ -2004,8 +2004,9 @@ async def init_admin_settings():
     default_settings = [
         {"key": "subscription_price", "value": 0.99, "description": "Subscription price in USD"},
         {"key": "results_per_page", "value": 20, "description": "Search results per page"},
+        {"key": "max_search_pages", "value": 99, "description": "Max search pages (1-99) for admin/paid users"},
         {"key": "unpaid_max_pages", "value": 1, "description": "Max pages for unpaid users"},
-        {"key": "daily_collate_limit", "value": 10, "description": "Max collations per day"},
+        {"key": "daily_collate_limit", "value": 100, "description": "Max collations per day"},
         {"key": "max_category_levels", "value": 100, "description": "Max category hierarchy depth"},
         {"key": "phd_min_words", "value": 1500, "description": "Min words for Ph.D. classification"},
         {"key": "phd_keyword_count", "value": 3, "description": "Min Ph.D. keywords required"},
