@@ -4610,6 +4610,371 @@ async def get_seller_sales(user = Depends(get_current_user)):
     return {"sales": sales, "total_count": len(sales)}
 
 
+# ============== QUOTE GALLERY ==============
+
+@api_router.get("/quotes/gallery")
+async def get_quote_gallery():
+    """Get all quotes from Letters to Evelyn for the gallery"""
+    quotes = []
+    categories = {}
+    
+    # Hilarious quotes
+    for q in MANUSCRIPT_CONTENT.get("hilarious_quotes", []):
+        quotes.append({
+            "quote": q["quote"],
+            "context": q.get("context", ""),
+            "category": "hilarious"
+        })
+    categories["hilarious"] = len(MANUSCRIPT_CONTENT.get("hilarious_quotes", []))
+    
+    # Profound lines
+    for line in MANUSCRIPT_CONTENT.get("profound_lines", []):
+        quotes.append({
+            "quote": line,
+            "context": "A moment of profound insight",
+            "category": "profound"
+        })
+    categories["profound"] = len(MANUSCRIPT_CONTENT.get("profound_lines", []))
+    
+    # Dad jokes
+    for joke in MANUSCRIPT_CONTENT.get("dad_jokes", []):
+        quotes.append({
+            "quote": joke,
+            "context": "Dad joke from the author",
+            "category": "dad_joke"
+        })
+    categories["dad_joke"] = len(MANUSCRIPT_CONTENT.get("dad_jokes", []))
+    
+    # Chapter teasers
+    for ch in MANUSCRIPT_CONTENT.get("chapter_teasers", []):
+        quotes.append({
+            "quote": ch["teaser"],
+            "context": f"Chapter {ch['chapter']}: {ch['title']}",
+            "category": "chapter_teaser"
+        })
+    categories["chapter_teaser"] = len(MANUSCRIPT_CONTENT.get("chapter_teasers", []))
+    
+    # Wild plot elements
+    for element in MANUSCRIPT_CONTENT.get("wild_plot_elements", []):
+        quotes.append({
+            "quote": element,
+            "context": "From the wildest parts of the book",
+            "category": "wild_element"
+        })
+    categories["wild_element"] = len(MANUSCRIPT_CONTENT.get("wild_plot_elements", []))
+    
+    # Marketing hooks
+    for hook in MANUSCRIPT_CONTENT.get("marketing_hooks", []):
+        quotes.append({
+            "quote": hook,
+            "context": "Marketing headline",
+            "category": "marketing"
+        })
+    categories["marketing"] = len(MANUSCRIPT_CONTENT.get("marketing_hooks", []))
+    
+    return {
+        "quotes": quotes,
+        "total": len(quotes),
+        "categories": [
+            {"id": "hilarious", "name": "Hilarious", "count": categories.get("hilarious", 0)},
+            {"id": "profound", "name": "Profound", "count": categories.get("profound", 0)},
+            {"id": "dad_joke", "name": "Dad Jokes", "count": categories.get("dad_joke", 0)},
+            {"id": "chapter_teaser", "name": "Chapter Teasers", "count": categories.get("chapter_teaser", 0)},
+            {"id": "wild_element", "name": "Wild Elements", "count": categories.get("wild_element", 0)},
+            {"id": "marketing", "name": "Marketing", "count": categories.get("marketing", 0)}
+        ]
+    }
+
+
+# ============== PROTOCOL DEBUGGER ==============
+
+class ProtocolDebugRequest(BaseModel):
+    protocol: str
+    test_text: Optional[str] = None
+
+@api_router.post("/protocol/debug")
+async def debug_protocol(request: ProtocolDebugRequest, user = Depends(get_current_user)):
+    """Debug a protocol string and optionally test against sample text"""
+    protocol = request.protocol
+    test_text = request.test_text
+    
+    # Parse the protocol
+    parsed = ProtocolParser.parse_protocol(protocol)
+    
+    result = {
+        "valid": parsed["valid"],
+        "groups": parsed["groups"],
+        "original_protocol": protocol
+    }
+    
+    # If test text provided, check if it matches
+    if test_text and parsed["valid"]:
+        text_lower = ProtocolParser.normalize_text(test_text)
+        match_details = []
+        overall_match = True
+        
+        for idx, group in enumerate(parsed["groups"]):
+            items = group["items"]
+            modifier = group["modifier"]
+            matched_words = []
+            
+            for item in items:
+                if ProtocolParser.text_contains_item(text_lower, item):
+                    matched_words.append(item)
+            
+            group_matched = False
+            if modifier == '+':
+                # Include all - all must match
+                group_matched = len(matched_words) == len(items)
+            elif modifier == '^':
+                # Exclude all - none should match
+                group_matched = len(matched_words) == 0
+            else:
+                # OR logic - at least one must match
+                group_matched = len(matched_words) > 0
+            
+            match_details.append({
+                "group": idx + 1,
+                "modifier": modifier or "OR",
+                "matched": group_matched,
+                "matched_words": matched_words,
+                "total_items": len(items)
+            })
+            
+            if not group_matched:
+                overall_match = False
+        
+        result["test_result"] = overall_match
+        result["match_details"] = match_details
+    
+    return result
+
+
+# ============== GAMIFICATION ENHANCEMENTS ==============
+
+@api_router.get("/gamification/leaderboard/weekly")
+async def get_weekly_leaderboard():
+    """Get weekly leaderboard (resets every Monday)"""
+    # Calculate start of current week (Monday)
+    today = datetime.utcnow()
+    start_of_week = today - timedelta(days=today.weekday())
+    start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Get XP earned this week
+    pipeline = [
+        {"$match": {"earned_at": {"$gte": start_of_week}}},
+        {"$group": {
+            "_id": "$user_id",
+            "weekly_xp": {"$sum": "$xp"}
+        }},
+        {"$sort": {"weekly_xp": -1}},
+        {"$limit": 20}
+    ]
+    
+    weekly_stats = await db.xp_history.aggregate(pipeline).to_list(20)
+    
+    leaderboard = []
+    for idx, stat in enumerate(weekly_stats):
+        user = await db.users.find_one({"_id": ObjectId(stat["_id"])})
+        if user:
+            leaderboard.append({
+                "rank": idx + 1,
+                "user_id": str(user["_id"]),
+                "username": user.get("username", user.get("callsign", "Unknown")),
+                "weekly_xp": stat["weekly_xp"]
+            })
+    
+    return {
+        "period": "weekly",
+        "start_date": start_of_week.isoformat(),
+        "leaderboard": leaderboard
+    }
+
+@api_router.get("/gamification/leaderboard/monthly")
+async def get_monthly_leaderboard():
+    """Get monthly leaderboard (resets on 1st of each month)"""
+    today = datetime.utcnow()
+    start_of_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    pipeline = [
+        {"$match": {"earned_at": {"$gte": start_of_month}}},
+        {"$group": {
+            "_id": "$user_id",
+            "monthly_xp": {"$sum": "$xp"}
+        }},
+        {"$sort": {"monthly_xp": -1}},
+        {"$limit": 20}
+    ]
+    
+    monthly_stats = await db.xp_history.aggregate(pipeline).to_list(20)
+    
+    leaderboard = []
+    for idx, stat in enumerate(monthly_stats):
+        user = await db.users.find_one({"_id": ObjectId(stat["_id"])})
+        if user:
+            leaderboard.append({
+                "rank": idx + 1,
+                "user_id": str(user["_id"]),
+                "username": user.get("username", user.get("callsign", "Unknown")),
+                "monthly_xp": stat["monthly_xp"]
+            })
+    
+    return {
+        "period": "monthly",
+        "start_date": start_of_month.isoformat(),
+        "leaderboard": leaderboard
+    }
+
+@api_router.post("/gamification/share-badge")
+async def share_badge(badge_id: str = Body(..., embed=True), user = Depends(get_current_user)):
+    """Generate shareable badge data for social media"""
+    user_profile = await db.gamification.find_one({"user_id": str(user["_id"])})
+    
+    if not user_profile:
+        raise HTTPException(status_code=404, detail="User profile not found")
+    
+    # Find the badge
+    user_badges = user_profile.get("badges", [])
+    badge = next((b for b in user_badges if b.get("id") == badge_id), None)
+    
+    if not badge:
+        raise HTTPException(status_code=404, detail="Badge not found")
+    
+    username = user.get("username", user.get("callsign", "Anonymous"))
+    
+    # Generate share text
+    share_text = f"🏆 I just earned the '{badge['name']}' badge on InfoPilot Explorer!\n\n{badge.get('description', '')}\n\n🚀 Join me and start your search journey: https://infopilot.app"
+    
+    # Generate Twitter/X share URL
+    twitter_url = f"https://twitter.com/intent/tweet?text={urllib.parse.quote(share_text)}"
+    
+    # Generate Facebook share URL
+    facebook_url = f"https://www.facebook.com/sharer/sharer.php?quote={urllib.parse.quote(share_text)}"
+    
+    return {
+        "badge": badge,
+        "username": username,
+        "share_text": share_text,
+        "share_urls": {
+            "twitter": twitter_url,
+            "facebook": facebook_url
+        }
+    }
+
+
+# ============== ANALYTICS ==============
+
+@api_router.get("/analytics/dashboard")
+async def get_analytics_dashboard(user = Depends(get_current_user)):
+    """Get analytics dashboard data"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get time periods
+    now = datetime.utcnow()
+    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_ago = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
+    
+    # User stats
+    total_users = await db.users.count_documents({})
+    new_users_today = await db.users.count_documents({"created_at": {"$gte": today}})
+    new_users_week = await db.users.count_documents({"created_at": {"$gte": week_ago}})
+    
+    # Search stats
+    total_searches = await db.search_results.count_documents({})
+    searches_today = await db.search_results.count_documents({"created_at": {"$gte": today}})
+    searches_week = await db.search_results.count_documents({"created_at": {"$gte": week_ago}})
+    
+    # Protocol stats
+    total_protocols = await db.categories.count_documents({})
+    public_protocols = await db.categories.count_documents({"is_public": True})
+    
+    # Marketplace stats
+    marketplace_listings = await db.marketplace_protocols.count_documents({"status": "active"})
+    marketplace_purchases = await db.marketplace_purchases.count_documents({})
+    
+    # Popular search terms (from recent searches)
+    recent_searches = await db.search_history.find().sort("created_at", -1).limit(100).to_list(100)
+    search_terms = {}
+    for s in recent_searches:
+        term = s.get("query", "").lower()
+        if term:
+            search_terms[term] = search_terms.get(term, 0) + 1
+    popular_terms = sorted(search_terms.items(), key=lambda x: x[1], reverse=True)[:10]
+    
+    # Engagement metrics
+    total_posts = await db.posts.count_documents({})
+    total_groups = await db.groups.count_documents({})
+    total_pages = await db.pages.count_documents({})
+    
+    return {
+        "users": {
+            "total": total_users,
+            "new_today": new_users_today,
+            "new_this_week": new_users_week
+        },
+        "searches": {
+            "total": total_searches,
+            "today": searches_today,
+            "this_week": searches_week
+        },
+        "protocols": {
+            "total": total_protocols,
+            "public": public_protocols
+        },
+        "marketplace": {
+            "active_listings": marketplace_listings,
+            "total_purchases": marketplace_purchases
+        },
+        "engagement": {
+            "total_posts": total_posts,
+            "total_groups": total_groups,
+            "total_pages": total_pages
+        },
+        "popular_search_terms": [{"term": t[0], "count": t[1]} for t in popular_terms],
+        "generated_at": now.isoformat()
+    }
+
+@api_router.get("/analytics/search-trends")
+async def get_search_trends(days: int = Query(7, ge=1, le=30), user = Depends(get_current_user)):
+    """Get search trends over time"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    now = datetime.utcnow()
+    start_date = now - timedelta(days=days)
+    
+    # Group searches by day
+    pipeline = [
+        {"$match": {"created_at": {"$gte": start_date}}},
+        {"$group": {
+            "_id": {
+                "year": {"$year": "$created_at"},
+                "month": {"$month": "$created_at"},
+                "day": {"$dayOfMonth": "$created_at"}
+            },
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"_id.year": 1, "_id.month": 1, "_id.day": 1}}
+    ]
+    
+    daily_searches = await db.search_results.aggregate(pipeline).to_list(100)
+    
+    trends = []
+    for d in daily_searches:
+        date_str = f"{d['_id']['year']}-{d['_id']['month']:02d}-{d['_id']['day']:02d}"
+        trends.append({
+            "date": date_str,
+            "searches": d["count"]
+        })
+    
+    return {
+        "period_days": days,
+        "trends": trends
+    }
+
+
 # ============== HEALTH CHECK ==============
 
 @api_router.get("/")
