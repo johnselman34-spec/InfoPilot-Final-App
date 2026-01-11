@@ -2581,17 +2581,86 @@ async def init_admin_settings():
 
 # ============== NEWSLETTER SYSTEM ==============
 
-# Book and App Marketing Content
+# Book and App Marketing Content - ENHANCED with full promotional data
 BOOK_INFO = {
     "title": "Letters to Evelyn",
     "author": "John Selman",
-    "genre": "Supernatural Thriller Comedy",
+    "genre": "A True Supernatural Thriller Comedy",
     "price": "$2.99",
     "amazon_url": "https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191",
     "reviews_url": "https://readersfavorite.com/book-review/letters-to-evelyn",
-    "review_count": "19 Five-Star Professional Reviews",
-    "featured_review": '"This memoir is a profound and unforgettable literary piece." - Dvine Zape, Readers\' Favorite',
+    "review_count": "57 Amazon Reviews, ALL 5 Stars!",
+    "featured_review": '"This memoir is a profound and unforgettable literary piece." - Divine Zape, Readers\' Favorite',
     "description": "A supernatural thriller comedy that will keep you on the edge of your seat while making you laugh!"
+}
+
+# NEW: Enhanced promotional images with hilarious taglines from advertisements
+BOOK_PROMO_IMAGES = [
+    {
+        "url": "https://customer-assets.emergentagent.com/job_40ecefb6-ad41-4cc2-b262-9d6290d06ac2/artifacts/hou1ho41_Letters%20to%20Evelyn%20advertisement%201.jpg",
+        "tagline": "WROTE A BOOK - UNIVERSE FACT-CHECKED IT - IT PASSED!",
+        "theme": "cosmic_approval",
+        "subtitle": "The universe literally gave it a passing grade. Beat that, Shakespeare!"
+    },
+    {
+        "url": "https://customer-assets.emergentagent.com/job_40ecefb6-ad41-4cc2-b262-9d6290d06ac2/artifacts/0jz7ijpw_Letters%20to%20Evelyn%20advertisement%202.jpg",
+        "tagline": "THERAPIST: THIS IS A LOT TO UNPACK - BRING SNACKS",
+        "theme": "therapy_humor",
+        "subtitle": "Finally, a book complex enough to justify your therapy bills!"
+    },
+    {
+        "url": "https://customer-assets.emergentagent.com/job_40ecefb6-ad41-4cc2-b262-9d6290d06ac2/artifacts/g0is1l74_Letters%20to%20Evelyn%20advertisement%203.jpg",
+        "tagline": "I FLEW JETS THEN REALITY BROKE",
+        "theme": "pilot_story",
+        "subtitle": "When your life is so wild, physics decides to take a vacation!"
+    },
+    {
+        "url": "https://customer-assets.emergentagent.com/job_40ecefb6-ad41-4cc2-b262-9d6290d06ac2/artifacts/kuqqskw9_Letters%20to%20Evelyn%20advertisement%204.jpg",
+        "tagline": "TERROR OF THE COSMICGULPER - WE'RE ALL GONNA DIE!",
+        "theme": "galactic_comedy",
+        "subtitle": "A Comedy of Galactic Proportions - Prepare for a mouth-watering adventure!"
+    }
+]
+
+# NEW: Rich review data from Readers' Favorite and Amazon
+BOOK_REVIEWS = {
+    "readers_favorite": {
+        "summary": "A prolific odyssey of love and redemption that takes readers on a journey through illuminating and unsettling life experiences.",
+        "themes": "Identity, spirituality, nature of reality, encounters with extraterrestrial beings, memories, dreams, and hallucinations woven in lyrical prose.",
+        "reviews": [
+            {"reviewer": "Divine Zape", "quote": "This memoir is a profound and unforgettable literary piece.", "stars": 5},
+            {"reviewer": "Luwi Nyakansaila", "quote": "Mind-bending.", "stars": 5},
+            {"reviewer": "Paul Zeitsman", "quote": "Exceedingly brilliant.", "stars": 5},
+            {"reviewer": "Leslie Jones", "quote": "The author's imagination is off the charts.", "stars": 5},
+            {"reviewer": "Doreen Chombu", "quote": "Mind-blowing.", "stars": 5},
+            {"reviewer": "Ruffina Oserio", "quote": "A captivating memoir that defies genre conventions.", "stars": 5},
+            {"reviewer": "Christian Sia", "quote": "A symphony of love and madness that transports readers to the furthest reaches of the human psyche.", "stars": 5},
+            {"reviewer": "Courtnee Turner Hoyle", "quote": "Deeply spiritual with a melodic quality.", "stars": 5},
+            {"reviewer": "David Jaggart", "quote": "A heartfelt book about grief, love, confronting trauma, and self-discovery.", "stars": 5}
+        ]
+    },
+    "amazon": {
+        "rating": "5.0 out of 5 stars",
+        "total_reviews": 57,
+        "reviews": [
+            {"reviewer": "Peter gale Carty", "quote": "This book evoked a mixture of surprise and amusement... I felt lighter and reminded of the importance of not taking life too seriously."},
+            {"reviewer": "Kindle Customer", "quote": "I laughed, I paused to think, and at times I had to reread sections just to take it all in."},
+            {"reviewer": "Roshannae Dougal", "quote": "Prepare to have a laugh every chapter, as betrayal unfolds maybe love."},
+            {"reviewer": "Nicole F", "quote": "A Haunting Masterpiece! Twists and turns keep you hooked!"},
+            {"reviewer": "Justine", "quote": "A gripping supernatural thriller memoir that'll keep you on the edge."},
+            {"reviewer": "Ella-O", "quote": "Very enjoyable and beautifully written in a way that keeps you captivated."}
+        ]
+    }
+}
+
+# NEW: Author biography highlights for funnier content
+AUTHOR_HIGHLIGHTS = {
+    "credentials": "Navy pilot, Top ROTC student, German language degree holder",
+    "world_record": "Steepest, highest Sarajevo Approach with the lowest recovery in a T-34C - 83 degree nose down dive from 6000 feet to 5 feet above treetops!",
+    "endurance_record": "Survived 12+ days without sleep after being poisoned",
+    "achievements": "Flew 10 different aircraft types",
+    "personality": "Self-proclaimed funnier than Dave Chappelle",
+    "book_promise": "50+ finely-crafted deafening, zany, zesty, zoo zingers... JOKES!"
 }
 
 APP_INFO = {
