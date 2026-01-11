@@ -47,6 +47,9 @@ if RESEND_API_KEY:
 # Emergent LLM Key
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY')
 
+# SerpAPI Key
+SERPAPI_KEY = os.environ.get('SERPAPI_KEY')
+
 # Protocol Marketplace Settings
 MARKETPLACE_PLATFORM_FEE = 0.10  # 10% platform fee, 90% to creators
 MARKETPLACE_MIN_PRICE = 0.99
