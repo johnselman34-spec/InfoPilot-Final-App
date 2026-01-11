@@ -2079,6 +2079,139 @@ async def get_newsletter_history(credentials: HTTPAuthorizationCredentials = Dep
         "ai_generated": n.get("ai_generated", False)
     } for n in newsletters]
 
+# ============== SCHEDULED NEWSLETTER ==============
+
+@api_router.get("/newsletter/schedule")
+async def get_newsletter_schedule(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get newsletter schedule settings (Admin only)"""
+    user = await get_current_user(credentials)
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    schedule = await db.settings.find_one({"key": "newsletter_schedule"})
+    return {
+        "enabled": schedule.get("value", {}).get("enabled", False) if schedule else False,
+        "day_of_week": schedule.get("value", {}).get("day_of_week", "monday") if schedule else "monday",
+        "hour": schedule.get("value", {}).get("hour", 9) if schedule else 9,
+        "last_scheduled_send": schedule.get("value", {}).get("last_scheduled_send") if schedule else None
+    }
+
+@api_router.post("/newsletter/schedule")
+async def update_newsletter_schedule(
+    enabled: bool = Body(...),
+    day_of_week: str = Body("monday"),
+    hour: int = Body(9),
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    """Update newsletter schedule settings (Admin only)"""
+    user = await get_current_user(credentials)
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    valid_days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    if day_of_week.lower() not in valid_days:
+        raise HTTPException(status_code=400, detail=f"Invalid day. Must be one of: {valid_days}")
+    
+    if not 0 <= hour <= 23:
+        raise HTTPException(status_code=400, detail="Hour must be between 0 and 23")
+    
+    await db.settings.update_one(
+        {"key": "newsletter_schedule"},
+        {"$set": {"value": {
+            "enabled": enabled,
+            "day_of_week": day_of_week.lower(),
+            "hour": hour,
+            "last_scheduled_send": None
+        }}},
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "message": f"Newsletter scheduled for {day_of_week}s at {hour}:00" if enabled else "Newsletter schedule disabled"
+    }
+
+@api_router.post("/newsletter/send-scheduled")
+async def check_and_send_scheduled_newsletter():
+    """
+    Endpoint to check if scheduled newsletter should be sent.
+    This should be called by a cron job or scheduler every hour.
+    """
+    schedule = await db.settings.find_one({"key": "newsletter_schedule"})
+    if not schedule or not schedule.get("value", {}).get("enabled"):
+        return {"sent": False, "reason": "Scheduling disabled"}
+    
+    settings = schedule["value"]
+    now = datetime.utcnow()
+    
+    # Check if it's the right day and hour
+    day_names = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    current_day = day_names[now.weekday()]
+    current_hour = now.hour
+    
+    if current_day != settings.get("day_of_week") or current_hour != settings.get("hour"):
+        return {"sent": False, "reason": f"Not scheduled time. Current: {current_day} {current_hour}:00"}
+    
+    # Check if already sent today
+    last_send = settings.get("last_scheduled_send")
+    if last_send:
+        last_send_date = datetime.fromisoformat(last_send) if isinstance(last_send, str) else last_send
+        if last_send_date.date() == now.date():
+            return {"sent": False, "reason": "Already sent today"}
+    
+    # Check if Resend is configured
+    if not RESEND_API_KEY:
+        return {"sent": False, "reason": "Email service not configured"}
+    
+    # Generate and send newsletter
+    try:
+        newsletter_data = await generate_newsletter_content()
+        newsletter = {
+            "content": newsletter_data["content"],
+            "generated_at": datetime.utcnow(),
+            "ai_generated": newsletter_data.get("ai_generated", True),
+            "sent": False
+        }
+        result = await db.newsletters.insert_one(newsletter)
+        newsletter["_id"] = result.inserted_id
+        
+        # Get all user emails
+        users = await db.users.find({"newsletter_unsubscribed": {"$ne": True}}).to_list(10000)
+        
+        sent_count = 0
+        failed_count = 0
+        
+        for u in users:
+            try:
+                params = {
+                    "from": SENDER_EMAIL,
+                    "to": [u['email']],
+                    "subject": "🚀 Your Weekly InfoPilot Newsletter - Laughs & Discoveries Inside!",
+                    "html": newsletter["content"]
+                }
+                await asyncio.to_thread(resend.Emails.send, params)
+                sent_count += 1
+            except Exception as e:
+                logger.error(f"Failed to send to {u['email']}: {e}")
+                failed_count += 1
+        
+        # Update newsletter and schedule records
+        await db.newsletters.update_one(
+            {"_id": newsletter["_id"]},
+            {"$set": {"sent": True, "sent_at": datetime.utcnow(), "sent_count": sent_count, "failed_count": failed_count}}
+        )
+        
+        await db.settings.update_one(
+            {"key": "newsletter_schedule"},
+            {"$set": {"value.last_scheduled_send": datetime.utcnow().isoformat()}}
+        )
+        
+        return {"sent": True, "sent_count": sent_count, "failed_count": failed_count}
+        
+    except Exception as e:
+        logger.error(f"Scheduled newsletter failed: {e}")
+        return {"sent": False, "reason": str(e)}
+
 # ============== PROTOCOL DEBUG ENDPOINT ==============
 
 class ProtocolDebugRequest(BaseModel):
