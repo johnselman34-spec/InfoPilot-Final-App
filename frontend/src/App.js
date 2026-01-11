@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import React, { useState, useEffect, createContext, useContext, useCallback, useRef } from 'react';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -69,6 +69,26 @@ const AuthProvider = ({ children }) => {
     return data;
   };
 
+  // Google OAuth login using Emergent Auth
+  const loginWithGoogle = async (googleUserData) => {
+    const res = await fetch(`${API}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: googleUserData.email,
+        google_id: googleUserData.id,
+        name: googleUserData.name,
+        picture: googleUserData.picture
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Google login failed');
+    localStorage.setItem('token', data.token);
+    setToken(data.token);
+    setUser(data.user);
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -88,7 +108,7 @@ const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, loginWithGoogle, logout, refreshUser, setUser, setToken, setLoading }}>
       {children}
     </AuthContext.Provider>
   );
