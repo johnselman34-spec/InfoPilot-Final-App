@@ -984,6 +984,93 @@ class WebSearchService:
         logger.info(f"Search for '{query}' returning {len(all_results)} results (with content enrichment)")
         return all_results[:num_results]
     
+    @staticmethod
+    async def search_fast(query: str, num_results: int = 500) -> List[Dict[str, Any]]:
+        """
+        OPTIMIZED FAST SEARCH - Target: 120+ results in 19-22 seconds
+        Skips slow content enrichment, uses parallel scraping with timeouts
+        """
+        import time
+        start_time = time.time()
+        all_results = []
+        seen_urls = set()
+        
+        try:
+            logger.info(f"Starting FAST search for: {query} (target: {num_results} results)")
+            
+            # Run ALL scrapers in parallel with aggressive timeout
+            tasks = []
+            
+            # DDGS library - most reliable
+            if DDGS_AVAILABLE:
+                tasks.append(asyncio.wait_for(
+                    WebSearchService.search_ddgs_library(query, min(300, num_results)),
+                    timeout=12.0
+                ))
+            
+            # Secondary scrapers - run in parallel
+            tasks.append(asyncio.wait_for(
+                WebSearchService.search_duckduckgo(query, min(200, num_results)),
+                timeout=10.0
+            ))
+            tasks.append(asyncio.wait_for(
+                WebSearchService.search_bing_scrape(query, min(200, num_results)),
+                timeout=10.0
+            ))
+            tasks.append(asyncio.wait_for(
+                WebSearchService.search_google_scrape(query, min(150, num_results)),
+                timeout=10.0
+            ))
+            
+            # Execute all in parallel
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # Process results from each source
+            source_names = ["DDGS Library", "DuckDuckGo Scrape", "Bing", "Google"] if DDGS_AVAILABLE else ["DuckDuckGo Scrape", "Bing", "Google"]
+            for i, source_results in enumerate(results):
+                if isinstance(source_results, list):
+                    added = 0
+                    for result in source_results:
+                        url = result.get("url", "")
+                        if url and url not in seen_urls:
+                            seen_urls.add(url)
+                            all_results.append(result)
+                            added += 1
+                    logger.info(f"{source_names[i] if i < len(source_names) else f'Source {i}'}: +{added} results")
+                elif isinstance(source_results, asyncio.TimeoutError):
+                    logger.warning(f"Source {i} timed out")
+                else:
+                    logger.debug(f"Source {i} error: {type(source_results).__name__}")
+            
+            elapsed = time.time() - start_time
+            logger.info(f"FAST search completed: {len(all_results)} results in {elapsed:.1f}s (target: 19-22s)")
+            
+            # If we have time remaining and need more results, do quick content enrichment
+            if elapsed < 15 and len(all_results) < 50:
+                # Only enrich first 30 results if we're short on results
+                batch_size = 30
+                enrichment_tasks = [
+                    asyncio.wait_for(WebSearchService.fetch_page_content(r["url"]), timeout=2.0)
+                    for r in all_results[:batch_size]
+                ]
+                try:
+                    contents = await asyncio.gather(*enrichment_tasks, return_exceptions=True)
+                    for j, content in enumerate(contents):
+                        if isinstance(content, dict) and j < len(all_results):
+                            if content.get("title"):
+                                all_results[j]["title"] = content["title"]
+                            if content.get("content"):
+                                all_results[j]["content"] = content["content"][:2000]
+                except Exception as e:
+                    logger.debug(f"Quick enrichment error: {e}")
+            
+        except Exception as e:
+            logger.error(f"Fast search error: {e}")
+        
+        final_elapsed = time.time() - start_time
+        logger.info(f"Returning {len(all_results)} results (total time: {final_elapsed:.1f}s)")
+        return all_results[:num_results]
+
 # ============== AUTH ENDPOINTS ==============
 
 @api_router.post("/auth/register", response_model=dict)
