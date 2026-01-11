@@ -916,7 +916,7 @@ async def get_subscription_info():
     return {
         "subscription_price": settings_dict.get("subscription_price", 0.99),
         "paypal_link": settings_dict.get("paypal_link", PAYPAL_PAYMENT_LINK),
-        "paypal_email": settings_dict.get("paypal_email", "sb-h7vc448665634@business.example.com")
+        "paypal_email": settings_dict.get("paypal_email", "JJSpilot24@gmail.com")
     }
 
 @api_router.post("/subscriptions/activate")

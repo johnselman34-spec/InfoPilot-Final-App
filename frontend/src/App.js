@@ -784,7 +784,7 @@ const AdminPanel = ({ showToast }) => {
               <label>PayPal Business Email</label>
               <input
                 type="email"
-                defaultValue={getSetting('paypal_email') || 'sb-h7vc448665634@business.example.com'}
+                defaultValue={getSetting('paypal_email') || 'JJSpilot24@gmail.com'}
                 onBlur={(e) => updateSetting('paypal_email', e.target.value)}
                 style={{ width: 300 }}
                 placeholder="your-business@email.com"
@@ -1775,7 +1775,7 @@ const SubscribePage = ({ showToast, onBack }) => {
   const [customAmount, setCustomAmount] = useState('');
   const [settings, setSettings] = useState({
     subscription_price: 0.99,
-    paypal_email: 'sb-h7vc448665634@business.example.com',
+    paypal_email: 'JJSpilot24@gmail.com',
     paypal_link: 'https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ'
   });
 
@@ -1798,7 +1798,7 @@ const SubscribePage = ({ showToast, onBack }) => {
   const handlePayPalClick = (amount) => {
     // Create PayPal payment URL with specific amount
     // Using PayPal's standard payment link format
-    const paypalEmail = settings.paypal_email || 'sb-h7vc448665634@business.example.com';
+    const paypalEmail = settings.paypal_email || 'JJSpilot24@gmail.com';
     const paymentUrl = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${encodeURIComponent(paypalEmail)}&amount=${amount.toFixed(2)}&currency_code=USD&item_name=${encodeURIComponent('InfoPilot Premium Subscription (1 Year)')}&no_shipping=1&no_note=1`;
     
     window.open(paymentUrl, '_blank');
