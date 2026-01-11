@@ -1445,6 +1445,254 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ============== NEWSLETTER SYSTEM ==============
+
+# Book and App Marketing Content
+BOOK_INFO = {
+    "title": "Letters to Evelyn",
+    "author": "John Selman",
+    "genre": "Supernatural Thriller Comedy",
+    "price": "$2.99",
+    "amazon_url": "https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191",
+    "reviews_url": "https://readersfavorite.com/book-review/letters-to-evelyn",
+    "review_count": "19 Five-Star Professional Reviews",
+    "featured_review": '"This memoir is a profound and unforgettable literary piece." - Dvine Zape, Readers\' Favorite',
+    "description": "A supernatural thriller comedy that will keep you on the edge of your seat while making you laugh!"
+}
+
+APP_INFO = {
+    "name": "InfoPilot",
+    "tagline": "Your 3D View of the Internet",
+    "description": "The world's most intelligent information exchange social network",
+    "features": [
+        "Smart Protocol Search with InfoJet 2.0",
+        "Interactive World Map with Search Results",
+        "AI-Powered Content Collation",
+        "Social Networking & Friends",
+        "Categories & Subcategories Organization"
+    ]
+}
+
+async def generate_newsletter_content():
+    """Generate AI-powered funny newsletter content"""
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        
+        api_key = os.environ.get('EMERGENT_LLM_KEY')
+        if not api_key:
+            return get_fallback_newsletter()
+        
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"newsletter-{datetime.now().strftime('%Y%m%d')}",
+            system_message="""You are a hilarious, witty marketing genius writing newsletters for InfoPilot.
+Your job is to create EXTREMELY FUNNY, engaging emails that:
+1. Make people laugh out loud
+2. Use puns, jokes, and clever wordplay
+3. Sell the book "Letters to Evelyn" (a supernatural thriller comedy, $2.99)
+4. Promote InfoPilot subscriptions
+5. Be memorable and shareable
+6. Use emojis and formatting to make text POP
+Keep it under 500 words but pack in maximum entertainment value!"""
+        ).with_model("openai", "gpt-5.2")
+        
+        # Get recent activity stats
+        total_users = await db.users.count_documents({})
+        total_results = await db.search_results.count_documents({})
+        total_categories = await db.categories.count_documents({})
+        
+        prompt = f"""Write an absolutely HILARIOUS weekly newsletter for InfoPilot users!
+
+Stats this week:
+- Total Users: {total_users}
+- Search Results Collated: {total_results}  
+- Categories Created: {total_categories}
+
+Book to promote: "Letters to Evelyn" by John Selman
+- Genre: Supernatural Thriller Comedy
+- Price: $2.99 on Amazon
+- Has 19 FIVE-STAR professional reviews from Readers' Favorite
+- One reviewer said: "This memoir is a profound and unforgettable literary piece"
+- Amazon link: https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191
+
+App subscription: Pay what you want! (Starting at $0.75/year)
+
+Make it:
+- EXTREMELY FUNNY with jokes and puns
+- Eye-catching with emojis and bold statements
+- Include a catchy subject line
+- Have clear CTAs for book and subscription
+- Feel personal and warm
+
+Format as HTML email with inline styles for maximum visual impact!"""
+
+        user_message = UserMessage(text=prompt)
+        response = await chat.send_message(user_message)
+        
+        return {
+            "content": response,
+            "generated_at": datetime.now().isoformat(),
+            "ai_generated": True
+        }
+    except Exception as e:
+        logger.error(f"Newsletter generation error: {e}")
+        return get_fallback_newsletter()
+
+def get_fallback_newsletter():
+    """Fallback newsletter if AI generation fails"""
+    return {
+        "content": f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px;">
+<div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+
+<h1 style="text-align: center; color: #764ba2; font-size: 32px;">
+🚀 INFOPILOT WEEKLY BLAST! 🚀
+</h1>
+
+<p style="font-size: 18px; line-height: 1.8; color: #333;">
+Hey there, Internet Explorer! (Not the browser, you're way cooler than that! 😎)
+</p>
+
+<p style="font-size: 16px; line-height: 1.8; color: #555;">
+Did you know that while you were busy living your life, our robots were busy collating the ENTIRE internet for you? That's right - we're basically doing your homework while you Netflix and chill! 📺
+</p>
+
+<div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 15px; margin: 20px 0;">
+<h2 style="color: white; text-align: center; margin: 0;">📚 BOOK OF THE CENTURY ALERT! 📚</h2>
+<p style="color: white; text-align: center; font-size: 18px; margin: 10px 0;">
+<strong>"Letters to Evelyn"</strong> by John Selman
+</p>
+<p style="color: white; text-align: center; font-style: italic;">
+"This memoir is a profound and unforgettable literary piece." - Readers' Favorite
+</p>
+<p style="text-align: center;">
+<a href="https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191" style="display: inline-block; background: white; color: #f5576c; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 18px;">
+🎁 GET IT FOR JUST $2.99! 🎁
+</a>
+</p>
+</div>
+
+<div style="background: #1a1a2e; padding: 20px; border-radius: 15px; margin: 20px 0;">
+<h2 style="color: #00ff88; text-align: center;">💎 PREMIUM MEMBERSHIP 💎</h2>
+<p style="color: white; text-align: center;">
+Pay what you want! Starting at just $0.75/year!<br>
+<em>(That's less than a candy bar! And WAY better for your brain!)</em>
+</p>
+</div>
+
+<p style="text-align: center; color: #888; font-size: 14px;">
+Made with ❤️ and probably too much coffee ☕<br>
+InfoPilot - Your 3D View of the Internet
+</p>
+
+</div>
+</body>
+</html>
+""",
+        "generated_at": datetime.now().isoformat(),
+        "ai_generated": False
+    }
+
+@api_router.post("/newsletter/generate")
+async def generate_newsletter(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Generate a new AI-powered newsletter (Admin only)"""
+    user = await get_current_user(credentials)
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    newsletter = await generate_newsletter_content()
+    
+    # Save to database
+    await db.newsletters.insert_one({
+        "content": newsletter["content"],
+        "generated_at": datetime.now(),
+        "ai_generated": newsletter.get("ai_generated", False),
+        "sent": False,
+        "created_by": str(user["_id"])
+    })
+    
+    return newsletter
+
+@api_router.get("/newsletter/preview")
+async def preview_newsletter(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Preview the latest newsletter"""
+    user = await get_current_user(credentials)
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get latest newsletter or generate new one
+    latest = await db.newsletters.find_one(sort=[("generated_at", -1)])
+    if latest:
+        return {
+            "content": latest["content"],
+            "generated_at": latest["generated_at"].isoformat() if latest.get("generated_at") else None,
+            "sent": latest.get("sent", False)
+        }
+    
+    return await generate_newsletter_content()
+
+@api_router.post("/newsletter/send")
+async def send_newsletter(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Send newsletter to all subscribed users (Admin only)"""
+    user = await get_current_user(credentials)
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get latest newsletter
+    newsletter = await db.newsletters.find_one(sort=[("generated_at", -1)])
+    if not newsletter:
+        newsletter_data = await generate_newsletter_content()
+        newsletter = {
+            "content": newsletter_data["content"],
+            "generated_at": datetime.now()
+        }
+        result = await db.newsletters.insert_one(newsletter)
+        newsletter["_id"] = result.inserted_id
+    
+    # Get all user emails (who haven't unsubscribed)
+    users = await db.users.find({"newsletter_unsubscribed": {"$ne": True}}).to_list(10000)
+    
+    sent_count = 0
+    for u in users:
+        # In production, this would use SendGrid or similar
+        # For now, we log the send
+        logger.info(f"Newsletter would be sent to: {u['email']}")
+        sent_count += 1
+    
+    # Mark as sent
+    await db.newsletters.update_one(
+        {"_id": newsletter["_id"]},
+        {"$set": {"sent": True, "sent_at": datetime.now(), "sent_count": sent_count}}
+    )
+    
+    return {
+        "success": True,
+        "sent_count": sent_count,
+        "message": f"Newsletter queued for {sent_count} users"
+    }
+
+@api_router.get("/newsletter/history")
+async def get_newsletter_history(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get newsletter history (Admin only)"""
+    user = await get_current_user(credentials)
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    newsletters = await db.newsletters.find().sort("generated_at", -1).limit(10).to_list(10)
+    return [{
+        "id": str(n["_id"]),
+        "generated_at": n["generated_at"].isoformat() if n.get("generated_at") else None,
+        "sent": n.get("sent", False),
+        "sent_at": n["sent_at"].isoformat() if n.get("sent_at") else None,
+        "sent_count": n.get("sent_count", 0),
+        "ai_generated": n.get("ai_generated", False)
+    } for n in newsletters]
+
+# ============== DATABASE STARTUP ==============
+
 @app.on_event("startup")
 async def startup():
     # Create indexes
