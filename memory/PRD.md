@@ -306,50 +306,23 @@ Build a comprehensive information exchange social network application ("InfoPilo
 ## Pending/Backlog
 
 ### P0 - Critical
-- ✅ **FIXED: Protocol Recognition & Collation** - Now working properly!
-  - Search returns 10+ results per query
-  - Collation matching is more lenient
-  - Content enrichment for better protocol matching
-  - Results flowing into database properly
-- ✅ **FIXED: Authentication Bug** (Jan 11, 2026) - Case-insensitive email matching for Google OAuth users
-  - New users can now create categories without Network Error
-  - Email lookup uses MongoDB regex with $options: 'i'
-- ✅ **ADDED: Password Change Feature** (Jan 11, 2026)
-  - Users can change their password from Settings page
-  - Google OAuth users can set a password to also login with email
-  - API: POST /api/users/change-password, GET /api/users/has-password
-- ✅ **ADDED: Protocol Marketplace** (Jan 11, 2026)
-  - Users can buy and sell search protocols
-  - 90% revenue to creators, 10% platform fee
-  - Price range: $0.99 - $99.99
-  - Seller dashboard with earnings tracking
-  - API endpoints: /api/marketplace/*
-- ✅ **ENHANCED: Newsletter System** (Jan 11, 2026)
-  - Enhanced with 4 NEW promotional images from user
-  - Hilarious taglines extracted from advertisements:
-    1. "WROTE A BOOK - UNIVERSE FACT-CHECKED IT - IT PASSED!"
-    2. "THERAPIST: THIS IS A LOT TO UNPACK - BRING SNACKS"
-    3. "I FLEW JETS THEN REALITY BROKE"
-    4. "TERROR OF THE COSMICGULPER - WE'RE ALL GONNA DIE!"
-  - Rich review data from Amazon (57 reviews, 5.0 stars) & Readers' Favorite (19 professional reviews)
-  - Author highlights: World record holder, Navy pilot, 50+ jokes
-  - Dad Joke of the Week rotating feature
-  - Douglas Adams/Terry Pratchett-style cosmic humor
-  - AI-powered generation with GPT-4o
+- ✅ **COMPLETE: Newsletter Enhancement Phase 2** - Full manuscript integration
+- ✅ **COMPLETE: Code Refactoring Phase 1** - Frontend modules extracted
+- ⏳ **IN PROGRESS: Code Refactoring Phase 2** - Extract remaining page components
 - Interactive map with Leaflet (IN PROGRESS)
 - Full social features (Groups, Pages, comments, reactions) (IN PROGRESS)
 
 ### P1 - High Priority
-- Grant admin access to JJSpilot24@gmail.com (user needs to login first)
+- Backend refactoring - Move endpoints from server.py to /routes/
+- PayPal Webhook testing with sandbox events
 - Better search API integration (SerpApi/DataForSEO) - Bing API retired
 - Internet Robot for automated classification
-- Access Google Doc manuscript content for newsletter (requires public sharing or content copy)
 
 ### P2 - Medium Priority
 - Global Research Database
 - Statistics pages
-- Gamification (achievements, badges)
-- Code refactoring (split monolithic files)
+- Gamification enhancements (weekly leaderboards)
+- "Quote of the Day" widget using manuscript quotes
 
 ### P3 - Nice to Have
 - Advanced analytics
