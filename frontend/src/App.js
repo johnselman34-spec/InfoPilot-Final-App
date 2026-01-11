@@ -541,6 +541,13 @@ const AdminPanel = ({ showToast }) => {
   const [newsletterPreview, setNewsletterPreview] = useState(null);
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [newsletterHistory, setNewsletterHistory] = useState([]);
+  const [newsletterSchedule, setNewsletterSchedule] = useState({
+    enabled: false,
+    day_of_week: 'monday',
+    hour: 9,
+    last_scheduled_send: null
+  });
+  const [testEmail, setTestEmail] = useState('');
 
   const generateNewsletter = async () => {
     setNewsletterLoading(true);
@@ -584,6 +591,33 @@ const AdminPanel = ({ showToast }) => {
     setNewsletterLoading(false);
   };
 
+  const sendTestNewsletter = async () => {
+    if (!testEmail) {
+      showToast('Please enter an email address', 'error');
+      return;
+    }
+    setNewsletterLoading(true);
+    try {
+      const res = await fetch(`${API}/newsletter/test-email`, {
+        method: 'POST',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: testEmail })
+      });
+      if (res.ok) {
+        showToast(`Test newsletter sent to ${testEmail}!`, 'success');
+      } else {
+        const err = await res.json();
+        showToast(err.detail || 'Failed to send test', 'error');
+      }
+    } catch (e) {
+      showToast('Error sending test newsletter', 'error');
+    }
+    setNewsletterLoading(false);
+  };
+
   const fetchNewsletterHistory = async () => {
     try {
       const res = await fetch(`${API}/newsletter/history`, {
@@ -598,9 +632,48 @@ const AdminPanel = ({ showToast }) => {
     }
   };
 
+  const fetchNewsletterSchedule = async () => {
+    try {
+      const res = await fetch(`${API}/newsletter/schedule`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNewsletterSchedule(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch newsletter schedule');
+    }
+  };
+
+  const saveNewsletterSchedule = async () => {
+    try {
+      const res = await fetch(`${API}/newsletter/schedule`, {
+        method: 'POST',
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newsletterSchedule)
+      });
+      if (res.ok) {
+        showToast(newsletterSchedule.enabled 
+          ? `Newsletter scheduled for ${newsletterSchedule.day_of_week}s at ${newsletterSchedule.hour}:00 UTC`
+          : 'Newsletter schedule disabled', 
+          'success'
+        );
+      } else {
+        showToast('Failed to save schedule', 'error');
+      }
+    } catch (e) {
+      showToast('Error saving schedule', 'error');
+    }
+  };
+
   useEffect(() => {
     if (activeTab === 'newsletter') {
       fetchNewsletterHistory();
+      fetchNewsletterSchedule();
     }
   }, [activeTab]);
 
