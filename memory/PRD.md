@@ -18,6 +18,7 @@ Build a comprehensive information exchange social network application ("InfoPilo
 - **Email:** Resend API ✅ WORKING
 - **AI:** OpenAI GPT-4o (via Emergent LLM Key)
 - **Payments:** PayPal "Pay What You Want"
+- **PWA:** Service Worker + Web App Manifest ✅ **NEW Jan 11, 2026**
 
 ## Code Architecture (Updated Jan 11, 2026)
 
@@ -32,7 +33,9 @@ Build a comprehensive information exchange social network application ("InfoPilo
 │   ├── categories.py  # Category CRUD
 │   ├── marketplace.py # Protocol marketplace
 │   ├── search.py      # Search & collation
-│   └── social.py      # Groups, Pages, Posts
+│   ├── social.py      # Groups, Pages, Posts
+│   ├── notifications.py  # **NEW** Real-time WebSocket notifications
+│   └── export.py         # **NEW** User data export (JSON/CSV)
 ├── services/          # Business logic services
 │   ├── auth_service.py
 │   ├── email_service.py
@@ -48,6 +51,15 @@ Build a comprehensive information exchange social network application ("InfoPilo
 ├── App.js             # Router (126 lines - reduced from 3000+)
 ├── pages/             # All page components
 ├── components/        # Reusable UI components
+│   └── shared/
+│       ├── NotificationBell.js  # **NEW** Real-time notification UI
+│       └── DataExport.js        # **NEW** Data export panel
+├── contexts/          # React contexts
+└── utils/             # Utilities
+/app/frontend/public/
+├── manifest.json      # **NEW** PWA Web App Manifest
+└── sw.js              # **NEW** Service Worker for offline support
+```
 ├── contexts/          # React contexts
 └── utils/             # Utilities
 ```
