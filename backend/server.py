@@ -674,30 +674,20 @@ class WebSearchService:
     @staticmethod
     async def search(query: str, num_results: int = 100) -> List[Dict[str, Any]]:
         """
-        Perform AGGRESSIVE web search using multiple sources
-        Returns deduplicated results from all available sources
-        Goal: Get as many results as possible for protocol matching!
+        Perform web search using multiple sources
+        Returns deduplicated results with content enrichment
         """
         all_results = []
         seen_urls = set()
         
-        # Run searches in parallel from multiple sources
         try:
-            ddg_task = WebSearchService.search_duckduckgo(query, num_results)
-            bing_task = WebSearchService.search_bing_scrape(query, num_results // 2)
+            # Run primary searches in parallel
+            ddg_task = WebSearchService.search_duckduckgo(query, 50)
+            bing_task = WebSearchService.search_bing_scrape(query, 30)
             
-            # Also search with related terms for broader results
-            words = query.split()
-            if len(words) >= 2:
-                alt_query = " ".join(words[:3])  # Use first 3 words for alt search
-                ddg_alt_task = WebSearchService.search_duckduckgo(alt_query, 30)
-            else:
-                ddg_alt_task = asyncio.sleep(0)  # No-op
-            
-            ddg_results, bing_results, ddg_alt = await asyncio.gather(
+            ddg_results, bing_results = await asyncio.gather(
                 ddg_task, 
                 bing_task,
-                ddg_alt_task,
                 return_exceptions=True
             )
             
@@ -707,6 +697,9 @@ class WebSearchService:
                     if result["url"] not in seen_urls:
                         seen_urls.add(result["url"])
                         all_results.append(result)
+                logger.info(f"DuckDuckGo returned {len(ddg_results)} results")
+            else:
+                logger.error(f"DuckDuckGo error: {ddg_results}")
             
             # Process Bing results
             if isinstance(bing_results, list):
@@ -714,23 +707,17 @@ class WebSearchService:
                     if result["url"] not in seen_urls:
                         seen_urls.add(result["url"])
                         all_results.append(result)
-            
-            # Process alternative search results
-            if isinstance(ddg_alt, list):
-                for result in ddg_alt:
-                    if result["url"] not in seen_urls:
-                        seen_urls.add(result["url"])
-                        all_results.append(result)
+                logger.info(f"Bing returned {len(bing_results)} results")
+            else:
+                logger.error(f"Bing error: {bing_results}")
             
         except Exception as e:
             logger.error(f"Search aggregation error: {e}")
         
-        # Fetch content for ALL results to improve protocol matching
-        # This is critical - more content = better matching
+        # Fetch content for results to improve protocol matching
         if all_results:
-            # Fetch content in batches to avoid timeout
-            batch_size = 20
-            for i in range(0, min(len(all_results), 60), batch_size):
+            batch_size = 10
+            for i in range(0, min(len(all_results), 30), batch_size):
                 batch = all_results[i:i+batch_size]
                 tasks = [WebSearchService.fetch_page_content(r["url"]) for r in batch]
                 
