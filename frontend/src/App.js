@@ -19,7 +19,8 @@ import {
   MapPage,
   MarketplacePage,
   AchievementsPage,
-  QuoteGalleryPage
+  QuoteGalleryPage,
+  AnalyticsPage
 } from './pages';
 
 // Fix Leaflet default marker icon issue
