@@ -91,17 +91,17 @@ const AMAZON_BOOK_URL = "https://www.amazon.com/Letters-Evelyn-John-Selman-ebook
 // Letters to Evelyn Book Promotion Component
 function BookPromoSection({ variant = 'full' }) {
   const [currentImage, setCurrentImage] = useState(0);
-  const promoImages = [bookImages.promo1, bookImages.promo2, bookImages.promo3];
+  const promoImages = [bookImages.promo1, bookImages.promo2, bookImages.promo3, bookImages.promo4];
   
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % promoImages.length);
-    }, 5000);
+    }, 4000); // Slightly faster rotation for more engagement
     return () => clearInterval(timer);
   }, [promoImages.length]);
 
   const handleBuyBook = () => {
-    window.open('https://www.amazon.com/Letters-Evelyn-ebook/dp/B0DHJBFPTH', '_blank');
+    window.open(AMAZON_BOOK_URL, '_blank');
   };
 
   if (variant === 'compact') {
