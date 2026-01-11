@@ -816,7 +816,8 @@ const AdminPanel = ({ showToast }) => {
               Generate and send AI-powered funny newsletters to promote your book and app!
             </p>
             
-            <div style={{ display: 'flex', gap: 15, marginBottom: 25 }}>
+            {/* Manual Send Controls */}
+            <div style={{ display: 'flex', gap: 15, marginBottom: 25, flexWrap: 'wrap' }}>
               <button 
                 className="btn btn-primary" 
                 onClick={generateNewsletter}
@@ -831,6 +832,89 @@ const AdminPanel = ({ showToast }) => {
               >
                 📤 Send to All Users
               </button>
+            </div>
+
+            {/* Test Email */}
+            <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: 20, borderRadius: 12, marginBottom: 25, border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+              <h4 style={{ color: '#3b82f6', marginBottom: 15 }}>🧪 Send Test Email</h4>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <input 
+                  type="email" 
+                  placeholder="your@email.com"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  style={{ flex: 1, minWidth: 200 }}
+                />
+                <button 
+                  className="btn btn-secondary"
+                  onClick={sendTestNewsletter}
+                  disabled={newsletterLoading}
+                >
+                  📧 Send Test
+                </button>
+              </div>
+            </div>
+
+            {/* Automated Schedule */}
+            <div style={{ background: 'rgba(124, 58, 237, 0.1)', padding: 20, borderRadius: 12, marginBottom: 25, border: '2px solid rgba(124, 58, 237, 0.3)' }}>
+              <h4 style={{ color: '#a78bfa', marginBottom: 15 }}>⏰ Automated Weekly Schedule</h4>
+              <div style={{ display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap', marginBottom: 15 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox"
+                    checked={newsletterSchedule.enabled}
+                    onChange={(e) => setNewsletterSchedule({...newsletterSchedule, enabled: e.target.checked})}
+                    style={{ width: 20, height: 20, accentColor: '#7c3aed' }}
+                  />
+                  <span style={{ color: newsletterSchedule.enabled ? '#10b981' : '#a1a1aa', fontWeight: 600 }}>
+                    {newsletterSchedule.enabled ? '✅ Enabled' : '⏸️ Disabled'}
+                  </span>
+                </label>
+                
+                <select 
+                  value={newsletterSchedule.day_of_week}
+                  onChange={(e) => setNewsletterSchedule({...newsletterSchedule, day_of_week: e.target.value})}
+                  style={{ padding: '8px 15px', borderRadius: 8, background: 'rgba(30, 20, 50, 0.8)', color: 'white', border: '1px solid rgba(124, 58, 237, 0.5)' }}
+                >
+                  <option value="monday">Monday</option>
+                  <option value="tuesday">Tuesday</option>
+                  <option value="wednesday">Wednesday</option>
+                  <option value="thursday">Thursday</option>
+                  <option value="friday">Friday</option>
+                  <option value="saturday">Saturday</option>
+                  <option value="sunday">Sunday</option>
+                </select>
+                
+                <span style={{ color: '#a1a1aa' }}>at</span>
+                
+                <select 
+                  value={newsletterSchedule.hour}
+                  onChange={(e) => setNewsletterSchedule({...newsletterSchedule, hour: parseInt(e.target.value)})}
+                  style={{ padding: '8px 15px', borderRadius: 8, background: 'rgba(30, 20, 50, 0.8)', color: 'white', border: '1px solid rgba(124, 58, 237, 0.5)' }}
+                >
+                  {[...Array(24)].map((_, i) => (
+                    <option key={i} value={i}>{i.toString().padStart(2, '0')}:00 UTC</option>
+                  ))}
+                </select>
+                
+                <button 
+                  className="btn btn-primary"
+                  onClick={saveNewsletterSchedule}
+                  style={{ background: 'linear-gradient(135deg, #7c3aed, #a78bfa)' }}
+                >
+                  💾 Save Schedule
+                </button>
+              </div>
+              
+              {newsletterSchedule.last_scheduled_send && (
+                <p style={{ color: '#a78bfa', fontSize: '0.85rem' }}>
+                  Last automated send: {new Date(newsletterSchedule.last_scheduled_send).toLocaleString()}
+                </p>
+              )}
+              
+              <p style={{ color: '#a1a1aa', fontSize: '0.8rem', marginTop: 10 }}>
+                ℹ️ When enabled, newsletters are automatically generated with AI and sent every week at the scheduled time.
+              </p>
             </div>
 
             {/* Newsletter Preview */}
@@ -865,7 +949,9 @@ const AdminPanel = ({ showToast }) => {
                       borderRadius: 10,
                       display: 'flex',
                       justifyContent: 'space-between',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 10
                     }}>
                       <div>
                         <span style={{ color: n.ai_generated ? '#10b981' : '#f472b6' }}>
@@ -878,7 +964,7 @@ const AdminPanel = ({ showToast }) => {
                       <div>
                         {n.sent ? (
                           <span style={{ color: '#10b981' }}>
-                            ✅ Sent to {n.sent_count} users
+                            ✅ Sent to {n.sent_count} users {n.failed_count > 0 && `(${n.failed_count} failed)`}
                           </span>
                         ) : (
                           <span style={{ color: '#fbbf24' }}>⏳ Not sent</span>
@@ -893,9 +979,10 @@ const AdminPanel = ({ showToast }) => {
             <div style={{ marginTop: 25, padding: 15, background: 'rgba(236, 72, 153, 0.1)', borderRadius: 10, border: '1px solid rgba(236, 72, 153, 0.3)' }}>
               <p style={{ fontSize: '0.85rem', color: '#f472b6' }}>
                 💡 Newsletter promotes:<br/>
-                • "Letters to Evelyn" by John Selman - $2.99 on Amazon<br/>
+                • "Letters to Evelyn" by John Selman - $2.99 on Amazon (19 Five-Star Reviews!)<br/>
                 • InfoPilot Premium subscriptions - Pay what you want!<br/>
-                • Uses AI to create funny, engaging content that converts!
+                • Uses AI to create funny, engaging content with your book's actual reviews!<br/>
+                • Includes your book advertisement images with rotating selection!
               </p>
             </div>
           </div>
