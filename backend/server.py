@@ -1548,26 +1548,23 @@ async def delete_category(category_id: str, user = Depends(get_current_user)):
 
 @api_router.post("/search", response_model=dict)
 async def perform_search(request: SearchRequest, user = Depends(get_current_user)):
-    """Perform a web search - returns maximum results for better collation
-    OPTIMIZED: Faster search with parallel fetching, aims for 120+ results in 19-22 seconds"""
+    """Perform a web search - returns 31-70 results for better collation
+    OPTIMIZED: Uses SerpAPI (premium) + free scrapers, aims for 31-70 results in 19-22 seconds"""
     
     if contains_blocked_content(request.query):
         raise HTTPException(status_code=400, detail="Search query contains blocked content")
     
-    # Get max search pages from admin settings
-    settings = await db.settings.find_one({"key": "max_search_pages"})
-    max_pages = settings.get("value", 99) if settings else 99
+    # Target 31-70 results as per user request
+    max_results = 70
     
-    # Calculate results based on max pages
-    max_results = max_pages * 20
-    
-    # Use optimized web search service - increased limit to 500 for 120+ results target
-    results = await WebSearchService.search_fast(request.query, min(max_results, 500))
+    # Use optimized web search service with SerpAPI
+    results = await WebSearchService.search_fast(request.query, max_results)
     
     return {
         "query": request.query,
         "results": results,
-        "total": len(results)
+        "total": len(results),
+        "source": "serpapi_hybrid" if SERPAPI_KEY else "free_scrapers"
     }
 
 @api_router.post("/collate", response_model=dict)
