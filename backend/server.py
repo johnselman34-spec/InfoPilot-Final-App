@@ -522,6 +522,32 @@ async def google_auth(data: GoogleAuthRequest):
         }
     }
 
+# Backend proxy for Emergent Auth session data (to avoid CORS issues)
+@api_router.get("/auth/google/session-data")
+async def get_google_session_data(session_id: str = Query(..., description="Session ID from Emergent Auth")):
+    """
+    Proxy endpoint to fetch session data from Emergent Auth.
+    This avoids CORS issues by making the request server-side.
+    """
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                'https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data',
+                headers={'X-Session-ID': session_id},
+                timeout=10.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Emergent Auth error: {response.status_code} - {response.text}")
+                raise HTTPException(status_code=response.status_code, detail="Failed to fetch session data")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Authentication service timeout")
+    except Exception as e:
+        logger.error(f"Session data fetch error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to verify Google session")
+
 @api_router.get("/auth/me", response_model=dict)
 async def get_me(user = Depends(get_current_user)):
     return {
