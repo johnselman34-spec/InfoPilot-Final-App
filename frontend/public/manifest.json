@@ -1,0 +1,46 @@
+{
+  "name": "InfoPilot Explorer",
+  "short_name": "InfoPilot",
+  "description": "Information Exchange Network - Search, Connect, Discover",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0a1a",
+  "theme_color": "#7c3aed",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%237c3aed' width='192' height='192' rx='32'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-size='100' fill='white'>🔍</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%237c3aed' width='512' height='512' rx='64'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-size='280' fill='white'>🔍</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities", "social"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "scope": "/",
+  "shortcuts": [
+    {
+      "name": "Search",
+      "url": "/?page=search",
+      "description": "Go to Ultimate Search"
+    },
+    {
+      "name": "Marketplace",
+      "url": "/?page=marketplace",
+      "description": "Browse Protocol Marketplace"
+    },
+    {
+      "name": "Social",
+      "url": "/?page=social",
+      "description": "View Social Feed"
+    }
+  ]
+}
