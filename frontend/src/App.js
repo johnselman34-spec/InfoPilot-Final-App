@@ -2313,6 +2313,231 @@ function SettingsPage() {
   );
 }
 
+// Marketplace Page - Buy and sell protocols
+function MarketplacePage() {
+  const { user } = useAuth();
+  const [protocols, setProtocols] = useState([]);
+  const [myProtocols, setMyProtocols] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('browse');
+  const [selectedProtocol, setSelectedProtocol] = useState(null);
+  const [priceModal, setPriceModal] = useState(false);
+  const [sellPrice, setSellPrice] = useState('1.99');
+
+  useEffect(() => {
+    loadProtocols();
+  }, []);
+
+  const loadProtocols = async () => {
+    try {
+      // Load public categories that could be sold
+      const cats = await api.get('/categories');
+      const publicCats = cats.filter(c => c.is_public);
+      setProtocols(publicCats);
+      setMyProtocols(cats.filter(c => c.user_id === user?.id));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyProtocol = (protocol, includeName = false) => {
+    const text = includeName ? `${protocol.name}: ${protocol.protocol}` : protocol.protocol;
+    navigator.clipboard.writeText(text);
+    alert('Protocol copied to clipboard!');
+  };
+
+  const handlePurchase = (protocol) => {
+    window.open('https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ', '_blank');
+    alert(`Thank you for supporting the creator of "${protocol.name}"! You can now copy this protocol.`);
+  };
+
+  return (
+    <>
+      <div className="page-header">
+        <h1><Icons.ShoppingCart /> Marketplace</h1>
+      </div>
+      <div className="page-content">
+        {/* Future Earning Potential Banner */}
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(59, 130, 246, 0.15) 100%)',
+          border: '1px solid rgba(16, 185, 129, 0.3)',
+          borderRadius: 20,
+          padding: 20,
+          marginBottom: 24,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16
+        }}>
+          <Icons.DollarSign style={{width: 40, height: 40, color: '#34D399', flexShrink: 0}} />
+          <div>
+            <h4 style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontSize: 16,
+              fontWeight: 700,
+              color: '#34D399',
+              marginBottom: 4
+            }}>Earn Money with Your Protocols!</h4>
+            <p style={{fontSize: 13, color: '#6EE7B7', lineHeight: 1.6}}>
+              When InfoPilot reaches <strong>100,000+ users</strong>, protocol creators can earn significant income 
+              from their unique search protocols. Start building your portfolio now!
+            </p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div style={{display: 'flex', gap: 12, marginBottom: 24}}>
+          <button 
+            className={`chip ${activeTab === 'browse' ? 'chip-selected' : 'chip-default'}`}
+            onClick={() => setActiveTab('browse')}
+          >
+            <Icons.Search /> Browse Protocols
+          </button>
+          <button 
+            className={`chip ${activeTab === 'sell' ? 'chip-selected' : 'chip-default'}`}
+            onClick={() => setActiveTab('sell')}
+          >
+            <Icons.DollarSign /> Sell Your Protocols
+          </button>
+        </div>
+
+        {activeTab === 'browse' && (
+          <>
+            <div className="section-title"><Icons.Globe /> Public Protocols</div>
+            {loading ? <div className="loading"><div className="spinner"/></div> : (
+              protocols.length === 0 ? (
+                <div className="empty-state">
+                  <Icons.Folder />
+                  <h3>No Public Protocols Yet</h3>
+                  <p>Be the first to share your InfoNavigator 2.0 protocol with the community!</p>
+                </div>
+              ) : (
+                protocols.map(protocol => (
+                  <div key={protocol.id} className="card" style={{marginBottom: 16, padding: 20}}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12}}>
+                      <div>
+                        <h4 style={{
+                          fontFamily: "'Outfit', sans-serif",
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: '#F8FAFC',
+                          marginBottom: 4
+                        }}>{protocol.name}</h4>
+                        <p style={{fontSize: 12, color: '#64748B'}}>by @{protocol.author_username || 'anonymous'}</p>
+                      </div>
+                      <div style={{
+                        background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                        color: 'white',
+                        padding: '6px 14px',
+                        borderRadius: 20,
+                        fontSize: 14,
+                        fontWeight: 700
+                      }}>$1.00 - $2.99</div>
+                    </div>
+                    
+                    <div style={{
+                      background: 'rgba(0,0,0,0.3)',
+                      borderRadius: 10,
+                      padding: 12,
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                      color: '#A78BFA',
+                      marginBottom: 12,
+                      wordBreak: 'break-all'
+                    }}>
+                      {protocol.protocol?.substring(0, 100)}...
+                    </div>
+                    
+                    <div style={{display: 'flex', gap: 10}}>
+                      <button 
+                        className="btn btn-success" 
+                        style={{flex: 1, padding: '10px 16px', fontSize: 13}}
+                        onClick={() => handlePurchase(protocol)}
+                      >
+                        <Icons.DollarSign /> Purchase Access
+                      </button>
+                      <button 
+                        className="btn btn-outline" 
+                        style={{padding: '10px 16px', fontSize: 13}}
+                        onClick={() => copyProtocol(protocol, true)}
+                        title="Copy name and protocol"
+                      >
+                        <Icons.Copy />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )
+            )}
+          </>
+        )}
+
+        {activeTab === 'sell' && (
+          <>
+            <div className="section-title"><Icons.DollarSign /> Your Protocols for Sale</div>
+            
+            <div className="info-box" style={{marginBottom: 20}}>
+              <Icons.Info />
+              <p>Set your protocols to "Public" in the Categories page, then set a price here between $1.00 and $2.99.</p>
+            </div>
+            
+            {myProtocols.filter(p => p.is_public).length === 0 ? (
+              <div className="empty-state">
+                <Icons.Folder />
+                <h3>No Public Protocols</h3>
+                <p>Go to Categories and make a protocol public to sell it in the Marketplace.</p>
+              </div>
+            ) : (
+              myProtocols.filter(p => p.is_public).map(protocol => (
+                <div key={protocol.id} className="card" style={{marginBottom: 16, padding: 20}}>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <div>
+                      <h4 style={{fontSize: 16, fontWeight: 600, color: '#F8FAFC'}}>{protocol.name}</h4>
+                      <p style={{fontSize: 12, color: '#A78BFA', fontFamily: 'monospace', marginTop: 4}}>
+                        {protocol.protocol?.substring(0, 60)}...
+                      </p>
+                    </div>
+                    <div style={{display: 'flex', gap: 10, alignItems: 'center'}}>
+                      <input 
+                        type="number" 
+                        min="1.00" 
+                        max="2.99" 
+                        step="0.01"
+                        value={sellPrice}
+                        onChange={(e) => setSellPrice(e.target.value)}
+                        style={{
+                          width: 80,
+                          padding: '8px 12px',
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          borderRadius: 8,
+                          color: '#34D399',
+                          fontSize: 16,
+                          fontWeight: 700,
+                          textAlign: 'center'
+                        }}
+                      />
+                      <button className="btn btn-primary" style={{padding: '10px 20px'}}>
+                        Set Price
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </>
+        )}
+
+        {/* Book Promo */}
+        <div style={{marginTop: 32}}>
+          <BookPromoSection variant="compact" />
+        </div>
+      </div>
+    </>
+  );
+}
+
 // Main Layout
 function MainLayout({ currentPage, onNavigate }) {
   const { user, logout } = useAuth();
