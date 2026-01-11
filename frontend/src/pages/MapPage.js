@@ -94,42 +94,6 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     fetchMapResults();
   }, [fetchMapResults]);
 
-  const fetchMapResults = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API}/ultimate-search?limit=100`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const resultsWithLocation = data.results
-          .map((r, idx) => {
-            if (r.latitude && r.longitude && 
-                r.latitude >= -90 && r.latitude <= 90 &&
-                r.longitude >= -180 && r.longitude <= 180) {
-              return { ...r, hasRealLocation: true, hashtags: extractHashtags(r.title, r.snippet, r.article_type) };
-            }
-            const extracted = extractLocation(r.content || r.snippet, r.title);
-            if (extracted) {
-              return { 
-                ...r, 
-                latitude: extracted.lat, 
-                longitude: extracted.lng, 
-                extractedPlace: extracted.place,
-                hashtags: extractHashtags(r.title, r.snippet, r.article_type)
-              };
-            }
-            return null;
-          })
-          .filter(r => r !== null);
-        setMapResults(resultsWithLocation);
-      }
-    } catch (e) {
-      console.error('Failed to fetch map results:', e);
-    }
-    setLoading(false);
-  };
-
   const getMarkerColor = (articleType) => {
     const colors = {
       'News Article': '#ef4444',
