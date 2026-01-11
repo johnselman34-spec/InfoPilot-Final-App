@@ -685,8 +685,8 @@ class WebSearchService:
         
         try:
             # Run primary searches in parallel with increased limits
-            ddg_task = WebSearchService.search_duckduckgo(query, min(100, num_results))
-            bing_task = WebSearchService.search_bing_scrape(query, min(80, num_results))
+            ddg_task = WebSearchService.search_duckduckgo(query, min(200, num_results))
+            bing_task = WebSearchService.search_bing_scrape(query, min(150, num_results))
             
             ddg_results, bing_results = await asyncio.gather(
                 ddg_task, 
@@ -717,11 +717,11 @@ class WebSearchService:
         except Exception as e:
             logger.error(f"Search aggregation error: {e}")
         
-        # Fetch content for results to improve protocol matching
-        # Increased batch processing for more results
+        # Fetch content for ALL results to improve protocol matching
+        # Significantly increased for better collation coverage
         if all_results:
-            batch_size = 15
-            max_content_fetch = min(len(all_results), 50)  # Fetch content for up to 50 results
+            batch_size = 20
+            max_content_fetch = len(all_results)  # Fetch content for ALL results
             for i in range(0, max_content_fetch, batch_size):
                 batch = all_results[i:i+batch_size]
                 tasks = [WebSearchService.fetch_page_content(r["url"]) for r in batch]
@@ -742,8 +742,6 @@ class WebSearchService:
         
         logger.info(f"Search for '{query}' returned {len(all_results)} results (with content enrichment)")
         return all_results[:num_results]
-        
-        return {"title": "", "description": "", "content": ""}
     
 # ============== AUTH ENDPOINTS ==============
 
