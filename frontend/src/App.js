@@ -251,15 +251,32 @@ function BookPromoSection({ variant = 'full' }) {
             lineHeight: 1.2
           }}>Letters to Evelyn</h3>
           
-          <p style={{
-            fontSize: '15px',
-            color: '#94A3B8',
-            lineHeight: 1.7,
-            marginBottom: '20px'
+          {/* Professional Review Quote */}
+          <div style={{
+            background: 'rgba(251, 191, 36, 0.1)',
+            border: '1px solid rgba(251, 191, 36, 0.3)',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '10px'
           }}>
-            A breathtaking journey through love, loss, and cosmic discovery. 
-            When reality breaks, what truths remain?
-          </p>
+            <Icons.Award style={{width: 20, height: 20, color: '#FBBF24', flexShrink: 0, marginTop: 2}} />
+            <div>
+              <p style={{
+                fontSize: '14px',
+                color: '#FDE68A',
+                fontStyle: 'italic',
+                marginBottom: '4px',
+                lineHeight: 1.5
+              }}>"{REVIEW_QUOTE.text}"</p>
+              <p style={{
+                fontSize: '11px',
+                color: '#D97706'
+              }}>— {REVIEW_QUOTE.reviewer}, {REVIEW_QUOTE.source}</p>
+            </div>
+          </div>
           
           {/* Promotional taglines */}
           <div style={{
