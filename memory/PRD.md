@@ -164,11 +164,21 @@ Build a comprehensive information exchange social network application ("InfoPilo
 - ✅ **FIXED: Authentication Bug** (Jan 11, 2026) - Case-insensitive email matching for Google OAuth users
   - New users can now create categories without Network Error
   - Email lookup uses MongoDB regex with $options: 'i'
+- ✅ **ADDED: Password Change Feature** (Jan 11, 2026)
+  - Users can change their password from Settings page
+  - Google OAuth users can set a password to also login with email
+  - API: POST /api/users/change-password, GET /api/users/has-password
+- ✅ **ADDED: Protocol Marketplace** (Jan 11, 2026)
+  - Users can buy and sell search protocols
+  - 90% revenue to creators, 10% platform fee
+  - Price range: $0.99 - $99.99
+  - Seller dashboard with earnings tracking
+  - API endpoints: /api/marketplace/*
 - Interactive map with Leaflet (IN PROGRESS)
 - Full social features (Groups, Pages, comments, reactions) (IN PROGRESS)
-- Protocol Marketplace (users sell protocols) - IN 1-2 MONTHS
 
 ### P1 - High Priority
+- Grant admin access to JJSpilot24@gmail.com (user needs to login first)
 - Better search API integration (SerpApi/DataForSEO) - Bing API retired
 - Internet Robot for automated classification
 - Access Google Doc manuscript content for newsletter (requires public sharing or content copy)
