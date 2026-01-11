@@ -78,7 +78,15 @@ const bookImages = {
   promo1: "https://customer-assets.emergentagent.com/job_b9531e7d-8be8-4b48-a8cb-04b5aa1b91c5/artifacts/cg5rg41q_Letters%20to%20Evelyn%20advertisement%201.jpg",
   promo2: "https://customer-assets.emergentagent.com/job_b9531e7d-8be8-4b48-a8cb-04b5aa1b91c5/artifacts/hc8e1pgk_Letters%20to%20Evelyn%20advertisement%202.jpg",
   promo3: "https://customer-assets.emergentagent.com/job_b9531e7d-8be8-4b48-a8cb-04b5aa1b91c5/artifacts/tlenrvs0_Letters%20to%20Evelyn%20advertisement%203.jpg",
+  promo4: "https://customer-assets.emergentagent.com/job_b9531e7d-8be8-4b48-a8cb-04b5aa1b91c5/artifacts/2l0nsrbt_Letters%20to%20Evelyn%20advertisement%204.jpg",
+  cosmicGulper: "https://customer-assets.emergentagent.com/job_b9531e7d-8be8-4b48-a8cb-04b5aa1b91c5/artifacts/2l0nsrbt_Letters%20to%20Evelyn%20advertisement%204.jpg",
 };
+
+// Premium subscription promotional image
+const premiumImage = "https://customer-assets.emergentagent.com/job_b9531e7d-8be8-4b48-a8cb-04b5aa1b91c5/artifacts/95v26r4c_global-network-world-globe-focusing-usa-symbolizing-data-transfer-worldwide-concept-data-transfer-global-connectivity-information-exchange-world-globe-usa-symbolism_918839-41653.jpg";
+
+// Amazon book link
+const AMAZON_BOOK_URL = "https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191";
 
 // Letters to Evelyn Book Promotion Component
 function BookPromoSection({ variant = 'full' }) {
