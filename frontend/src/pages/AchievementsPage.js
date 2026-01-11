@@ -7,9 +7,13 @@ const AchievementsPage = ({ showToast }) => {
   const { token } = useAuth();
   const [profile, setProfile] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
+  const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
+  const [monthlyLeaderboard, setMonthlyLeaderboard] = useState([]);
   const [allBadges, setAllBadges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile'); // profile, badges, leaderboard
+  const [leaderboardPeriod, setLeaderboardPeriod] = useState('all'); // all, weekly, monthly
+  const [shareModal, setShareModal] = useState(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -39,6 +43,30 @@ const AchievementsPage = ({ showToast }) => {
     setLoading(false);
   }, [token, showToast]);
 
+  const fetchWeeklyLeaderboard = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/gamification/leaderboard/weekly`);
+      if (res.ok) {
+        const data = await res.json();
+        setWeeklyLeaderboard(data.leaderboard || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch weekly leaderboard');
+    }
+  }, []);
+
+  const fetchMonthlyLeaderboard = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/gamification/leaderboard/monthly`);
+      if (res.ok) {
+        const data = await res.json();
+        setMonthlyLeaderboard(data.leaderboard || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch monthly leaderboard');
+    }
+  }, []);
+
   const trackLogin = useCallback(async () => {
     try {
       await fetch(`${API}/gamification/track-login`, {
@@ -54,6 +82,45 @@ const AchievementsPage = ({ showToast }) => {
     fetchData();
     trackLogin();
   }, [fetchData, trackLogin]);
+
+  useEffect(() => {
+    if (activeTab === 'leaderboard') {
+      if (leaderboardPeriod === 'weekly') fetchWeeklyLeaderboard();
+      else if (leaderboardPeriod === 'monthly') fetchMonthlyLeaderboard();
+    }
+  }, [activeTab, leaderboardPeriod, fetchWeeklyLeaderboard, fetchMonthlyLeaderboard]);
+
+  const shareBadge = async (badge) => {
+    try {
+      const res = await fetch(`${API}/gamification/share-badge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ badge_id: badge.id })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setShareModal(data);
+      } else {
+        showToast('Failed to generate share link', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to share badge', 'error');
+    }
+  };
+
+  const copyShareText = async () => {
+    if (shareModal?.share_text) {
+      try {
+        await navigator.clipboard.writeText(shareModal.share_text);
+        showToast('Copied to clipboard!', 'success');
+      } catch (e) {
+        showToast('Failed to copy', 'error');
+      }
+    }
+  };
 
   const getRarityColor = (rarity) => {
     switch (rarity) {
