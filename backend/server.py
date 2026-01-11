@@ -2786,7 +2786,7 @@ Made with ❤️ and cosmic approval ✨<br>
     }
 
 async def generate_newsletter_content():
-    """Generate AI-powered funny newsletter content using rich book data from manuscript"""
+    """Generate AI-powered EXTREMELY FUNNY newsletter content using rich book data and advertisement images"""
     try:
         from emergentintegrations.llm.chat import LlmChat, UserMessage
         
@@ -2798,18 +2798,24 @@ async def generate_newsletter_content():
         chat = LlmChat(
             api_key=api_key,
             session_id=f"newsletter-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-            system_message="""You are a HYSTERICALLY FUNNY marketing genius writing newsletters for InfoPilot.
+            system_message="""You are a COMEDIC GENIUS and marketing wizard writing newsletters for InfoPilot.
+Your humor style is: absurdist, witty, self-aware, warm-hearted, and laugh-out-loud funny!
+Reference: The Office, Parks & Rec, Brooklyn 99, Terry Pratchett, Douglas Adams
+
 Your job is to create EXTREMELY FUNNY, laugh-out-loud emails that:
-1. Make people laugh so hard they snort their coffee
-2. Use absurd jokes, witty puns, and clever wordplay  
-3. Sell the book "Letters to Evelyn" using the ACTUAL review quotes and manuscript content provided
-4. Promote InfoPilot subscriptions
-5. Be so entertaining people FORWARD it to friends
-6. Use emojis liberally to make text POP
-7. Create urgency and FOMO (Fear Of Missing Out)
-8. Reference the book's wild plot: Navy pilot, hallucinations, aliens, love story, supernatural comedy
-9. The humor should be WARM, WITTY, and WELCOMING - not mean-spirited
-You must output complete HTML email with inline styles. Be WILD and CREATIVE!"""
+1. Make people laugh so hard they snort their beverage of choice
+2. Use absurd jokes, witty puns, cosmic humor, and clever wordplay  
+3. Sell the book "Letters to Evelyn" using the hilarious advertisement taglines provided
+4. Promote InfoPilot subscriptions as if the universe itself depends on it
+5. Be so entertaining people FORWARD it to friends and enemies alike
+6. Use emojis strategically to make text POP and sparkle
+7. Create urgency and FOMO (Fear Of Missing Out on cosmic knowledge)
+8. Reference the book's absolutely WILD plot: Navy pilot, LSD poisoning, hallucinations, aliens, love story
+9. The humor should be WARM, WITTY, COSMIC, and WELCOMING - never mean-spirited
+10. Include references to the hilarious ad taglines like "UNIVERSE FACT-CHECKED IT" and "THERAPIST: THIS IS A LOT TO UNPACK"
+
+You must output complete HTML email with inline styles. Be WILD, COSMIC, and CREATIVE!
+Think: What if Douglas Adams wrote marketing emails while on a spaceship?"""
         ).with_model("openai", "gpt-4o")
         
         # Get recent activity stats
@@ -2817,97 +2823,100 @@ You must output complete HTML email with inline styles. Be WILD and CREATIVE!"""
         total_results = await db.search_results.count_documents({})
         total_categories = await db.categories.count_documents({})
         
-        # Rotate through different book advertisement images
+        # Select a random promotional image with its hilarious tagline
         import random
-        book_images = [
-            "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/3wggnw99_Letters%20to%20Evelyn%20advertisement%201.jpg",
-            "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/obecjep4_Letters%20to%20Evelyn%20advertisement%202.jpg",
-            "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/63ydb5j8_Letters%20to%20Evelyn%20advertisement%203.jpg",
-            "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/8ss0c1fe_Letters%20to%20Evelyn%20advertisement%204.jpg"
-        ]
-        selected_image = random.choice(book_images)
+        promo = random.choice(BOOK_PROMO_IMAGES)
         
-        # Funny taglines to rotate
-        funny_taglines = [
-            "The book that makes your therapist jealous!",
-            "50+ jokes that hit harder than a Navy jet landing!",
-            "Warning: May cause uncontrollable giggling in public places",
-            "Finally, a love story with ACTUAL aliens! Take that, romance novels!",
-            "Part Navy memoir, part alien encounter, ALL hilarious!",
-            "The only book where you'll laugh, cry, AND question reality!",
-            "Dave Chappelle wishes he wrote this! (The author's words, not ours... okay maybe ours too)",
-        ]
-        selected_tagline = random.choice(funny_taglines)
+        # Select random reviews to feature
+        rf_reviews = random.sample(BOOK_REVIEWS["readers_favorite"]["reviews"], min(3, len(BOOK_REVIEWS["readers_favorite"]["reviews"])))
+        amazon_reviews = random.sample(BOOK_REVIEWS["amazon"]["reviews"], min(2, len(BOOK_REVIEWS["amazon"]["reviews"])))
         
+        # Funny recurring elements
+        dad_jokes = [
+            "Why did the Navy pilot write a book? Because his stories were PLANE amazing! ✈️",
+            "What do aliens and this book have in common? They're both OUT OF THIS WORLD! 👽",
+            "Why did the universe fact-check the book? Because even black holes couldn't contain these plot twists! 🕳️",
+            "What's the difference between this book and therapy? This one's cheaper and funnier! 🛋️",
+            "Why bring snacks while reading? Because the laughs will burn ALL your calories! 🍿",
+            "How many dimensions does this book span? ALL of them, and it still fits on your Kindle! 📱",
+            "Why did the therapist recommend this book? It unpacks itself! 📦"
+        ]
+        selected_joke = random.choice(dad_jokes)
+        
+        # Create detailed prompt with all the rich content
         prompt = f"""Write an absolutely HILARIOUS weekly newsletter HTML email for InfoPilot users!
 
-STATS THIS WEEK:
-- Total Users: {total_users}
-- Search Results Collated: {total_results}  
-- Categories Created: {total_categories}
+CURRENT STATS (make these sound impressive and funny):
+- Total Cosmic Explorers: {total_users} users
+- Information Atoms Collated: {total_results} search results
+- Knowledge Categories Discovered: {total_categories}
 
-===== BOOK PROMOTION (THIS IS THE STAR!) =====
+===== 🌟 FEATURED BOOK PROMOTION (THE STAR OF THE SHOW!) 🌟 =====
+
 📚 "LETTERS TO EVELYN" by John Selman
-- A True Supernatural Thriller Comedy Memoir
-- Price: ONLY $2.99 on Amazon Kindle (cheaper than a fancy coffee!)
-- Has 57 reviews on Amazon, 5.0 out of 5 stars!
+- Genre: A True Supernatural Thriller Comedy
+- Price: ONLY $2.99 on Amazon Kindle
+- Amazon Rating: 5.0 out of 5 stars with {BOOK_REVIEWS['amazon']['total_reviews']} reviews!
 - 19 PROFESSIONAL Five-Star Reviews from Readers' Favorite
-- "{selected_tagline}"
 
-FROM THE ACTUAL MANUSCRIPT (use these for authenticity!):
-- The author was a Navy ROTC top student who dreamed of flying like his father
-- His stepmother Lauren poisoned his food with LSD, causing 10+ months of hallucinations
-- He holds a WORLD RECORD for the steepest Sarajevo Approach in a T-34C aircraft!
-- He writes beautiful love letters to a mysterious woman named Evelyn Tuskegee
-- The book contains "upwards of 50 finely-crafted deafening, zany, zesty, zoo zingers... JOKES!"
-- Author's own claim: "More funny than Dave Chappelle or your money back!"
-- Contains extraterrestrial encounters and a "phantasmagoria of disconnected thoughts"
-- The author survived a U.S. Northeast endurance record of 12+ days without sleep after being poisoned!
+THIS WEEK'S HILARIOUS AD TAGLINE (USE THIS AS A CENTERPIECE!):
+🎯 "{promo['tagline']}"
+✨ Subtitle: "{promo['subtitle']}"
+🎨 Theme: {promo['theme']}
 
-ACTUAL PROFESSIONAL REVIEW QUOTES (use 2-3):
-★ "This memoir is a profound and unforgettable literary piece." - Divine Zape, Readers' Favorite
-★ "Mind-bending." - Luwi Nyakansaila, Readers' Favorite
-★ "Exceedingly brilliant." - Paul Zeitsman, Readers' Favorite
-★ "The author's imagination is off the charts." - Leslie Jones, Readers' Favorite
-★ "Mind-blowing." - Doreen Chombu, Readers' Favorite
-★ "Resonates on a visceral level." - Divine Zape
-★ "Bold, strange, and very human." - Kindle Customer
-★ "A captivating and thought-provoking memoir that defies genre conventions." - Ruffina Oserio
-★ "A symphony of love and madness that transports readers to the furthest reaches of the human psyche." - Christian Sia
+FEATURED IMAGE TO INCLUDE:
+<img src="{promo['url']}" alt="Letters to Evelyn - {promo['tagline']}" style="max-width: 300px; border-radius: 15px; box-shadow: 0 15px 40px rgba(124,58,237,0.4); border: 3px solid #7c3aed;">
 
-READER TESTIMONIALS FROM AMAZON:
-★ "This book evoked a mixture of surprise and amusement... I felt lighter and reminded of the importance of not taking life too seriously." - Peter gale Carty
-★ "I laughed, I paused to think, and at times I had to reread sections just to take it all in." - Kindle Customer
-★ "Prepare to have a laugh every chapter, as betrayal unfolds maybe love." - Roshannae Dougal
+===== ABSOLUTELY WILD PLOT ELEMENTS (REFERENCE THESE!) =====
+🎖️ The author was a Navy ROTC TOP STUDENT who dreamed of flying like his father
+💊 His stepmother Lauren POISONED his food with LSD, causing 10+ MONTHS of hallucinations
+🏆 He holds a WORLD RECORD for the steepest Sarajevo Approach in a T-34C aircraft! (83° nose dive from 6000ft to 5ft above treetops!)
+💌 He writes beautiful love letters to a mysterious woman named Evelyn Tuskegee
+😂 Contains "upwards of 50 finely-crafted deafening, zany, zesty, zoo zingers... JOKES!"
+🎤 Author's BOLD claim: "More funny than Dave Chappelle or your money back!"
+👽 Features extraterrestrial encounters and a "phantasmagoria of disconnected thoughts"
+💪 The author survived 12+ DAYS WITHOUT SLEEP after being poisoned! (Northeast US record!)
 
-BOOK THEMES TO REFERENCE:
-- Love and cosmic connection to Evelyn
-- Military service and following dreams
-- Overcoming trauma with humor
-- The search for meaning in a chaotic world
-- Blending reality with the extraordinary
+===== PROFESSIONAL REVIEWS TO FEATURE (Pick 2-3) =====
+{chr(10).join([f'★ "{r["quote"]}" - {r["reviewer"]}, Readers\' Favorite' for r in rf_reviews])}
 
-BOOK IMAGE TO INCLUDE:
-<img src="{selected_image}" alt="Letters to Evelyn" style="max-width: 300px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+===== AMAZON READER REVIEWS (Pick 1-2) =====
+{chr(10).join([f'★ "{r["quote"]}" - {r["reviewer"]}' for r in amazon_reviews])}
+
+===== DAD JOKE OF THE WEEK =====
+🎭 "{selected_joke}"
+
+===== INFOPILOT SUBSCRIPTION =====
+Premium subscription: Pay what you want! Starting at $0.75/year
+(That's less than a single gumball from those fancy machines!)
+(That's approximately 0.002 cents per day of cosmic knowledge!)
+
+===== STYLE & DESIGN REQUIREMENTS =====
+Color Palette:
+- Primary: Deep space purple (#7c3aed), Cosmic pink (#ec4899)
+- Accents: Galactic blue (#3b82f6), Neon green (#10b981), Star gold (#fbbf24)
+- Background: Space black (#1a1a2e) gradients
+
+Design Elements:
+- Make the book the ABSOLUTE HERO with a prominent featured section
+- Include the book image with glowing effects
+- Create URGENCY ("The universe is waiting! Only mortals hesitate!")
+- Be ABSURD and SURREAL (match the book's cosmic vibe)
+- Include the Dad Joke of the Week in a highlighted box
+- Make buttons BIG, COLORFUL, and IRRESISTIBLE
+- Add subtle space/cosmic theme throughout
+- Sign off as "Your Friends at InfoPilot (Cosmically Approved! ✨)"
+
+HUMOR GUIDELINES:
+- Channel Douglas Adams meets Terry Pratchett
+- Self-aware meta-humor about email marketing
+- Cosmic absurdity that ties back to the book's themes
+- Warm and welcoming - we want people to ENJOY this email
+- Maybe acknowledge that yes, we ARE really promoting this book... because it's ACTUALLY that good!
 
 Amazon Link: https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191
 
-===== INFOPILOT SUBSCRIPTION =====
-App subscription: Pay what you want! Starting at $0.75/year
-(That's less than a single gumball from those fancy machines!)
-
-===== STYLE REQUIREMENTS =====
-- Use gradient backgrounds: purple (#7c3aed), pink (#ec4899), blue (#3b82f6)
-- Make the book the HERO with a big featured section
-- Include the book image prominently
-- Create URGENCY ("Only a few people have discovered this gem!")
-- Be ABSURD and SURREAL (match the book's vibe)
-- Add a "Dad joke of the week" or fun recurring element
-- Make buttons big and colorful
-- Sign off as "Your Friends at InfoPilot"
-- Keep it fun and warm - we want people to ENJOY opening these emails!
-
-Output ONLY the complete HTML email with inline styles. No markdown code blocks!"""
+Output ONLY the complete HTML email with inline styles. No markdown code blocks! Make it SO FUNNY people screenshot it and share it!"""
 
         user_message = UserMessage(text=prompt)
         response = await chat.send_message(user_message)
@@ -2915,7 +2924,8 @@ Output ONLY the complete HTML email with inline styles. No markdown code blocks!
         return {
             "content": response,
             "generated_at": datetime.now().isoformat(),
-            "ai_generated": True
+            "ai_generated": True,
+            "featured_promo": promo['tagline']
         }
     except Exception as e:
         logger.error(f"Newsletter generation error: {e}")
