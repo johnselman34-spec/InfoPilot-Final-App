@@ -1884,12 +1884,9 @@ const MapPage = ({ showToast, setCurrentPage }) => {
   const [mapResults, setMapResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedResult, setSelectedResult] = useState(null);
-  const [hoveredResult, setHoveredResult] = useState(null);
-  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
 
   // Known locations for context-based geocoding
   const KNOWN_LOCATIONS = {
-    // US States
     'texas': { lat: 31.9686, lng: -99.9018 },
     'california': { lat: 36.7783, lng: -119.4179 },
     'new york': { lat: 40.7128, lng: -74.0060 },
@@ -1897,35 +1894,30 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     'washington': { lat: 47.7511, lng: -120.7401 },
     'washington dc': { lat: 38.9072, lng: -77.0369 },
     'virginia': { lat: 37.4316, lng: -78.6569 },
-    // Cities
     'houston': { lat: 29.7604, lng: -95.3698 },
     'midland': { lat: 31.9973, lng: -102.0779 },
     'new haven': { lat: 41.3083, lng: -72.9279 },
     'yale': { lat: 41.3163, lng: -72.9223 },
     'gettysburg': { lat: 39.8309, lng: -77.2311 },
-    // Countries
     'united states': { lat: 39.8283, lng: -98.5795 },
     'usa': { lat: 39.8283, lng: -98.5795 },
     'america': { lat: 39.8283, lng: -98.5795 },
     'england': { lat: 51.5074, lng: -0.1278 },
     'france': { lat: 46.2276, lng: 2.2137 },
     'germany': { lat: 51.1657, lng: 10.4515 },
-    // Military
     'air force': { lat: 38.8719, lng: -77.0563 },
     'pentagon': { lat: 38.8719, lng: -77.0563 },
     'white house': { lat: 38.8977, lng: -77.0365 },
   };
 
-  // Extract location from text content
   const extractLocation = (text, title) => {
     if (!text && !title) return null;
     const combined = `${title || ''} ${text || ''}`.toLowerCase();
-    
     for (const [place, coords] of Object.entries(KNOWN_LOCATIONS)) {
       if (combined.includes(place)) {
         return {
-          lat: coords.lat + (Math.random() - 0.5) * 2,
-          lng: coords.lng + (Math.random() - 0.5) * 2,
+          lat: coords.lat + (Math.random() - 0.5) * 1.5,
+          lng: coords.lng + (Math.random() - 0.5) * 1.5,
           place: place
         };
       }
@@ -1954,13 +1946,7 @@ const MapPage = ({ showToast, setCurrentPage }) => {
             }
             const extracted = extractLocation(r.content || r.snippet, r.title);
             if (extracted) {
-              return {
-                ...r,
-                latitude: extracted.lat,
-                longitude: extracted.lng,
-                extractedPlace: extracted.place,
-                hasRealLocation: false
-              };
+              return { ...r, latitude: extracted.lat, longitude: extracted.lng, extractedPlace: extracted.place };
             }
             return null;
           })
@@ -1987,28 +1973,22 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     return colors[articleType] || colors['Unknown'];
   };
 
-  // Handle marker click with popup positioning
-  const handleMarkerClick = (result, event) => {
-    const rect = event.currentTarget.parentElement.getBoundingClientRect();
-    const markerRect = event.currentTarget.getBoundingClientRect();
-    
-    // Calculate popup position relative to map container
-    let popupX = markerRect.left - rect.left + 20;
-    let popupY = markerRect.top - rect.top - 10;
-    
-    // Adjust if popup would go off screen
-    if (popupX > rect.width - 320) popupX = markerRect.left - rect.left - 320;
-    if (popupY < 10) popupY = markerRect.top - rect.top + 30;
-    
-    setPopupPosition({ x: popupX, y: popupY });
-    setSelectedResult(selectedResult?.id === result.id ? null : result);
-  };
-
-  // Close popup when clicking outside
-  const handleMapClick = (e) => {
-    if (e.target === e.currentTarget) {
-      setSelectedResult(null);
-    }
+  // Create custom colored marker icon
+  const createCustomIcon = (color) => {
+    return L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="
+        width: 24px;
+        height: 24px;
+        background: ${color};
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 10px ${color}, 0 2px 6px rgba(0,0,0,0.4);
+      "></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+      popupAnchor: [0, -12]
+    });
   };
 
   return (
@@ -2022,13 +2002,8 @@ const MapPage = ({ showToast, setCurrentPage }) => {
 
       {/* Legend */}
       <div style={{ 
-        display: 'flex', 
-        gap: 15, 
-        flexWrap: 'wrap', 
-        marginBottom: 15,
-        padding: 10,
-        background: 'rgba(30, 20, 50, 0.5)',
-        borderRadius: 10
+        display: 'flex', gap: 15, flexWrap: 'wrap', marginBottom: 15,
+        padding: 10, background: 'rgba(30, 20, 50, 0.5)', borderRadius: 10
       }}>
         {[
           { type: 'News Article', color: '#ef4444' },
@@ -2039,13 +2014,7 @@ const MapPage = ({ showToast, setCurrentPage }) => {
           { type: 'Government', color: '#06b6d4' }
         ].map(({ type, color }) => (
           <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ 
-              width: 12, 
-              height: 12, 
-              borderRadius: '50%', 
-              background: color,
-              boxShadow: `0 0 5px ${color}`
-            }} />
+            <div style={{ width: 12, height: 12, borderRadius: '50%', background: color, boxShadow: `0 0 5px ${color}` }} />
             <span style={{ fontSize: '0.75rem', color: '#a1a1aa' }}>{type}</span>
           </div>
         ))}
@@ -2061,274 +2030,82 @@ const MapPage = ({ showToast, setCurrentPage }) => {
           <p style={{ color: '#a1a1aa', fontSize: '1.1rem' }}>
             No mapped results yet. Search and collate content to see results on the map!
           </p>
-          <button 
-            className="btn btn-primary"
-            style={{ marginTop: 15 }}
-            onClick={() => setCurrentPage('search')}
-          >
+          <button className="btn btn-primary" style={{ marginTop: 15 }} onClick={() => setCurrentPage('search')}>
             Go to Ultimate Search
           </button>
         </div>
       ) : (
         <>
-          {/* Map container */}
-          <div 
-            style={{ 
-              height: 450, 
-              borderRadius: 12, 
-              overflow: 'hidden',
-              border: '2px solid rgba(124, 58, 237, 0.3)',
-              position: 'relative',
-              background: '#1e3a5f'
-            }}
-            onClick={handleMapClick}
-          >
-            {/* Map background */}
-            <div style={{
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(180deg, #1e3a5f 0%, #0f2744 100%)',
-              position: 'relative'
-            }}>
-              {/* World map SVG */}
-              <svg viewBox="0 0 1000 500" style={{ width: '100%', height: '100%', position: 'absolute' }}>
-                <rect fill="#1e3a5f" width="1000" height="500"/>
-                <path fill="#2d5a87" d="M150,120 Q200,100 250,110 Q300,90 350,100 L380,150 Q350,180 300,170 Q250,190 200,180 Q150,170 150,120Z"/>
-                <path fill="#2d5a87" d="M100,180 Q150,160 200,190 Q180,250 150,280 Q100,260 80,220 Q90,190 100,180Z"/>
-                <path fill="#2d5a87" d="M220,200 Q280,180 350,200 Q380,250 350,300 Q300,320 250,300 Q200,260 220,200Z"/>
-                <path fill="#2d5a87" d="M450,80 Q550,60 650,80 Q700,120 680,180 Q620,200 550,180 Q480,160 450,120 Q440,100 450,80Z"/>
-                <path fill="#2d5a87" d="M700,100 Q800,80 900,120 Q920,180 880,240 Q800,260 720,220 Q680,160 700,100Z"/>
-                <path fill="#2d5a87" d="M550,200 Q620,180 680,220 Q700,280 650,340 Q580,360 520,320 Q500,260 550,200Z"/>
-                <path fill="#2d5a87" d="M750,280 Q850,260 920,300 Q940,380 880,420 Q800,440 740,400 Q720,340 750,280Z"/>
-              </svg>
-              
-              {/* Interactive Markers */}
-              {mapResults.slice(0, 50).map((result, idx) => {
-                const x = ((result.longitude + 180) / 360) * 100;
-                const latRad = result.latitude * Math.PI / 180;
-                const mercY = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
-                const y = (1 - (mercY / Math.PI + 1) / 2) * 100;
-                const clampedX = Math.max(2, Math.min(98, x));
-                const clampedY = Math.max(5, Math.min(95, y));
-                const isHovered = hoveredResult?.id === result.id || hoveredResult === idx;
-                const isSelected = selectedResult?.id === result.id;
-                
-                return (
-                  <div
-                    key={result.id || `marker-${idx}`}
-                    data-testid={`map-marker-${idx}`}
-                    onClick={(e) => handleMarkerClick(result, e)}
-                    onMouseEnter={() => setHoveredResult(result.id ? result : idx)}
-                    onMouseLeave={() => setHoveredResult(null)}
-                    style={{
-                      position: 'absolute',
-                      left: `${clampedX}%`,
-                      top: `${clampedY}%`,
-                      width: isHovered || isSelected ? 22 : 16,
-                      height: isHovered || isSelected ? 22 : 16,
-                      borderRadius: '50%',
-                      background: getMarkerColor(result.article_type),
-                      border: isSelected ? '3px solid #fff' : '2px solid rgba(255,255,255,0.9)',
-                      boxShadow: isHovered || isSelected 
-                        ? `0 0 20px ${getMarkerColor(result.article_type)}, 0 0 30px ${getMarkerColor(result.article_type)}, 0 4px 8px rgba(0,0,0,0.5)` 
-                        : `0 0 10px ${getMarkerColor(result.article_type)}, 0 2px 4px rgba(0,0,0,0.3)`,
-                      cursor: 'pointer',
-                      transform: 'translate(-50%, -50%)',
-                      transition: 'all 0.15s ease-out',
-                      zIndex: isSelected ? 200 : (isHovered ? 150 : 10)
-                    }}
-                  >
-                    {/* Hover tooltip */}
-                    {isHovered && !isSelected && (
-                      <div style={{
-                        position: 'absolute',
-                        bottom: '100%',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        marginBottom: 8,
-                        padding: '8px 12px',
-                        background: 'rgba(15, 10, 30, 0.95)',
-                        borderRadius: 8,
-                        border: `2px solid ${getMarkerColor(result.article_type)}`,
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                        whiteSpace: 'nowrap',
-                        maxWidth: 280,
-                        zIndex: 300,
-                        pointerEvents: 'none'
-                      }}>
-                        <div style={{ 
-                          color: '#fff', 
-                          fontSize: '0.8rem', 
-                          fontWeight: 600,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          maxWidth: 250
-                        }}>
-                          {result.title?.substring(0, 50) || 'Article'}...
-                        </div>
-                        <div style={{ 
-                          color: getMarkerColor(result.article_type), 
-                          fontSize: '0.7rem',
-                          marginTop: 4
-                        }}>
-                          📍 {result.extractedPlace ? result.extractedPlace.charAt(0).toUpperCase() + result.extractedPlace.slice(1) : 'Location'} • Click to view
-                        </div>
-                        {/* Arrow pointer */}
-                        <div style={{
-                          position: 'absolute',
-                          bottom: -6,
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          width: 0,
-                          height: 0,
-                          borderLeft: '6px solid transparent',
-                          borderRight: '6px solid transparent',
-                          borderTop: `6px solid ${getMarkerColor(result.article_type)}`
-                        }} />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Popup window for selected marker */}
-              {selectedResult && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    left: Math.min(Math.max(popupPosition.x, 10), 60) + '%',
-                    top: Math.min(Math.max(popupPosition.y, 10), 200),
-                    width: 320,
-                    background: 'rgba(15, 10, 35, 0.98)',
-                    borderRadius: 12,
-                    border: `2px solid ${getMarkerColor(selectedResult.article_type)}`,
-                    boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 20px ${getMarkerColor(selectedResult.article_type)}40`,
-                    zIndex: 500,
-                    overflow: 'hidden'
+          {/* React-Leaflet Map - markers move with zoom/pan */}
+          <div style={{ 
+            height: 450, borderRadius: 12, overflow: 'hidden',
+            border: '2px solid rgba(124, 58, 237, 0.3)'
+          }}>
+            <MapContainer
+              center={[39.8283, -98.5795]}
+              zoom={4}
+              style={{ height: '100%', width: '100%' }}
+              scrollWheelZoom={true}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {mapResults.slice(0, 50).map((result, idx) => (
+                <Marker
+                  key={result.id || `marker-${idx}`}
+                  position={[result.latitude, result.longitude]}
+                  icon={createCustomIcon(getMarkerColor(result.article_type))}
+                  eventHandlers={{
+                    click: () => setSelectedResult(result)
                   }}
-                  onClick={(e) => e.stopPropagation()}
                 >
-                  {/* Popup header */}
-                  <div style={{
-                    padding: '12px 15px',
-                    background: `linear-gradient(135deg, ${getMarkerColor(selectedResult.article_type)}30, transparent)`,
-                    borderBottom: '1px solid rgba(255,255,255,0.1)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}>
-                    <span style={{
-                      background: getMarkerColor(selectedResult.article_type),
-                      padding: '3px 10px',
-                      borderRadius: 12,
-                      fontSize: '0.7rem',
-                      fontWeight: 600,
-                      color: '#fff'
-                    }}>
-                      {selectedResult.article_type}
-                    </span>
-                    <button
-                      onClick={() => setSelectedResult(null)}
-                      style={{
-                        background: 'rgba(255,255,255,0.1)',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: 24,
-                        height: 24,
-                        cursor: 'pointer',
-                        color: '#fff',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  
-                  {/* Popup content */}
-                  <div style={{ padding: 15 }}>
-                    <h4 style={{ 
-                      color: '#fff', 
-                      margin: '0 0 10px 0', 
-                      fontSize: '0.95rem',
-                      lineHeight: 1.4
-                    }}>
-                      {selectedResult.title || 'Untitled Article'}
-                    </h4>
-                    
-                    <p style={{ 
-                      color: '#a1a1aa', 
-                      fontSize: '0.8rem', 
-                      margin: '0 0 12px 0',
-                      lineHeight: 1.5
-                    }}>
-                      {selectedResult.snippet?.substring(0, 150) || 'No description available'}...
-                    </p>
-                    
-                    {selectedResult.extractedPlace && (
-                      <div style={{ 
-                        color: '#10b981', 
-                        fontSize: '0.8rem',
-                        marginBottom: 12,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 5
+                  <Popup>
+                    <div style={{ minWidth: 200, maxWidth: 280 }}>
+                      <div style={{
+                        background: getMarkerColor(result.article_type),
+                        color: '#fff', padding: '4px 8px', borderRadius: 4,
+                        fontSize: '0.7rem', fontWeight: 600, marginBottom: 8, display: 'inline-block'
                       }}>
-                        <span>📍</span>
-                        <span>{selectedResult.extractedPlace.charAt(0).toUpperCase() + selectedResult.extractedPlace.slice(1)}</span>
+                        {result.article_type}
                       </div>
-                    )}
-                    
-                    {/* Action button */}
-                    <a
-                      href={selectedResult.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      data-testid="popup-view-article-btn"
-                      style={{
-                        display: 'block',
-                        width: '100%',
-                        padding: '10px 15px',
-                        background: `linear-gradient(135deg, ${getMarkerColor(selectedResult.article_type)}, ${getMarkerColor(selectedResult.article_type)}cc)`,
-                        color: '#fff',
-                        textDecoration: 'none',
-                        borderRadius: 8,
-                        textAlign: 'center',
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
-                        transition: 'all 0.2s',
-                        boxShadow: `0 4px 15px ${getMarkerColor(selectedResult.article_type)}50`
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.transform = 'translateY(-2px)';
-                        e.target.style.boxShadow = `0 6px 20px ${getMarkerColor(selectedResult.article_type)}70`;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = `0 4px 15px ${getMarkerColor(selectedResult.article_type)}50`;
-                      }}
-                    >
-                      🔗 View Full Article
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
+                      <h4 style={{ margin: '0 0 8px 0', fontSize: '0.9rem', lineHeight: 1.3 }}>
+                        {result.title?.substring(0, 60) || 'Untitled'}...
+                      </h4>
+                      <p style={{ margin: '0 0 8px 0', fontSize: '0.8rem', color: '#666', lineHeight: 1.4 }}>
+                        {result.snippet?.substring(0, 100) || 'No description'}...
+                      </p>
+                      {result.extractedPlace && (
+                        <div style={{ color: '#10b981', fontSize: '0.75rem', marginBottom: 8 }}>
+                          📍 {result.extractedPlace.charAt(0).toUpperCase() + result.extractedPlace.slice(1)}
+                        </div>
+                      )}
+                      <a
+                        href={result.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: 'block', padding: '8px 12px',
+                          background: getMarkerColor(result.article_type),
+                          color: '#fff', textDecoration: 'none', borderRadius: 6,
+                          textAlign: 'center', fontWeight: 600, fontSize: '0.8rem'
+                        }}
+                      >
+                        🔗 View Article
+                      </a>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
           </div>
 
-          {/* Results list below map */}
+          {/* Results list */}
           <div style={{ marginTop: 20 }}>
-            <h3 style={{ color: '#f472b6', marginBottom: 15 }}>
-              📍 Mapped Results ({mapResults.length})
-            </h3>
+            <h3 style={{ color: '#f472b6', marginBottom: 15 }}>📍 Mapped Results ({mapResults.length})</h3>
             <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: 12,
-              maxHeight: 350,
-              overflowY: 'auto'
+              display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: 12, maxHeight: 350, overflowY: 'auto'
             }}>
               {mapResults.slice(0, 20).map((result, idx) => (
                 <div 
@@ -2336,47 +2113,26 @@ const MapPage = ({ showToast, setCurrentPage }) => {
                   data-testid={`map-result-${idx}`}
                   style={{
                     padding: 12,
-                    background: selectedResult?.id === result.id 
-                      ? 'rgba(236, 72, 153, 0.2)' 
-                      : 'rgba(30, 20, 50, 0.5)',
+                    background: selectedResult?.id === result.id ? 'rgba(236, 72, 153, 0.2)' : 'rgba(30, 20, 50, 0.5)',
                     borderRadius: 10,
                     border: `2px solid ${selectedResult?.id === result.id ? '#ec4899' : 'transparent'}`,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
+                    cursor: 'pointer', transition: 'all 0.2s'
                   }}
                   onClick={() => setSelectedResult(result)}
-                  onMouseEnter={() => setHoveredResult(result.id ? result : idx)}
-                  onMouseLeave={() => setHoveredResult(null)}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <div style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
+                      width: 10, height: 10, borderRadius: '50%',
                       background: getMarkerColor(result.article_type),
                       boxShadow: `0 0 6px ${getMarkerColor(result.article_type)}`
                     }} />
-                    <span style={{ 
-                      color: getMarkerColor(result.article_type), 
-                      fontSize: '0.7rem',
-                      fontWeight: 600
-                    }}>
+                    <span style={{ color: getMarkerColor(result.article_type), fontSize: '0.7rem', fontWeight: 600 }}>
                       {result.article_type}
                     </span>
                   </div>
                   <a 
-                    href={result.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ 
-                      color: '#fff', 
-                      textDecoration: 'none',
-                      fontWeight: 600,
-                      fontSize: '0.85rem',
-                      display: 'block',
-                      marginBottom: 5,
-                      lineHeight: 1.3
-                    }}
+                    href={result.url} target="_blank" rel="noopener noreferrer"
+                    style={{ color: '#fff', textDecoration: 'none', fontWeight: 600, fontSize: '0.85rem', display: 'block', marginBottom: 5, lineHeight: 1.3 }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {result.title?.substring(0, 55) || 'Untitled'}...
@@ -2394,7 +2150,7 @@ const MapPage = ({ showToast, setCurrentPage }) => {
       )}
 
       <p style={{ marginTop: 20, color: '#a1a1aa', fontSize: '0.85rem', textAlign: 'center' }}>
-        💡 Tip: Hover over markers to preview, click to view details and access the article!
+        💡 Tip: Click on markers to see article details. Zoom and pan the map freely!
       </p>
     </div>
   );
