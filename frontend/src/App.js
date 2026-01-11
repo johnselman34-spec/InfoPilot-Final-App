@@ -15,6 +15,82 @@ L.Icon.Default.mergeOptions({
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// ==================== HASHTAG EXTRACTION ====================
+// Extract 4-6 relevant hashtags from article content
+const extractHashtags = (title, snippet, articleType) => {
+  const text = `${title || ''} ${snippet || ''}`.toLowerCase();
+  const words = text.match(/\b[a-z]{4,15}\b/g) || [];
+  
+  // Common words to exclude
+  const stopWords = new Set([
+    'this', 'that', 'with', 'from', 'have', 'been', 'were', 'they', 'their',
+    'what', 'when', 'where', 'which', 'while', 'about', 'would', 'could',
+    'should', 'there', 'these', 'those', 'being', 'other', 'some', 'such',
+    'into', 'over', 'after', 'before', 'under', 'between', 'through', 'during',
+    'without', 'again', 'further', 'then', 'once', 'here', 'there', 'more',
+    'most', 'very', 'just', 'only', 'also', 'back', 'well', 'even', 'still',
+    'will', 'each', 'make', 'like', 'time', 'take', 'come', 'made', 'find'
+  ]);
+  
+  // Count word frequency
+  const wordCount = {};
+  words.forEach(word => {
+    if (!stopWords.has(word) && word.length > 3) {
+      wordCount[word] = (wordCount[word] || 0) + 1;
+    }
+  });
+  
+  // Sort by frequency and take top words
+  const sortedWords = Object.entries(wordCount)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([word]) => word);
+  
+  // Add article type as a hashtag
+  const typeTag = articleType?.toLowerCase().replace(/\s+/g, '') || 'article';
+  
+  // Combine and format as hashtags (4-6 total)
+  const hashtags = [typeTag, ...sortedWords].slice(0, 6);
+  return hashtags.map(tag => `#${tag.charAt(0).toUpperCase() + tag.slice(1)}`);
+};
+
+// Hashtag component for displaying clickable hashtags
+const HashtagDisplay = ({ hashtags, small = false }) => (
+  <div style={{ 
+    display: 'flex', 
+    flexWrap: 'wrap', 
+    gap: small ? 4 : 6, 
+    marginTop: small ? 6 : 10 
+  }}>
+    {hashtags.map((tag, idx) => (
+      <span
+        key={idx}
+        style={{
+          background: 'rgba(124, 58, 237, 0.2)',
+          color: '#a78bfa',
+          padding: small ? '2px 6px' : '3px 8px',
+          borderRadius: 12,
+          fontSize: small ? '0.65rem' : '0.7rem',
+          fontWeight: 500,
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          border: '1px solid rgba(124, 58, 237, 0.3)'
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.background = 'rgba(124, 58, 237, 0.4)';
+          e.target.style.color = '#c4b5fd';
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.background = 'rgba(124, 58, 237, 0.2)';
+          e.target.style.color = '#a78bfa';
+        }}
+      >
+        {tag}
+      </span>
+    ))}
+  </div>
+);
+
 // ==================== AUTH CONTEXT ====================
 const AuthContext = createContext(null);
 
