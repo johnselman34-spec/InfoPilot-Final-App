@@ -152,8 +152,9 @@ const UltimateSearchPage = ({ showToast }) => {
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setLoading(true);
+    const startTime = Date.now();
     try {
-      // First search
+      // First search - using optimized fast search
       const searchRes = await fetch(`${API}/search`, {
         method: 'POST',
         headers: {
@@ -165,6 +166,7 @@ const UltimateSearchPage = ({ showToast }) => {
       
       if (searchRes.ok) {
         const searchData = await searchRes.json();
+        const searchTime = ((Date.now() - startTime) / 1000).toFixed(1);
         
         // Then collate
         const collateRes = await fetch(`${API}/collate`, {
@@ -178,8 +180,11 @@ const UltimateSearchPage = ({ showToast }) => {
         
         if (collateRes.ok) {
           const collateData = await collateRes.json();
-          showToast(`Collated ${collateData.collated_count} results!`, 'success');
+          const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+          setLastBatchId(collateData.batch_id);
+          showToast(`Collated ${collateData.collated_count} of ${searchData.total} results in ${totalTime}s!`, 'success');
           fetchSearchResults();
+          fetchBatches();
         }
       }
     } catch (e) {
