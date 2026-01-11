@@ -26,12 +26,19 @@ const AuthCallback = () => {
         // Call our backend proxy to get session data (avoids CORS issues)
         const sessionResponse = await fetch(`${API}/auth/google/session-data?session_id=${encodeURIComponent(sessionId)}`);
         
-        if (!sessionResponse.ok) {
-          const errorData = await sessionResponse.json().catch(() => ({}));
-          throw new Error(errorData.detail || 'Failed to verify Google session');
+        // Read response text first to avoid "body stream already read" error
+        const sessionText = await sessionResponse.text();
+        let userData;
+        try {
+          userData = sessionText ? JSON.parse(sessionText) : {};
+        } catch (e) {
+          throw new Error('Invalid response from authentication service');
         }
         
-        const userData = await sessionResponse.json();
+        if (!sessionResponse.ok) {
+          throw new Error(userData.detail || 'Failed to verify Google session');
+        }
+        
         console.log('Got user data:', userData);
         
         // Validate we have required fields
@@ -51,12 +58,19 @@ const AuthCallback = () => {
           })
         });
         
-        if (!authResponse.ok) {
-          const errorData = await authResponse.json().catch(() => ({}));
-          throw new Error(errorData.detail || 'Login failed');
+        // Read response text first
+        const authText = await authResponse.text();
+        let authData;
+        try {
+          authData = authText ? JSON.parse(authText) : {};
+        } catch (e) {
+          throw new Error('Invalid response from login service');
         }
         
-        const authData = await authResponse.json();
+        if (!authResponse.ok) {
+          throw new Error(authData.detail || 'Login failed');
+        }
+        
         localStorage.setItem('token', authData.token);
         
         // Clear hash and redirect to clean URL
