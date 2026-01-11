@@ -2930,6 +2930,15 @@ While you were busy questioning the nature of reality (we've all been there), ou
 
 </div>
 
+<!-- CHAPTER TEASER BOX -->
+<div style="background: linear-gradient(135deg, #312e81 0%, #4c1d95 100%); padding: 20px; border-radius: 15px; margin: 20px 0;">
+<h2 style="color: #c4b5fd; text-align: center; margin: 0 0 10px 0;">📖 CHAPTER TEASER</h2>
+<p style="color: white; text-align: center; margin: 0; font-size: 16px;">
+<strong>Ch.{chapter['chapter']} "{chapter['title']}":</strong><br>
+<em style="color: #fbbf24;">"{chapter['teaser']}"</em>
+</p>
+</div>
+
 <div style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); padding: 20px; border-radius: 15px; margin: 20px 0;">
 <h2 style="color: #34d399; text-align: center; margin: 0 0 10px 0;">💎 INFOPILOT PREMIUM 💎</h2>
 <p style="color: white; text-align: center; margin: 0;">
@@ -2941,7 +2950,15 @@ Pay what you want! Starting at <strong>$0.75/year</strong>!<br>
 <div style="background: #fef3c7; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #f59e0b;">
 <p style="margin: 0; color: #92400e; font-size: 14px;">
 <strong>🎭 Dad Joke of the Week:</strong><br>
-Why did the Navy pilot write a book? Because his stories were <em>plane</em> amazing! ✈️😄
+{dad_joke}
+</p>
+</div>
+
+<!-- PROFOUND MOMENT -->
+<div style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 15px; border-radius: 10px; margin: 20px 0;">
+<p style="margin: 0; color: #93c5fd; font-size: 14px; text-align: center;">
+<strong>💫 Profound Moment from the Book:</strong><br>
+<em style="color: white; font-size: 16px;">"{profound}"</em>
 </p>
 </div>
 
