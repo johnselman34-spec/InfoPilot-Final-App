@@ -11,6 +11,7 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
     { id: 'achievements', label: 'Achievements', icon: Icons.Trophy },
     { id: 'social', label: 'Social', icon: Icons.Users },
     { id: 'map', label: 'Map View', icon: Icons.Map },
+    { id: 'quotes', label: 'Quote Gallery', icon: Icons.Quote },
     { id: 'messages', label: 'Messages', icon: Icons.Message },
     { id: 'settings', label: 'Settings', icon: Icons.Settings },
   ];
