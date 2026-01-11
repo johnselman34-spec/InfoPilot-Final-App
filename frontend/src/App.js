@@ -3,17 +3,29 @@ import './App.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { api } from './services/api';
 
-// Leaflet will be loaded dynamically to avoid SSR issues
-let MapContainer, TileLayer, Marker, Popup;
-try {
-  const leafletReact = require('react-leaflet');
-  MapContainer = leafletReact.MapContainer;
-  TileLayer = leafletReact.TileLayer;
-  Marker = leafletReact.Marker;
-  Popup = leafletReact.Popup;
-} catch (e) {
-  console.log('React-Leaflet not loaded');
-}
+// Leaflet imports
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default marker icons in react-leaflet
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
+
+// Create custom colored marker icon
+const createColoredIcon = (color) => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `<svg viewBox="0 0 24 24" fill="${color}" stroke="white" stroke-width="1" style="width:32px;height:32px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3))"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3" fill="white"/></svg>`,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+  });
+};
 
 // Custom marker icons by category
 const categoryColors = [
