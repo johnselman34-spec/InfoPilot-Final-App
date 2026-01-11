@@ -16,6 +16,8 @@ import secrets
 import httpx
 from bson import ObjectId
 import urllib.parse
+import asyncio
+import resend
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
