@@ -32,11 +32,11 @@ client = AsyncIOMotorClient(
 )
 db = client[DB_NAME]
 
-# PayPal Configuration
-PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', 'BAABmhMWqe1WrfJkqJ7RRzEZwoAfxSF2bclm8_HY2BuU9C-7pnakTdjFVCvSJyWh63-wUWmKN1cT1hdMIY')
-PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET', 'EB_2D4V5qbvV0_phOCf6dAQBs_NzDLRxmjxQ-3l8T2cWzjTa84TVrZheyVMGGBnVKaxXO0XkUYf7vxa5')
-PAYPAL_HOSTED_BUTTON_ID = os.environ.get('PAYPAL_HOSTED_BUTTON_ID', '765S46VPPEP5C')
-PAYPAL_PAYMENT_LINK = "https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ"
+# PayPal Configuration - credentials must be set in .env file
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
+PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET')
+PAYPAL_HOSTED_BUTTON_ID = os.environ.get('PAYPAL_HOSTED_BUTTON_ID')
+PAYPAL_PAYMENT_LINK = os.environ.get('PAYPAL_PAYMENT_LINK', 'https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ')
 
 # Resend Email Configuration
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
