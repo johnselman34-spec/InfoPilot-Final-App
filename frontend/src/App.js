@@ -840,6 +840,19 @@ const AdminPanel = ({ showToast }) => {
               />
             </div>
             <div className="admin-setting">
+              <label>Max Search Pages (Admin/Paid)</label>
+              <input
+                type="number"
+                min="1"
+                max="99"
+                defaultValue={getSetting('max_search_pages') || 99}
+                onBlur={(e) => updateSetting('max_search_pages', Math.min(99, Math.max(1, parseInt(e.target.value))))}
+              />
+              <small style={{ color: '#a1a1aa', display: 'block', marginTop: 5 }}>
+                Maximum pages to fetch during Search & Collate (1-99)
+              </small>
+            </div>
+            <div className="admin-setting">
               <label>Unpaid User Max Pages</label>
               <input
                 type="number"
