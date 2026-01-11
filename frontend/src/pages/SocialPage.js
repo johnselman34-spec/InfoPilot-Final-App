@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import { Icons } from '../components/shared';
-import GroupsSection from '../components/social/GroupsSection';
-import PagesSection from '../components/social/PagesSection';
+import { GroupsSection, PagesSection } from '../components/social';
 
 const SocialPage = ({ showToast }) => {
   const { token, user } = useAuth();
