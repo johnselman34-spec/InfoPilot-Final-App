@@ -68,7 +68,269 @@ const Icons = {
   ExternalLink: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>,
   Filter: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>,
   Code: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>,
+  Book: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
+  ShoppingCart: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>,
 };
+
+// Book Images for promotional carousel
+const bookImages = {
+  cover: "https://customer-assets.emergentagent.com/job_b9531e7d-8be8-4b48-a8cb-04b5aa1b91c5/artifacts/2h5e2m0v_492184737_9796149057120753_8323589957375320957_n.jpg",
+  promo1: "https://customer-assets.emergentagent.com/job_b9531e7d-8be8-4b48-a8cb-04b5aa1b91c5/artifacts/cg5rg41q_Letters%20to%20Evelyn%20advertisement%201.jpg",
+  promo2: "https://customer-assets.emergentagent.com/job_b9531e7d-8be8-4b48-a8cb-04b5aa1b91c5/artifacts/hc8e1pgk_Letters%20to%20Evelyn%20advertisement%202.jpg",
+  promo3: "https://customer-assets.emergentagent.com/job_b9531e7d-8be8-4b48-a8cb-04b5aa1b91c5/artifacts/tlenrvs0_Letters%20to%20Evelyn%20advertisement%203.jpg",
+};
+
+// Letters to Evelyn Book Promotion Component
+function BookPromoSection({ variant = 'full' }) {
+  const [currentImage, setCurrentImage] = useState(0);
+  const promoImages = [bookImages.promo1, bookImages.promo2, bookImages.promo3];
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % promoImages.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [promoImages.length]);
+
+  const handleBuyBook = () => {
+    window.open('https://www.amazon.com/Letters-Evelyn-ebook/dp/B0DHJBFPTH', '_blank');
+  };
+
+  if (variant === 'compact') {
+    return (
+      <div 
+        className="book-promo-compact" 
+        onClick={handleBuyBook}
+        style={{
+          background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(244, 63, 94, 0.15) 100%)',
+          border: '1px solid rgba(244, 63, 94, 0.3)',
+          borderRadius: '16px',
+          padding: '16px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          marginBottom: '20px',
+          transition: 'all 0.3s ease'
+        }}
+        data-testid="book-promo-compact"
+      >
+        <img 
+          src={bookImages.cover} 
+          alt="Letters to Evelyn" 
+          style={{
+            width: '60px',
+            height: '80px',
+            objectFit: 'cover',
+            borderRadius: '8px',
+            boxShadow: '0 4px 15px rgba(244, 63, 94, 0.3)'
+          }}
+        />
+        <div style={{flex: 1}}>
+          <div style={{
+            fontFamily: "'Unbounded', sans-serif",
+            fontSize: '14px',
+            fontWeight: 700,
+            background: 'linear-gradient(135deg, #F43F5E 0%, #8B5CF6 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '4px'
+          }}>Letters to Evelyn</div>
+          <div style={{fontSize: '12px', color: '#94A3B8'}}>A cosmic journey of love & discovery</div>
+        </div>
+        <Icons.ShoppingCart style={{width: 20, height: 20, color: '#F43F5E'}} />
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      className="book-promo-section" 
+      style={{
+        background: 'linear-gradient(135deg, rgba(5, 5, 16, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)',
+        border: '1px solid rgba(244, 63, 94, 0.3)',
+        borderRadius: '24px',
+        padding: '28px',
+        marginBottom: '28px',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+      data-testid="book-promo-section"
+    >
+      {/* Cosmic glow effect */}
+      <div style={{
+        position: 'absolute',
+        top: '-50%',
+        right: '-30%',
+        width: '80%',
+        height: '200%',
+        background: 'radial-gradient(circle, rgba(244, 63, 94, 0.2) 0%, transparent 50%)',
+        pointerEvents: 'none',
+        animation: 'rotate-glow 20s linear infinite'
+      }} />
+      
+      <div style={{
+        display: 'flex',
+        gap: '28px',
+        alignItems: 'center',
+        position: 'relative',
+        zIndex: 1,
+        flexWrap: 'wrap'
+      }}>
+        {/* Book Cover */}
+        <div style={{
+          flexShrink: 0,
+          position: 'relative'
+        }}>
+          <img 
+            src={bookImages.cover} 
+            alt="Letters to Evelyn - Book Cover" 
+            style={{
+              width: '140px',
+              height: '200px',
+              objectFit: 'cover',
+              borderRadius: '12px',
+              boxShadow: '0 10px 40px rgba(244, 63, 94, 0.4), 0 0 60px rgba(139, 92, 246, 0.2)',
+              border: '2px solid rgba(255, 255, 255, 0.1)'
+            }}
+            data-testid="book-cover-image"
+          />
+          {/* Sparkle effect */}
+          <div style={{
+            position: 'absolute',
+            top: '-5px',
+            right: '-5px',
+            width: '20px',
+            height: '20px',
+            background: 'radial-gradient(circle, #F43F5E 0%, transparent 70%)',
+            borderRadius: '50%',
+            animation: 'pulse-glow 2s ease-in-out infinite'
+          }} />
+        </div>
+        
+        {/* Book Info */}
+        <div style={{flex: 1, minWidth: '200px'}}>
+          <div style={{
+            fontSize: '12px',
+            color: '#F472B6',
+            letterSpacing: '2px',
+            textTransform: 'uppercase',
+            marginBottom: '8px'
+          }}>From the Creator of InfoPilot</div>
+          
+          <h3 style={{
+            fontFamily: "'Unbounded', sans-serif",
+            fontSize: '28px',
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, #F43F5E 0%, #EC4899 50%, #8B5CF6 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '12px',
+            lineHeight: 1.2
+          }}>Letters to Evelyn</h3>
+          
+          <p style={{
+            fontSize: '15px',
+            color: '#94A3B8',
+            lineHeight: 1.7,
+            marginBottom: '20px'
+          }}>
+            A breathtaking journey through love, loss, and cosmic discovery. 
+            When reality breaks, what truths remain?
+          </p>
+          
+          {/* Promotional taglines */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '8px',
+            marginBottom: '20px'
+          }}>
+            {['I FLEW JETS THEN REALITY BROKE', 'UNIVERSE FACT-CHECKED IT'].map((tag, i) => (
+              <span key={i} style={{
+                background: 'rgba(244, 63, 94, 0.15)',
+                border: '1px solid rgba(244, 63, 94, 0.3)',
+                borderRadius: '20px',
+                padding: '6px 14px',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: '#FB7185',
+                letterSpacing: '0.5px'
+              }}>{tag}</span>
+            ))}
+          </div>
+          
+          <button 
+            onClick={handleBuyBook}
+            className="btn btn-primary"
+            style={{
+              width: 'auto',
+              padding: '14px 28px',
+              fontSize: '14px'
+            }}
+            data-testid="buy-book-button"
+          >
+            <Icons.Book /> Get Your Copy on Amazon
+          </button>
+        </div>
+        
+        {/* Promotional Image Carousel */}
+        <div style={{
+          width: '200px',
+          height: '200px',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          position: 'relative',
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          flexShrink: 0
+        }}>
+          {promoImages.map((img, idx) => (
+            <img 
+              key={idx}
+              src={img} 
+              alt={`Letters to Evelyn Promo ${idx + 1}`}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                opacity: currentImage === idx ? 1 : 0,
+                transition: 'opacity 1s ease-in-out'
+              }}
+            />
+          ))}
+          {/* Image indicator dots */}
+          <div style={{
+            position: 'absolute',
+            bottom: '10px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: '6px'
+          }}>
+            {promoImages.map((_, idx) => (
+              <div 
+                key={idx}
+                onClick={() => setCurrentImage(idx)}
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: currentImage === idx ? '#F43F5E' : 'rgba(255, 255, 255, 0.3)',
+                  cursor: 'pointer',
+                  transition: 'background 0.3s ease'
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Login Page
 function LoginPage({ onNavigate }) {
