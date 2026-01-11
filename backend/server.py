@@ -1729,6 +1729,94 @@ async def get_ultimate_search_stats(user = Depends(get_current_user)):
         "top_domains": domains.most_common(10)
     }
 
+@api_router.get("/ultimate-search/batches", response_model=dict)
+async def get_search_batches(user = Depends(get_current_user)):
+    """Get list of Search & Collate batches (sessions) for deletion"""
+    
+    pipeline = [
+        {"$match": {"user_id": str(user["_id"]), "batch_id": {"$exists": True, "$ne": None}}},
+        {"$group": {
+            "_id": "$batch_id",
+            "count": {"$sum": 1},
+            "first_result": {"$first": "$title"},
+            "collated_at": {"$first": "$collated_at"}
+        }},
+        {"$sort": {"collated_at": -1}},
+        {"$limit": 50}
+    ]
+    
+    batches = await db.search_results.aggregate(pipeline).to_list(50)
+    
+    return {
+        "batches": [
+            {
+                "batch_id": b["_id"],
+                "result_count": b["count"],
+                "sample_title": b.get("first_result", "Untitled")[:60],
+                "collated_at": b["collated_at"].isoformat() if b.get("collated_at") else None
+            }
+            for b in batches
+        ],
+        "total": len(batches)
+    }
+
+@api_router.delete("/ultimate-search/batch/{batch_id}", response_model=dict)
+async def delete_search_batch(batch_id: str, user = Depends(get_current_user)):
+    """Delete all search results from a specific Search & Collate session (batch)
+    Admin can delete any user's batch, regular users can only delete their own"""
+    
+    # Build query - admin can delete any batch
+    if user.get("is_admin"):
+        # Admin can delete any batch
+        query = {"batch_id": batch_id}
+    else:
+        # Regular users can only delete their own
+        query = {"batch_id": batch_id, "user_id": str(user["_id"])}
+    
+    # Count before deletion
+    count_before = await db.search_results.count_documents(query)
+    
+    if count_before == 0:
+        raise HTTPException(status_code=404, detail="Batch not found or already deleted")
+    
+    # Delete all results in this batch
+    result = await db.search_results.delete_many(query)
+    
+    logger.info(f"User {user.get('email')} deleted batch {batch_id}: {result.deleted_count} results removed")
+    
+    return {
+        "success": True,
+        "deleted_count": result.deleted_count,
+        "batch_id": batch_id,
+        "message": f"Successfully deleted {result.deleted_count} search results from this session"
+    }
+
+@api_router.delete("/ultimate-search/result/{result_id}", response_model=dict)
+async def delete_single_result(result_id: str, user = Depends(get_current_user)):
+    """Delete a single search result. Admin can delete any, users can only delete their own"""
+    
+    try:
+        result_obj_id = ObjectId(result_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid result ID")
+    
+    # Build query - admin can delete any result
+    if user.get("is_admin"):
+        query = {"_id": result_obj_id}
+    else:
+        query = {"_id": result_obj_id, "user_id": str(user["_id"])}
+    
+    result = await db.search_results.delete_one(query)
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Result not found or not authorized")
+    
+    return {
+        "success": True,
+        "deleted_id": result_id,
+        "message": "Search result deleted successfully"
+    }
+
 # ============== MAP DATA ENDPOINT ==============
 
 @api_router.get("/map-data", response_model=dict)
