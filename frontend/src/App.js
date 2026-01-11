@@ -461,22 +461,22 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
         </div>
       </nav>
 
-      {/* Book Promo */}
-      <div style={{ marginTop: 20, padding: 15, background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(124, 58, 237, 0.2))', borderRadius: 12, border: '2px solid rgba(236, 72, 153, 0.5)' }}>
-        <div style={{ fontSize: '0.9rem', color: '#f472b6', fontWeight: 700, marginBottom: 8, textAlign: 'center' }}>
-          📚 MUST READ! 📚
+      {/* Book Promo - Enhanced */}
+      <div style={{ marginTop: 20, padding: 15, background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(124, 58, 237, 0.25))', borderRadius: 12, border: '2px solid rgba(236, 72, 153, 0.5)' }}>
+        <div style={{ fontSize: '0.85rem', color: '#fbbf24', fontWeight: 800, marginBottom: 8, textAlign: 'center' }}>
+          🎬 OPTIONED FOR FILM! 🎬
         </div>
-        <div style={{ fontSize: '0.85rem', color: '#fce7f3', marginBottom: 8, textAlign: 'center', fontWeight: 600 }}>
+        <div style={{ fontSize: '0.9rem', color: '#f472b6', marginBottom: 6, textAlign: 'center', fontWeight: 700 }}>
           "Letters to Evelyn"
         </div>
-        <div style={{ fontSize: '0.7rem', color: '#f472b6', marginBottom: 6, fontStyle: 'italic', textAlign: 'center' }}>
-          A True Supernatural Thriller Comedy
+        <div style={{ fontSize: '0.7rem', color: '#a78bfa', marginBottom: 8, fontStyle: 'italic', textAlign: 'center' }}>
+          Supernatural Thriller Comedy
         </div>
-        <div style={{ fontSize: '0.65rem', color: '#10b981', marginBottom: 8, textAlign: 'center', fontWeight: 600 }}>
-          ⭐ 19 Five-Star Reviews from Readers' Favorite
+        <div style={{ fontSize: '0.65rem', color: '#10b981', marginBottom: 6, textAlign: 'center', fontWeight: 600 }}>
+          ⭐ 19 Five-Star Professional Reviews
         </div>
-        <div style={{ fontSize: '0.6rem', color: '#a1a1aa', marginBottom: 10, fontStyle: 'italic', textAlign: 'center', lineHeight: 1.4 }}>
-          "This memoir is a profound and unforgettable literary piece." - Divine Zape
+        <div style={{ fontSize: '0.6rem', color: '#a1a1aa', marginBottom: 10, fontStyle: 'italic', textAlign: 'center', lineHeight: 1.3 }}>
+          "Comedy that creeps into your mind!"
         </div>
         <a 
           href="https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191" 
@@ -485,7 +485,7 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
           className="btn btn-primary"
           style={{ fontSize: '0.8rem', padding: '10px 12px', display: 'block', textAlign: 'center', textDecoration: 'none', background: 'linear-gradient(135deg, #ec4899, #f97316)', boxShadow: '0 0 15px rgba(236, 72, 153, 0.5)' }}
         >
-          🎁 GET IT NOW - Only $2.99!
+          🛒 GET IT - Only $2.99!
         </a>
       </div>
     </div>
