@@ -506,6 +506,7 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
 
   const navItems = [
     { id: 'search', label: 'Ultimate Search', icon: Icons.Search },
+    { id: 'marketplace', label: 'Marketplace', icon: Icons.Shop },
     { id: 'social', label: 'Social', icon: Icons.Users },
     { id: 'map', label: 'Map View', icon: Icons.Map },
     { id: 'messages', label: 'Messages', icon: Icons.Message },
