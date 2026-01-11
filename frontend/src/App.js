@@ -3029,18 +3029,36 @@ const MarketplacePage = ({ showToast }) => {
   };
 
   const handlePurchase = async (protocol) => {
-    // Open PayPal payment
-    const paymentWindow = window.open(
-      `https://www.paypal.com/paypalme/JJSpilot24/${protocol.price}USD`,
-      '_blank',
-      'width=600,height=700'
-    );
-
-    // Show confirmation modal
-    setPurchaseModal({
-      protocol,
-      step: 'confirm'
-    });
+    try {
+      // Initiate purchase on backend
+      const res = await fetch(`${API}/marketplace/initiate-purchase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ protocol_id: protocol.id })
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Open PayPal payment in new window
+        window.open(data.payment_url, '_blank', 'width=600,height=700');
+        
+        // Show confirmation modal with pending info
+        setPurchaseModal({
+          protocol,
+          pending_id: data.pending_id,
+          payment_url: data.payment_url,
+          step: 'confirm'
+        });
+      } else {
+        showToast(data.detail || 'Failed to initiate purchase', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to initiate purchase', 'error');
+    }
   };
 
   const confirmPurchase = async () => {
