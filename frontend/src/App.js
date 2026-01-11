@@ -2198,6 +2198,7 @@ function SettingsPage() {
   const { user, logout, refreshUser } = useAuth();
   const [ultimateSearchPublic, setUltimateSearchPublic] = useState(user?.ultimate_search_public || false);
   const [friendsVisible, setFriendsVisible] = useState(user?.friends_visible || false);
+  const [customAmount, setCustomAmount] = useState('');
 
   const handleToggle = async (setting, value) => {
     try {
@@ -2213,15 +2214,14 @@ function SettingsPage() {
     }
   };
 
-  const handleSubscribe = () => {
-    if (window.confirm('Subscribe to InfoPilot Premium for $0.99?\n\n• Unlimited search result pages\n• Interactive world map\n• All premium features')) {
-      window.open('https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ', '_blank');
-      setTimeout(() => {
-        if (window.confirm('Did you complete your PayPal payment?')) {
-          api.post('/payment/activate', {}).then(() => { refreshUser(); alert('Welcome to InfoPilot Premium!'); }).catch(() => alert('Could not activate premium'));
-        }
-      }, 2000);
-    }
+  const handleSubscribe = (amount) => {
+    const finalAmount = amount || customAmount || '0.99';
+    window.open('https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ', '_blank');
+    setTimeout(() => {
+      if (window.confirm(`Did you complete your $${finalAmount} PayPal payment?`)) {
+        api.post('/payment/activate', {}).then(() => { refreshUser(); alert('Welcome to InfoPilot Premium! Thank you for your generous support!'); }).catch(() => alert('Could not activate premium'));
+      }
+    }, 2000);
   };
 
   const handleLogout = () => {
@@ -2249,17 +2249,109 @@ function SettingsPage() {
 
         {!user?.is_paid && (
           <>
-            <div className="section-title">Subscription</div>
-            <div className="subscribe-card" onClick={handleSubscribe} style={{marginBottom: 24}}>
-              <div className="subscribe-content">
-                <Icons.Rocket />
-                <div className="subscribe-text">
-                  <h4>Upgrade to Premium</h4>
-                  <p>Unlimited pages, world map, all features</p>
-                  <div className="price-row"><span className="price-text">Only $0.99</span><span className="paypal-badge">PayPal</span></div>
-                </div>
+            <div className="section-title">Support InfoPilot - Pay What You Can</div>
+            
+            {/* Professional Review Quote */}
+            <div style={{
+              background: 'rgba(251, 191, 36, 0.1)',
+              border: '1px solid rgba(251, 191, 36, 0.3)',
+              borderRadius: 16,
+              padding: 16,
+              marginBottom: 20,
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 12
+            }}>
+              <Icons.Award style={{width: 24, height: 24, color: '#FBBF24', flexShrink: 0}} />
+              <div>
+                <p style={{fontSize: 14, color: '#FDE68A', fontStyle: 'italic', marginBottom: 6, lineHeight: 1.5}}>
+                  "{REVIEW_QUOTE.text}"
+                </p>
+                <p style={{fontSize: 12, color: '#D97706'}}>
+                  — {REVIEW_QUOTE.reviewer}, {REVIEW_QUOTE.source} (About "Letters to Evelyn" by the creator of InfoPilot)
+                </p>
               </div>
-              <Icons.ChevronRight />
+            </div>
+            
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(244, 63, 94, 0.1) 100%)',
+              border: '1px solid rgba(139, 92, 246, 0.3)',
+              borderRadius: 20,
+              padding: 24,
+              marginBottom: 24
+            }}>
+              <h4 style={{
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: 18,
+                fontWeight: 700,
+                color: '#F8FAFC',
+                marginBottom: 16,
+                textAlign: 'center'
+              }}>Choose Your Contribution for 1 Year of Premium</h4>
+              
+              {/* Suggested amounts */}
+              <div style={{display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 20}}>
+                {DONATION_AMOUNTS.map(amount => (
+                  <button 
+                    key={amount}
+                    onClick={() => handleSubscribe(amount.toFixed(2))}
+                    style={{
+                      background: amount === 4.62 ? 'linear-gradient(135deg, #F43F5E 0%, #8B5CF6 100%)' : 'rgba(255,255,255,0.05)',
+                      border: amount === 4.62 ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: 12,
+                      padding: '14px 24px',
+                      cursor: 'pointer',
+                      color: '#F8FAFC',
+                      fontSize: 16,
+                      fontWeight: 700,
+                      transition: 'all 0.3s ease',
+                      boxShadow: amount === 4.62 ? '0 0 20px rgba(244, 63, 94, 0.4)' : 'none'
+                    }}
+                  >
+                    ${amount.toFixed(2)}
+                    {amount === 4.62 && <span style={{fontSize: 10, display: 'block', fontWeight: 400, marginTop: 2}}>Recommended</span>}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Custom amount */}
+              <div style={{display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'center'}}>
+                <span style={{color: '#94A3B8', fontSize: 14}}>Or enter any amount:</span>
+                <div style={{position: 'relative', display: 'flex', alignItems: 'center'}}>
+                  <span style={{position: 'absolute', left: 14, color: '#34D399', fontSize: 18, fontWeight: 700}}>$</span>
+                  <input 
+                    type="number" 
+                    min="0.01" 
+                    step="0.01"
+                    placeholder="0.00"
+                    value={customAmount}
+                    onChange={(e) => setCustomAmount(e.target.value)}
+                    style={{
+                      width: 100,
+                      padding: '12px 12px 12px 30px',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: 10,
+                      color: '#34D399',
+                      fontSize: 18,
+                      fontWeight: 700
+                    }}
+                  />
+                </div>
+                <button 
+                  onClick={() => handleSubscribe(customAmount)}
+                  className="btn btn-primary"
+                  style={{padding: '12px 24px'}}
+                  disabled={!customAmount || parseFloat(customAmount) < 0.01}
+                >
+                  Donate
+                </button>
+              </div>
+              
+              <p style={{textAlign: 'center', marginTop: 16, fontSize: 12, color: '#64748B'}}>
+                <Icons.Heart style={{width: 12, height: 12, display: 'inline', marginRight: 4}} />
+                Every contribution helps us grow and build amazing features!
+              </p>
             </div>
           </>
         )}
