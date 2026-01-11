@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { API } from '../../utils/api';
+import { API } from '../utils/api';
 
 const AuthCallback = () => {
   const [status, setStatus] = useState('processing'); // 'processing', 'error', 'success'
