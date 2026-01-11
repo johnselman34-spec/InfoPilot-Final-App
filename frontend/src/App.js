@@ -1186,7 +1186,7 @@ const MapPage = ({ showToast, setCurrentPage }) => {
         <p style={{ color: '#a1a1aa', marginBottom: 20 }}>
           The interactive map is available for premium users. Upgrade to see your search results on a world map!
         </p>
-        <button className="btn btn-primary">Subscribe Now</button>
+        <button className="btn btn-primary" onClick={() => setCurrentPage('subscribe')}>Subscribe Now</button>
       </div>
     );
   }
