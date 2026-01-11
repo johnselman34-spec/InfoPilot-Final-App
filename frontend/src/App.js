@@ -1178,11 +1178,12 @@ const SocialPage = ({ showToast }) => {
 const MapPage = ({ showToast, setCurrentPage }) => {
   const { user } = useAuth();
 
-  if (!user?.is_paid && !user?.is_admin) {
+  // Show subscribe option for non-premium users
+  if (!user || (!user.is_paid && !user.is_admin)) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: 50 }}>
-        <Icons.Map />
-        <h2 style={{ marginTop: 20, marginBottom: 10 }}>Premium Feature</h2>
+        <div style={{ fontSize: '4rem', marginBottom: 20 }}>🗺️</div>
+        <h2 style={{ marginTop: 20, marginBottom: 10, color: '#f472b6' }}>Premium Feature</h2>
         <p style={{ color: '#a1a1aa', marginBottom: 20 }}>
           The interactive map is available for premium users. Upgrade to see your search results on a world map!
         </p>
