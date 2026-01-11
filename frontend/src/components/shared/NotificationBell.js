@@ -85,9 +85,9 @@ const NotificationBell = ({ showToast }) => {
               setUnreadCount(data.count);
             }
           } catch (e) {
-            // Handle ping/pong
-            if (event.data === 'ping') {
-              wsRef.current?.send('pong');
+            // Handle ping/pong - only send if WebSocket is open
+            if (event.data === 'ping' && wsRef.current?.readyState === WebSocket.OPEN) {
+              wsRef.current.send('pong');
             }
           }
         };
