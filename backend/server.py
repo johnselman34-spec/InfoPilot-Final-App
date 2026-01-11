@@ -2670,53 +2670,111 @@ APP_INFO = {
 }
 
 def get_fallback_newsletter():
-    """Fallback newsletter if AI generation fails"""
+    """Fallback newsletter if AI generation fails - NOW WITH HILARIOUS CONTENT!"""
+    import random
+    promo = random.choice(BOOK_PROMO_IMAGES)
+    review = random.choice(BOOK_REVIEWS["readers_favorite"]["reviews"])
+    amazon_review = random.choice(BOOK_REVIEWS["amazon"]["reviews"])
+    
     return {
-        "content": """
+        "content": f"""
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"></head>
-<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px;">
-<div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%); padding: 20px;">
+<div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.4);">
 
-<h1 style="text-align: center; color: #764ba2; font-size: 32px;">
+<h1 style="text-align: center; background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 32px; margin-bottom: 5px;">
 🚀 INFOPILOT WEEKLY BLAST! 🚀
 </h1>
 
+<p style="text-align: center; color: #6b7280; font-size: 14px; margin-top: 0;">
+<em>The newsletter so good, the universe fact-checked it (and it passed!)</em>
+</p>
+
 <p style="font-size: 18px; line-height: 1.8; color: #333;">
-Hey there, Internet Explorer! (Not the browser, you're way cooler than that! 😎)
+Hey there, Cosmic Explorer! 🌌
 </p>
 
 <p style="font-size: 16px; line-height: 1.8; color: #555;">
-Did you know that while you were busy living your life, our robots were busy collating the ENTIRE internet for you? That's right - we're basically doing your homework while you Netflix and chill! 📺
+While you were busy questioning the nature of reality (we've all been there), our search robots were collating the ENTIRE internet for you! That's right - we're doing the heavy lifting while you contemplate whether your therapist needs a therapist! 🧠💫
 </p>
 
-<div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 20px; border-radius: 15px; margin: 20px 0;">
-<h2 style="color: white; text-align: center; margin: 0;">📚 BOOK OF THE CENTURY ALERT! 📚</h2>
-<p style="color: white; text-align: center; font-size: 18px; margin: 10px 0;">
-<strong>"Letters to Evelyn"</strong> by John Selman
+<div style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 25px; border-radius: 20px; margin: 25px 0; border: 2px solid #7c3aed;">
+
+<h2 style="color: #f5d922; text-align: center; margin: 0; font-size: 24px; text-shadow: 0 0 10px rgba(245,217,34,0.5);">
+⚠️ GALACTIC BOOK ALERT ⚠️
+</h2>
+
+<p style="color: #ec4899; text-align: center; font-size: 22px; margin: 15px 0; font-weight: bold;">
+"{promo['tagline']}"
 </p>
-<p style="color: white; text-align: center; font-style: italic;">
-"This memoir is a profound and unforgettable literary piece." - Readers' Favorite
+
+<p style="color: #a78bfa; text-align: center; font-style: italic; margin: 10px 0;">
+{promo['subtitle']}
 </p>
-<p style="text-align: center;">
-<a href="https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191" style="display: inline-block; background: white; color: #f5576c; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 18px;">
-🎁 GET IT FOR JUST $2.99! 🎁
+
+<div style="text-align: center; margin: 20px 0;">
+<img src="{promo['url']}" alt="Letters to Evelyn" style="max-width: 280px; border-radius: 15px; box-shadow: 0 15px 40px rgba(124,58,237,0.4); border: 3px solid #7c3aed;">
+</div>
+
+<h3 style="color: white; text-align: center; margin: 20px 0 10px 0;">
+📚 "LETTERS TO EVELYN" by John Selman
+</h3>
+
+<p style="color: #10b981; text-align: center; font-size: 18px; margin: 10px 0; font-weight: bold;">
+⭐⭐⭐⭐⭐ 57 Amazon Reviews - ALL 5 STARS!
+</p>
+
+<div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; margin: 15px 0;">
+<p style="color: #fbbf24; text-align: center; font-size: 16px; margin: 0; font-style: italic;">
+"{review['quote']}"
+</p>
+<p style="color: #9ca3af; text-align: center; font-size: 14px; margin: 5px 0 0 0;">
+— {review['reviewer']}, Readers' Favorite ⭐⭐⭐⭐⭐
+</p>
+</div>
+
+<div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 15px; margin: 15px 0;">
+<p style="color: #34d399; text-align: center; font-size: 15px; margin: 0; font-style: italic;">
+"{amazon_review['quote']}"
+</p>
+<p style="color: #9ca3af; text-align: center; font-size: 14px; margin: 5px 0 0 0;">
+— {amazon_review['reviewer']}, Amazon Reader
+</p>
+</div>
+
+<div style="text-align: center; margin: 20px 0;">
+<p style="color: white; font-size: 16px; margin-bottom: 15px;">
+🎯 <strong>ONLY $2.99</strong> - Less than a fancy coffee!<br>
+<span style="color: #fbbf24;">Contains 50+ JOKES that hit harder than a Navy jet landing!</span>
+</p>
+<a href="https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191" style="display: inline-block; background: linear-gradient(135deg, #ec4899 0%, #f59e0b 100%); color: white; padding: 18px 40px; text-decoration: none; border-radius: 30px; font-weight: bold; font-size: 18px; box-shadow: 0 8px 25px rgba(236,72,153,0.4); transition: transform 0.2s;">
+🎁 GRAB YOUR COPY NOW! 🚀
 </a>
+</div>
+
+</div>
+
+<div style="background: linear-gradient(135deg, #065f46 0%, #047857 100%); padding: 20px; border-radius: 15px; margin: 20px 0;">
+<h2 style="color: #34d399; text-align: center; margin: 0 0 10px 0;">💎 INFOPILOT PREMIUM 💎</h2>
+<p style="color: white; text-align: center; margin: 0;">
+Pay what you want! Starting at <strong>$0.75/year</strong>!<br>
+<em style="color: #a7f3d0;">(That's less than a single gumball! Your brain deserves this!)</em>
 </p>
 </div>
 
-<div style="background: #1a1a2e; padding: 20px; border-radius: 15px; margin: 20px 0;">
-<h2 style="color: #00ff88; text-align: center;">💎 PREMIUM MEMBERSHIP 💎</h2>
-<p style="color: white; text-align: center;">
-Pay what you want! Starting at just $0.75/year!<br>
-<em>(That's less than a candy bar! And WAY better for your brain!)</em>
+<div style="background: #fef3c7; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+<p style="margin: 0; color: #92400e; font-size: 14px;">
+<strong>🎭 Dad Joke of the Week:</strong><br>
+Why did the Navy pilot write a book? Because his stories were <em>plane</em> amazing! ✈️😄
 </p>
 </div>
 
-<p style="text-align: center; color: #888; font-size: 14px;">
-Made with ❤️ and probably too much coffee ☕<br>
-InfoPilot - Your 3D View of the Internet
+<p style="text-align: center; color: #888; font-size: 14px; margin-top: 25px;">
+Made with ❤️ and cosmic approval ✨<br>
+<strong>InfoPilot</strong> - Your 3D View of the Internet<br>
+<em>"Because the universe fact-checks our newsletters too!"</em>
 </p>
 
 </div>
