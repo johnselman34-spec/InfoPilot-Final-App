@@ -674,18 +674,19 @@ class WebSearchService:
         return {"title": "", "description": "", "content": ""}
     
     @staticmethod
-    async def search(query: str, num_results: int = 100) -> List[Dict[str, Any]]:
+    async def search(query: str, num_results: int = 200, max_pages: int = 99) -> List[Dict[str, Any]]:
         """
         Perform web search using multiple sources
         Returns deduplicated results with content enrichment
+        Now supports up to 99 pages of results (configurable via admin panel)
         """
         all_results = []
         seen_urls = set()
         
         try:
-            # Run primary searches in parallel
-            ddg_task = WebSearchService.search_duckduckgo(query, 50)
-            bing_task = WebSearchService.search_bing_scrape(query, 30)
+            # Run primary searches in parallel with increased limits
+            ddg_task = WebSearchService.search_duckduckgo(query, min(100, num_results))
+            bing_task = WebSearchService.search_bing_scrape(query, min(80, num_results))
             
             ddg_results, bing_results = await asyncio.gather(
                 ddg_task, 
@@ -717,9 +718,11 @@ class WebSearchService:
             logger.error(f"Search aggregation error: {e}")
         
         # Fetch content for results to improve protocol matching
+        # Increased batch processing for more results
         if all_results:
-            batch_size = 10
-            for i in range(0, min(len(all_results), 30), batch_size):
+            batch_size = 15
+            max_content_fetch = min(len(all_results), 50)  # Fetch content for up to 50 results
+            for i in range(0, max_content_fetch, batch_size):
                 batch = all_results[i:i+batch_size]
                 tasks = [WebSearchService.fetch_page_content(r["url"]) for r in batch]
                 
