@@ -559,6 +559,9 @@ function UltimateSearchPage() {
           </div>
         )}
 
+        {/* Book Promotion Section */}
+        <BookPromoSection variant="full" />
+
         <div className="search-bar" style={{marginBottom: 20}}>
           <Icons.Search />
           <input type="text" placeholder="Search in your results..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && loadResults()} />
