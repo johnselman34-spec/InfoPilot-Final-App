@@ -20,20 +20,31 @@ const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      if (token) {
+      const storedToken = localStorage.getItem('token');
+      
+      // Sync token state with localStorage
+      if (storedToken !== token) {
+        setToken(storedToken);
+      }
+      
+      if (storedToken) {
         try {
           const res = await fetch(`${API}/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { 'Authorization': `Bearer ${storedToken}` }
           });
           if (res.ok) {
             const data = await res.json();
             setUser(data);
           } else {
+            // Token is invalid or expired
+            console.warn('Token validation failed, clearing auth');
             localStorage.removeItem('token');
             setToken(null);
+            setUser(null);
           }
         } catch (e) {
-          console.error('Auth check failed:', e);
+          console.error('Auth check network error:', e);
+          // Network error - don't clear token, might be temporary
         }
       }
       setLoading(false);
