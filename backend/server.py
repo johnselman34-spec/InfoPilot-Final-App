@@ -1135,8 +1135,15 @@ async def perform_search(request: SearchRequest, user = Depends(get_current_user
     if contains_blocked_content(request.query):
         raise HTTPException(status_code=400, detail="Search query contains blocked content")
     
-    # Use web search service - get LOTS of results for better protocol matching
-    results = await WebSearchService.search(request.query, 100)
+    # Get max search pages from admin settings
+    settings = await db.settings.find_one({"key": "max_search_pages"})
+    max_pages = settings.get("value", 99) if settings else 99
+    
+    # Calculate results based on max pages (assuming ~20 results per page)
+    max_results = max_pages * 20
+    
+    # Use web search service - get results based on admin setting
+    results = await WebSearchService.search(request.query, min(max_results, 200))
     
     return {
         "query": request.query,
