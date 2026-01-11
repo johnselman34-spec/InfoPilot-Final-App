@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
-import { DataExport } from '../components/shared';
+import { DataExport, PushNotifications } from '../components/shared';
 
 const SettingsPage = ({ showToast, setCurrentPage }) => {
   const { token, user, refreshUser } = useAuth();
