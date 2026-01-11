@@ -1087,7 +1087,7 @@ class WebSearchService:
             if SERPAPI_KEY:
                 tasks.append(asyncio.wait_for(
                     WebSearchService.search_serpapi(query, min(70, num_results)),
-                    timeout=15.0
+                    timeout=25.0  # Increased timeout for SerpAPI
                 ))
                 source_names.append("SerpAPI")
             
