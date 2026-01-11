@@ -1807,7 +1807,7 @@ InfoPilot - Your 3D View of the Internet
     }
 
 async def generate_newsletter_content():
-    """Generate AI-powered funny newsletter content"""
+    """Generate AI-powered funny newsletter content using rich book data"""
     try:
         from emergentintegrations.llm.chat import LlmChat, UserMessage
         
@@ -1819,16 +1819,17 @@ async def generate_newsletter_content():
         chat = LlmChat(
             api_key=api_key,
             session_id=f"newsletter-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-            system_message="""You are a hilarious, witty marketing genius writing newsletters for InfoPilot.
-Your job is to create EXTREMELY FUNNY, engaging emails that:
-1. Make people laugh out loud
-2. Use puns, jokes, and clever wordplay
-3. Sell the book "Letters to Evelyn" (a supernatural thriller comedy, $2.99)
+            system_message="""You are a HYSTERICALLY FUNNY marketing genius writing newsletters for InfoPilot.
+Your job is to create EXTREMELY FUNNY, laugh-out-loud emails that:
+1. Make people laugh so hard they snort their coffee
+2. Use absurd jokes, witty puns, and clever wordplay  
+3. Sell the book "Letters to Evelyn" using the ACTUAL review quotes provided
 4. Promote InfoPilot subscriptions
-5. Be memorable and shareable
-6. Use emojis and formatting to make text POP
-Keep it under 500 words but pack in maximum entertainment value!
-Always output complete HTML email with inline styles."""
+5. Be so entertaining people FORWARD it to friends
+6. Use emojis liberally to make text POP
+7. Create urgency and FOMO (Fear Of Missing Out)
+8. Reference the book's wild plot: Navy pilot, hallucinations, aliens, love story, supernatural comedy
+You must output complete HTML email with inline styles. Be WILD and CREATIVE!"""
         ).with_model("openai", "gpt-4o")
         
         # Get recent activity stats
@@ -1836,30 +1837,69 @@ Always output complete HTML email with inline styles."""
         total_results = await db.search_results.count_documents({})
         total_categories = await db.categories.count_documents({})
         
+        # Rotate through different book advertisement images
+        import random
+        book_images = [
+            "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/3wggnw99_Letters%20to%20Evelyn%20advertisement%201.jpg",
+            "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/obecjep4_Letters%20to%20Evelyn%20advertisement%202.jpg",
+            "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/63ydb5j8_Letters%20to%20Evelyn%20advertisement%203.jpg",
+            "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/8ss0c1fe_Letters%20to%20Evelyn%20advertisement%204.jpg"
+        ]
+        selected_image = random.choice(book_images)
+        
         prompt = f"""Write an absolutely HILARIOUS weekly newsletter HTML email for InfoPilot users!
 
-Stats this week:
+STATS THIS WEEK:
 - Total Users: {total_users}
 - Search Results Collated: {total_results}  
 - Categories Created: {total_categories}
 
-Book to promote: "Letters to Evelyn" by John Selman
-- Genre: Supernatural Thriller Comedy
-- Price: $2.99 on Amazon
-- Has 19 FIVE-STAR professional reviews from Readers' Favorite
-- One reviewer said: "This memoir is a profound and unforgettable literary piece"
-- Amazon link: https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191
+===== BOOK PROMOTION (THIS IS THE STAR!) =====
+📚 "LETTERS TO EVELYN" by John Selman
+- A True Supernatural Thriller Comedy
+- Price: ONLY $2.99 on Amazon Kindle (cheaper than a fancy coffee!)
+- Has 57 reviews on Amazon, 5.0 out of 5 stars!
+- 19 PROFESSIONAL Five-Star Reviews from Readers' Favorite
 
-App subscription: Pay what you want! (Starting at $0.75/year)
+ACTUAL REVIEW QUOTES TO USE (pick 2-3):
+★ "This memoir is a profound and unforgettable literary piece." - Divine Zape
+★ "Mind-bending." - Luwi Nyakansaila  
+★ "Exceedingly brilliant." - Paul Zeitsman
+★ "The author's imagination is off the charts." - Leslie Jones
+★ "Mind-blowing." - Doreen Chombu
+★ "Resonates on a visceral level." - Divine Zape
+★ "Bold, strange, and very human." - Kindle Customer
+★ "It can give many reasons for exhilarating exuberance!" - Amazon description
 
-Make it:
-- EXTREMELY FUNNY with jokes and puns
-- Eye-catching with emojis and bold statements
-- Include call-to-action buttons for book and subscription
-- Feel personal and warm
-- Use inline CSS styles for colors and formatting
+BOOK PLOT ELEMENTS TO JOKE ABOUT:
+- Navy pilot has his food poisoned with LSD by his stepmother (yes, really!)
+- Hallucinations for 10+ months (imagine calling in sick for THAT)
+- Encounters with extraterrestrial beings 
+- Letters written to a mysterious woman named Evelyn
+- A love story that spans the cosmos
+- More funny than Dave Chappelle (the author's own bold claim!)
+- Contains 50+ "hurricane force winds of laughter" jokes
 
-Output ONLY the HTML, no markdown code blocks."""
+BOOK IMAGE TO INCLUDE:
+<img src="{selected_image}" alt="Letters to Evelyn" style="max-width: 300px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+
+Amazon Link: https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191
+
+===== INFOPILOT SUBSCRIPTION =====
+App subscription: Pay what you want! Starting at $0.75/year
+(That's less than a single gumball from those fancy machines!)
+
+===== STYLE REQUIREMENTS =====
+- Use gradient backgrounds: purple (#7c3aed), pink (#ec4899), blue (#3b82f6)
+- Make the book the HERO with a big featured section
+- Include the book image prominently
+- Create URGENCY ("Only a few people have discovered this gem!")
+- Be ABSURD and SURREAL (match the book's vibe)
+- Add a "Dad joke of the week" or similar recurring element
+- Make buttons big and colorful
+- Sign off as "Your Friends at InfoPilot"
+
+Output ONLY the complete HTML email with inline styles. No markdown code blocks!"""
 
         user_message = UserMessage(text=prompt)
         response = await chat.send_message(user_message)
