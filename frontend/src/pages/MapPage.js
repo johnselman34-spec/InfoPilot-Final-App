@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,7 +7,7 @@ import { extractHashtags } from '../utils/hashtags';
 import { HashtagDisplay } from '../components/shared';
 
 const MapPage = ({ showToast, setCurrentPage }) => {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const [mapResults, setMapResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hoveredResult, setHoveredResult] = useState(null);
@@ -39,7 +39,7 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     'white house': { lat: 38.8977, lng: -77.0365 },
   };
 
-  const extractLocation = (text, title) => {
+  const extractLocation = useCallback((text, title) => {
     if (!text && !title) return null;
     const combined = `${title || ''} ${text || ''}`.toLowerCase();
     for (const [place, coords] of Object.entries(KNOWN_LOCATIONS)) {
@@ -52,11 +52,47 @@ const MapPage = ({ showToast, setCurrentPage }) => {
       }
     }
     return null;
-  };
+  }, []);
+
+  const fetchMapResults = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/ultimate-search?limit=100`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const resultsWithLocation = data.results
+          .map((r) => {
+            if (r.latitude && r.longitude && 
+                r.latitude >= -90 && r.latitude <= 90 &&
+                r.longitude >= -180 && r.longitude <= 180) {
+              return { ...r, hasRealLocation: true, hashtags: extractHashtags(r.title, r.snippet, r.article_type) };
+            }
+            const extracted = extractLocation(r.content || r.snippet, r.title);
+            if (extracted) {
+              return { 
+                ...r, 
+                latitude: extracted.lat, 
+                longitude: extracted.lng, 
+                extractedPlace: extracted.place,
+                hashtags: extractHashtags(r.title, r.snippet, r.article_type)
+              };
+            }
+            return null;
+          })
+          .filter(r => r !== null);
+        setMapResults(resultsWithLocation);
+      }
+    } catch (e) {
+      console.error('Failed to fetch map results:', e);
+    }
+    setLoading(false);
+  }, [token, extractLocation]);
 
   useEffect(() => {
     fetchMapResults();
-  }, []);
+  }, [fetchMapResults]);
 
   const fetchMapResults = async () => {
     setLoading(true);
