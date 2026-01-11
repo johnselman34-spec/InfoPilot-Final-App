@@ -105,7 +105,7 @@ const AnalyticsPage = ({ showToast }) => {
           Analytics Dashboard
         </h2>
         <p style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>
-          Platform insights and metrics • Generated {new Date(analytics.generated_at).toLocaleString()}
+          Platform insights and metrics • Generated {analytics?.generated_at ? new Date(analytics.generated_at).toLocaleString() : 'now'}
         </p>
       </div>
 
@@ -118,39 +118,39 @@ const AnalyticsPage = ({ showToast }) => {
       }}>
         <StatCard 
           icon="👥" 
-          value={analytics.users.total} 
+          value={users.total} 
           label="Total Users" 
           color="#a78bfa"
-          trend={analytics.users.new_this_week}
+          trend={users.new_this_week}
         />
         <StatCard 
           icon="🔍" 
-          value={analytics.searches.total} 
+          value={searches.total} 
           label="Total Searches" 
           color="#f472b6"
-          trend={analytics.searches.this_week}
+          trend={searches.this_week}
         />
         <StatCard 
           icon="📝" 
-          value={analytics.protocols.total} 
+          value={protocols.total} 
           label="Protocols Created" 
           color="#10b981"
         />
         <StatCard 
           icon="🛒" 
-          value={analytics.marketplace.active_listings} 
+          value={marketplace.active_listings} 
           label="Marketplace Listings" 
           color="#fbbf24"
         />
         <StatCard 
           icon="💰" 
-          value={analytics.marketplace.total_purchases} 
+          value={marketplace.total_purchases} 
           label="Protocol Purchases" 
           color="#3b82f6"
         />
         <StatCard 
           icon="🏘️" 
-          value={analytics.engagement.total_groups} 
+          value={engagement.total_groups} 
           label="Groups" 
           color="#ec4899"
         />
