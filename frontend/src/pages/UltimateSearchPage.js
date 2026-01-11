@@ -390,10 +390,21 @@ const UltimateSearchPage = ({ showToast }) => {
           >
             🔧 {showDebugger ? 'Hide' : 'Show'} Protocol Debugger
           </button>
+          <button
+            className={`btn ${showTemplates ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setShowTemplates(!showTemplates)}
+            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+            data-testid="toggle-templates-btn"
+          >
+            📁 {showTemplates ? 'Hide' : 'Show'} Templates
+          </button>
         </div>
 
         {/* Protocol Debugger */}
         {showDebugger && <ProtocolDebugger showToast={showToast} />}
+        
+        {/* Protocol Templates */}
+        {showTemplates && <ProtocolTemplates showToast={showToast} onApplyTemplate={handleApplyTemplate} />}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 20 }}>
