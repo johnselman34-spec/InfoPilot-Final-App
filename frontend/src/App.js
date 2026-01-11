@@ -3253,6 +3253,8 @@ const MainApp = () => {
       <main className="main-content">
         {/* Book Promotion Banner - Always visible */}
         <BookPromoBanner />
+        {/* Quote of the Day - Rotating manuscript quotes */}
+        <QuoteOfTheDay />
         {renderPage()}
       </main>
       {toast && (
