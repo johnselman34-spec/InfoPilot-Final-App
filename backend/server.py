@@ -486,67 +486,72 @@ class WebSearchService:
     
     @staticmethod
     async def search_duckduckgo(query: str, num_results: int = 50) -> List[Dict[str, Any]]:
-        """Search using DuckDuckGo HTML - multiple pages"""
+        """Search using DuckDuckGo HTML - with rate limit handling"""
         results = []
         try:
-            # Search multiple pages for more results
-            for page in range(3):  # Get 3 pages of results
-                encoded_query = urllib.parse.quote(query)
-                start = page * 30
-                url = f"https://html.duckduckgo.com/html/?q={encoded_query}&s={start}"
+            # Just get first page to avoid rate limiting
+            encoded_query = urllib.parse.quote(query)
+            url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    url,
+                    headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                    },
+                    timeout=30.0
+                )
                 
-                async with httpx.AsyncClient() as client:
-                    response = await client.get(
-                        url,
-                        headers={
-                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-                        },
-                        timeout=20.0
-                    )
+                # Handle rate limiting - 202 means we need to wait
+                if response.status_code == 202:
+                    await asyncio.sleep(2)
+                    response = await client.get(url, headers={
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                    }, timeout=30.0)
+                
+                if response.status_code == 200:
+                    html = response.text
                     
-                    if response.status_code == 200:
-                        html = response.text
-                        
-                        # Parse results - improved regex
-                        result_pattern = r'<a rel="nofollow" class="result__a" href="([^"]+)"[^>]*>([^<]+)</a>'
-                        snippet_pattern = r'<a class="result__snippet"[^>]*>([^<]+)</a>'
-                        
-                        urls = re.findall(result_pattern, html)
-                        snippets = re.findall(snippet_pattern, html)
-                        
-                        for i, (url_match, title) in enumerate(urls):
-                            # Decode DuckDuckGo redirect URL
-                            actual_url = url_match
-                            if "//duckduckgo.com/l/?uddg=" in url_match:
-                                try:
-                                    actual_url = urllib.parse.unquote(url_match.split("uddg=")[1].split("&")[0])
-                                except:
-                                    pass
-                            
-                            # Skip ads and duplicates
-                            if "duckduckgo.com" in actual_url or any(r["url"] == actual_url for r in results):
-                                continue
-                            
-                            snippet = snippets[i] if i < len(snippets) else ""
-                            
-                            # Extract root domain
+                    # Parse results - improved regex
+                    result_pattern = r'<a rel="nofollow" class="result__a" href="([^"]+)"[^>]*>([^<]+)</a>'
+                    snippet_pattern = r'<a class="result__snippet"[^>]*>([^<]+)</a>'
+                    
+                    urls = re.findall(result_pattern, html)
+                    snippets = re.findall(snippet_pattern, html)
+                    
+                    for i, (url_match, title) in enumerate(urls):
+                        # Decode DuckDuckGo redirect URL
+                        actual_url = url_match
+                        if "//duckduckgo.com/l/?uddg=" in url_match:
                             try:
-                                parsed = urllib.parse.urlparse(actual_url)
-                                root_domain = parsed.netloc
+                                actual_url = urllib.parse.unquote(url_match.split("uddg=")[1].split("&")[0])
                             except:
-                                root_domain = ""
-                            
-                            results.append({
-                                "url": actual_url,
-                                "title": title.strip(),
-                                "snippet": snippet.strip(),
-                                "content": snippet.strip(),
-                                "root_domain": root_domain,
-                                "source": "duckduckgo"
-                            })
-                
-                if len(results) >= num_results:
-                    break
+                                pass
+                        
+                        # Skip ads and duplicates
+                        if "duckduckgo.com" in actual_url or any(r["url"] == actual_url for r in results):
+                            continue
+                        
+                        snippet = snippets[i] if i < len(snippets) else ""
+                        
+                        # Extract root domain
+                        try:
+                            parsed = urllib.parse.urlparse(actual_url)
+                            root_domain = parsed.netloc
+                        except:
+                            root_domain = ""
+                        
+                        results.append({
+                            "url": actual_url,
+                            "title": title.strip(),
+                            "snippet": snippet.strip(),
+                            "content": snippet.strip(),
+                            "root_domain": root_domain,
+                            "source": "duckduckgo"
+                        })
+                        
+                        if len(results) >= num_results:
+                            break
                     
         except Exception as e:
             logger.error(f"DuckDuckGo search error: {e}")
