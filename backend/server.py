@@ -303,37 +303,44 @@ class ProtocolParser:
     
     @staticmethod
     def matches_protocol(text: str, protocol: str) -> bool:
-        """Check if text matches the protocol requirements - MORE LENIENT"""
+        """Check if text matches the protocol requirements - VERY LENIENT for broad matching"""
         if not text or not protocol:
             return False
             
         parsed = ProtocolParser.parse_protocol(protocol)
-        if not parsed["valid"]:
-            # If protocol parsing fails, try simple keyword matching
-            keywords = re.findall(r'\w+', protocol.lower())
-            text_lower = text.lower()
-            return any(kw in text_lower for kw in keywords if len(kw) >= 3)
-        
         text_lower = ProtocolParser.normalize_text(text)
+        
+        if not parsed["valid"]:
+            # If protocol parsing fails, try very lenient simple keyword matching
+            # Extract all words from protocol (minimum 2 characters)
+            keywords = re.findall(r'\w{2,}', protocol.lower())
+            # Match if ANY keyword is found
+            return any(kw in text_lower for kw in keywords)
+        
+        # For valid protocols, be more lenient:
+        # Only require that at least ONE group matches (not all groups)
+        any_group_matched = False
+        any_exclude_violated = False
         
         for group in parsed["groups"]:
             items = group["items"]
             modifier = group["modifier"]
             
-            if modifier == "+":
-                # ALL items must be present (INCLUDE ALL)
-                if not all(ProtocolParser.text_contains_item(text_lower, item) for item in items):
-                    return False
-            elif modifier == "^":
-                # ALL items must be ABSENT (EXCLUDE ALL)
+            if modifier == "^":
+                # EXCLUDE ALL - if any excluded word is found, mark violation
                 if any(ProtocolParser.text_contains_item(text_lower, item) for item in items):
-                    return False
+                    any_exclude_violated = True
+            elif modifier == "+":
+                # INCLUDE ALL - all must be present for this group to match
+                if all(ProtocolParser.text_contains_item(text_lower, item) for item in items):
+                    any_group_matched = True
             else:
-                # At least ONE item must be present (OR logic)
-                if not any(ProtocolParser.text_contains_item(text_lower, item) for item in items):
-                    return False
+                # OR logic - any one item matching counts as group match
+                if any(ProtocolParser.text_contains_item(text_lower, item) for item in items):
+                    any_group_matched = True
         
-        return True
+        # Return True if at least one non-exclude group matched AND no exclude rules violated
+        return any_group_matched and not any_exclude_violated
     
     @staticmethod
     def get_match_details(text: str, protocol: str) -> Dict[str, Any]:
