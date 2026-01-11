@@ -340,6 +340,122 @@ function BookPromoSection({ variant = 'full' }) {
   );
 }
 
+// Premium Subscription Promo Component - for non-premium users
+function PremiumPromoSection({ onSubscribe }) {
+  return (
+    <div 
+      className="premium-promo-section" 
+      style={{
+        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%)',
+        border: '1px solid rgba(59, 130, 246, 0.3)',
+        borderRadius: '20px',
+        padding: '24px',
+        marginBottom: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '24px',
+        position: 'relative',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'all 0.3s ease'
+      }}
+      onClick={onSubscribe}
+      data-testid="premium-promo-section"
+    >
+      {/* Glowing background effect */}
+      <div style={{
+        position: 'absolute',
+        top: '-50%',
+        left: '-20%',
+        width: '60%',
+        height: '200%',
+        background: 'radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 50%)',
+        pointerEvents: 'none'
+      }} />
+      
+      {/* Globe Image */}
+      <div style={{
+        width: '100px',
+        height: '100px',
+        borderRadius: '16px',
+        overflow: 'hidden',
+        flexShrink: 0,
+        boxShadow: '0 8px 30px rgba(59, 130, 246, 0.3)',
+        border: '2px solid rgba(59, 130, 246, 0.3)',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <img 
+          src={premiumImage}
+          alt="Global Network"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
+        />
+      </div>
+      
+      {/* Content */}
+      <div style={{flex: 1, position: 'relative', zIndex: 1}}>
+        <div style={{
+          fontSize: '11px',
+          color: '#60A5FA',
+          letterSpacing: '2px',
+          textTransform: 'uppercase',
+          marginBottom: '6px',
+          fontWeight: 600
+        }}>Unlock the Full Power</div>
+        
+        <h4 style={{
+          fontFamily: "'Outfit', sans-serif",
+          fontSize: '20px',
+          fontWeight: 700,
+          background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          marginBottom: '8px'
+        }}>Go Premium - Only $0.99</h4>
+        
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '12px',
+          fontSize: '13px',
+          color: '#94A3B8'
+        }}>
+          <span style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
+            <Icons.Map style={{width: 14, height: 14, color: '#60A5FA'}} /> Interactive World Map
+          </span>
+          <span style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
+            <Icons.Search style={{width: 14, height: 14, color: '#60A5FA'}} /> Unlimited Search Pages
+          </span>
+          <span style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
+            <Icons.Star style={{width: 14, height: 14, color: '#60A5FA'}} /> All Premium Features
+          </span>
+        </div>
+      </div>
+      
+      {/* CTA Arrow */}
+      <div style={{
+        background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
+        borderRadius: '50%',
+        width: '44px',
+        height: '44px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        boxShadow: '0 0 20px rgba(59, 130, 246, 0.4)',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <Icons.ChevronRight style={{width: 24, height: 24, color: 'white'}} />
+      </div>
+    </div>
+  );
+}
+
 // Login Page
 function LoginPage({ onNavigate }) {
   const { login } = useAuth();
