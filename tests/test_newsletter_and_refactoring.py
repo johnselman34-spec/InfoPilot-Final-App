@@ -262,10 +262,13 @@ class TestSearchEndpoints:
         pytest.skip("Admin authentication failed")
     
     def test_search_endpoint(self, admin_token):
-        """Test search endpoint returns results"""
-        response = requests.get(f"{BASE_URL}/api/search?q=python", headers={
-            "Authorization": f"Bearer {admin_token}"
-        })
+        """Test search endpoint returns results (POST method)"""
+        response = requests.post(f"{BASE_URL}/api/search", 
+            json={"query": "python programming"},
+            headers={
+                "Authorization": f"Bearer {admin_token}"
+            }
+        )
         # Search might return 200 or 429 (rate limited)
         assert response.status_code in [200, 429]
         if response.status_code == 200:
