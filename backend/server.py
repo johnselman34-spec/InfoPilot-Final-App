@@ -748,8 +748,13 @@ async def register(user: UserCreate):
     if contains_blocked_content(user.username):
         raise HTTPException(status_code=400, detail="Username contains blocked content")
     
-    # Check if user exists
-    existing = await db.users.find_one({"$or": [{"email": user.email}, {"username": user.username}]})
+    # Check if user exists - case-insensitive email check
+    existing = await db.users.find_one({
+        "$or": [
+            {"email": {"$regex": f"^{re.escape(user.email)}$", "$options": "i"}},
+            {"username": user.username}
+        ]
+    })
     if existing:
         raise HTTPException(status_code=400, detail="Email or username already exists")
     
