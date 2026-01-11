@@ -13,11 +13,44 @@ Build a comprehensive information exchange social network application ("InfoPilo
 
 ## Tech Stack
 - **Frontend:** React, TailwindCSS (custom theme: purple/pink/blue)
-- **Backend:** FastAPI, MongoDB (motor), Pydantic
+- **Backend:** FastAPI, MongoDB (motor), Pydantic - **REFACTORED Jan 11, 2026**
 - **Authentication:** JWT + Google OAuth (via Emergent Auth)
 - **Email:** Resend API ✅ WORKING
 - **AI:** OpenAI GPT-4o (via Emergent LLM Key)
 - **Payments:** PayPal "Pay What You Want"
+
+## Code Architecture (Updated Jan 11, 2026)
+
+### Backend Structure
+```
+/app/backend/
+├── server.py          # Main FastAPI app (2303 lines - reduced from 5219)
+├── config.py          # Central configuration & DB connection
+├── routes/            # Modular API routers
+│   ├── auth.py        # Authentication endpoints
+│   ├── admin.py       # Admin panel endpoints
+│   ├── categories.py  # Category CRUD
+│   ├── marketplace.py # Protocol marketplace
+│   ├── search.py      # Search & collation
+│   └── social.py      # Groups, Pages, Posts
+├── services/          # Business logic services
+│   ├── auth_service.py
+│   ├── email_service.py
+│   ├── protocol_service.py
+│   └── search_service.py
+└── models/
+    └── schemas.py     # Pydantic models
+```
+
+### Frontend Structure
+```
+/app/frontend/src/
+├── App.js             # Router (126 lines - reduced from 3000+)
+├── pages/             # All page components
+├── components/        # Reusable UI components
+├── contexts/          # React contexts
+└── utils/             # Utilities
+```
 
 ## Key Features Implemented
 
