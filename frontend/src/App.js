@@ -4,6 +4,13 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './App.css';
 
+// Import refactored modules
+import { API } from './utils/api';
+import { extractHashtags } from './utils/hashtags';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Toast, Icons, HashtagDisplay, Sidebar } from './components/shared';
+import { LoginPage, RegisterPage, AuthCallback } from './pages';
+
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -12,8 +19,20 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// NOTE: The following components are still defined inline for stability
+// Future refactoring will move them to separate files:
+// - AdminPanel -> /pages/AdminPanel.js
+// - UltimateSearchPage -> /pages/UltimateSearchPage.js
+// - SocialPage -> /pages/SocialPage.js
+// - GroupsSection -> /components/social/GroupsSection.js
+// - PagesSection -> /components/social/PagesSection.js
+// - MapPage -> /pages/MapPage.js
+// - MessagesPage -> /pages/MessagesPage.js
+// - SettingsPage -> /pages/SettingsPage.js
+// - SubscribePage -> /pages/SubscribePage.js
+// - MarketplacePage -> /pages/MarketplacePage.js
+// - AchievementsPage -> /pages/AchievementsPage.js
+// - BookPromoBanner -> /components/shared/BookPromoBanner.js
 
 // ==================== HASHTAG EXTRACTION ====================
 // Extract 4-6 relevant hashtags from article content
