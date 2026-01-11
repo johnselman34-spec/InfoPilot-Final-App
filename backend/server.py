@@ -1057,13 +1057,13 @@ async def delete_category(category_id: str, user = Depends(get_current_user)):
 
 @api_router.post("/search", response_model=dict)
 async def perform_search(request: SearchRequest, user = Depends(get_current_user)):
-    """Perform a web search"""
+    """Perform a web search - returns maximum results for better collation"""
     
     if contains_blocked_content(request.query):
         raise HTTPException(status_code=400, detail="Search query contains blocked content")
     
-    # Use web search service
-    results = await WebSearchService.search(request.query, 20)
+    # Use web search service - get LOTS of results for better protocol matching
+    results = await WebSearchService.search(request.query, 100)
     
     return {
         "query": request.query,
