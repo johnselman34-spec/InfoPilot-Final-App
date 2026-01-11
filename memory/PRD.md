@@ -58,13 +58,21 @@ InfoPilot is a web-based information search, categorization, and social networki
 
 ### 7. Book Promotion - "Letters to Evelyn" ✅
 - **Full Promo Section** on Dashboard with:
-  - Beautiful book cover display
+  - Beautiful book cover display with cosmic woman artwork
   - Gradient title with cosmic styling
   - Promotional taglines ("I FLEW JETS THEN REALITY BROKE", etc.)
-  - Image carousel rotating promotional images
-  - "Get Your Copy on Amazon" CTA button
-- **Compact Promo** on Settings page
+  - Image carousel with 4 promotional images including "Terror of the Cosmic Gulper" dinosaur
+  - "Get Your Copy on Amazon" CTA button linked to: https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191
+- **Compact Promo** on Settings and InfoJet pages
 - Book images from customer assets
+
+### 8. Premium Subscription Upsell ✅
+- **Enhanced Map Page Upsell** for non-premium users featuring:
+  - Global Network globe background image
+  - "Unlock the World Map" gradient title
+  - Feature pills: Interactive Markers, Category Colors, One-Click Sources
+  - "Upgrade for Only $0.99" CTA button
+  - Book promo displayed below upsell for cross-selling
 
 ---
 
