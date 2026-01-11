@@ -42,6 +42,65 @@ const UltimateSearchPage = ({ showToast }) => {
   const [loading, setLoading] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [newCategory, setNewCategory] = useState({ name: '', protocol: '', parent_id: null, is_public: false });
+  const [batches, setBatches] = useState([]);
+  const [showBatchManager, setShowBatchManager] = useState(false);
+  const [lastBatchId, setLastBatchId] = useState(null);
+
+  // Fetch search batches for deletion
+  const fetchBatches = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/ultimate-search/batches`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBatches(data.batches || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch batches:', e);
+    }
+  }, [token]);
+
+  // Delete a search batch
+  const deleteBatch = async (batchId) => {
+    if (!window.confirm('Delete all results from this search session? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`${API}/ultimate-search/batch/${batchId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`Deleted ${data.deleted_count} results`, 'success');
+        fetchBatches();
+        fetchSearchResults();
+      } else {
+        const err = await res.json();
+        showToast(err.detail || 'Failed to delete batch', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to delete batch', 'error');
+    }
+  };
+
+  // Delete a single result
+  const deleteResult = async (resultId) => {
+    try {
+      const res = await fetch(`${API}/ultimate-search/result/${resultId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        showToast('Result deleted', 'success');
+        fetchSearchResults();
+      } else {
+        const err = await res.json();
+        showToast(err.detail || 'Failed to delete', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to delete result', 'error');
+    }
+  };
 
   const fetchCategories = useCallback(async () => {
     if (!token) {
