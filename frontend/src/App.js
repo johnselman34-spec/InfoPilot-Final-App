@@ -2667,39 +2667,6 @@ const PagesSection = ({ showToast, token, user }) => {
     </div>
   );
 };
-              className="input-field"
-              value={newPage.name}
-              onChange={e => setNewPage({...newPage, name: e.target.value})}
-              style={{ marginBottom: 15 }}
-            />
-            <textarea
-              placeholder="Description (optional)"
-              className="input-field"
-              value={newPage.description}
-              onChange={e => setNewPage({...newPage, description: e.target.value})}
-              rows={3}
-              style={{ marginBottom: 15 }}
-            />
-            <select
-              className="input-field"
-              value={newPage.category}
-              onChange={e => setNewPage({...newPage, category: e.target.value})}
-              style={{ marginBottom: 20 }}
-            >
-              {categories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={createPage}>Create Page</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 // ==================== MAP PAGE ====================
 const MapPage = ({ showToast, setCurrentPage }) => {
