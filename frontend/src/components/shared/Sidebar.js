@@ -109,7 +109,7 @@ const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
           <div
             key={item.id}
             className={`sidebar-nav-item ${currentPage === item.id ? 'active' : ''}`}
-            onClick={() => setCurrentPage(item.id)}
+            onClick={() => handleNavClick(item.id)}
             data-testid={`nav-${item.id}`}
           >
             <item.icon />
