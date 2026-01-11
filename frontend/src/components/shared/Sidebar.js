@@ -48,6 +48,24 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
             Admin Control
           </div>
         )}
+        
+        {/* Analytics - Admin Only */}
+        {user?.is_admin && (
+          <div
+            className={`sidebar-nav-item ${currentPage === 'analytics' ? 'active' : ''}`}
+            onClick={() => setCurrentPage('analytics')}
+            data-testid="nav-analytics"
+            style={{
+              background: currentPage === 'analytics' 
+                ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(16, 185, 129, 0.2))' 
+                : 'transparent',
+              borderLeft: currentPage === 'analytics' ? '3px solid #3b82f6' : 'none'
+            }}
+          >
+            <Icons.Chart />
+            <span>📊 Analytics</span>
+          </div>
+        )}
 
         {navItems.map(item => (
           <div
