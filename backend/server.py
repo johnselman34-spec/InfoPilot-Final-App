@@ -4086,22 +4086,7 @@ async def check_and_send_scheduled_newsletter():
 
 # ============== PROTOCOL DEBUG ENDPOINT ==============
 
-class ProtocolDebugRequest(BaseModel):
-    text: str
-    protocol: str
-
-@api_router.post("/protocol/debug")
-async def debug_protocol_matching(request: ProtocolDebugRequest, user = Depends(get_current_user)):
-    """Debug why a protocol is or isn't matching against text"""
-    details = ProtocolParser.get_match_details(request.text, request.protocol)
-    parsed = ProtocolParser.parse_protocol(request.protocol)
-    
-    return {
-        "matched": details["matched"],
-        "parsed_protocol": parsed,
-        "match_details": details["details"],
-        "text_preview": request.text[:500] + "..." if len(request.text) > 500 else request.text
-    }
+# Note: Protocol debug endpoint moved to line ~4695 to avoid duplicate
 
 @api_router.post("/protocol/validate")
 async def validate_protocol(protocol: str = Body(..., embed=True)):
