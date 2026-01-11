@@ -795,7 +795,8 @@ async def register(user: UserCreate):
 
 @api_router.post("/auth/login", response_model=dict)
 async def login(credentials: UserLogin):
-    user = await db.users.find_one({"email": credentials.email})
+    # Case-insensitive email lookup
+    user = await db.users.find_one({"email": {"$regex": f"^{re.escape(credentials.email)}$", "$options": "i"}})
     
     if not user or user.get("password_hash") != hash_password(credentials.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
