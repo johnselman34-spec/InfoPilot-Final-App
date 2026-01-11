@@ -5,3 +5,8 @@ export { default as AdminPanel } from './AdminPanel';
 export { default as SettingsPage } from './SettingsPage';
 export { default as SubscribePage } from './SubscribePage';
 export { default as MessagesPage } from './MessagesPage';
+export { default as UltimateSearchPage } from './UltimateSearchPage';
+export { default as SocialPage } from './SocialPage';
+export { default as MapPage } from './MapPage';
+export { default as MarketplacePage } from './MarketplacePage';
+export { default as AchievementsPage } from './AchievementsPage';
