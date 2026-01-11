@@ -541,6 +541,52 @@ class WebSearchService:
     """
     
     @staticmethod
+    async def search_ddgs_library(query: str, num_results: int = 200) -> List[Dict[str, Any]]:
+        """Use the duckduckgo-search library for better results"""
+        results = []
+        
+        if not DDGS_AVAILABLE:
+            logger.warning("DDGS library not available")
+            return results
+        
+        try:
+            # Run in thread pool since DDGS is synchronous
+            def _search():
+                with DDGS() as ddgs:
+                    # Get text results
+                    search_results = list(ddgs.text(query, max_results=num_results))
+                    return search_results
+            
+            search_results = await asyncio.get_event_loop().run_in_executor(None, _search)
+            
+            for r in search_results:
+                url = r.get('href', r.get('link', ''))
+                if not url:
+                    continue
+                
+                try:
+                    parsed = urllib.parse.urlparse(url)
+                    root_domain = parsed.netloc
+                except:
+                    root_domain = ""
+                
+                results.append({
+                    "url": url,
+                    "title": r.get('title', ''),
+                    "snippet": r.get('body', r.get('snippet', '')),
+                    "content": r.get('body', r.get('snippet', '')),
+                    "root_domain": root_domain,
+                    "source": "ddgs_library"
+                })
+            
+            logger.info(f"DDGS library returned {len(results)} results")
+            
+        except Exception as e:
+            logger.error(f"DDGS library search error: {e}")
+        
+        return results
+    
+    @staticmethod
     async def search_duckduckgo(query: str, num_results: int = 200) -> List[Dict[str, Any]]:
         """Search using DuckDuckGo HTML - with pagination for MORE results"""
         results = []
