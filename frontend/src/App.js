@@ -3798,6 +3798,8 @@ const MainApp = () => {
         return <UltimateSearchPage showToast={showToast} />;
       case 'marketplace':
         return <MarketplacePage showToast={showToast} />;
+      case 'achievements':
+        return <AchievementsPage showToast={showToast} />;
       case 'social':
         return <SocialPage showToast={showToast} />;
       case 'map':
