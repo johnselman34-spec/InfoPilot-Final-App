@@ -2584,6 +2584,7 @@ function MainLayout({ currentPage, onNavigate }) {
         {currentPage === 'search' && <UltimateSearchPage />}
         {currentPage === 'infojet' && <InfoJetPage />}
         {currentPage === 'categories' && <CategoriesPage />}
+        {currentPage === 'marketplace' && <MarketplacePage />}
         {currentPage === 'map' && <MapPage />}
         {currentPage === 'social' && <SocialPage />}
         {currentPage === 'settings' && <SettingsPage />}
