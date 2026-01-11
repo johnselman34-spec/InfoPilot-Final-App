@@ -165,8 +165,8 @@ class TestAuthenticatedEndpoints:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test credentials"""
-        self.test_email = "john@infojet.com"
-        self.test_password = "password123"
+        self.test_email = "test_user_refactor@test.com"
+        self.test_password = "TestPass123!"
         self.token = None
     
     def get_auth_token(self):
