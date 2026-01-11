@@ -1147,16 +1147,116 @@ function MapPage() {
     return categoryColors[idx % categoryColors.length];
   };
 
+  const handleSubscribe = () => {
+    if (window.confirm('Subscribe to InfoPilot Premium for $0.99?\n\n• Unlimited search result pages\n• Interactive world map\n• All premium features')) {
+      window.open('https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ', '_blank');
+    }
+  };
+
   if (!user?.is_paid) {
     return (
       <>
         <div className="page-header"><h1><Icons.Map /> World Map</h1></div>
         <div className="page-content">
-          <div className="premium-lock">
-            <Icons.Lock />
-            <h3>Premium Feature</h3>
-            <p>The interactive world map showing your collated search results is available for premium subscribers.</p>
-            <button className="btn btn-success" style={{width: 'auto'}}><Icons.Star /> Upgrade for $0.99</button>
+          {/* Premium Upsell with Globe Image */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(5, 5, 16, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
+            border: '1px solid rgba(59, 130, 246, 0.3)',
+            borderRadius: '24px',
+            padding: '40px',
+            textAlign: 'center',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Globe background */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundImage: `url(${premiumImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: 0.15,
+              filter: 'blur(2px)'
+            }} />
+            
+            <div style={{position: 'relative', zIndex: 1}}>
+              <div style={{
+                width: '120px',
+                height: '120px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                margin: '0 auto 24px',
+                boxShadow: '0 0 40px rgba(59, 130, 246, 0.5)',
+                border: '3px solid rgba(59, 130, 246, 0.5)'
+              }}>
+                <img 
+                  src={premiumImage}
+                  alt="Global Network"
+                  style={{width: '100%', height: '100%', objectFit: 'cover'}}
+                />
+              </div>
+              
+              <h3 style={{
+                fontFamily: "'Unbounded', sans-serif",
+                fontSize: '28px',
+                fontWeight: 800,
+                background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                marginBottom: '12px'
+              }}>Unlock the World Map</h3>
+              
+              <p style={{
+                fontSize: '16px',
+                color: '#94A3B8',
+                maxWidth: '400px',
+                margin: '0 auto 24px',
+                lineHeight: 1.7
+              }}>
+                Visualize your research on an interactive globe. See where your information comes from across the world.
+              </p>
+              
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '16px',
+                marginBottom: '24px',
+                flexWrap: 'wrap'
+              }}>
+                {['Interactive Markers', 'Category Colors', 'One-Click Sources'].map((feature, i) => (
+                  <span key={i} style={{
+                    background: 'rgba(59, 130, 246, 0.15)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '20px',
+                    padding: '8px 16px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: '#60A5FA'
+                  }}>{feature}</span>
+                ))}
+              </div>
+              
+              <button 
+                className="btn btn-primary"
+                onClick={handleSubscribe}
+                style={{
+                  width: 'auto',
+                  padding: '16px 32px',
+                  fontSize: '16px',
+                  background: 'linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%)'
+                }}
+              >
+                <Icons.Rocket /> Upgrade for Only $0.99
+              </button>
+            </div>
+          </div>
+          
+          {/* Book promo below */}
+          <div style={{marginTop: 24}}>
+            <BookPromoSection variant="compact" />
           </div>
         </div>
       </>
