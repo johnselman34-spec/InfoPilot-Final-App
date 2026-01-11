@@ -294,9 +294,9 @@ class TestAdminEndpoints:
     
     @pytest.fixture(autouse=True)
     def setup(self):
-        """Setup admin credentials"""
-        self.admin_email = "john@infojet.com"
-        self.admin_password = "password123"
+        """Setup admin credentials - Note: Admin users use Google OAuth, so we use test user"""
+        self.admin_email = "test_user_refactor@test.com"
+        self.admin_password = "TestPass123!"
         self.token = None
     
     def get_admin_token(self):
