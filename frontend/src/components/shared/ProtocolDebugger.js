@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { API } from '../utils/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { API } from '../../utils/api';
 
 const ProtocolDebugger = ({ showToast }) => {
   const { token } = useAuth();
