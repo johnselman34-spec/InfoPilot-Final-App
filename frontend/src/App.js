@@ -1061,28 +1061,155 @@ function CategoriesPage() {
               )}
               <div className="form-group">
                 <label>Category Name</label>
-                <input type="text" placeholder="e.g., American Civil War" value={name} onChange={(e) => setName(e.target.value)} style={{width: '100%', padding: '12px 14px', border: '1px solid #E0E0E0', borderRadius: 10, fontSize: 15}} />
+                <input 
+                  type="text" 
+                  placeholder="e.g., American Civil War" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  style={{
+                    width: '100%', 
+                    padding: '14px 16px', 
+                    background: 'rgba(255, 255, 255, 0.05)', 
+                    border: '1px solid rgba(255, 255, 255, 0.1)', 
+                    borderRadius: 12, 
+                    fontSize: 15,
+                    color: '#F8FAFC'
+                  }} 
+                />
               </div>
+              
+              {/* InfoNavigator 2.0 Guide */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(244, 63, 94, 0.1) 100%)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                borderRadius: 16,
+                padding: 16,
+                marginBottom: 16
+              }}>
+                <h5 style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: '#A78BFA',
+                  marginBottom: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
+                }}>
+                  <Icons.Code /> InfoNavigator 2.0 Protocol Guide
+                </h5>
+                
+                <div style={{fontSize: 13, color: '#94A3B8', lineHeight: 1.8}}>
+                  <div style={{marginBottom: 12}}>
+                    <strong style={{color: '#F472B6'}}>Format:</strong> 
+                    <code style={{
+                      background: 'rgba(0,0,0,0.3)', 
+                      padding: '2px 8px', 
+                      borderRadius: 6,
+                      marginLeft: 8,
+                      color: '#34D399',
+                      fontSize: 12
+                    }}>
+                      (words)+ & (words) & (exclude)^
+                    </code>
+                  </div>
+                  
+                  <div style={{display: 'grid', gap: 8}}>
+                    <div style={{display: 'flex', gap: 12, alignItems: 'flex-start'}}>
+                      <span style={{
+                        background: '#10B981',
+                        color: 'white',
+                        padding: '2px 10px',
+                        borderRadius: 6,
+                        fontWeight: 700,
+                        fontSize: 14,
+                        flexShrink: 0
+                      }}>+</span>
+                      <span><strong>INCLUDE ALL</strong> - Results MUST contain ALL words/phrases in the parentheses</span>
+                    </div>
+                    
+                    <div style={{display: 'flex', gap: 12, alignItems: 'flex-start'}}>
+                      <span style={{
+                        background: '#F43F5E',
+                        color: 'white',
+                        padding: '2px 10px',
+                        borderRadius: 6,
+                        fontWeight: 700,
+                        fontSize: 14,
+                        flexShrink: 0
+                      }}>^</span>
+                      <span><strong>EXCLUDE</strong> - Results must NOT contain any words/phrases in the parentheses</span>
+                    </div>
+                    
+                    <div style={{display: 'flex', gap: 12, alignItems: 'flex-start'}}>
+                      <span style={{
+                        background: '#8B5CF6',
+                        color: 'white',
+                        padding: '2px 10px',
+                        borderRadius: 6,
+                        fontWeight: 700,
+                        fontSize: 14,
+                        flexShrink: 0
+                      }}>&</span>
+                      <span><strong>AND</strong> - Connect multiple conditions together</span>
+                    </div>
+                    
+                    <div style={{display: 'flex', gap: 12, alignItems: 'flex-start'}}>
+                      <span style={{
+                        background: '#3B82F6',
+                        color: 'white',
+                        padding: '2px 10px',
+                        borderRadius: 6,
+                        fontWeight: 700,
+                        fontSize: 14,
+                        flexShrink: 0
+                      }}>or</span>
+                      <span><strong>OR</strong> - Any word/phrase in parentheses matches</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
               <div className="form-group">
-                <label>Protocol (InfoPilot 2.0)</label>
-                <textarea placeholder="(word1 or word2) & (word3)+ & (exclude)^" value={protocol} onChange={(e) => setProtocol(e.target.value)} />
+                <label>Protocol (InfoNavigator 2.0)</label>
+                <textarea 
+                  placeholder="(word1 or phrase1)+ & (word2 or word3 or word4) & (exclude1 or exclude2)^" 
+                  value={protocol} 
+                  onChange={(e) => setProtocol(e.target.value)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: '#F8FAFC'
+                  }}
+                />
               </div>
+              
               <div className="examples-card">
-                <h5>Examples:</h5>
-                <div className="example-item" onClick={() => setProtocol("(American civil war) & (civil war) & (1860 or 1861 or 1862 or 1863 or 1864 or 1865)+")}>American Civil War - Basic</div>
-                <div className="example-item" onClick={() => setProtocol("(heroically or hero or helped solve) & (good citizen or citizenship) & (Gettysburg or Princeton) & (isn't or wasn't)^")}>Heroes - With Exclusion</div>
+                <h5>Click to Use Examples:</h5>
+                <div className="example-item" onClick={() => setProtocol("(American civil war or Civil War history)+ & (1860 or 1861 or 1862 or 1863 or 1864 or 1865) & (battle or campaign)")}>
+                  <strong>American Civil War</strong> - Includes all civil war terms, years, and battles
+                </div>
+                <div className="example-item" onClick={() => setProtocol("(artificial intelligence or machine learning or AI)+ & (research or study or paper) & (spam or advertisement)^")}>
+                  <strong>AI Research</strong> - AI topics, research papers, excludes spam
+                </div>
+                <div className="example-item" onClick={() => setProtocol("(heroically or hero or helped solve)+ & (good citizen or citizenship) & (Gettysburg or Princeton) & (fake or scam or misleading)^")}>
+                  <strong>Local Heroes</strong> - Heroic stories, excludes fake content
+                </div>
               </div>
+              
               <div className="checkbox-row" onClick={() => setIsPublic(!isPublic)}>
                 <div className={`checkbox ${isPublic ? 'checked' : ''}`}>{isPublic && <Icons.Check />}</div>
                 <div className="checkbox-label">
-                  <div className="label">Make Public</div>
-                  <div className="desc">Other users can see and use this category</div>
+                  <div className="label">Make Public (Free)</div>
+                  <div className="desc">Other users can see and use this category for free</div>
                 </div>
               </div>
-              <div className="info-box success" style={{marginTop: 16}}>
-                <Icons.Shield />
-                <p>We encourage you to keep your categories private for security.</p>
+              
+              <div className="info-box" style={{marginTop: 16}}>
+                <Icons.Star />
+                <p>Want to sell your protocol? Make it public and set a price in the Marketplace!</p>
               </div>
+              
               <button className="btn btn-primary" onClick={handleSave} disabled={saving} style={{marginTop: 20}}>
                 {saving ? <div className="spinner" style={{width: 20, height: 20}}/> : 'Save Category'}
               </button>
