@@ -712,6 +712,62 @@ const UltimateSearchPage = ({ showToast }) => {
                 data-testid="edit-protocol-input"
               />
               
+              {/* Visibility Toggle */}
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                padding: '12px 15px',
+                background: editIsPublic ? 'rgba(16, 185, 129, 0.15)' : 'rgba(107, 114, 128, 0.15)',
+                borderRadius: 10,
+                border: `1px solid ${editIsPublic ? 'rgba(16, 185, 129, 0.3)' : 'rgba(107, 114, 128, 0.3)'}`
+              }}>
+                <div>
+                  <label style={{ 
+                    color: editIsPublic ? '#10b981' : '#9ca3af', 
+                    fontWeight: 600,
+                    display: 'block',
+                    marginBottom: 4
+                  }}>
+                    {editIsPublic ? '🌍 Public Category' : '🔒 Private Category'}
+                  </label>
+                  <p style={{ fontSize: '0.75rem', color: '#a1a1aa', margin: 0 }}>
+                    {editIsPublic 
+                      ? 'This category is visible to all users' 
+                      : 'Only you can see this category'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditIsPublic(!editIsPublic)}
+                  style={{
+                    width: 50,
+                    height: 28,
+                    borderRadius: 14,
+                    background: editIsPublic 
+                      ? 'linear-gradient(135deg, #10b981, #059669)' 
+                      : '#4b5563',
+                    border: 'none',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    transition: 'background 0.2s'
+                  }}
+                  data-testid="edit-visibility-toggle"
+                >
+                  <span style={{
+                    position: 'absolute',
+                    top: 2,
+                    left: editIsPublic ? 24 : 2,
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    background: 'white',
+                    transition: 'left 0.2s',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                  }} />
+                </button>
+              </div>
+              
               <div style={{ 
                 background: 'rgba(16, 185, 129, 0.1)', 
                 padding: 12, 
