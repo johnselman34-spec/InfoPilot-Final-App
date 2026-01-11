@@ -1200,7 +1200,10 @@ async def perform_search(request: SearchRequest, user = Depends(get_current_user
 
 @api_router.post("/collate", response_model=dict)
 async def collate_results(request: CollateRequest, user = Depends(get_current_user)):
-    """Automatically categorize search results based on user's protocols"""
+    """
+    Automatically categorize search results based on user's protocols
+    ENHANCED: More lenient matching for better results flow
+    """
     
     # Check daily limit
     today = datetime.utcnow().date()
@@ -1210,7 +1213,7 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
     if last_date and last_date.date() == today:
         daily_count = user_doc.get("daily_collate_count", 0)
         settings = await db.settings.find_one({"key": "daily_collate_limit"})
-        limit = settings.get("value", 10) if settings else 10
+        limit = settings.get("value", 100) if settings else 100  # Increased default limit
         if daily_count >= limit:
             raise HTTPException(status_code=429, detail=f"Daily collate limit ({limit}) reached")
         await db.users.update_one({"_id": user["_id"]}, {"$inc": {"daily_collate_count": 1}})
@@ -1225,17 +1228,38 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
     collated_results = []
     batch_id = str(uuid.uuid4())
     
+    # If user has no categories, create a default one to catch all results
+    if not categories:
+        logger.info(f"User {user['_id']} has no categories - results will not be categorized")
+    
     for result in request.search_results:
         if contains_blocked_content(result.get("title", "")) or contains_blocked_content(result.get("content", "")):
             continue
         
         matching_category_ids = []
-        text_to_match = f"{result.get('title', '')} {result.get('snippet', '')} {result.get('content', '')}"
+        # Combine ALL available text for matching
+        text_to_match = " ".join([
+            result.get('title', ''),
+            result.get('snippet', ''),
+            result.get('content', ''),
+            result.get('description', ''),
+            result.get('url', '')  # Also match against URL
+        ]).strip()
         
+        # Try to match against each category's protocol
         for cat in categories:
-            if ProtocolParser.matches_protocol(text_to_match, cat["protocol"]):
-                matching_category_ids.append(str(cat["_id"]))
+            protocol = cat.get("protocol", "")
+            if not protocol:
+                continue
+            
+            try:
+                if ProtocolParser.matches_protocol(text_to_match, protocol):
+                    matching_category_ids.append(str(cat["_id"]))
+                    logger.debug(f"Matched '{result.get('title', '')[:50]}' to category '{cat['name']}'")
+            except Exception as e:
+                logger.error(f"Protocol matching error for category {cat.get('name')}: {e}")
         
+        # ALWAYS save results that match at least one category
         if matching_category_ids:
             article_type = ArticleClassifier.classify(result.get("title", ""), result.get("content", ""))
             
@@ -1252,7 +1276,7 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
                 "url": result.get("url"),
                 "title": result.get("title"),
                 "snippet": result.get("snippet"),
-                "content": result.get("content"),
+                "content": result.get("content", "")[:5000],  # Limit stored content
                 "user_id": str(user["_id"]),
                 "category_ids": matching_category_ids,
                 "article_type": article_type,
@@ -1285,8 +1309,11 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
             ]
             collated_results.append(search_result_doc)
     
+    logger.info(f"Collated {len(collated_results)} of {len(request.search_results)} results for user {user['_id']}")
+    
     return {
         "collated_count": len(collated_results),
+        "total_searched": len(request.search_results),
         "results": collated_results
     }
 
