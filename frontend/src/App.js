@@ -2546,6 +2546,7 @@ function MainLayout({ currentPage, onNavigate }) {
     { id: 'search', label: 'Search', icon: Icons.Search },
     { id: 'infojet', label: 'InfoJet', icon: Icons.Globe },
     { id: 'categories', label: 'Categories', icon: Icons.Folder },
+    { id: 'marketplace', label: 'Marketplace', icon: Icons.ShoppingCart },
     { id: 'map', label: 'Map', icon: Icons.Map },
     { id: 'social', label: 'Social', icon: Icons.People },
     { id: 'settings', label: 'Settings', icon: Icons.Settings },
