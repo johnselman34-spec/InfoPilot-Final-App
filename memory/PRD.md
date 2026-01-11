@@ -25,6 +25,7 @@ Build a comprehensive information exchange social network application ("InfoPilo
 - Email/password registration and login
 - Google OAuth via Emergent Auth
 - JWT session management
+- **Case-insensitive email matching** (Fixed Jan 11, 2026)
 
 ### 2. Protocol Search Engine (InfoJet 2.0) ✅
 - Multi-word phrase matching ("civil war")
@@ -125,10 +126,11 @@ Build a comprehensive information exchange social network application ("InfoPilo
 
 ## Date: January 11, 2026
 
-## Test Results
-- Backend: 95.5% (21/22 tests passed)
+## Test Results (Updated Jan 11, 2026)
+- Backend: 95.5% (37/38 tests passed - includes 16 new auth tests)
 - Frontend: 100% (all critical features working)
 - App Mode: **FREE FOR EVERYONE**
+- Authentication Bug Fix: **100% VERIFIED** (16/16 tests passed)
 
 ## What's Been Completed This Session
 1. ✅ Resend email integration for newsletters (API key configured, WORKING)
@@ -158,8 +160,11 @@ Build a comprehensive information exchange social network application ("InfoPilo
   - Collation matching is more lenient
   - Content enrichment for better protocol matching
   - Results flowing into database properly
-- Interactive map with Leaflet (premium feature)
-- Full social features (Groups, Pages, comments, reactions)
+- ✅ **FIXED: Authentication Bug** (Jan 11, 2026) - Case-insensitive email matching for Google OAuth users
+  - New users can now create categories without Network Error
+  - Email lookup uses MongoDB regex with $options: 'i'
+- Interactive map with Leaflet (IN PROGRESS)
+- Full social features (Groups, Pages, comments, reactions) (IN PROGRESS)
 - Protocol Marketplace (users sell protocols) - IN 1-2 MONTHS
 
 ### P1 - High Priority
