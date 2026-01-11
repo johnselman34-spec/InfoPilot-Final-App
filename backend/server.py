@@ -179,7 +179,49 @@ class PaymentVerification(BaseModel):
 # ============== PROTOCOL PARSER (InfoPilot 2.0) ==============
 
 class ProtocolParser:
-    """Parse and evaluate InfoPilot 2.0 Boolean protocols"""
+    """
+    Parse and evaluate InfoPilot 2.0 Boolean protocols
+    
+    Protocol Format Examples:
+    - (word1 or word2) - Match ANY word in group
+    - (word1 or word2)+ - ALL words must be present (INCLUDE ALL)
+    - (word1 or word2)^ - ALL words must be ABSENT (EXCLUDE ALL)
+    - "multi word phrase" - Exact phrase matching
+    - (U.S. or USA or United States) - Handles abbreviations with punctuation
+    
+    Case-insensitive by default
+    """
+    
+    @staticmethod
+    def normalize_text(text: str) -> str:
+        """Normalize text for consistent matching"""
+        if not text:
+            return ""
+        # Keep periods in abbreviations like U.S., Ph.D.
+        return text.lower()
+    
+    @staticmethod
+    def extract_phrases_and_words(content: str) -> List[str]:
+        """
+        Extract both quoted phrases and individual words from protocol content
+        Handles: "multi word phrase", single_word, U.S., Ph.D.
+        """
+        items = []
+        
+        # First extract quoted phrases
+        quoted = re.findall(r'"([^"]+)"', content)
+        items.extend([q.strip().lower() for q in quoted])
+        
+        # Remove quoted parts and split rest by 'or'
+        remaining = re.sub(r'"[^"]+"', '', content)
+        parts = re.split(r'\s+or\s+', remaining, flags=re.IGNORECASE)
+        
+        for part in parts:
+            part = part.strip().lower()
+            if part:
+                items.append(part)
+        
+        return items
     
     @staticmethod
     def parse_protocol(protocol: str) -> Dict[str, Any]:
@@ -187,27 +229,53 @@ class ProtocolParser:
         Parse InfoPilot 2.0 protocol format:
         (word1 or word2) & (word3 or word4)+ & (word5)^
         
-        + = include ALL words in group
-        ^ = exclude ALL words in group
+        + = INCLUDE ALL words in group
+        ^ = EXCLUDE ALL words in group
+        No modifier = OR logic (at least one must match)
         """
         if not protocol:
             return {"groups": [], "valid": False}
         
         # Find all groups with their modifiers
-        pattern = r'([+^]?)\(([^)]+)\)([+^]?)'
+        # Pattern handles: (content), +(content), (content)+, ^(content), (content)^
+        pattern = r'([+^]?)\s*\(([^)]+)\)\s*([+^]?)'
         matches = re.findall(pattern, protocol)
         
         groups = []
         for prefix_mod, content, suffix_mod in matches:
-            modifier = prefix_mod or suffix_mod or None
-            words = [w.strip().lower() for w in content.split(' or ')]
-            groups.append({
-                "words": words,
-                "modifier": modifier,
-                "original": content
-            })
+            modifier = prefix_mod.strip() or suffix_mod.strip() or None
+            items = ProtocolParser.extract_phrases_and_words(content)
+            if items:
+                groups.append({
+                    "items": items,
+                    "modifier": modifier,
+                    "original": content
+                })
         
         return {"groups": groups, "valid": len(groups) > 0}
+    
+    @staticmethod
+    def text_contains_item(text_lower: str, item: str) -> bool:
+        """
+        Check if text contains the item (word or phrase)
+        Handles abbreviations with periods (U.S., Ph.D., etc.)
+        """
+        if not item:
+            return False
+        
+        # For phrases with spaces, do substring match
+        if ' ' in item:
+            return item in text_lower
+        
+        # For abbreviations with periods (u.s., ph.d., etc.)
+        if '.' in item:
+            # Direct substring match for abbreviations
+            return item in text_lower
+        
+        # For single words, use word boundary matching
+        # This prevents "civil" from matching "civilian"
+        pattern = r'\b' + re.escape(item) + r'\b'
+        return bool(re.search(pattern, text_lower))
     
     @staticmethod
     def matches_protocol(text: str, protocol: str) -> bool:
@@ -219,26 +287,67 @@ class ProtocolParser:
         if not parsed["valid"]:
             return False
         
-        text_lower = text.lower()
+        text_lower = ProtocolParser.normalize_text(text)
         
         for group in parsed["groups"]:
-            words = group["words"]
+            items = group["items"]
             modifier = group["modifier"]
             
             if modifier == "+":
-                # ALL words must be present
-                if not all(word in text_lower for word in words):
+                # ALL items must be present (INCLUDE ALL)
+                if not all(ProtocolParser.text_contains_item(text_lower, item) for item in items):
                     return False
             elif modifier == "^":
-                # ALL words must be ABSENT
-                if any(word in text_lower for word in words):
+                # ALL items must be ABSENT (EXCLUDE ALL)
+                if any(ProtocolParser.text_contains_item(text_lower, item) for item in items):
                     return False
             else:
-                # At least ONE word must be present (OR logic)
-                if not any(word in text_lower for word in words):
+                # At least ONE item must be present (OR logic)
+                if not any(ProtocolParser.text_contains_item(text_lower, item) for item in items):
                     return False
         
         return True
+    
+    @staticmethod
+    def get_match_details(text: str, protocol: str) -> Dict[str, Any]:
+        """Get detailed matching information for debugging"""
+        if not text or not protocol:
+            return {"matched": False, "details": []}
+            
+        parsed = ProtocolParser.parse_protocol(protocol)
+        if not parsed["valid"]:
+            return {"matched": False, "details": [], "error": "Invalid protocol"}
+        
+        text_lower = ProtocolParser.normalize_text(text)
+        details = []
+        all_passed = True
+        
+        for group in parsed["groups"]:
+            items = group["items"]
+            modifier = group["modifier"]
+            group_result = {
+                "original": group["original"],
+                "modifier": modifier,
+                "items": items,
+                "item_matches": {}
+            }
+            
+            for item in items:
+                group_result["item_matches"][item] = ProtocolParser.text_contains_item(text_lower, item)
+            
+            if modifier == "+":
+                group_result["passed"] = all(group_result["item_matches"].values())
+            elif modifier == "^":
+                group_result["passed"] = not any(group_result["item_matches"].values())
+            else:
+                group_result["passed"] = any(group_result["item_matches"].values())
+            
+            if not group_result["passed"]:
+                all_passed = False
+            
+            details.append(group_result)
+        
+        return {"matched": all_passed, "details": details}
 
 # ============== ARTICLE TYPE CLASSIFIER ==============
 
