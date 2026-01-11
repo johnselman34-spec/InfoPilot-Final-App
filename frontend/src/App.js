@@ -1873,8 +1873,55 @@ const MapPage = ({ showToast, setCurrentPage }) => {
   const [mapResults, setMapResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedResult, setSelectedResult] = useState(null);
-  const [mapCenter, setMapCenter] = useState([39.8283, -98.5795]); // US center
-  const [mapZoom, setMapZoom] = useState(4);
+
+  // Known locations for context-based geocoding
+  const KNOWN_LOCATIONS = {
+    // US States
+    'texas': { lat: 31.9686, lng: -99.9018 },
+    'california': { lat: 36.7783, lng: -119.4179 },
+    'new york': { lat: 40.7128, lng: -74.0060 },
+    'florida': { lat: 27.6648, lng: -81.5158 },
+    'washington': { lat: 47.7511, lng: -120.7401 },
+    'washington dc': { lat: 38.9072, lng: -77.0369 },
+    'virginia': { lat: 37.4316, lng: -78.6569 },
+    // Cities
+    'houston': { lat: 29.7604, lng: -95.3698 },
+    'midland': { lat: 31.9973, lng: -102.0779 },
+    'new haven': { lat: 41.3083, lng: -72.9279 },
+    'yale': { lat: 41.3163, lng: -72.9223 },
+    'gettysburg': { lat: 39.8309, lng: -77.2311 },
+    // Countries
+    'united states': { lat: 39.8283, lng: -98.5795 },
+    'usa': { lat: 39.8283, lng: -98.5795 },
+    'america': { lat: 39.8283, lng: -98.5795 },
+    'england': { lat: 51.5074, lng: -0.1278 },
+    'france': { lat: 46.2276, lng: 2.2137 },
+    'germany': { lat: 51.1657, lng: 10.4515 },
+    // Military
+    'air force': { lat: 38.8719, lng: -77.0563 }, // Pentagon area
+    'pentagon': { lat: 38.8719, lng: -77.0563 },
+    'white house': { lat: 38.8977, lng: -77.0365 },
+  };
+
+  // Extract location from text content
+  const extractLocation = (text, title) => {
+    if (!text && !title) return null;
+    const combined = `${title || ''} ${text || ''}`.toLowerCase();
+    
+    // Check for known locations
+    for (const [place, coords] of Object.entries(KNOWN_LOCATIONS)) {
+      if (combined.includes(place)) {
+        // Add small random offset to prevent marker stacking
+        return {
+          lat: coords.lat + (Math.random() - 0.5) * 2,
+          lng: coords.lng + (Math.random() - 0.5) * 2,
+          place: place
+        };
+      }
+    }
+    
+    return null;
+  };
 
   useEffect(() => {
     fetchMapResults();
@@ -1884,17 +1931,38 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     setLoading(true);
     try {
       const res = await fetch(`${API}/ultimate-search?limit=100`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        // Filter results that have location data or assign random locations for demo
-        const resultsWithLocation = data.results.map((r, idx) => ({
-          ...r,
-          // Assign demo locations if none exist (spread across US and world)
-          latitude: r.latitude || (30 + Math.random() * 20 + (idx % 3) * 15),
-          longitude: r.longitude || (-120 + Math.random() * 60 + (idx % 5) * 10)
-        }));
+        
+        // Process results and extract/assign locations
+        const resultsWithLocation = data.results
+          .map((r, idx) => {
+            // First check if result already has valid location
+            if (r.latitude && r.longitude && 
+                r.latitude >= -90 && r.latitude <= 90 &&
+                r.longitude >= -180 && r.longitude <= 180) {
+              return { ...r, hasRealLocation: true };
+            }
+            
+            // Try to extract location from content
+            const extracted = extractLocation(r.content || r.snippet, r.title);
+            if (extracted) {
+              return {
+                ...r,
+                latitude: extracted.lat,
+                longitude: extracted.lng,
+                extractedPlace: extracted.place,
+                hasRealLocation: false
+              };
+            }
+            
+            // Skip results without identifiable location
+            return null;
+          })
+          .filter(r => r !== null);
+        
         setMapResults(resultsWithLocation);
       }
     } catch (e) {
@@ -1918,13 +1986,12 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     return colors[articleType] || colors['Unknown'];
   };
 
-  // App is now FREE - no subscription check needed
   return (
     <div className="card">
       <div className="card-header">
         <h2>🗺️ Interactive World Map</h2>
         <span style={{ color: '#10b981', fontSize: '0.9rem' }}>
-          {mapResults.length} results with locations
+          {mapResults.length} results mapped
         </span>
       </div>
 
@@ -1964,36 +2031,62 @@ const MapPage = ({ showToast, setCurrentPage }) => {
           <div className="loading-spinner"><div className="spinner"></div></div>
           <p style={{ color: '#a1a1aa', marginTop: 15 }}>Loading map data...</p>
         </div>
+      ) : mapResults.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 50 }}>
+          <p style={{ color: '#a1a1aa', fontSize: '1.1rem' }}>
+            No mapped results yet. Search and collate content to see results on the map!
+          </p>
+          <button 
+            className="btn btn-primary"
+            style={{ marginTop: 15 }}
+            onClick={() => setCurrentPage('search')}
+          >
+            Go to Ultimate Search
+          </button>
+        </div>
       ) : (
         <>
-          {/* Interactive Map using OpenStreetMap */}
+          {/* Map container with proper styling */}
           <div style={{ 
-            height: 500, 
+            height: 450, 
             borderRadius: 12, 
             overflow: 'hidden',
             border: '2px solid rgba(124, 58, 237, 0.3)',
             position: 'relative',
-            background: '#1a1a2e'
+            background: '#1e3a5f'
           }}>
-            <iframe
-              src={`https://www.openstreetmap.org/export/embed.html?bbox=-180,-60,180,75&layer=mapnik&marker=${mapCenter[0]},${mapCenter[1]}`}
-              style={{ width: '100%', height: '100%', border: 'none' }}
-              title="World Map"
-            />
-            
-            {/* Overlay markers */}
+            {/* Using a clean world map image with proper marker overlay */}
             <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              pointerEvents: 'none'
+              width: '100%',
+              height: '100%',
+              background: 'linear-gradient(180deg, #1e3a5f 0%, #0f2744 100%)',
+              position: 'relative'
             }}>
+              {/* World map SVG background */}
+              <svg viewBox="0 0 1000 500" style={{ width: '100%', height: '100%', position: 'absolute' }}>
+                <rect fill="#1e3a5f" width="1000" height="500"/>
+                {/* Simplified world continents */}
+                <path fill="#2d5a87" d="M150,120 Q200,100 250,110 Q300,90 350,100 L380,150 Q350,180 300,170 Q250,190 200,180 Q150,170 150,120Z"/>
+                <path fill="#2d5a87" d="M100,180 Q150,160 200,190 Q180,250 150,280 Q100,260 80,220 Q90,190 100,180Z"/>
+                <path fill="#2d5a87" d="M220,200 Q280,180 350,200 Q380,250 350,300 Q300,320 250,300 Q200,260 220,200Z"/>
+                <path fill="#2d5a87" d="M450,80 Q550,60 650,80 Q700,120 680,180 Q620,200 550,180 Q480,160 450,120 Q440,100 450,80Z"/>
+                <path fill="#2d5a87" d="M700,100 Q800,80 900,120 Q920,180 880,240 Q800,260 720,220 Q680,160 700,100Z"/>
+                <path fill="#2d5a87" d="M550,200 Q620,180 680,220 Q700,280 650,340 Q580,360 520,320 Q500,260 550,200Z"/>
+                <path fill="#2d5a87" d="M750,280 Q850,260 920,300 Q940,380 880,420 Q800,440 740,400 Q720,340 750,280Z"/>
+              </svg>
+              
+              {/* Markers overlay */}
               {mapResults.slice(0, 50).map((result, idx) => {
-                // Convert lat/lng to approximate screen position
+                // Mercator-like projection for better accuracy
                 const x = ((result.longitude + 180) / 360) * 100;
-                const y = ((90 - result.latitude) / 150) * 100;
+                // Adjusted y calculation for better positioning
+                const latRad = result.latitude * Math.PI / 180;
+                const mercY = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+                const y = (1 - (mercY / Math.PI + 1) / 2) * 100;
+                
+                // Clamp values to visible area
+                const clampedX = Math.max(2, Math.min(98, x));
+                const clampedY = Math.max(5, Math.min(95, y));
                 
                 return (
                   <div
@@ -2001,26 +2094,69 @@ const MapPage = ({ showToast, setCurrentPage }) => {
                     onClick={() => setSelectedResult(result)}
                     style={{
                       position: 'absolute',
-                      left: `${x}%`,
-                      top: `${y}%`,
-                      width: 14,
-                      height: 14,
+                      left: `${clampedX}%`,
+                      top: `${clampedY}%`,
+                      width: 16,
+                      height: 16,
                       borderRadius: '50%',
                       background: getMarkerColor(result.article_type),
                       border: '2px solid white',
-                      boxShadow: `0 0 10px ${getMarkerColor(result.article_type)}`,
+                      boxShadow: `0 0 12px ${getMarkerColor(result.article_type)}, 0 2px 4px rgba(0,0,0,0.5)`,
                       cursor: 'pointer',
-                      pointerEvents: 'auto',
                       transform: 'translate(-50%, -50%)',
                       transition: 'all 0.2s',
                       zIndex: selectedResult?.id === result.id ? 100 : 10
                     }}
-                    title={result.title}
+                    title={`${result.title} - ${result.extractedPlace || 'Location'}`}
                   />
                 );
               })}
             </div>
           </div>
+
+          {/* Selected result details */}
+          {selectedResult && (
+            <div style={{
+              marginTop: 15,
+              padding: 15,
+              background: 'rgba(236, 72, 153, 0.15)',
+              borderRadius: 10,
+              border: '2px solid #ec4899'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                <div>
+                  <h4 style={{ color: '#f472b6', margin: '0 0 8px 0' }}>{selectedResult.title}</h4>
+                  <p style={{ color: '#a1a1aa', fontSize: '0.85rem', margin: 0 }}>
+                    {selectedResult.snippet?.substring(0, 200)}...
+                  </p>
+                  <div style={{ marginTop: 10, display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <span style={{ 
+                      background: getMarkerColor(selectedResult.article_type),
+                      padding: '2px 8px',
+                      borderRadius: 12,
+                      fontSize: '0.75rem'
+                    }}>
+                      {selectedResult.article_type}
+                    </span>
+                    {selectedResult.extractedPlace && (
+                      <span style={{ color: '#10b981', fontSize: '0.8rem' }}>
+                        📍 {selectedResult.extractedPlace}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <a 
+                  href={selectedResult.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary"
+                  style={{ fontSize: '0.8rem', padding: '6px 12px' }}
+                >
+                  View Article
+                </a>
+              </div>
+            </div>
+          )}
 
           {/* Results list below map */}
           <div style={{ marginTop: 20 }}>
@@ -2029,16 +2165,16 @@ const MapPage = ({ showToast, setCurrentPage }) => {
             </h3>
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: 15,
-              maxHeight: 400,
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: 12,
+              maxHeight: 350,
               overflowY: 'auto'
             }}>
               {mapResults.slice(0, 20).map((result, idx) => (
                 <div 
                   key={result.id || idx}
                   style={{
-                    padding: 15,
+                    padding: 12,
                     background: selectedResult?.id === result.id 
                       ? 'rgba(236, 72, 153, 0.2)' 
                       : 'rgba(30, 20, 50, 0.5)',
@@ -2049,16 +2185,17 @@ const MapPage = ({ showToast, setCurrentPage }) => {
                   }}
                   onClick={() => setSelectedResult(result)}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <div style={{
                       width: 10,
                       height: 10,
                       borderRadius: '50%',
-                      background: getMarkerColor(result.article_type)
+                      background: getMarkerColor(result.article_type),
+                      boxShadow: `0 0 6px ${getMarkerColor(result.article_type)}`
                     }} />
                     <span style={{ 
                       color: getMarkerColor(result.article_type), 
-                      fontSize: '0.75rem',
+                      fontSize: '0.7rem',
                       fontWeight: 600
                     }}>
                       {result.article_type}
@@ -2072,16 +2209,19 @@ const MapPage = ({ showToast, setCurrentPage }) => {
                       color: '#fff', 
                       textDecoration: 'none',
                       fontWeight: 600,
-                      fontSize: '0.9rem',
+                      fontSize: '0.85rem',
                       display: 'block',
-                      marginBottom: 5
+                      marginBottom: 5,
+                      lineHeight: 1.3
                     }}
                   >
-                    {result.title?.substring(0, 60) || 'Untitled'}...
+                    {result.title?.substring(0, 55) || 'Untitled'}...
                   </a>
-                  <div style={{ color: '#a1a1aa', fontSize: '0.75rem' }}>
-                    📍 {result.latitude?.toFixed(2)}°, {result.longitude?.toFixed(2)}°
-                  </div>
+                  {result.extractedPlace && (
+                    <div style={{ color: '#10b981', fontSize: '0.75rem' }}>
+                      📍 {result.extractedPlace.charAt(0).toUpperCase() + result.extractedPlace.slice(1)}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -2090,7 +2230,7 @@ const MapPage = ({ showToast, setCurrentPage }) => {
       )}
 
       <p style={{ marginTop: 20, color: '#a1a1aa', fontSize: '0.85rem', textAlign: 'center' }}>
-        💡 Tip: Search and collate more results to populate the map with diverse locations!
+        💡 Tip: Search and collate results about specific locations to see them on the map!
       </p>
     </div>
   );
