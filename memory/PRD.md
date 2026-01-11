@@ -133,22 +133,23 @@ Build a comprehensive information exchange social network application ("InfoPilo
 1. ✅ Resend email integration for newsletters (API key configured, WORKING)
 2. ✅ Improved Protocol Parser (multi-word phrases, abbreviations, word boundaries)
 3. ✅ Enhanced web search (DuckDuckGo + Google scraping)
-4. ✅ Book promotion banner with rotating images (4 user-provided images)
+4. ✅ **ENHANCED Book Promotion Banner** with elements from old app:
+   - "WROTE IT, UNIVERSE FACT-CHECKED IT" header banner
+   - "IT PASSED • LETTERS TO EVELYN • Available Now"
+   - "19 FIVE-STAR REVIEWS" golden badge
+   - "By World Record Aviation Holder John Selman"
+   - "The Navy Taught Me to Fly Jets. The Universe Taught Me Everything Else." quote
+   - Thumbnail image gallery (4 images clickable)
+   - Extended Divine Zape review with 5 stars
+   - "BUY ON AMAZON" and "READ REVIEWS" action buttons
+   - "Only $2.99 Kindle Edition" price badge
 5. ✅ Newsletter test email endpoint
 6. ✅ Protocol debugging endpoint
 7. ✅ **AUTOMATED WEEKLY NEWSLETTER SCHEDULE** - Admin can set day/time
-8. ✅ Enhanced AI newsletter generation with actual book content:
-   - Divine Zape quote: "This memoir is a profound and unforgettable literary piece."
-   - 19 Five-Star Reviews from Readers' Favorite
-   - All 9 professional reviewer quotes from Readers' Favorite
-   - Book plot details from ACTUAL MANUSCRIPT (Navy pilot, LSD poisoning, aliens, love story)
-   - World record claim: steepest Sarajevo Approach in T-34C aircraft
-   - "Funnier than Dave Chappelle" tagline
-   - 50+ "hurricane force winds of laughter" jokes
-   - Rotating book advertisement images in emails
-   - Rotating funny taglines
+8. ✅ Enhanced AI newsletter generation with actual book content from manuscript
 9. ✅ Crawled Amazon, Readers' Favorite pages, AND analyzed Google Drive manuscript
 10. ✅ Admin Panel Newsletter tab with full scheduling UI
+11. ✅ **PayPal email updated to JJSpilot24@gmail.com** (awaiting user to call PayPal/bank)
 
 ## Pending/Backlog
 
