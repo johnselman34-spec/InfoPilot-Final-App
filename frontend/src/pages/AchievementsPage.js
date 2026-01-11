@@ -262,15 +262,35 @@ const AchievementsPage = ({ showToast }) => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
-                    minWidth: 180
+                    minWidth: 180,
+                    position: 'relative'
                   }}
                   title={badge.description}
                 >
                   <span style={{ fontSize: '1.5rem' }}>{badge.icon}</span>
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem' }}>{badge.name}</div>
                     <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', textTransform: 'uppercase' }}>{badge.rarity}</div>
                   </div>
+                  <button
+                    onClick={() => shareBadge(badge)}
+                    style={{
+                      background: 'rgba(255,255,255,0.2)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: 28,
+                      height: 28,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem'
+                    }}
+                    title="Share this badge"
+                    data-testid={`share-badge-${badge.id}`}
+                  >
+                    📤
+                  </button>
                 </div>
               ))}
             </div>
