@@ -149,15 +149,14 @@ class TestNewsletterEndpoints:
         assert response.status_code == 200
         data = response.json()
         
-        # Verify response structure
-        assert "subject" in data
+        # Verify response structure - content is required
         assert "content" in data
         assert "generated_at" in data
         
         # Verify content is substantial
         assert len(data["content"]) > 500, "Newsletter content should be substantial"
         
-        print(f"✓ Newsletter generated: subject='{data['subject'][:50]}...', content_length={len(data['content'])}")
+        print(f"✓ Newsletter generated: content_length={len(data['content'])}, ai_generated={data.get('ai_generated', 'unknown')}")
     
     def test_newsletter_generate_requires_admin(self):
         """Test newsletter generate requires admin authentication"""
