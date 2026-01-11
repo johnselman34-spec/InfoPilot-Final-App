@@ -8,7 +8,7 @@ import './App.css';
 import { API } from './utils/api';
 import { extractHashtags } from './utils/hashtags';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { Toast, Icons, HashtagDisplay, Sidebar, QuoteOfTheDay } from './components/shared';
+import { Toast, Icons, HashtagDisplay, Sidebar, QuoteOfTheDay, BookPromoBanner } from './components/shared';
 import { LoginPage, RegisterPage, AuthCallback, AdminPanel, SettingsPage, SubscribePage, MessagesPage } from './pages';
 
 // Fix Leaflet default marker icon issue
