@@ -15,7 +15,7 @@ import os
 import uuid
 import time
 
-BASE_URL = "https://search-jet.preview.emergentagent.com"
+BASE_URL = "https://infopilot-2.preview.emergentagent.com"
 
 # Test credentials from main agent
 ADMIN_EMAIL = "john@infojet.com"
