@@ -1194,9 +1194,6 @@ const UltimateSearchPage = ({ showToast }) => {
         is_public: newCategory.is_public || false
       };
       
-      console.log('Creating category with:', requestBody);
-      console.log('API URL:', `${API}/categories`);
-      
       const res = await fetch(`${API}/categories`, {
         method: 'POST',
         headers: {
@@ -1206,17 +1203,17 @@ const UltimateSearchPage = ({ showToast }) => {
         body: JSON.stringify(requestBody)
       });
       
-      console.log('Response status:', res.status);
+      // Clone response before reading to avoid "body stream already read" error
+      const resClone = res.clone();
       
-      // Handle non-JSON responses
-      const contentType = res.headers.get('content-type');
       let data;
-      if (contentType && contentType.includes('application/json')) {
+      try {
         data = await res.json();
-      } else {
-        const text = await res.text();
-        console.error('Non-JSON response:', text);
-        throw new Error(`Server error: ${res.status}`);
+      } catch (jsonError) {
+        // If JSON parsing fails, try to get text from cloned response
+        const text = await resClone.text();
+        console.error('Response parsing error:', text);
+        throw new Error(`Server returned invalid response: ${res.status}`);
       }
       
       if (res.ok) {
@@ -1227,17 +1224,13 @@ const UltimateSearchPage = ({ showToast }) => {
       } else {
         const errorMsg = data.detail || data.message || 'Failed to create category. Please try again.';
         showToast(errorMsg, 'error');
-        console.error('Category creation error:', data);
       }
     } catch (e) {
-      console.error('Category creation exception:', e);
-      // More specific error messages
-      if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError')) {
-        showToast('Network error. Please check your connection and try again.', 'error');
-      } else if (e.message.includes('Server error')) {
-        showToast(e.message, 'error');
+      console.error('Category creation error:', e);
+      if (e.message.includes('Failed to fetch')) {
+        showToast('Network error. Please check your connection.', 'error');
       } else {
-        showToast(`Error: ${e.message || 'Unknown error occurred'}`, 'error');
+        showToast(e.message || 'Failed to create category', 'error');
       }
     }
   };
