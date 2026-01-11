@@ -1748,6 +1748,186 @@ async def update_user_settings(
     
     return {"message": "Settings updated"}
 
+# ============== GROUPS ENDPOINTS ==============
+
+class GroupCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    is_public: bool = True
+
+@api_router.get("/groups")
+async def get_groups(user = Depends(get_current_user)):
+    """Get all groups the user is a member of or public groups"""
+    user_id = str(user["_id"])
+    
+    # Get groups user is member of OR public groups
+    groups = await db.groups.find({
+        "$or": [
+            {"members": user_id},
+            {"creator_id": user_id},
+            {"is_public": True}
+        ]
+    }).to_list(100)
+    
+    return [{
+        "id": str(g["_id"]),
+        "name": g["name"],
+        "description": g.get("description"),
+        "is_public": g.get("is_public", True),
+        "creator_id": g.get("creator_id"),
+        "member_count": len(g.get("members", [])) + 1,
+        "created_at": g.get("created_at").isoformat() if g.get("created_at") else None
+    } for g in groups]
+
+@api_router.post("/groups")
+async def create_group(group: GroupCreate, user = Depends(get_current_user)):
+    """Create a new group"""
+    if contains_blocked_content(group.name) or (group.description and contains_blocked_content(group.description)):
+        raise HTTPException(status_code=400, detail="Group contains blocked content")
+    
+    group_doc = {
+        "name": group.name,
+        "description": group.description,
+        "is_public": group.is_public,
+        "creator_id": str(user["_id"]),
+        "members": [],
+        "posts": [],
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.groups.insert_one(group_doc)
+    
+    return {
+        "id": str(result.inserted_id),
+        "name": group.name,
+        "description": group.description,
+        "is_public": group.is_public,
+        "member_count": 1,
+        "created_at": group_doc["created_at"].isoformat()
+    }
+
+@api_router.post("/groups/{group_id}/join")
+async def join_group(group_id: str, user = Depends(get_current_user)):
+    """Join a group"""
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    if not group.get("is_public"):
+        raise HTTPException(status_code=403, detail="This is a private group")
+    
+    user_id = str(user["_id"])
+    if user_id not in group.get("members", []):
+        await db.groups.update_one(
+            {"_id": ObjectId(group_id)},
+            {"$addToSet": {"members": user_id}}
+        )
+    
+    return {"message": "Joined group successfully"}
+
+@api_router.post("/groups/{group_id}/leave")
+async def leave_group(group_id: str, user = Depends(get_current_user)):
+    """Leave a group"""
+    await db.groups.update_one(
+        {"_id": ObjectId(group_id)},
+        {"$pull": {"members": str(user["_id"])}}
+    )
+    return {"message": "Left group successfully"}
+
+# ============== PAGES ENDPOINTS ==============
+
+class PageCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    category: str = "General"
+
+@api_router.get("/pages")
+async def get_pages(user = Depends(get_current_user)):
+    """Get all pages"""
+    pages = await db.pages.find().sort("created_at", -1).to_list(100)
+    
+    return [{
+        "id": str(p["_id"]),
+        "name": p["name"],
+        "description": p.get("description"),
+        "category": p.get("category", "General"),
+        "creator_id": p.get("creator_id"),
+        "likes": len(p.get("likes", [])),
+        "created_at": p.get("created_at").isoformat() if p.get("created_at") else None
+    } for p in pages]
+
+@api_router.post("/pages")
+async def create_page(page: PageCreate, user = Depends(get_current_user)):
+    """Create a new page"""
+    if contains_blocked_content(page.name) or (page.description and contains_blocked_content(page.description)):
+        raise HTTPException(status_code=400, detail="Page contains blocked content")
+    
+    page_doc = {
+        "name": page.name,
+        "description": page.description,
+        "category": page.category,
+        "creator_id": str(user["_id"]),
+        "likes": [],
+        "followers": [],
+        "posts": [],
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.pages.insert_one(page_doc)
+    
+    return {
+        "id": str(result.inserted_id),
+        "name": page.name,
+        "description": page.description,
+        "category": page.category,
+        "likes": 0,
+        "created_at": page_doc["created_at"].isoformat()
+    }
+
+@api_router.post("/pages/{page_id}/like")
+async def like_page(page_id: str, user = Depends(get_current_user)):
+    """Like/unlike a page"""
+    page = await db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    user_id = str(user["_id"])
+    if user_id in page.get("likes", []):
+        # Unlike
+        await db.pages.update_one(
+            {"_id": ObjectId(page_id)},
+            {"$pull": {"likes": user_id}}
+        )
+        return {"liked": False, "likes": len(page.get("likes", [])) - 1}
+    else:
+        # Like
+        await db.pages.update_one(
+            {"_id": ObjectId(page_id)},
+            {"$addToSet": {"likes": user_id}}
+        )
+        return {"liked": True, "likes": len(page.get("likes", [])) + 1}
+
+@api_router.post("/pages/{page_id}/follow")
+async def follow_page(page_id: str, user = Depends(get_current_user)):
+    """Follow/unfollow a page"""
+    page = await db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    user_id = str(user["_id"])
+    if user_id in page.get("followers", []):
+        await db.pages.update_one(
+            {"_id": ObjectId(page_id)},
+            {"$pull": {"followers": user_id}}
+        )
+        return {"following": False}
+    else:
+        await db.pages.update_one(
+            {"_id": ObjectId(page_id)},
+            {"$addToSet": {"followers": user_id}}
+        )
+        return {"following": True}
+
 # ============== ADMIN ENDPOINTS ==============
 
 @api_router.get("/admin/settings", response_model=List[dict])
