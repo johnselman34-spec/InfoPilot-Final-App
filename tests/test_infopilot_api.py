@@ -226,7 +226,7 @@ class TestSocialEndpoints:
     
     def test_get_social_feed(self, auth_token):
         """Test social feed endpoint"""
-        response = requests.get(f"{BASE_URL}/api/social/feed",
+        response = requests.get(f"{BASE_URL}/api/feed",
             headers={"Authorization": f"Bearer {auth_token}"}
         )
         assert response.status_code == 200
@@ -244,15 +244,15 @@ class TestSocialEndpoints:
         assert "friends" in data
         print(f"Friends: {len(data['friends'])} friends")
     
-    def test_search_users(self, auth_token):
-        """Test user search endpoint"""
-        response = requests.get(f"{BASE_URL}/api/users/search?q=test",
+    def test_get_posts(self, auth_token):
+        """Test posts endpoint"""
+        response = requests.get(f"{BASE_URL}/api/posts",
             headers={"Authorization": f"Bearer {auth_token}"}
         )
         assert response.status_code == 200
         data = response.json()
-        assert "users" in data
-        print(f"User search: {len(data['users'])} users found")
+        assert "posts" in data
+        print(f"Posts: {len(data['posts'])} posts found")
 
 
 class TestPaymentEndpoints:
@@ -293,7 +293,7 @@ class TestSettingsEndpoints:
     
     def test_update_settings(self, auth_token):
         """Test updating user settings"""
-        response = requests.put(f"{BASE_URL}/api/settings",
+        response = requests.put(f"{BASE_URL}/api/users/settings",
             headers={"Authorization": f"Bearer {auth_token}"},
             json={
                 "ultimate_search_public": False,
