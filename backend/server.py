@@ -3181,6 +3181,277 @@ async def get_marketplace_categories():
     
     return {"categories": [{"name": r["_id"], "count": r["count"]} for r in result]}
 
+
+# ============== PAYPAL WEBHOOK INTEGRATION ==============
+
+# PayPal credentials from user
+PAYPAL_CLIENT_ID = "BAABmhMWqe1WrfJkqJ7RRzEZwoAfxSF2bclm8_HY2BuU9C-7pnakTdjFVCvSJyWh63-wUWmKN1cT1hdMIY"
+PAYPAL_HOSTED_BUTTON_ID = "765S46VPPEP5C"
+
+class PayPalWebhookEvent(BaseModel):
+    event_type: str
+    resource: dict
+    id: Optional[str] = None
+    create_time: Optional[str] = None
+
+class ManualPaymentConfirm(BaseModel):
+    protocol_id: str
+    transaction_id: str
+    amount: float
+
+@api_router.post("/paypal/webhook")
+async def paypal_webhook(event: PayPalWebhookEvent):
+    """
+    Handle PayPal webhook events for automatic payment confirmation.
+    Events: PAYMENT.CAPTURE.COMPLETED, CHECKOUT.ORDER.APPROVED
+    """
+    try:
+        event_type = event.event_type
+        resource = event.resource
+        
+        logger.info(f"PayPal webhook received: {event_type}")
+        
+        # Store webhook event for audit
+        await db.paypal_webhooks.insert_one({
+            "event_type": event_type,
+            "event_id": event.id,
+            "resource": resource,
+            "processed": False,
+            "created_at": datetime.utcnow()
+        })
+        
+        # Handle payment completion
+        if event_type in ["PAYMENT.CAPTURE.COMPLETED", "CHECKOUT.ORDER.APPROVED"]:
+            # Extract payment details
+            amount = float(resource.get("amount", {}).get("value", 0))
+            transaction_id = resource.get("id")
+            payer_email = resource.get("payer", {}).get("email_address")
+            custom_id = resource.get("custom_id")  # Should contain protocol_id:user_id
+            
+            if custom_id and ":" in custom_id:
+                protocol_id, user_id = custom_id.split(":")
+                
+                # Find pending purchase
+                pending = await db.pending_purchases.find_one({
+                    "protocol_id": protocol_id,
+                    "user_id": user_id,
+                    "status": "pending"
+                })
+                
+                if pending:
+                    # Confirm the purchase
+                    protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(protocol_id)})
+                    if protocol:
+                        creator_earnings = amount * 0.9  # 90% to creator
+                        
+                        purchase_record = {
+                            "protocol_id": protocol_id,
+                            "user_id": user_id,
+                            "payment_id": transaction_id,
+                            "price": amount,
+                            "creator_earnings": creator_earnings,
+                            "payer_email": payer_email,
+                            "status": "completed",
+                            "created_at": datetime.utcnow()
+                        }
+                        
+                        await db.marketplace_purchases.insert_one(purchase_record)
+                        
+                        # Update protocol stats
+                        await db.marketplace_protocols.update_one(
+                            {"_id": ObjectId(protocol_id)},
+                            {"$inc": {"total_sales": 1, "total_revenue": amount, "creator_earnings": creator_earnings}}
+                        )
+                        
+                        # Update pending purchase
+                        await db.pending_purchases.update_one(
+                            {"_id": pending["_id"]},
+                            {"$set": {"status": "completed", "transaction_id": transaction_id}}
+                        )
+                        
+                        # Award XP to buyer
+                        await db.users.update_one(
+                            {"_id": ObjectId(user_id)},
+                            {"$inc": {"xp": 10}}  # XP for purchase
+                        )
+                        
+                        # Award XP to seller
+                        await db.users.update_one(
+                            {"_id": ObjectId(protocol["creator_id"])},
+                            {"$inc": {"xp": 50}}  # XP for sale
+                        )
+                        
+                        logger.info(f"Purchase confirmed via webhook: {transaction_id}")
+            
+            # Mark webhook as processed
+            await db.paypal_webhooks.update_one(
+                {"event_id": event.id},
+                {"$set": {"processed": True, "processed_at": datetime.utcnow()}}
+            )
+        
+        return {"status": "ok", "received": True}
+        
+    except Exception as e:
+        logger.error(f"PayPal webhook error: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+@api_router.post("/marketplace/initiate-purchase")
+async def initiate_purchase(protocol_id: str = Body(...), user = Depends(get_current_user)):
+    """Initiate a purchase - creates pending record and returns PayPal payment URL"""
+    protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(protocol_id)})
+    
+    if not protocol:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    
+    if protocol.get("creator_id") == str(user["_id"]):
+        raise HTTPException(status_code=400, detail="Cannot purchase your own protocol")
+    
+    # Check if already owned
+    existing = await db.marketplace_purchases.find_one({
+        "protocol_id": protocol_id,
+        "user_id": str(user["_id"])
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="You already own this protocol")
+    
+    # Create pending purchase
+    pending = {
+        "protocol_id": protocol_id,
+        "user_id": str(user["_id"]),
+        "amount": protocol["price"],
+        "protocol_name": protocol["name"],
+        "status": "pending",
+        "created_at": datetime.utcnow(),
+        "expires_at": datetime.utcnow() + timedelta(hours=24)
+    }
+    
+    result = await db.pending_purchases.insert_one(pending)
+    
+    # Generate PayPal payment URL
+    custom_id = f"{protocol_id}:{str(user['_id'])}"
+    paypal_url = f"https://www.paypal.com/paypalme/JJSpilot24/{protocol['price']}USD?custom_id={custom_id}"
+    
+    return {
+        "pending_id": str(result.inserted_id),
+        "protocol_name": protocol["name"],
+        "amount": protocol["price"],
+        "payment_url": paypal_url,
+        "expires_at": pending["expires_at"].isoformat()
+    }
+
+@api_router.post("/marketplace/confirm-payment")
+async def confirm_payment(data: ManualPaymentConfirm, user = Depends(get_current_user)):
+    """Manually confirm a PayPal payment (for sellers to verify purchases)"""
+    protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(data.protocol_id)})
+    
+    if not protocol:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    
+    # Check for pending purchase
+    pending = await db.pending_purchases.find_one({
+        "protocol_id": data.protocol_id,
+        "user_id": str(user["_id"]),
+        "status": "pending"
+    })
+    
+    if not pending:
+        raise HTTPException(status_code=400, detail="No pending purchase found")
+    
+    # Verify amount matches
+    if abs(data.amount - protocol["price"]) > 0.01:
+        raise HTTPException(status_code=400, detail="Payment amount does not match protocol price")
+    
+    # Complete the purchase
+    creator_earnings = data.amount * 0.9
+    
+    purchase_record = {
+        "protocol_id": data.protocol_id,
+        "user_id": str(user["_id"]),
+        "payment_id": data.transaction_id,
+        "price": data.amount,
+        "creator_earnings": creator_earnings,
+        "status": "completed",
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.marketplace_purchases.insert_one(purchase_record)
+    
+    # Update protocol stats
+    await db.marketplace_protocols.update_one(
+        {"_id": ObjectId(data.protocol_id)},
+        {"$inc": {"total_sales": 1, "total_revenue": data.amount, "creator_earnings": creator_earnings}}
+    )
+    
+    # Update pending purchase
+    await db.pending_purchases.update_one(
+        {"_id": pending["_id"]},
+        {"$set": {"status": "completed", "transaction_id": data.transaction_id}}
+    )
+    
+    # Award XP
+    await db.users.update_one({"_id": user["_id"]}, {"$inc": {"xp": 10}})
+    await db.users.update_one(
+        {"_id": ObjectId(protocol["creator_id"])},
+        {"$inc": {"xp": 50}}
+    )
+    
+    return {
+        "success": True,
+        "message": "Payment confirmed!",
+        "protocol": protocol["protocol"],
+        "protocol_name": protocol["name"]
+    }
+
+@api_router.get("/marketplace/pending-purchases")
+async def get_pending_purchases(user = Depends(get_current_user)):
+    """Get user's pending purchases"""
+    pending = await db.pending_purchases.find({
+        "user_id": str(user["_id"]),
+        "status": "pending",
+        "expires_at": {"$gt": datetime.utcnow()}
+    }).to_list(100)
+    
+    return {
+        "pending": [{
+            "id": str(p["_id"]),
+            "protocol_id": p["protocol_id"],
+            "protocol_name": p.get("protocol_name"),
+            "amount": p["amount"],
+            "created_at": p["created_at"].isoformat(),
+            "expires_at": p["expires_at"].isoformat()
+        } for p in pending]
+    }
+
+@api_router.get("/marketplace/seller/sales")
+async def get_seller_sales(user = Depends(get_current_user)):
+    """Get detailed sales history for seller"""
+    # Get all protocols by this seller
+    protocols = await db.marketplace_protocols.find({"creator_id": str(user["_id"])}).to_list(100)
+    protocol_ids = [str(p["_id"]) for p in protocols]
+    
+    # Get all purchases of these protocols
+    purchases = await db.marketplace_purchases.find({
+        "protocol_id": {"$in": protocol_ids},
+        "status": "completed"
+    }).sort("created_at", -1).to_list(100)
+    
+    sales = []
+    for p in purchases:
+        protocol = next((pr for pr in protocols if str(pr["_id"]) == p["protocol_id"]), None)
+        if protocol:
+            sales.append({
+                "id": str(p["_id"]),
+                "protocol_name": protocol["name"],
+                "price": p["price"],
+                "your_earnings": p.get("creator_earnings", p["price"] * 0.9),
+                "buyer_id": p["user_id"],
+                "date": p["created_at"].isoformat()
+            })
+    
+    return {"sales": sales, "total_count": len(sales)}
+
+
 # ============== HEALTH CHECK ==============
 
 @api_router.get("/")
