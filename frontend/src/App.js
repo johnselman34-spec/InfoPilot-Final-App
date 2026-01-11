@@ -72,8 +72,8 @@ const MainApp = () => {
 
   return (
     <div className="app-container">
-      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} />
-      <main className="main-content">
+      <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} showToast={showToast} />
+      <main className="main-content pt-16 md:pt-0">
         {/* Book Promotion Banner - Always visible */}
         <BookPromoBanner />
         {/* Quote of the Day - Rotating manuscript quotes */}
