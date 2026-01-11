@@ -149,7 +149,7 @@ async def get_me(user = Depends(get_current_user)):
     return AuthService.format_user_response(user)
 
 
-@router.get("/auth/session-data")
+@router.get("/auth/google/session-data")
 async def get_session_data(session_id: str):
     """Get user data from Emergent Auth session"""
     try:
@@ -160,7 +160,11 @@ async def get_session_data(session_id: str):
             if response.status_code == 200:
                 return response.json()
             else:
+                logger.error(f"Emergent auth returned {response.status_code}: {response.text}")
                 raise HTTPException(status_code=500, detail="Failed to verify Google session")
+    except httpx.TimeoutException:
+        logger.error("Timeout connecting to Emergent auth")
+        raise HTTPException(status_code=500, detail="Authentication service timeout")
     except Exception as e:
         logger.error(f"Session verification error: {e}")
         raise HTTPException(status_code=500, detail="Failed to verify Google session")
