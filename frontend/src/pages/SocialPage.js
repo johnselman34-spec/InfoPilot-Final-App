@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import { Icons } from '../components/shared';
@@ -12,12 +12,7 @@ const SocialPage = ({ showToast }) => {
   const [newPost, setNewPost] = useState('');
   const [postingFeed, setPostingFeed] = useState(false);
 
-  useEffect(() => {
-    if (activeTab === 'friends') fetchFriends();
-    if (activeTab === 'feed') fetchFeed();
-  }, [activeTab]);
-
-  const fetchFriends = async () => {
+  const fetchFriends = useCallback(async () => {
     try {
       const res = await fetch(`${API}/friends`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -29,9 +24,9 @@ const SocialPage = ({ showToast }) => {
     } catch (e) {
       console.error('Failed to fetch friends:', e);
     }
-  };
+  }, [token]);
 
-  const fetchFeed = async () => {
+  const fetchFeed = useCallback(async () => {
     try {
       const res = await fetch(`${API}/feed`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -43,7 +38,12 @@ const SocialPage = ({ showToast }) => {
     } catch (e) {
       console.error('Failed to fetch feed:', e);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (activeTab === 'friends') fetchFriends();
+    if (activeTab === 'feed') fetchFeed();
+  }, [activeTab, fetchFriends, fetchFeed]);
 
   const createFeedPost = async () => {
     if (!newPost.trim()) return;
