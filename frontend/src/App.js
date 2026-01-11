@@ -1456,6 +1456,8 @@ const UltimateSearchPage = ({ showToast }) => {
                       </span>
                     ))}
                   </div>
+                  {/* Hashtags */}
+                  <HashtagDisplay hashtags={extractHashtags(result.title, result.snippet, result.article_type)} />
                   <div className="reactions-bar">
                     {['Like', 'Love', 'Funny', 'Sad', 'Best'].map(reaction => (
                       <button
