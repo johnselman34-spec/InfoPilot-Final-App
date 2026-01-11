@@ -2133,6 +2133,199 @@ async def leave_group(group_id: str, user = Depends(get_current_user)):
     )
     return {"message": "Left group successfully"}
 
+
+@api_router.get("/groups/{group_id}")
+async def get_group_details(group_id: str, user = Depends(get_current_user)):
+    """Get detailed group info including posts"""
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    user_id = str(user["_id"])
+    is_member = user_id in group.get("members", []) or group.get("creator_id") == user_id
+    
+    # Get group posts
+    posts = await db.group_posts.find({"group_id": group_id}).sort("created_at", -1).limit(50).to_list(50)
+    
+    # Enrich posts with user info
+    enriched_posts = []
+    for post in posts:
+        author = await db.users.find_one({"_id": ObjectId(post["user_id"])})
+        enriched_posts.append({
+            "id": str(post["_id"]),
+            "content": post["content"],
+            "author_id": post["user_id"],
+            "author_name": author.get("username", "Unknown") if author else "Unknown",
+            "likes": post.get("likes", []),
+            "comments": post.get("comments", []),
+            "created_at": post["created_at"].isoformat()
+        })
+    
+    return {
+        "id": str(group["_id"]),
+        "name": group["name"],
+        "description": group.get("description"),
+        "is_public": group.get("is_public", True),
+        "creator_id": group.get("creator_id"),
+        "member_count": len(group.get("members", [])) + 1,
+        "is_member": is_member,
+        "is_creator": group.get("creator_id") == user_id,
+        "posts": enriched_posts,
+        "created_at": group.get("created_at").isoformat() if group.get("created_at") else None
+    }
+
+
+class GroupPostCreate(BaseModel):
+    content: str
+
+
+@api_router.post("/groups/{group_id}/posts")
+async def create_group_post(group_id: str, post: GroupPostCreate, user = Depends(get_current_user)):
+    """Create a post in a group"""
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    user_id = str(user["_id"])
+    is_member = user_id in group.get("members", []) or group.get("creator_id") == user_id
+    
+    if not is_member and not group.get("is_public"):
+        raise HTTPException(status_code=403, detail="You must be a member to post")
+    
+    post_doc = {
+        "group_id": group_id,
+        "user_id": user_id,
+        "content": post.content,
+        "likes": [],
+        "comments": [],
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.group_posts.insert_one(post_doc)
+    
+    # Award XP for posting
+    await db.users.update_one({"_id": user["_id"]}, {"$inc": {"xp": 5}})
+    
+    return {
+        "id": str(result.inserted_id),
+        "content": post.content,
+        "author_name": user.get("username"),
+        "created_at": post_doc["created_at"].isoformat()
+    }
+
+
+@api_router.post("/groups/{group_id}/posts/{post_id}/like")
+async def like_group_post(group_id: str, post_id: str, user = Depends(get_current_user)):
+    """Like/unlike a group post"""
+    post = await db.group_posts.find_one({"_id": ObjectId(post_id), "group_id": group_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    user_id = str(user["_id"])
+    if user_id in post.get("likes", []):
+        await db.group_posts.update_one({"_id": ObjectId(post_id)}, {"$pull": {"likes": user_id}})
+        return {"liked": False}
+    else:
+        await db.group_posts.update_one({"_id": ObjectId(post_id)}, {"$addToSet": {"likes": user_id}})
+        return {"liked": True}
+
+
+@api_router.post("/groups/{group_id}/posts/{post_id}/comment")
+async def comment_group_post(group_id: str, post_id: str, content: str = Body(..., embed=True), user = Depends(get_current_user)):
+    """Comment on a group post"""
+    post = await db.group_posts.find_one({"_id": ObjectId(post_id), "group_id": group_id})
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    
+    comment = {
+        "id": str(uuid.uuid4()),
+        "user_id": str(user["_id"]),
+        "username": user.get("username"),
+        "content": content,
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    await db.group_posts.update_one({"_id": ObjectId(post_id)}, {"$push": {"comments": comment}})
+    
+    return {"message": "Comment added", "comment": comment}
+
+
+# ============== SOCIAL FEED ==============
+
+@api_router.get("/feed")
+async def get_social_feed(user = Depends(get_current_user)):
+    """Get personalized social feed with posts from friends and groups"""
+    user_id = str(user["_id"])
+    
+    # Get user's groups
+    groups = await db.groups.find({
+        "$or": [
+            {"members": user_id},
+            {"creator_id": user_id}
+        ]
+    }).to_list(100)
+    group_ids = [str(g["_id"]) for g in groups]
+    
+    # Get posts from groups
+    feed_posts = []
+    
+    # Group posts
+    group_posts = await db.group_posts.find({
+        "group_id": {"$in": group_ids}
+    }).sort("created_at", -1).limit(30).to_list(30)
+    
+    for post in group_posts:
+        author = await db.users.find_one({"_id": ObjectId(post["user_id"])})
+        group = next((g for g in groups if str(g["_id"]) == post["group_id"]), None)
+        
+        feed_posts.append({
+            "id": str(post["_id"]),
+            "type": "group_post",
+            "content": post["content"],
+            "author_id": post["user_id"],
+            "author_name": author.get("username", "Unknown") if author else "Unknown",
+            "group_id": post["group_id"],
+            "group_name": group["name"] if group else "Unknown Group",
+            "likes": len(post.get("likes", [])),
+            "is_liked": user_id in post.get("likes", []),
+            "comment_count": len(post.get("comments", [])),
+            "created_at": post["created_at"].isoformat()
+        })
+    
+    # Sort by date
+    feed_posts.sort(key=lambda x: x["created_at"], reverse=True)
+    
+    return {"posts": feed_posts[:30]}
+
+
+class FeedPostCreate(BaseModel):
+    content: str
+
+
+@api_router.post("/feed/post")
+async def create_feed_post(post: FeedPostCreate, user = Depends(get_current_user)):
+    """Create a general feed post (visible to friends)"""
+    post_doc = {
+        "user_id": str(user["_id"]),
+        "content": post.content,
+        "likes": [],
+        "comments": [],
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.feed_posts.insert_one(post_doc)
+    
+    # Award XP
+    await db.users.update_one({"_id": user["_id"]}, {"$inc": {"xp": 5}})
+    
+    return {
+        "id": str(result.inserted_id),
+        "content": post.content,
+        "author_name": user.get("username"),
+        "created_at": post_doc["created_at"].isoformat()
+    }
+
+
 # ============== PAGES ENDPOINTS ==============
 
 class PageCreate(BaseModel):
