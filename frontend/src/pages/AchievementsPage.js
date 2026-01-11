@@ -342,12 +342,38 @@ const AchievementsPage = ({ showToast }) => {
       {/* Leaderboard Tab */}
       {activeTab === 'leaderboard' && (
         <div>
+          {/* Period Selector */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+            {[
+              { id: 'all', label: '🏆 All Time' },
+              { id: 'weekly', label: '📅 This Week' },
+              { id: 'monthly', label: '📆 This Month' }
+            ].map(period => (
+              <button
+                key={period.id}
+                className={`btn ${leaderboardPeriod === period.id ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setLeaderboardPeriod(period.id)}
+                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                data-testid={`leaderboard-${period.id}`}
+              >
+                {period.label}
+              </button>
+            ))}
+          </div>
+
           <p style={{ color: '#a1a1aa', marginBottom: 20 }}>
-            Top InfoPilot users ranked by XP
+            {leaderboardPeriod === 'all' && 'Top InfoPilot users ranked by total XP'}
+            {leaderboardPeriod === 'weekly' && 'Top performers this week (resets Monday)'}
+            {leaderboardPeriod === 'monthly' && 'Top performers this month (resets 1st)'}
           </p>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {leaderboard.map((entry, index) => {
+            {(leaderboardPeriod === 'all' ? leaderboard : 
+              leaderboardPeriod === 'weekly' ? weeklyLeaderboard : monthlyLeaderboard
+            ).map((entry, index) => {
               const isCurrentUser = entry.user_id === profile?.user_id;
+              const xpValue = leaderboardPeriod === 'weekly' ? entry.weekly_xp : 
+                              leaderboardPeriod === 'monthly' ? entry.monthly_xp : entry.xp;
               return (
                 <div
                   key={entry.user_id}
@@ -384,16 +410,135 @@ const AchievementsPage = ({ showToast }) => {
                       {isCurrentUser && <span style={{ color: '#f472b6', marginLeft: 8, fontSize: '0.8rem' }}>(You)</span>}
                     </div>
                     <div style={{ color: '#a1a1aa', fontSize: '0.8rem' }}>
-                      Level {entry.level} • {entry.badge_count} badges
+                      Level {entry.level || '?'} • {entry.badge_count || 0} badges
                     </div>
                   </div>
                   
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ color: '#fbbf24', fontWeight: 700 }}>{entry.xp.toLocaleString()} XP</div>
+                    <div style={{ color: '#fbbf24', fontWeight: 700 }}>{(xpValue || 0).toLocaleString()} XP</div>
                   </div>
                 </div>
               );
             })}
+            {(leaderboardPeriod === 'all' ? leaderboard : 
+              leaderboardPeriod === 'weekly' ? weeklyLeaderboard : monthlyLeaderboard
+            ).length === 0 && (
+              <div style={{ textAlign: 'center', padding: 30, background: 'rgba(30, 20, 50, 0.5)', borderRadius: 12 }}>
+                <p style={{ color: '#a1a1aa' }}>
+                  {leaderboardPeriod === 'weekly' && 'No activity this week yet. Be the first!'}
+                  {leaderboardPeriod === 'monthly' && 'No activity this month yet. Be the first!'}
+                  {leaderboardPeriod === 'all' && 'No users on the leaderboard yet.'}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Share Badge Modal */}
+      {shareModal && (
+        <div 
+          className="modal-overlay"
+          onClick={() => setShareModal(null)}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div 
+            className="modal"
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
+              borderRadius: 20,
+              padding: 30,
+              maxWidth: 450,
+              width: '90%',
+              border: '2px solid rgba(251, 191, 36, 0.5)'
+            }}
+          >
+            <h3 style={{ color: '#fbbf24', marginBottom: 15 }}>🏆 Share Your Badge!</h3>
+            
+            <div style={{
+              background: getRarityColor(shareModal.badge?.rarity),
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 20,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 15
+            }}>
+              <span style={{ fontSize: '2.5rem' }}>{shareModal.badge?.icon}</span>
+              <div>
+                <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem' }}>{shareModal.badge?.name}</div>
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>{shareModal.badge?.description}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <a
+                href={shareModal.share_urls?.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn"
+                style={{ 
+                  background: '#1DA1F2', 
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  textDecoration: 'none'
+                }}
+              >
+                🐦 Share on Twitter
+              </a>
+              <a
+                href={shareModal.share_urls?.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn"
+                style={{ 
+                  background: '#4267B2', 
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  textDecoration: 'none'
+                }}
+              >
+                📘 Share on Facebook
+              </a>
+              <button
+                className="btn btn-secondary"
+                onClick={copyShareText}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8
+                }}
+              >
+                📋 Copy to Clipboard
+              </button>
+              <button
+                className="btn"
+                onClick={() => setShareModal(null)}
+                style={{ 
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#a1a1aa'
+                }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
