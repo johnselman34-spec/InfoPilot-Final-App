@@ -727,6 +727,98 @@ const AdminPanel = ({ showToast }) => {
           </div>
         )}
 
+        {activeTab === 'newsletter' && (
+          <div>
+            <h3 style={{ marginBottom: 20, color: '#f472b6' }}>📧 Weekly Newsletter</h3>
+            <p style={{ color: '#a1a1aa', marginBottom: 20 }}>
+              Generate and send AI-powered funny newsletters to promote your book and app!
+            </p>
+            
+            <div style={{ display: 'flex', gap: 15, marginBottom: 25 }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={generateNewsletter}
+                disabled={newsletterLoading}
+              >
+                {newsletterLoading ? '🤖 Generating...' : '🎨 Generate New Newsletter'}
+              </button>
+              <button 
+                className="btn btn-success" 
+                onClick={sendNewsletter}
+                disabled={newsletterLoading}
+              >
+                📤 Send to All Users
+              </button>
+            </div>
+
+            {/* Newsletter Preview */}
+            {newsletterPreview && (
+              <div style={{ marginBottom: 25 }}>
+                <h4 style={{ color: '#f472b6', marginBottom: 10 }}>Preview:</h4>
+                <div 
+                  style={{ 
+                    background: '#fff', 
+                    borderRadius: 12, 
+                    padding: 20, 
+                    maxHeight: 500, 
+                    overflow: 'auto',
+                    border: '2px solid rgba(236, 72, 153, 0.3)'
+                  }}
+                  dangerouslySetInnerHTML={{ __html: newsletterPreview }}
+                />
+              </div>
+            )}
+
+            {/* Newsletter History */}
+            <div>
+              <h4 style={{ color: '#f472b6', marginBottom: 15 }}>📜 Newsletter History</h4>
+              {newsletterHistory.length === 0 ? (
+                <p style={{ color: '#a1a1aa' }}>No newsletters sent yet.</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {newsletterHistory.map((n, i) => (
+                    <div key={n.id} style={{ 
+                      padding: 15, 
+                      background: 'rgba(30, 20, 50, 0.5)', 
+                      borderRadius: 10,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div>
+                        <span style={{ color: n.ai_generated ? '#10b981' : '#f472b6' }}>
+                          {n.ai_generated ? '🤖 AI Generated' : '📝 Template'}
+                        </span>
+                        <span style={{ color: '#a1a1aa', marginLeft: 15 }}>
+                          {new Date(n.generated_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div>
+                        {n.sent ? (
+                          <span style={{ color: '#10b981' }}>
+                            ✅ Sent to {n.sent_count} users
+                          </span>
+                        ) : (
+                          <span style={{ color: '#fbbf24' }}>⏳ Not sent</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: 25, padding: 15, background: 'rgba(236, 72, 153, 0.1)', borderRadius: 10, border: '1px solid rgba(236, 72, 153, 0.3)' }}>
+              <p style={{ fontSize: '0.85rem', color: '#f472b6' }}>
+                💡 Newsletter promotes:<br/>
+                • "Letters to Evelyn" by John Selman - $2.99 on Amazon<br/>
+                • InfoPilot Premium subscriptions - Pay what you want!<br/>
+                • Uses AI to create funny, engaging content that converts!
+              </p>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'users' && (
           <div>
             <h3 style={{ marginBottom: 20, color: '#f472b6' }}>User Management</h3>
