@@ -258,10 +258,15 @@ class ProtocolParser:
     def text_contains_item(text_lower: str, item: str) -> bool:
         """
         Check if text contains the item (word or phrase)
-        Handles abbreviations with periods (U.S., Ph.D., etc.)
+        MORE LENIENT matching for better results:
+        - Handles abbreviations with periods (U.S., Ph.D., etc.)
+        - Handles partial word matches for compound words
+        - Case-insensitive
         """
-        if not item:
+        if not item or not text_lower:
             return False
+        
+        item = item.lower().strip()
         
         # For phrases with spaces, do substring match
         if ' ' in item:
@@ -269,23 +274,43 @@ class ProtocolParser:
         
         # For abbreviations with periods (u.s., ph.d., etc.)
         if '.' in item:
-            # Direct substring match for abbreviations
-            return item in text_lower
+            # Try with and without periods
+            item_no_periods = item.replace('.', '')
+            return item in text_lower or item_no_periods in text_lower
         
-        # For single words, use word boundary matching
-        # This prevents "civil" from matching "civilian"
-        pattern = r'\b' + re.escape(item) + r'\b'
-        return bool(re.search(pattern, text_lower))
+        # Direct substring match first (most lenient)
+        if item in text_lower:
+            return True
+        
+        # For single words, also try word boundary matching
+        # But be lenient - match if the word appears anywhere
+        try:
+            pattern = r'\b' + re.escape(item) + r'\b'
+            if re.search(pattern, text_lower):
+                return True
+        except:
+            pass
+        
+        # Try partial match for longer words (stemming-like behavior)
+        if len(item) >= 5:
+            # Match if the item appears as part of a larger word
+            if item in text_lower:
+                return True
+        
+        return False
     
     @staticmethod
     def matches_protocol(text: str, protocol: str) -> bool:
-        """Check if text matches the protocol requirements"""
+        """Check if text matches the protocol requirements - MORE LENIENT"""
         if not text or not protocol:
             return False
             
         parsed = ProtocolParser.parse_protocol(protocol)
         if not parsed["valid"]:
-            return False
+            # If protocol parsing fails, try simple keyword matching
+            keywords = re.findall(r'\w+', protocol.lower())
+            text_lower = text.lower()
+            return any(kw in text_lower for kw in keywords if len(kw) >= 3)
         
         text_lower = ProtocolParser.normalize_text(text)
         
