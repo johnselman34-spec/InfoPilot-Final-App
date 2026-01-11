@@ -3013,7 +3013,13 @@ CURRENT STATS (make these sound impressive and funny):
 - Information Atoms Collated: {total_results} search results
 - Knowledge Categories Discovered: {total_categories}
 
-===== 🌟 FEATURED BOOK PROMOTION (THE STAR OF THE SHOW!) 🌟 =====
+===== 📖 BOOK SUMMARY (From the ACTUAL MANUSCRIPT!) =====
+{MANUSCRIPT_CONTENT['book_meta']['summary']}
+
+⚠️ COPYRIGHT WARNING (Include this - it's hilarious!):
+{MANUSCRIPT_CONTENT['book_meta']['copyright_warning']}
+
+===== 🌟 FEATURED BOOK PROMOTION =====
 
 📚 "LETTERS TO EVELYN" by John Selman
 - Genre: A True Supernatural Thriller Comedy
@@ -3021,39 +3027,56 @@ CURRENT STATS (make these sound impressive and funny):
 - Amazon Rating: 5.0 out of 5 stars with {BOOK_REVIEWS['amazon']['total_reviews']} reviews!
 - 19 PROFESSIONAL Five-Star Reviews from Readers' Favorite
 
-THIS WEEK'S HILARIOUS AD TAGLINE (USE THIS AS A CENTERPIECE!):
+THIS WEEK'S HILARIOUS AD TAGLINE:
 🎯 "{promo['tagline']}"
 ✨ Subtitle: "{promo['subtitle']}"
 🎨 Theme: {promo['theme']}
 
-FEATURED IMAGE TO INCLUDE:
+FEATURED IMAGE:
 <img src="{promo['url']}" alt="Letters to Evelyn - {promo['tagline']}" style="max-width: 300px; border-radius: 15px; box-shadow: 0 15px 40px rgba(124,58,237,0.4); border: 3px solid #7c3aed;">
 
-===== ABSOLUTELY WILD PLOT ELEMENTS (REFERENCE THESE!) =====
-🎖️ The author was a Navy ROTC TOP STUDENT who dreamed of flying like his father
-💊 His stepmother Lauren POISONED his food with LSD, causing 10+ MONTHS of hallucinations
-🏆 He holds a WORLD RECORD for the steepest Sarajevo Approach in a T-34C aircraft! (83° nose dive from 6000ft to 5ft above treetops!)
-💌 He writes beautiful love letters to a mysterious woman named Evelyn Tuskegee
-😂 Contains "upwards of 50 finely-crafted deafening, zany, zesty, zoo zingers... JOKES!"
-🎤 Author's BOLD claim: "More funny than Dave Chappelle or your money back!"
-👽 Features extraterrestrial encounters and a "phantasmagoria of disconnected thoughts"
-💪 The author survived 12+ DAYS WITHOUT SLEEP after being poisoned! (Northeast US record!)
+===== 🎭 CHARACTER SPOTLIGHT =====
+This week featuring: {char_spotlight[0]}
+Description: {char_spotlight[1]}
 
-===== PROFESSIONAL REVIEWS TO FEATURE (Pick 2-3) =====
+===== 🤯 WILD PLOT ELEMENTS FROM THE MANUSCRIPT (Use 2-3!) =====
+{wild_elements_text}
+
+===== 💬 HILARIOUS QUOTES FROM THE BOOK (Feature 1-2!) =====
+{quotes_text}
+
+===== 📚 CHAPTER TEASERS (Pick 1-2 to feature!) =====
+{chapter_teasers_text}
+
+===== 🎤 DAD JOKES (Feature one in a special box!) =====
+{dad_jokes_text}
+
+===== 💫 PROFOUND LINES (Balance the absurdity!) =====
+{profound_text}
+
+===== 🎯 MARKETING HOOKS (Inspiration for headlines!) =====
+{marketing_hooks[0]}
+{marketing_hooks[1] if len(marketing_hooks) > 1 else ''}
+
+===== 📧 NEWSLETTER THEME FOR THIS WEEK =====
+Theme: {theme['theme']}
+Angle: {theme['angle']}
+
+===== ⭐ PROFESSIONAL REVIEWS (Pick 2-3) =====
 {rf_reviews_text}
 
-===== AMAZON READER REVIEWS (Pick 1-2) =====
+===== 📱 AMAZON READER REVIEWS (Pick 1-2) =====
 {amazon_reviews_text}
 
-===== DAD JOKE OF THE WEEK =====
-🎭 "{selected_joke}"
+===== 🎭 FEATURED DAD JOKE OF THE WEEK =====
+"{selected_joke}"
 
-===== INFOPILOT SUBSCRIPTION =====
+===== 🚀 INFOPILOT SUBSCRIPTION =====
 Premium subscription: Pay what you want! Starting at $0.75/year
 (That's less than a single gumball from those fancy machines!)
 (That's approximately 0.002 cents per day of cosmic knowledge!)
 
-===== STYLE & DESIGN REQUIREMENTS =====
+===== 🎨 STYLE & DESIGN REQUIREMENTS =====
 Color Palette:
 - Primary: Deep space purple (#7c3aed), Cosmic pink (#ec4899)
 - Accents: Galactic blue (#3b82f6), Neon green (#10b981), Star gold (#fbbf24)
@@ -3064,17 +3087,21 @@ Design Elements:
 - Include the book image with glowing effects
 - Create URGENCY ("The universe is waiting! Only mortals hesitate!")
 - Be ABSURD and SURREAL (match the book's cosmic vibe)
-- Include the Dad Joke of the Week in a highlighted box
+- Include a QUOTE BOX featuring one manuscript quote with context
+- Include the COPYRIGHT WARNING section (it's marketing gold!)
+- Feature the Dad Joke of the Week in a highlighted box
 - Make buttons BIG, COLORFUL, and IRRESISTIBLE
-- Add subtle space/cosmic theme throughout
+- Include a teaser for one chapter
 - Sign off as "Your Friends at InfoPilot (Cosmically Approved! ✨)"
 
 HUMOR GUIDELINES:
-- Channel Douglas Adams meets Terry Pratchett
+- Channel Douglas Adams meets Terry Pratchett meets Monty Python
+- Use ACTUAL QUOTES from the manuscript - they're funnier than anything we could make up!
 - Self-aware meta-humor about email marketing
+- Reference the Jesus encounters (comedically - he kept saying 'Fack off!')
 - Cosmic absurdity that ties back to the book's themes
 - Warm and welcoming - we want people to ENJOY this email
-- Maybe acknowledge that yes, we ARE really promoting this book... because it's ACTUALLY that good!
+- Acknowledge that yes, we ARE really promoting this book... because it's ACTUALLY that wild and good!
 
 Amazon Link: https://www.amazon.com/Letters-Evelyn-John-Selman-ebook/dp/B0CQZ8R191
 
