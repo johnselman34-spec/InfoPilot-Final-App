@@ -58,14 +58,29 @@ const NotificationBell = ({ showToast }) => {
   useEffect(() => {
     if (!token || !user) return;
 
-    const wsUrl = API.replace('http', 'ws').replace('/api', '') + `/api/ws/notifications?token=${token}`;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    let reconnectTimeout = null;
     
     const connectWebSocket = () => {
+      // Don't reconnect if we've exceeded max attempts
+      if (reconnectAttempts >= maxReconnectAttempts) {
+        console.log('Max WebSocket reconnect attempts reached, falling back to polling');
+        return;
+      }
+      
       try {
+        // Build WebSocket URL properly
+        const baseUrl = API.replace('/api', '');
+        const wsProtocol = baseUrl.startsWith('https') ? 'wss' : 'ws';
+        const wsHost = baseUrl.replace(/^https?:\/\//, '');
+        const wsUrl = `${wsProtocol}://${wsHost}/api/ws/notifications?token=${token}`;
+        
         wsRef.current = new WebSocket(wsUrl);
         
         wsRef.current.onopen = () => {
           console.log('Notifications WebSocket connected');
+          reconnectAttempts = 0; // Reset on successful connection
         };
         
         wsRef.current.onmessage = (event) => {
@@ -92,27 +107,34 @@ const NotificationBell = ({ showToast }) => {
           }
         };
         
-        wsRef.current.onclose = () => {
-          console.log('Notifications WebSocket closed');
-          // Reconnect after 5 seconds
-          setTimeout(connectWebSocket, 5000);
+        wsRef.current.onclose = (event) => {
+          console.log('Notifications WebSocket closed:', event.code);
+          reconnectAttempts++;
+          // Exponential backoff for reconnection
+          const delay = Math.min(5000 * Math.pow(2, reconnectAttempts - 1), 30000);
+          reconnectTimeout = setTimeout(connectWebSocket, delay);
         };
         
         wsRef.current.onerror = (error) => {
-          console.error('WebSocket error:', error);
+          // WebSocket errors are expected if the server doesn't support WebSockets
+          // Silently handle and fall back to polling via REST API
+          console.log('WebSocket connection not available, using REST API for notifications');
         };
       } catch (e) {
-        console.error('Failed to connect WebSocket:', e);
+        console.log('WebSocket not supported, using REST API for notifications');
       }
     };
 
     connectWebSocket();
     
-    // Initial fetch
+    // Initial fetch (always works even without WebSocket)
     fetchNotifications();
     fetchUnreadCount();
 
     return () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
       if (wsRef.current) {
         wsRef.current.close();
       }
