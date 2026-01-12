@@ -111,10 +111,14 @@ async def update_category(category_id: str, update: CategoryUpdate, user = Depen
 @router.delete("/categories/{category_id}")
 async def delete_category(category_id: str, user = Depends(get_current_user)):
     """Delete a category and its children"""
-    category = await db.categories.find_one({
-        "_id": ObjectId(category_id),
-        "user_id": str(user["_id"])
-    })
+    # Admin can delete any category, regular users can only delete their own
+    if user.get("is_admin"):
+        category = await db.categories.find_one({"_id": ObjectId(category_id)})
+    else:
+        category = await db.categories.find_one({
+            "_id": ObjectId(category_id),
+            "user_id": str(user["_id"])
+        })
     
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
