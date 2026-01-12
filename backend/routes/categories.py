@@ -75,10 +75,14 @@ async def create_category(category: CategoryCreate, user = Depends(get_current_u
 @router.put("/categories/{category_id}", response_model=dict)
 async def update_category(category_id: str, update: CategoryUpdate, user = Depends(get_current_user)):
     """Update a category"""
-    category = await db.categories.find_one({
-        "_id": ObjectId(category_id),
-        "user_id": str(user["_id"])
-    })
+    # Admin can edit any category, regular users can only edit their own
+    if user.get("is_admin"):
+        category = await db.categories.find_one({"_id": ObjectId(category_id)})
+    else:
+        category = await db.categories.find_one({
+            "_id": ObjectId(category_id),
+            "user_id": str(user["_id"])
+        })
     
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
