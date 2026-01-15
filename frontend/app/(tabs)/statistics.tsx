@@ -7,375 +7,454 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
-  Image,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/utils/colors';
 import { api } from '../../src/services/api';
+import { LineChart, BarChart, PieChart, ProgressChart } from 'react-native-chart-kit';
 
 const { width } = Dimensions.get('window');
+const chartWidth = width - 40;
 
-interface Statistics {
+interface StatisticsData {
   overview: {
     total_users: number;
     total_protocols: number;
     total_searches: number;
-    total_sales: number;
+    total_categories: number;
+    total_transactions: number;
     total_revenue: number;
   };
-  country_breakdown: Record<string, number>;
-  content_type_breakdown: Record<string, number>;
+  top_categories: Array<{ name: string; count: number }>;
+  top_words: Array<{ word: string; count: number }>;
   top_protocol_words: Array<{ word: string; count: number }>;
+  document_types: Array<{ type: string; count: number }>;
+  countries: Array<{ country: string; count: number }>;
+  states: Array<{ state: string; count: number }>;
 }
 
 interface LeaderboardEntry {
   rank: number;
-  user_id: string;
   username: string;
-  profile_photo?: string;
   sales_count: number;
   revenue: number;
-  title: string;
 }
 
-interface Badge {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  category: string;
-  rarity: string;
-  earned?: boolean;
-  locked?: boolean;
-}
-
-type ViewMode = 'stats' | 'leaderboard' | 'badges';
-type LeaderboardTab = 'sales' | 'revenue' | 'both';
-
-// Colors for pie chart
-const PIE_COLORS = [colors.primary, colors.secondary, colors.accent, colors.marketplaceGold, colors.success, colors.tertiary, '#FF6B6B', '#4ECDC4'];
+type ChartType = 'overview' | 'categories' | 'words' | 'documents' | 'geography' | 'leaderboard';
+type LeaderboardTab = 'sales' | 'revenue';
 
 export default function StatisticsScreen() {
-  const [viewMode, setViewMode] = useState<ViewMode>('stats');
   const [loading, setLoading] = useState(true);
-  const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [stats, setStats] = useState<StatisticsData | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [leaderboardTab, setLeaderboardTab] = useState<LeaderboardTab>('both');
-  const [badges, setBadges] = useState<Badge[]>([]);
-  const [userBadges, setUserBadges] = useState<Badge[]>([]);
+  const [activeChart, setActiveChart] = useState<ChartType>('overview');
+  const [leaderboardTab, setLeaderboardTab] = useState<LeaderboardTab>('sales');
+  const [funnyMessage, setFunnyMessage] = useState('');
 
   useEffect(() => {
     loadData();
-  }, [viewMode, leaderboardTab]);
+  }, []);
+
+  useEffect(() => {
+    loadLeaderboard();
+  }, [leaderboardTab]);
 
   const loadData = async () => {
-    setLoading(true);
     try {
-      if (viewMode === 'stats') {
-        const response = await api.get('/statistics');
-        setStatistics(response);
-      } else if (viewMode === 'leaderboard') {
-        const response = await api.get(`/leaderboard/sellers?tab=${leaderboardTab}`);
-        setLeaderboard(response.leaderboard || []);
-      } else if (viewMode === 'badges') {
-        const allBadgesResponse = await api.get('/gamification/badges');
-        setBadges(allBadgesResponse.badges || []);
-        try {
-          const userBadgesResponse = await api.get('/gamification/user-badges');
-          setUserBadges(userBadgesResponse.badges || []);
-        } catch {
-          setUserBadges([]);
-        }
-      }
+      setLoading(true);
+      const response = await api.get('/statistics');
+      setStats(response);
+      setFunnyMessage(response.funny_message || getRandomFunnyMessage());
     } catch (error) {
       console.error('Load statistics error:', error);
-      // Set demo data
-      if (viewMode === 'stats') {
-        setStatistics({
-          overview: { total_users: 1234, total_protocols: 567, total_searches: 89012, total_sales: 345, total_revenue: 2456.78 },
-          country_breakdown: { 'USA': 450, 'UK': 230, 'Germany': 180, 'France': 120, 'Japan': 100 },
-          content_type_breakdown: { 'Web': 5000, 'News': 2500, 'Academic': 1800, 'Blog': 1200, 'Forum': 800 },
-          top_protocol_words: [
-            { word: 'history', count: 156 }, { word: 'research', count: 134 }, { word: 'science', count: 98 },
-            { word: 'business', count: 87 }, { word: 'technology', count: 76 }, { word: 'education', count: 65 }
-          ]
-        });
-      } else if (viewMode === 'leaderboard') {
-        setLeaderboard([
-          { rank: 1, user_id: 'u1', username: 'ProtocolKing', profile_photo: 'https://i.pravatar.cc/150?img=1', sales_count: 234, revenue: 567.89, title: '🏆 Protocol Tycoon' },
-          { rank: 2, user_id: 'u2', username: 'SearchQueen', profile_photo: 'https://i.pravatar.cc/150?img=2', sales_count: 189, revenue: 432.10, title: '💎 Diamond Seller' },
-          { rank: 3, user_id: 'u3', username: 'DataNinja', profile_photo: 'https://i.pravatar.cc/150?img=3', sales_count: 145, revenue: 298.50, title: '⭐ Star Seller' },
-        ]);
-      }
+      // Use mock data for demo
+      setStats(getMockStats());
+      setFunnyMessage(getRandomFunnyMessage());
     } finally {
       setLoading(false);
     }
   };
 
-  // Simple bar chart component
-  const BarChart = ({ data, title }: { data: Record<string, number>; title: string }) => {
-    const entries = Object.entries(data).slice(0, 6);
-    const maxValue = Math.max(...entries.map(([, v]) => v));
+  const loadLeaderboard = async () => {
+    try {
+      const response = await api.get('/leaderboard/sellers', { tab: leaderboardTab });
+      setLeaderboard(response.leaderboard || []);
+    } catch (error) {
+      console.error('Load leaderboard error:', error);
+      setLeaderboard(getMockLeaderboard());
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    await loadLeaderboard();
+    setRefreshing(false);
+  };
+
+  const getRandomFunnyMessage = () => {
+    const messages = [
+      "📊 Numbers so impressive, even calculators are jealous!",
+      "🚀 These stats are out of this world - literally sending them to NASA!",
+      "💡 Fun fact: 73% of statistics are made up. But not these ones!",
+      "🎯 Our data is so accurate, fortune tellers are asking for tips!",
+      "📈 Growth so strong, our charts need protein shakes!",
+      "🔥 These numbers are hotter than a jalapeño in a sauna!",
+      "🎪 Step right up! See the greatest show in data!",
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
+  const getMockStats = (): StatisticsData => ({
+    overview: {
+      total_users: 1247,
+      total_protocols: 892,
+      total_searches: 15632,
+      total_categories: 156,
+      total_transactions: 2891,
+      total_revenue: 8945.50,
+    },
+    top_categories: [
+      { name: 'American Civil War', count: 234 },
+      { name: 'Technology Research', count: 198 },
+      { name: 'World History', count: 167 },
+      { name: 'Science & Medicine', count: 145 },
+      { name: 'Business Strategy', count: 121 },
+    ],
+    top_words: [
+      { word: 'research', count: 1234 },
+      { word: 'history', count: 1089 },
+      { word: 'technology', count: 956 },
+      { word: 'science', count: 823 },
+      { word: 'business', count: 712 },
+      { word: 'education', count: 645 },
+      { word: 'innovation', count: 589 },
+      { word: 'strategy', count: 534 },
+      { word: 'development', count: 478 },
+      { word: 'analysis', count: 423 },
+    ],
+    top_protocol_words: [
+      { word: 'civil war', count: 456 },
+      { word: 'heroes', count: 389 },
+      { word: 'leadership', count: 312 },
+      { word: 'military', count: 278 },
+      { word: 'George Bush', count: 234 },
+      { word: 'William C. Gamble', count: 198 },
+      { word: 'battle', count: 167 },
+      { word: 'strategy', count: 145 },
+      { word: 'victory', count: 123 },
+      { word: 'generals', count: 112 },
+    ],
+    document_types: [
+      { type: 'Academic', count: 3456 },
+      { type: 'News', count: 2891 },
+      { type: 'Blog', count: 2234 },
+      { type: 'Wiki', count: 1876 },
+      { type: 'Forum', count: 1234 },
+      { type: 'PhD', count: 892 },
+      { type: 'Government', count: 567 },
+    ],
+    countries: [
+      { country: 'United States', count: 5678 },
+      { country: 'United Kingdom', count: 2345 },
+      { country: 'Germany', count: 1234 },
+      { country: 'Canada', count: 987 },
+      { country: 'Australia', count: 765 },
+      { country: 'France', count: 654 },
+      { country: 'Japan', count: 543 },
+    ],
+    states: [
+      { state: 'California', count: 1234 },
+      { state: 'New York', count: 1098 },
+      { state: 'Texas', count: 876 },
+      { state: 'Florida', count: 765 },
+      { state: 'New Mexico', count: 543 },
+    ],
+  });
+
+  const getMockLeaderboard = (): LeaderboardEntry[] => [
+    { rank: 1, username: 'JohnSelman', sales_count: 156, revenue: 2345.50 },
+    { rank: 2, username: 'ProtocolMaster', sales_count: 134, revenue: 1987.25 },
+    { rank: 3, username: 'ResearchGuru', sales_count: 112, revenue: 1654.00 },
+    { rank: 4, username: 'DataWizard', sales_count: 98, revenue: 1432.75 },
+    { rank: 5, username: 'InfoPilotPro', sales_count: 87, revenue: 1298.50 },
+  ];
+
+  const chartConfig = {
+    backgroundColor: colors.cardBackground,
+    backgroundGradientFrom: colors.cardBackground,
+    backgroundGradientTo: colors.background,
+    decimalPlaces: 0,
+    color: (opacity = 1) => `rgba(147, 51, 234, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+    style: {
+      borderRadius: 16,
+    },
+    propsForDots: {
+      r: '6',
+      strokeWidth: '2',
+      stroke: colors.primary,
+    },
+  };
+
+  const pieChartColors = [
+    '#9333EA', '#EC4899', '#F97316', '#10B981', '#3B82F6', '#EAB308', '#6366F1'
+  ];
+
+  // Render Overview Cards
+  const renderOverviewCards = () => {
+    if (!stats) return null;
+    
+    const cards = [
+      { icon: 'people', label: 'Total Users', value: stats.overview.total_users, color: '#9333EA' },
+      { icon: 'document-text', label: 'Protocols', value: stats.overview.total_protocols, color: '#EC4899' },
+      { icon: 'search', label: 'Searches', value: stats.overview.total_searches, color: '#3B82F6' },
+      { icon: 'folder', label: 'Categories', value: stats.overview.total_categories, color: '#10B981' },
+      { icon: 'cart', label: 'Transactions', value: stats.overview.total_transactions, color: '#F97316' },
+      { icon: 'cash', label: 'Revenue', value: `$${stats.overview.total_revenue.toFixed(2)}`, color: '#EAB308' },
+    ];
 
     return (
-      <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>{title}</Text>
-        {entries.map(([label, value], index) => (
-          <View key={label} style={styles.barRow}>
-            <Text style={styles.barLabel} numberOfLines={1}>{label}</Text>
-            <View style={styles.barContainer}>
-              <View 
-                style={[
-                  styles.bar, 
-                  { 
-                    width: `${(value / maxValue) * 100}%`,
-                    backgroundColor: PIE_COLORS[index % PIE_COLORS.length]
-                  }
-                ]} 
-              />
+      <View style={styles.overviewGrid}>
+        {cards.map((card, index) => (
+          <View key={index} style={[styles.overviewCard, { borderLeftColor: card.color }]}>
+            <View style={[styles.cardIconContainer, { backgroundColor: card.color + '20' }]}>
+              <Ionicons name={card.icon as any} size={24} color={card.color} />
             </View>
-            <Text style={styles.barValue}>{value}</Text>
+            <Text style={styles.cardValue}>{card.value}</Text>
+            <Text style={styles.cardLabel}>{card.label}</Text>
           </View>
         ))}
       </View>
     );
   };
 
-  // Pie chart visualization (simplified)
-  const PieChart = ({ data, title }: { data: Record<string, number>; title: string }) => {
-    const entries = Object.entries(data).slice(0, 6);
-    const total = entries.reduce((sum, [, v]) => sum + v, 0);
+  // Render Category Bar Chart
+  const renderCategoryChart = () => {
+    if (!stats || !stats.top_categories.length) return null;
+
+    const data = {
+      labels: stats.top_categories.slice(0, 5).map(c => c.name.substring(0, 10)),
+      datasets: [{
+        data: stats.top_categories.slice(0, 5).map(c => c.count),
+      }],
+    };
 
     return (
       <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>{title}</Text>
-        <View style={styles.pieContainer}>
-          <View style={styles.pieCircle}>
-            {entries.map(([label, value], index) => {
-              const percentage = Math.round((value / total) * 100);
-              return (
+        <Text style={styles.chartTitle}>📊 Top Categories</Text>
+        <BarChart
+          data={data}
+          width={chartWidth}
+          height={220}
+          chartConfig={chartConfig}
+          verticalLabelRotation={15}
+          style={styles.chart}
+          yAxisLabel=""
+          yAxisSuffix=""
+        />
+      </View>
+    );
+  };
+
+  // Render Top Words Lists
+  const renderTopWords = () => {
+    if (!stats) return null;
+
+    return (
+      <View style={styles.wordsContainer}>
+        <View style={styles.wordsList}>
+          <Text style={styles.wordsTitle}>🔤 Top 10 Most Used Words</Text>
+          {stats.top_words.slice(0, 10).map((item, index) => (
+            <View key={index} style={styles.wordItem}>
+              <Text style={styles.wordRank}>#{index + 1}</Text>
+              <Text style={styles.wordText}>{item.word}</Text>
+              <Text style={styles.wordCount}>{item.count}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.wordsList}>
+          <Text style={styles.wordsTitle}>🎯 Top 10 Protocol Words</Text>
+          {stats.top_protocol_words.slice(0, 10).map((item, index) => (
+            <View key={index} style={styles.wordItem}>
+              <Text style={styles.wordRank}>#{index + 1}</Text>
+              <Text style={styles.wordText}>{item.word}</Text>
+              <Text style={styles.wordCount}>{item.count}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  // Render Document Type Pie Chart
+  const renderDocumentTypeChart = () => {
+    if (!stats || !stats.document_types.length) return null;
+
+    const pieData = stats.document_types.slice(0, 7).map((item, index) => ({
+      name: item.type,
+      population: item.count,
+      color: pieChartColors[index % pieChartColors.length],
+      legendFontColor: colors.text,
+      legendFontSize: 12,
+    }));
+
+    return (
+      <View style={styles.chartContainer}>
+        <Text style={styles.chartTitle}>📋 Document Types Breakdown</Text>
+        <PieChart
+          data={pieData}
+          width={chartWidth}
+          height={220}
+          chartConfig={chartConfig}
+          accessor="population"
+          backgroundColor="transparent"
+          paddingLeft="15"
+          style={styles.chart}
+        />
+      </View>
+    );
+  };
+
+  // Render Geography Stats
+  const renderGeographyStats = () => {
+    if (!stats) return null;
+
+    return (
+      <View style={styles.geographyContainer}>
+        <Text style={styles.chartTitle}>🌍 Geographic Distribution</Text>
+        
+        <View style={styles.geoSection}>
+          <Text style={styles.geoSectionTitle}>🏳️ Top Countries</Text>
+          {stats.countries.slice(0, 5).map((item, index) => (
+            <View key={index} style={styles.geoItem}>
+              <Text style={styles.geoRank}>#{index + 1}</Text>
+              <View style={styles.geoBarContainer}>
                 <View 
-                  key={label} 
                   style={[
-                    styles.pieSegment, 
+                    styles.geoBar, 
                     { 
-                      backgroundColor: PIE_COLORS[index % PIE_COLORS.length],
-                      flex: value 
+                      width: `${(item.count / stats.countries[0].count) * 100}%`,
+                      backgroundColor: pieChartColors[index % pieChartColors.length],
                     }
                   ]} 
                 />
-              );
-            })}
-          </View>
-          <View style={styles.pieLegend}>
-            {entries.map(([label, value], index) => (
-              <View key={label} style={styles.legendItem}>
-                <View style={[styles.legendColor, { backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }]} />
-                <Text style={styles.legendText}>{label}: {Math.round((value / total) * 100)}%</Text>
               </View>
-            ))}
-          </View>
+              <Text style={styles.geoName}>{item.country}</Text>
+              <Text style={styles.geoCount}>{item.count}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.geoSection}>
+          <Text style={styles.geoSectionTitle}>🏛️ Top US States</Text>
+          {stats.states.slice(0, 5).map((item, index) => (
+            <View key={index} style={styles.geoItem}>
+              <Text style={styles.geoRank}>#{index + 1}</Text>
+              <View style={styles.geoBarContainer}>
+                <View 
+                  style={[
+                    styles.geoBar, 
+                    { 
+                      width: `${(item.count / stats.states[0].count) * 100}%`,
+                      backgroundColor: pieChartColors[(index + 3) % pieChartColors.length],
+                    }
+                  ]} 
+                />
+              </View>
+              <Text style={styles.geoName}>{item.state}</Text>
+              <Text style={styles.geoCount}>{item.count}</Text>
+            </View>
+          ))}
         </View>
       </View>
     );
   };
 
-  const renderStatistics = () => (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-      {/* Overview Cards */}
-      <Text style={styles.sectionTitle}>📊 Overview - The Big Picture</Text>
-      <View style={styles.overviewGrid}>
-        {[
-          { label: 'Total Users', value: statistics?.overview.total_users || 0, icon: 'people', color: colors.primary },
-          { label: 'Protocols', value: statistics?.overview.total_protocols || 0, icon: 'code-working', color: colors.secondary },
-          { label: 'Searches', value: statistics?.overview.total_searches || 0, icon: 'search', color: colors.accent },
-          { label: 'Total Sales', value: statistics?.overview.total_sales || 0, icon: 'cart', color: colors.marketplaceGold },
-          { label: 'Revenue', value: `$${statistics?.overview.total_revenue?.toFixed(2) || '0.00'}`, icon: 'cash', color: colors.success },
-        ].map((stat, index) => (
-          <View key={index} style={[styles.overviewCard, { borderLeftColor: stat.color }]}>
-            <Ionicons name={stat.icon as any} size={24} color={stat.color} />
-            <Text style={styles.overviewValue}>{stat.value}</Text>
-            <Text style={styles.overviewLabel}>{stat.label}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Country Breakdown */}
-      {statistics?.country_breakdown && (
-        <BarChart data={statistics.country_breakdown} title="🌍 Results by Country" />
-      )}
-
-      {/* Content Type Breakdown */}
-      {statistics?.content_type_breakdown && (
-        <PieChart data={statistics.content_type_breakdown} title="📄 Content Type Distribution" />
-      )}
-
-      {/* Top Protocol Words */}
-      <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>🔤 Top Protocol Words</Text>
-        <Text style={styles.chartSubtitle}>The words that make protocols POWERFUL!</Text>
-        {statistics?.top_protocol_words?.map((item, index) => (
-          <View key={item.word} style={styles.wordRow}>
-            <Text style={styles.wordRank}>#{index + 1}</Text>
-            <Text style={styles.wordText}>{item.word}</Text>
-            <View style={styles.wordCountBadge}>
-              <Text style={styles.wordCount}>{item.count} uses</Text>
-            </View>
-          </View>
-        ))}
-      </View>
-
-      {/* Book Promo */}
-      <View style={styles.promoCard}>
-        <Text style={styles.promoTitle}>📚 Speaking of Statistics...</Text>
-        <Text style={styles.promoText}>
-          "Letters to Evelyn" by John Selman has been read by THOUSANDS! 
-          (Okay, we don't have exact numbers, but trust us, it's a LOT.)
-          Join the club and see what all the fuss is about!
-        </Text>
-        <TouchableOpacity style={styles.promoButton}>
-          <Text style={styles.promoButtonText}>Get the Book on Amazon! 📖</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  );
-
-  const renderLeaderboard = () => (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-      {/* Tabs */}
-      <View style={styles.leaderboardTabs}>
-        {(['sales', 'revenue', 'both'] as LeaderboardTab[]).map((tab) => (
+  // Render Leaderboard
+  const renderLeaderboard = () => {
+    return (
+      <View style={styles.leaderboardContainer}>
+        <Text style={styles.chartTitle}>👑 Top Sellers Leaderboard</Text>
+        
+        <View style={styles.leaderboardTabs}>
           <TouchableOpacity
-            key={tab}
-            style={[styles.leaderboardTab, leaderboardTab === tab && styles.leaderboardTabActive]}
-            onPress={() => setLeaderboardTab(tab)}
+            style={[styles.tabButton, leaderboardTab === 'sales' && styles.tabButtonActive]}
+            onPress={() => setLeaderboardTab('sales')}
           >
-            <Text style={[styles.leaderboardTabText, leaderboardTab === tab && styles.leaderboardTabTextActive]}>
-              {tab === 'sales' ? '📊 Sales' : tab === 'revenue' ? '💰 Revenue' : '🏆 Both'}
+            <Text style={[styles.tabText, leaderboardTab === 'sales' && styles.tabTextActive]}>
+              📦 By Sales
             </Text>
           </TouchableOpacity>
-        ))}
-      </View>
-
-      <Text style={styles.leaderboardSubtitle}>
-        {leaderboardTab === 'sales' ? 'Sorted by number of sales' : 
-         leaderboardTab === 'revenue' ? 'Sorted by total earnings' : 
-         'The complete picture!'}
-      </Text>
-
-      {/* Leaderboard Entries */}
-      {leaderboard.map((entry) => (
-        <View key={entry.user_id} style={[styles.leaderboardCard, entry.rank <= 3 && styles.topThreeCard]}>
-          <View style={[styles.rankBadge, getRankStyle(entry.rank)]}>
-            <Text style={styles.rankText}>{entry.rank}</Text>
-          </View>
-          
-          <Image 
-            source={{ uri: entry.profile_photo || 'https://i.pravatar.cc/150' }}
-            style={styles.leaderboardAvatar}
-          />
-          
-          <View style={styles.leaderboardInfo}>
-            <Text style={styles.leaderboardUsername}>{entry.username}</Text>
-            <Text style={styles.leaderboardTitle}>{entry.title}</Text>
-          </View>
-          
-          <View style={styles.leaderboardStats}>
-            <Text style={styles.statValue}>{entry.sales_count}</Text>
-            <Text style={styles.statLabel}>Sales</Text>
-            <Text style={styles.statValue}>${entry.revenue.toFixed(2)}</Text>
-            <Text style={styles.statLabel}>Earned</Text>
-          </View>
-        </View>
-      ))}
-
-      {leaderboard.length === 0 && (
-        <View style={styles.emptyLeaderboard}>
-          <Text style={styles.emptyText}>No sellers yet!</Text>
-          <Text style={styles.emptySubtext}>Be the first to claim the throne! 👑</Text>
-        </View>
-      )}
-
-      {/* Marketplace Promo */}
-      <View style={styles.promoCard}>
-        <Text style={styles.promoTitle}>🎯 Want to be on this list?</Text>
-        <Text style={styles.promoText}>
-          List your protocols on the World Wide Marketplace and start climbing the ranks!
-          Remember: 90% of every sale goes directly to YOU. We're basically just here to hold your crown. 👑
-        </Text>
-      </View>
-    </ScrollView>
-  );
-
-  const renderBadges = () => (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-      <Text style={styles.sectionTitle}>🎖️ Achievement Badges</Text>
-      <Text style={styles.sectionSubtitle}>Collect them all and become a Protocol Legend!</Text>
-      
-      <View style={styles.badgesGrid}>
-        {(userBadges.length > 0 ? userBadges : badges).map((badge) => (
-          <View 
-            key={badge.id} 
-            style={[
-              styles.badgeCard, 
-              badge.locked && styles.badgeCardLocked,
-              badge.rarity === 'legendary' && styles.badgeLegendary,
-              badge.rarity === 'epic' && styles.badgeEpic,
-              badge.rarity === 'rare' && styles.badgeRare,
-            ]}
+          <TouchableOpacity
+            style={[styles.tabButton, leaderboardTab === 'revenue' && styles.tabButtonActive]}
+            onPress={() => setLeaderboardTab('revenue')}
           >
-            <Text style={styles.badgeIcon}>{badge.icon}</Text>
-            <Text style={[styles.badgeName, badge.locked && styles.badgeNameLocked]}>{badge.name}</Text>
-            <Text style={[styles.badgeDesc, badge.locked && styles.badgeDescLocked]} numberOfLines={2}>
-              {badge.description}
+            <Text style={[styles.tabText, leaderboardTab === 'revenue' && styles.tabTextActive]}>
+              💰 By Revenue
             </Text>
-            <View style={[styles.rarityBadge, getRarityStyle(badge.rarity)]}>
-              <Text style={styles.rarityText}>{badge.rarity.toUpperCase()}</Text>
-            </View>
-            {badge.locked && (
-              <View style={styles.lockedOverlay}>
-                <Ionicons name="lock-closed" size={24} color={colors.textMuted} />
-              </View>
-            )}
+          </TouchableOpacity>
+        </View>
+
+        {leaderboard.length === 0 ? (
+          <View style={styles.emptyLeaderboard}>
+            <Text style={styles.emptyText}>No sellers yet - be the first! 🏆</Text>
           </View>
-        ))}
+        ) : (
+          leaderboard.map((entry, index) => (
+            <View 
+              key={index} 
+              style={[
+                styles.leaderboardItem, 
+                index === 0 && styles.leaderboardFirst,
+                index === 1 && styles.leaderboardSecond,
+                index === 2 && styles.leaderboardThird,
+              ]}
+            >
+              <View style={styles.leaderboardRank}>
+                <Text style={styles.rankText}>
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${entry.rank}`}
+                </Text>
+              </View>
+              <View style={styles.leaderboardInfo}>
+                <Text style={styles.leaderboardUsername}>@{entry.username}</Text>
+                <Text style={styles.leaderboardStats}>
+                  {entry.sales_count} sales • ${entry.revenue.toFixed(2)}
+                </Text>
+              </View>
+              <View style={styles.leaderboardBadge}>
+                <Text style={styles.badgeText}>
+                  {leaderboardTab === 'sales' ? entry.sales_count : `$${entry.revenue.toFixed(0)}`}
+                </Text>
+              </View>
+            </View>
+          ))
+        )}
       </View>
-
-      {/* Letters to Evelyn Badge Promo */}
-      <View style={styles.promoCard}>
-        <Text style={styles.promoTitle}>📚 The LEGENDARY Badge</Text>
-        <Text style={styles.promoText}>
-          Share "Letters to Evelyn" with a friend to unlock the rarest badge in the game!
-          Only TRUE fans have this one. Are you a true fan? Prove it! 🏆
-        </Text>
-      </View>
-    </ScrollView>
-  );
-
-  const getRankStyle = (rank: number) => {
-    if (rank === 1) return { backgroundColor: colors.marketplaceGold };
-    if (rank === 2) return { backgroundColor: '#C0C0C0' };
-    if (rank === 3) return { backgroundColor: '#CD7F32' };
-    return { backgroundColor: colors.cardBackground };
+    );
   };
 
-  const getRarityStyle = (rarity: string) => {
-    switch (rarity) {
-      case 'legendary': return { backgroundColor: colors.marketplaceGold };
-      case 'epic': return { backgroundColor: colors.secondary };
-      case 'rare': return { backgroundColor: colors.accent };
-      default: return { backgroundColor: colors.gray };
-    }
-  };
+  // Navigation tabs for different chart views
+  const chartTabs: { key: ChartType; label: string; icon: string }[] = [
+    { key: 'overview', label: 'Overview', icon: 'grid' },
+    { key: 'categories', label: 'Categories', icon: 'folder' },
+    { key: 'words', label: 'Words', icon: 'text' },
+    { key: 'documents', label: 'Docs', icon: 'document' },
+    { key: 'geography', label: 'Geo', icon: 'globe' },
+    { key: 'leaderboard', label: 'Leaders', icon: 'trophy' },
+  ];
 
   if (loading) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Crunching numbers... 📊</Text>
-          <Text style={styles.loadingSubtext}>Math is hard, but we're doing it for YOU!</Text>
+          <Text style={styles.loadingText}>Crunching the numbers... 🔢</Text>
+          <Text style={styles.loadingSubtext}>Our hamsters are working overtime!</Text>
         </View>
       </SafeAreaView>
     );
@@ -383,41 +462,59 @@ export default function StatisticsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>📈 Statistics & Leaderboards</Text>
-        <Text style={styles.headerSubtitle}>
-          "Numbers don't lie (but they do exaggerate sometimes)" 😉
-        </Text>
+        <Text style={styles.headerTitle}>📊 Statistics</Text>
+        <Text style={styles.funnyMessage}>{funnyMessage}</Text>
       </View>
 
-      {/* View Mode Tabs */}
-      <View style={styles.viewTabs}>
-        {[
-          { mode: 'stats' as ViewMode, icon: 'stats-chart', label: 'Stats' },
-          { mode: 'leaderboard' as ViewMode, icon: 'trophy', label: 'Leaders' },
-          { mode: 'badges' as ViewMode, icon: 'medal', label: 'Badges' },
-        ].map((tab) => (
+      {/* Chart Type Tabs */}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        style={styles.tabsScroll}
+        contentContainerStyle={styles.tabsContent}
+      >
+        {chartTabs.map((tab) => (
           <TouchableOpacity
-            key={tab.mode}
-            style={[styles.viewTab, viewMode === tab.mode && styles.viewTabActive]}
-            onPress={() => setViewMode(tab.mode)}
+            key={tab.key}
+            style={[styles.chartTab, activeChart === tab.key && styles.chartTabActive]}
+            onPress={() => setActiveChart(tab.key)}
           >
             <Ionicons 
               name={tab.icon as any} 
-              size={20} 
-              color={viewMode === tab.mode ? colors.white : colors.primary} 
+              size={18} 
+              color={activeChart === tab.key ? colors.white : colors.primary} 
             />
-            <Text style={[styles.viewTabText, viewMode === tab.mode && styles.viewTabTextActive]}>
+            <Text style={[styles.chartTabText, activeChart === tab.key && styles.chartTabTextActive]}>
               {tab.label}
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
-      {/* Content */}
-      {viewMode === 'stats' && renderStatistics()}
-      {viewMode === 'leaderboard' && renderLeaderboard()}
-      {viewMode === 'badges' && renderBadges()}
+      {/* Chart Content */}
+      <ScrollView 
+        style={styles.contentScroll}
+        contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+        }
+      >
+        {activeChart === 'overview' && renderOverviewCards()}
+        {activeChart === 'categories' && renderCategoryChart()}
+        {activeChart === 'words' && renderTopWords()}
+        {activeChart === 'documents' && renderDocumentTypeChart()}
+        {activeChart === 'geography' && renderGeographyStats()}
+        {activeChart === 'leaderboard' && renderLeaderboard()}
+
+        {/* Book Promotion */}
+        <View style={styles.bookPromo}>
+          <Text style={styles.bookPromoText}>
+            📚 "Letters to Evelyn" - The book with MORE stats than this page! 📚
+          </Text>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -450,87 +547,92 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.cardBorder,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
   },
-  headerSubtitle: {
+  funnyMessage: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: colors.primary,
     textAlign: 'center',
     marginTop: 4,
     fontStyle: 'italic',
   },
-  viewTabs: {
-    flexDirection: 'row',
-    padding: 12,
+  tabsScroll: {
+    backgroundColor: colors.cardBackground,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  tabsContent: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     gap: 8,
   },
-  viewTab: {
-    flex: 1,
+  chartTab: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: colors.cardBackground,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderColor: colors.primary,
+    marginRight: 8,
     gap: 6,
   },
-  viewTabActive: {
+  chartTabActive: {
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
-  viewTabText: {
+  chartTabText: {
     color: colors.primary,
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
-  viewTabTextActive: {
+  chartTabTextActive: {
     color: colors.white,
   },
-  scrollContent: {
+  contentScroll: {
+    flex: 1,
+  },
+  contentContainer: {
     padding: 16,
     paddingBottom: 40,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 12,
-  },
-  sectionSubtitle: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginBottom: 16,
-  },
+  // Overview Cards
   overviewGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
+    justifyContent: 'space-between',
   },
   overviewCard: {
+    width: (width - 48) / 2,
     backgroundColor: colors.cardBackground,
     borderRadius: 12,
     padding: 16,
-    width: (width - 56) / 2,
+    marginBottom: 12,
     borderLeftWidth: 4,
     alignItems: 'center',
   },
-  overviewValue: {
+  cardIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  cardValue: {
     fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
-    marginTop: 8,
   },
-  overviewLabel: {
+  cardLabel: {
     fontSize: 12,
     color: colors.textMuted,
     marginTop: 4,
   },
+  // Charts
   chartContainer: {
     backgroundColor: colors.cardBackground,
     borderRadius: 16,
@@ -538,79 +640,31 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   chartTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  chart: {
+    borderRadius: 16,
+  },
+  // Words Lists
+  wordsContainer: {
+    gap: 16,
+  },
+  wordsList: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 16,
+  },
+  wordsTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 4,
-  },
-  chartSubtitle: {
-    fontSize: 12,
-    color: colors.textMuted,
     marginBottom: 12,
   },
-  barRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 6,
-  },
-  barLabel: {
-    width: 70,
-    fontSize: 12,
-    color: colors.text,
-  },
-  barContainer: {
-    flex: 1,
-    height: 20,
-    backgroundColor: colors.background,
-    borderRadius: 10,
-    overflow: 'hidden',
-    marginHorizontal: 8,
-  },
-  bar: {
-    height: '100%',
-    borderRadius: 10,
-  },
-  barValue: {
-    width: 40,
-    fontSize: 12,
-    color: colors.textMuted,
-    textAlign: 'right',
-  },
-  pieContainer: {
-    alignItems: 'center',
-  },
-  pieCircle: {
-    flexDirection: 'row',
-    width: width - 80,
-    height: 30,
-    borderRadius: 15,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  pieSegment: {
-    height: '100%',
-  },
-  pieLegend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 4,
-  },
-  legendText: {
-    fontSize: 11,
-    color: colors.text,
-  },
-  wordRow: {
+  wordItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
@@ -619,7 +673,7 @@ const styles = StyleSheet.create({
   },
   wordRank: {
     width: 30,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     color: colors.primary,
   },
@@ -627,214 +681,166 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: colors.text,
-    textTransform: 'capitalize',
-  },
-  wordCountBadge: {
-    backgroundColor: colors.background,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
   },
   wordCount: {
-    fontSize: 11,
-    color: colors.textMuted,
-  },
-  promoCard: {
-    backgroundColor: colors.secondary,
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 16,
-    borderWidth: 2,
-    borderColor: colors.marketplaceGold,
-  },
-  promoTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.marketplaceGold,
-    marginBottom: 8,
-  },
-  promoText: {
     fontSize: 14,
-    color: colors.white,
-    lineHeight: 20,
-  },
-  promoButton: {
-    backgroundColor: colors.marketplaceGold,
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 12,
-    alignItems: 'center',
-  },
-  promoButtonText: {
-    color: colors.background,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  leaderboardTabs: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-  },
-  leaderboardTab: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: colors.cardBackground,
-    alignItems: 'center',
-  },
-  leaderboardTabActive: {
-    backgroundColor: colors.primary,
-  },
-  leaderboardTabText: {
-    color: colors.primary,
     fontWeight: '600',
-    fontSize: 12,
+    color: colors.accent,
   },
-  leaderboardTabTextActive: {
-    color: colors.white,
-  },
-  leaderboardSubtitle: {
-    color: colors.textMuted,
-    fontSize: 12,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  leaderboardCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  topThreeCard: {
-    borderColor: colors.marketplaceGold,
-    borderWidth: 2,
-  },
-  rankBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rankText: {
-    color: colors.white,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  leaderboardAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    marginLeft: 10,
-  },
-  leaderboardInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  leaderboardUsername: {
-    color: colors.text,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  leaderboardTitle: {
-    color: colors.textMuted,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  leaderboardStats: {
-    alignItems: 'center',
-  },
-  statValue: {
-    color: colors.primary,
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  statLabel: {
-    color: colors.textMuted,
-    fontSize: 10,
-    marginBottom: 4,
-  },
-  emptyLeaderboard: {
-    alignItems: 'center',
-    padding: 40,
-  },
-  emptyText: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  emptySubtext: {
-    color: colors.textMuted,
-    fontSize: 14,
-    marginTop: 8,
-  },
-  badgesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  badgeCard: {
-    width: (width - 56) / 2,
+  // Geography
+  geographyContainer: {
     backgroundColor: colors.cardBackground,
     borderRadius: 16,
     padding: 16,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.cardBorder,
-    position: 'relative',
   },
-  badgeCardLocked: {
-    opacity: 0.6,
+  geoSection: {
+    marginBottom: 20,
   },
-  badgeLegendary: {
-    borderColor: colors.marketplaceGold,
-  },
-  badgeEpic: {
-    borderColor: colors.secondary,
-  },
-  badgeRare: {
-    borderColor: colors.accent,
-  },
-  badgeIcon: {
-    fontSize: 36,
-    marginBottom: 8,
-  },
-  badgeName: {
+  geoSectionTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
     color: colors.text,
+    marginBottom: 12,
+  },
+  geoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  geoRank: {
+    width: 30,
+    fontSize: 12,
     fontWeight: 'bold',
+    color: colors.primary,
+  },
+  geoBarContainer: {
+    width: 80,
+    height: 8,
+    backgroundColor: colors.background,
+    borderRadius: 4,
+    marginRight: 10,
+    overflow: 'hidden',
+  },
+  geoBar: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  geoName: {
+    flex: 1,
     fontSize: 13,
-    textAlign: 'center',
+    color: colors.text,
   },
-  badgeNameLocked: {
+  geoCount: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.accent,
+  },
+  // Leaderboard
+  leaderboardContainer: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 16,
+  },
+  leaderboardTabs: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    gap: 12,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  tabButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '600',
     color: colors.textMuted,
   },
-  badgeDesc: {
-    color: colors.textLight,
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  badgeDescLocked: {
-    color: colors.textMuted,
-  },
-  rarityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  rarityText: {
+  tabTextActive: {
     color: colors.white,
-    fontSize: 9,
+  },
+  emptyLeaderboard: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: colors.textMuted,
+    fontSize: 14,
+  },
+  leaderboardItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: colors.background,
+  },
+  leaderboardFirst: {
+    backgroundColor: '#FFD70020',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  leaderboardSecond: {
+    backgroundColor: '#C0C0C020',
+    borderWidth: 1,
+    borderColor: '#C0C0C0',
+  },
+  leaderboardThird: {
+    backgroundColor: '#CD7F3220',
+    borderWidth: 1,
+    borderColor: '#CD7F32',
+  },
+  leaderboardRank: {
+    width: 40,
+  },
+  rankText: {
+    fontSize: 18,
+  },
+  leaderboardInfo: {
+    flex: 1,
+  },
+  leaderboardUsername: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  leaderboardStats: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  leaderboardBadge: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  badgeText: {
+    color: colors.white,
+    fontSize: 12,
     fontWeight: 'bold',
   },
-  lockedOverlay: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
+  // Book Promo
+  bookPromo: {
+    backgroundColor: colors.secondary,
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  bookPromoText: {
+    color: colors.marketplaceGold,
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
