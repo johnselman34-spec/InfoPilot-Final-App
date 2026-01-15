@@ -412,6 +412,15 @@ https://infopilot-network.preview.emergentagent.com
 - `POST /api/protocols/{id}/collaborate/restore/{id}` - Restore version
 - `WS /api/protocols/{id}/collaborate/ws` - Real-time collaboration
 
+### Polls APIs (NEW - January 15, 2026)
+- `POST /api/polls?parent_type={type}&parent_id={id}` - Create poll
+- `GET /api/polls/{poll_id}` - Get single poll
+- `GET /api/polls/parent/{type}/{id}` - Get polls for group/page/USP
+- `POST /api/polls/{poll_id}/vote` - Vote on poll
+- `DELETE /api/polls/{poll_id}/vote` - Remove vote
+- `DELETE /api/polls/{poll_id}` - Delete poll
+- `PUT /api/polls/{poll_id}/close` - Close poll early
+
 ## Prioritized Backlog
 
 ### P1 (High Priority) - COMPLETED ✅
@@ -421,6 +430,9 @@ https://infopilot-network.preview.emergentagent.com
 - [x] Collaborative protocol editing
 - [x] AI Newsletter system (GPT-5.2)
 - [x] Location auto-detection
+- [x] Polls Feature for Groups, Pages, USP
+- [x] Default Admin Friend for new users
+- [x] Push Notifications for DMs
 
 ### P1 (Remaining)
 - [ ] Mobile app wrapper (Capacitor) - Configuration ready
