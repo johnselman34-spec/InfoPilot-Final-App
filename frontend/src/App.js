@@ -3073,6 +3073,104 @@ const MarketplacePage = () => {
               </div>
             )}
 
+            {/* Top Sellers Leaderboard Tab */}
+            {activeTab === "leaderboard" && (
+              <div className="space-y-4">
+                <FuturisticFrame title="🏆 TOP SELLERS LEADERBOARD" color="yellow" className="bg-slate-900/80 border border-yellow-500/30 rounded-lg">
+                  <p className="text-purple-300/80 font-mono text-sm mb-4">
+                    The greatest protocol merchants in the InfoPilot universe! 🚀
+                  </p>
+                  
+                  {/* Tabs for Sales Count vs Revenue */}
+                  <div className="flex gap-2 mb-4">
+                    <button
+                      onClick={() => { setTopSellersTab("sales"); }}
+                      className={`px-4 py-2 font-mono text-sm rounded ${topSellersTab === "sales" ? "bg-yellow-500 text-black font-bold" : "bg-slate-800 text-purple-300 hover:bg-slate-700"}`}
+                    >
+                      📊 BY SALES COUNT
+                    </button>
+                    <button
+                      onClick={() => { setTopSellersTab("revenue"); }}
+                      className={`px-4 py-2 font-mono text-sm rounded ${topSellersTab === "revenue" ? "bg-green-500 text-black font-bold" : "bg-slate-800 text-purple-300 hover:bg-slate-700"}`}
+                    >
+                      💰 BY REVENUE
+                    </button>
+                  </div>
+                  
+                  {topSellers.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Trophy className="w-16 h-16 text-yellow-500/30 mx-auto mb-4" />
+                      <p className="text-purple-300 font-mono mb-2">No sales yet!</p>
+                      <p className="text-purple-400/60 font-mono text-sm">Be the first to climb the leaderboard! 🏔️</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {topSellers.map((seller, index) => (
+                        <div 
+                          key={seller.user_id} 
+                          className={`p-4 rounded-lg border flex items-center gap-4 ${
+                            index === 0 ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500' :
+                            index === 1 ? 'bg-gradient-to-r from-gray-400/20 to-gray-500/20 border-gray-400' :
+                            index === 2 ? 'bg-gradient-to-r from-orange-600/20 to-orange-700/20 border-orange-600' :
+                            'bg-slate-800/50 border-purple-500/20'
+                          }`}
+                        >
+                          {/* Rank */}
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center font-mono font-bold text-xl ${
+                            index === 0 ? 'bg-yellow-500 text-black' :
+                            index === 1 ? 'bg-gray-400 text-black' :
+                            index === 2 ? 'bg-orange-600 text-white' :
+                            'bg-slate-700 text-purple-300'
+                          }`}>
+                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : seller.rank}
+                          </div>
+                          
+                          {/* User Info */}
+                          <div className="flex-1">
+                            <h3 className="text-purple-200 font-mono font-bold">{seller.username}</h3>
+                            <p className="text-purple-400/60 font-mono text-xs">
+                              {seller.sales_count} sale{seller.sales_count !== 1 ? 's' : ''} • {seller.unique_protocols_sold} protocol{seller.unique_protocols_sold !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                          
+                          {/* Stats */}
+                          <div className="text-right">
+                            {topSellersTab === "revenue" ? (
+                              <>
+                                <p className="text-2xl font-bold text-green-400 font-mono">${seller.total_revenue.toFixed(2)}</p>
+                                <p className="text-xs text-purple-400/60 font-mono">Earnings: ${seller.earnings_after_split.toFixed(2)}</p>
+                              </>
+                            ) : (
+                              <>
+                                <p className="text-2xl font-bold text-yellow-400 font-mono">{seller.sales_count}</p>
+                                <p className="text-xs text-purple-400/60 font-mono">Total Sales</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </FuturisticFrame>
+                
+                {/* Funny Call to Action */}
+                <div className="bg-gradient-to-r from-pink-900/30 to-purple-900/30 rounded-lg p-4 border border-pink-500/30 text-center">
+                  <p className="text-pink-400 font-mono text-lg font-bold mb-2">
+                    🤔 Not on the leaderboard yet?
+                  </p>
+                  <p className="text-purple-300 font-mono text-sm mb-3">
+                    Your protocols could be the next big thing! Start selling and join the elite! 🚀
+                  </p>
+                  <button 
+                    onClick={() => navigate("/categories")} 
+                    className="px-6 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-mono font-bold rounded hover:scale-[1.02]"
+                  >
+                    LIST MY PROTOCOLS NOW! 💰
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Sales Tab */}
             {activeTab === "sales" && (
               <div className="space-y-4">
