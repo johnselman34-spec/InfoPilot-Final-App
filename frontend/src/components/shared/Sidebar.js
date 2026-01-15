@@ -17,6 +17,7 @@ const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
     { id: 'map', label: 'Map View', icon: Icons.Map },
     { id: 'quotes', label: 'Quote Gallery', icon: Icons.Quote },
     { id: 'messages', label: 'Messages', icon: Icons.Message },
+    { id: 'tutorials', label: '🎬 Tutorials', icon: Icons.Play },
     { id: 'settings', label: 'Settings', icon: Icons.Settings },
   ];
 
