@@ -1106,13 +1106,13 @@ class InfoPilot2Parser:
             phrase_lower = phrase.lower().strip()
             
             # Quick check: if phrase not in text at all (with some flexibility), skip
-            # Remove periods for initial check to handle "John J S" vs "John J. S."
-            phrase_no_periods = phrase_lower.replace('.', '').replace(',', ' ')
-            text_no_periods = text.replace('.', '').replace(',', ' ')
+            # Remove periods and commas for initial check
+            phrase_no_punct = phrase_lower.replace('.', '').replace(',', ' ')
+            text_no_punct = text.replace('.', '').replace(',', ' ')
             
             # Normalize multiple spaces
-            phrase_normalized = ' '.join(phrase_no_periods.split())
-            text_normalized = ' '.join(text_no_periods.split())
+            phrase_normalized = ' '.join(phrase_no_punct.split())
+            text_normalized = ' '.join(text_no_punct.split())
             
             if phrase_normalized not in text_normalized and phrase_lower not in text:
                 return False
@@ -1122,15 +1122,28 @@ class InfoPilot2Parser:
                 words_in_text = set(re.findall(r'\b\w+\b', text))
                 return phrase_lower in words_in_text
             
-            # Build flexible pattern for the phrase
-            # Handle initials (single letters followed by optional period and space)
-            # E.g., "John J S" matches "John J. S.", "John J S", "john j. s."
-            # E.g., "Heidelberg, GER" matches "Heidelberg, GER", "Heidelberg, Germany", "heidelberg, ger"
+            # For location patterns with comma (e.g., "Heidelberg, GER" or "Albuquerque, NM")
+            if ',' in phrase_lower:
+                # Split by comma and match each part flexibly
+                parts = [p.strip() for p in phrase_lower.split(',')]
+                
+                # Build a pattern that allows comma or space between parts
+                pattern_parts = []
+                for i, part in enumerate(parts):
+                    pattern_parts.append(re.escape(part))
+                    if i < len(parts) - 1:
+                        # Allow comma with optional spaces, or just spaces
+                        pattern_parts.append(r'[,\s]+')
+                
+                pattern = r'(?:^|[\s\.,;:!?\-\(\)\[\]"])' + ''.join(pattern_parts) + r'(?:[\s\.,;:!?\-\(\)\[\]"]|$)'
+                return bool(re.search(pattern, text, re.IGNORECASE))
             
+            # Build flexible pattern for names with initials
+            # E.g., "John J S" matches "John J. S.", "John J S", "john j. s."
             pattern_parts = []
             words = phrase_lower.split()
             
-            for word in words:
+            for i, word in enumerate(words):
                 word = word.strip('.,;:')
                 if not word:
                     continue
@@ -1140,9 +1153,9 @@ class InfoPilot2Parser:
                     # Single initial - match with or without period
                     initial = word.rstrip('.')
                     pattern_parts.append(re.escape(initial) + r'\.?\s*')
-                elif len(word) <= 3 and word.isupper():
+                elif len(word) <= 3 and word.replace('.', '').isupper():
                     # Short abbreviation like "NM", "GER", "USA"
-                    pattern_parts.append(re.escape(word) + r'\.?\s*')
+                    pattern_parts.append(re.escape(word.replace('.', '')) + r'\.?\s*')
                 else:
                     # Regular word
                     pattern_parts.append(re.escape(word) + r'\s*')
