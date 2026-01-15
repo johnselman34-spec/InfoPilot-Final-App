@@ -11,3 +11,4 @@ export { default as DataExport } from './DataExport';
 export { default as PushNotifications } from './PushNotifications';
 export { default as PollCard, CreatePollModal } from './PollCard';
 export { default as CopyButton, ProtocolCopyButtons } from './CopyButton';
+export { default as AISuggestions } from './AISuggestions';
