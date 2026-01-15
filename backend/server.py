@@ -6453,8 +6453,28 @@ async def get_my_badges(user: dict = Depends(require_user)):
     # Get purchases count
     purchases_count = await db.protocol_purchases.count_documents({"buyer_id": user_id, "status": "completed"})
     
-    # Calculate badges
-    all_badges = calculate_badges(total_copies, protocols_created, sales_count, purchases_count)
+    # Get social stats
+    friends_count = await db.friends.count_documents({
+        "$or": [{"user_id": user_id}, {"friend_id": user_id}],
+        "status": "accepted"
+    })
+    groups_created = await db.groups.count_documents({"owner_id": user_id})
+    pages_created = await db.pages.count_documents({"owner_id": user_id})
+    messages_sent = await db.messages.count_documents({"sender_id": user_id})
+    
+    # Get search stats
+    search_results = await db.search_results.count_documents({"user_id": user_id})
+    
+    # Get engagement stats
+    reactions_count = await db.reactions.count_documents({"user_id": user_id})
+    comments_count = await db.comments.count_documents({"user_id": user_id})
+    
+    # Calculate badges with all stats
+    all_badges = calculate_badges(
+        total_copies, protocols_created, sales_count, purchases_count,
+        friends_count, groups_created, pages_created, messages_sent,
+        search_results, reactions_count, comments_count
+    )
     
     # Separate earned vs locked
     earned_badges = [b for b in all_badges if b["earned"]]
@@ -6471,7 +6491,14 @@ async def get_my_badges(user: dict = Depends(require_user)):
             "total_copies_received": total_copies,
             "protocols_created": protocols_created,
             "sales_count": sales_count,
-            "purchases_count": purchases_count
+            "purchases_count": purchases_count,
+            "friends_count": friends_count,
+            "groups_created": groups_created,
+            "pages_created": pages_created,
+            "messages_sent": messages_sent,
+            "search_results": search_results,
+            "reactions_count": reactions_count,
+            "comments_count": comments_count
         },
         "top_protocol": {
             "name": top_protocol["name"],
