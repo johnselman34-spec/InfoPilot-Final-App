@@ -2339,6 +2339,16 @@ const MarketplacePage = () => {
   const [purchasing, setPurchasing] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Enhanced search and filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchMode, setSearchMode] = useState("AND"); // AND, OR
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [docTypeFilters, setDocTypeFilters] = useState({ webpage: true, news: true, pdf: true, docx: true });
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 100 });
+  const [showFilters, setShowFilters] = useState(true);
+  const [marketStats, setMarketStats] = useState(null);
+  const [filteredProtocols, setFilteredProtocols] = useState([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -2346,6 +2356,13 @@ const MarketplacePage = () => {
       if (activeTab === "browse") {
         const res = await axios.get(`${API}/marketplace/protocols`);
         setProtocols(res.data.protocols || []);
+        setFilteredProtocols(res.data.protocols || []);
+        
+        // Fetch marketplace stats
+        try {
+          const statsRes = await axios.get(`${API}/marketplace/stats`);
+          setMarketStats(statsRes.data);
+        } catch (e) { console.log("Stats not available"); }
       } else if (activeTab === "purchases") {
         const res = await axios.get(`${API}/marketplace/my-purchases`);
         setPurchases(res.data.purchases || []);
@@ -2364,16 +2381,42 @@ const MarketplacePage = () => {
     fetchData();
   }, [fetchData]);
 
+  // Filter protocols based on search and filters
+  useEffect(() => {
+    let filtered = [...protocols];
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const terms = searchQuery.toLowerCase().split(/\s+/);
+      filtered = filtered.filter(p => {
+        const text = `${p.name} ${p.owner_username} ${p.protocol_preview || ''}`.toLowerCase();
+        if (searchMode === "AND") {
+          return terms.every(term => text.includes(term));
+        } else {
+          return terms.some(term => text.includes(term));
+        }
+      });
+    }
+    
+    // Price filter
+    filtered = filtered.filter(p => {
+      const price = p.price || 0;
+      return price >= priceRange.min && price <= priceRange.max;
+    });
+    
+    setFilteredProtocols(filtered);
+  }, [protocols, searchQuery, searchMode, priceRange]);
+
   const handlePurchase = async (protocolId) => {
-    if (!window.confirm("Confirm purchase? You will be able to view and copy this protocol after payment.")) return;
+    if (!window.confirm("🛒 Confirm purchase? This protocol will be added to your collection immediately!")) return;
     
     setPurchasing(protocolId);
     try {
       const res = await axios.post(`${API}/marketplace/protocols/${protocolId}/purchase`);
-      toast.success(res.data.message);
+      toast.success("🎉 " + res.data.message);
       
       // Show the protocol
-      alert(`Protocol purchased!\n\nProtocol: ${res.data.protocol_string}\n\nThis has been added to your purchases.`);
+      alert(`✅ Protocol purchased!\n\n📋 Protocol: ${res.data.protocol_string}\n\nThis has been added to your purchases.`);
       
       fetchData();
     } catch (error) {
@@ -2385,38 +2428,64 @@ const MarketplacePage = () => {
 
   const copyProtocol = async (protocolString, categoryId = null) => {
     try {
-      // Track the copy if we have a category ID
       if (categoryId) {
         await axios.post(`${API}/categories/${categoryId}/copy`);
       }
       navigator.clipboard.writeText(protocolString);
-      toast.success("Protocol copied to clipboard!");
+      toast.success("📋 Protocol copied to clipboard!");
     } catch (error) {
-      // Still copy even if tracking fails
       navigator.clipboard.writeText(protocolString);
-      toast.success("Protocol copied!");
+      toast.success("📋 Protocol copied!");
     }
   };
 
+  // Get unique categories for filter checkboxes
+  const uniqueCategories = [...new Set(protocols.map(p => p.owner_username))];
+
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400 font-mono tracking-wider mb-2">PROTOCOL MARKETPLACE</h1>
-            <p className="text-purple-300/80 font-mono text-sm">Buy and sell private InfoPilot protocols</p>
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Hero Banner */}
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-yellow-900/30 via-orange-900/30 to-red-900/30 border border-yellow-500/30 p-6">
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLW9wYWNpdHk9IjAuMDMiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-50"></div>
+          <div className="relative flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 font-mono tracking-wider mb-2">
+                🌍 WORLDWIDE PROTOCOL MARKETPLACE
+              </h1>
+              <p className="text-purple-300/80 font-mono text-sm">Buy, sell, and discover powerful InfoJet 2.0™ research protocols from pilots worldwide</p>
+              <p className="text-yellow-400/60 font-mono text-xs mt-1">💡 Powered by Top Pilot Enterprises, Inc. — "Where every search reaches cruising altitude"</p>
+            </div>
+            <button onClick={() => navigate("/categories")} className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-mono font-bold tracking-wider rounded-lg hover:scale-[1.02] flex items-center gap-2 shadow-lg shadow-yellow-500/20" data-testid="sell-protocol-btn">
+              <DollarSign className="w-5 h-5" /> SELL YOUR PROTOCOL
+            </button>
           </div>
-          <button onClick={() => navigate("/categories")} className="px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono tracking-wider rounded hover:scale-[1.02] flex items-center gap-2">
-            <Plus className="w-5 h-5" /> SELL YOUR PROTOCOL
-          </button>
+          
+          {/* Market Stats */}
+          {marketStats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+              {[
+                { label: "Total Protocols", value: marketStats.total_protocols || protocols.length, icon: "📊" },
+                { label: "Total Sales", value: `$${(marketStats.total_revenue || 0).toFixed(2)}`, icon: "💰" },
+                { label: "Active Sellers", value: marketStats.active_sellers || uniqueCategories.length, icon: "👥" },
+                { label: "Avg Price", value: `$${(protocols.reduce((a, p) => a + (p.price || 0), 0) / Math.max(protocols.length, 1)).toFixed(2)}`, icon: "📈" }
+              ].map((stat, i) => (
+                <div key={i} className="bg-black/30 rounded-lg p-3 text-center">
+                  <div className="text-2xl mb-1">{stat.icon}</div>
+                  <div className="text-lg font-bold text-yellow-400 font-mono">{stat.value}</div>
+                  <div className="text-xs text-purple-400/60 font-mono">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
         <div className="flex gap-2 border-b border-purple-500/30 pb-2">
           {[
-            { id: "browse", label: "BROWSE", icon: ShoppingCart },
-            { id: "purchases", label: "MY PURCHASES", icon: Gift },
-            { id: "sales", label: "MY SALES", icon: DollarSign }
+            { id: "browse", label: "🛒 BROWSE", icon: ShoppingCart },
+            { id: "purchases", label: "📦 MY PURCHASES", icon: Gift },
+            { id: "sales", label: "💵 MY SALES", icon: DollarSign }
           ].map(tab => (
             <button
               key={tab.id}
@@ -2426,6 +2495,7 @@ const MarketplacePage = () => {
                   ? "bg-yellow-500/20 text-yellow-400 border-b-2 border-yellow-400" 
                   : "text-purple-400/60 hover:text-purple-300"
               }`}
+              data-testid={`marketplace-tab-${tab.id}`}
             >
               <tab.icon className="w-4 h-4" />
               {tab.label}
@@ -2440,32 +2510,156 @@ const MarketplacePage = () => {
           </div>
         ) : (
           <>
-            {/* Browse Tab */}
+            {/* Browse Tab with Advanced Filters */}
             {activeTab === "browse" && (
               <div className="space-y-4">
-                {protocols.length === 0 ? (
-                  <FuturisticFrame title="NO PROTOCOLS FOR SALE" color="yellow" className="bg-slate-900/80 border border-yellow-500/30 rounded-lg text-center py-12">
+                {/* Search & Filters Panel */}
+                <div className="bg-slate-900/80 rounded-xl border border-yellow-500/20 p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-yellow-400 font-mono font-bold flex items-center gap-2">
+                      <Search className="w-4 h-4" /> AI-POWERED SEARCH
+                    </h3>
+                    <button onClick={() => setShowFilters(!showFilters)} className="text-purple-400 hover:text-pink-400 text-sm font-mono flex items-center gap-1">
+                      <Filter className="w-4 h-4" /> {showFilters ? "HIDE" : "SHOW"} FILTERS
+                    </button>
+                  </div>
+                  
+                  {/* Search Input */}
+                  <div className="flex gap-2 mb-4">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-yellow-400/50" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search protocols by name, seller, or keywords..."
+                        className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-yellow-500/30 rounded-lg text-purple-200 font-mono placeholder-purple-400/40 focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/50"
+                        data-testid="marketplace-search"
+                      />
+                    </div>
+                    
+                    {/* AND/OR Toggle */}
+                    <div className="flex rounded-lg overflow-hidden border border-yellow-500/30">
+                      {["AND", "OR"].map(mode => (
+                        <button
+                          key={mode}
+                          onClick={() => setSearchMode(mode)}
+                          className={`px-4 py-2 font-mono text-sm ${searchMode === mode ? "bg-yellow-500 text-black" : "bg-slate-950 text-purple-400"}`}
+                        >
+                          {mode}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {showFilters && (
+                    <div className="grid md:grid-cols-3 gap-4 pt-4 border-t border-purple-500/20">
+                      {/* Document Type Filters */}
+                      <div>
+                        <label className="text-purple-400 font-mono text-xs mb-2 block">DOCUMENT TYPES</label>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            { key: "webpage", label: "🌐 Web", color: "blue" },
+                            { key: "news", label: "📰 News", color: "green" },
+                            { key: "pdf", label: "📄 PDF", color: "red" },
+                            { key: "docx", label: "📝 Word", color: "purple" }
+                          ].map(type => (
+                            <label key={type.key} className={`flex items-center gap-1 px-2 py-1 rounded cursor-pointer text-xs font-mono ${docTypeFilters[type.key] ? `bg-${type.color}-500/20 text-${type.color}-400 border border-${type.color}-500/50` : "bg-slate-800 text-purple-400/50 border border-transparent"}`}>
+                              <input
+                                type="checkbox"
+                                checked={docTypeFilters[type.key]}
+                                onChange={(e) => setDocTypeFilters(prev => ({...prev, [type.key]: e.target.checked}))}
+                                className="sr-only"
+                              />
+                              {type.label}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Price Range */}
+                      <div>
+                        <label className="text-purple-400 font-mono text-xs mb-2 block">PRICE RANGE</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            value={priceRange.min}
+                            onChange={(e) => setPriceRange(prev => ({...prev, min: Number(e.target.value)}))}
+                            className="w-20 px-2 py-1 bg-slate-950 border border-purple-500/30 rounded text-purple-200 font-mono text-sm"
+                            placeholder="Min"
+                          />
+                          <span className="text-purple-400/60">—</span>
+                          <input
+                            type="number"
+                            min="0"
+                            value={priceRange.max}
+                            onChange={(e) => setPriceRange(prev => ({...prev, max: Number(e.target.value)}))}
+                            className="w-20 px-2 py-1 bg-slate-950 border border-purple-500/30 rounded text-purple-200 font-mono text-sm"
+                            placeholder="Max"
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* Seller Filter */}
+                      <div>
+                        <label className="text-purple-400 font-mono text-xs mb-2 block">SELLERS ({uniqueCategories.length})</label>
+                        <div className="max-h-20 overflow-y-auto space-y-1">
+                          {uniqueCategories.slice(0, 5).map(seller => (
+                            <label key={seller} className="flex items-center gap-2 text-xs font-mono text-purple-300 cursor-pointer hover:text-yellow-400">
+                              <input type="checkbox" defaultChecked className="rounded border-purple-500/50" />
+                              {seller}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Results count */}
+                  <div className="mt-4 pt-4 border-t border-purple-500/20 flex items-center justify-between">
+                    <span className="text-purple-400/60 font-mono text-sm">
+                      Showing {filteredProtocols.length} of {protocols.length} protocols
+                    </span>
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery("")} className="text-pink-400 font-mono text-xs hover:underline">
+                        Clear Search
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Protocol Grid */}
+                {filteredProtocols.length === 0 ? (
+                  <FuturisticFrame title="NO PROTOCOLS FOUND" color="yellow" className="bg-slate-900/80 border border-yellow-500/30 rounded-lg text-center py-12">
                     <ShoppingCart className="w-16 h-16 text-yellow-500/30 mx-auto mb-4" />
-                    <p className="text-purple-300 font-mono mb-4">No protocols are currently listed for sale</p>
+                    <p className="text-purple-300 font-mono mb-4">
+                      {searchQuery ? "No protocols match your search criteria" : "No protocols are currently listed for sale"}
+                    </p>
                     <p className="text-purple-400/60 font-mono text-sm">List your private protocols in Categories to start selling!</p>
                   </FuturisticFrame>
                 ) : (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {protocols.map((protocol) => (
-                      <div key={protocol.id} className="bg-slate-900/80 p-4 rounded-lg border border-yellow-500/20 hover:border-yellow-500/50 transition-colors">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredProtocols.map((protocol) => (
+                      <div key={protocol.id} className="bg-slate-900/80 p-4 rounded-lg border border-yellow-500/20 hover:border-yellow-500/50 transition-all hover:shadow-lg hover:shadow-yellow-500/10 group">
                         <div className="flex items-start justify-between mb-3">
-                          <div>
-                            <h3 className="text-yellow-400 font-mono font-bold">{protocol.name}</h3>
+                          <div className="flex-1">
+                            <h3 className="text-yellow-400 font-mono font-bold group-hover:text-yellow-300 transition-colors">{protocol.name}</h3>
                             <p className="text-purple-400/60 font-mono text-xs">by {protocol.owner_username}</p>
                           </div>
                           <span className="text-xl font-bold text-green-400 font-mono">${protocol.price?.toFixed(2)}</span>
                         </div>
                         
+                        {/* Protocol preview */}
+                        {protocol.protocol_preview && (
+                          <div className="bg-slate-950/50 rounded p-2 mb-3 text-xs text-purple-300/60 font-mono truncate">
+                            {protocol.protocol_preview}
+                          </div>
+                        )}
+                        
                         {protocol.is_purchased ? (
-                          <div className="flex items-center gap-2">
-                            <span className="flex-1 text-green-400 font-mono text-sm flex items-center gap-2">
-                              <Check className="w-4 h-4" /> PURCHASED
-                            </span>
+                          <div className="flex items-center gap-2 text-green-400 font-mono text-sm">
+                            <Check className="w-4 h-4" /> PURCHASED
                           </div>
                         ) : protocol.owner_id === user?.id ? (
                           <span className="text-purple-400/60 font-mono text-sm">YOUR PROTOCOL</span>
@@ -2489,6 +2683,23 @@ const MarketplacePage = () => {
                     ))}
                   </div>
                 )}
+                
+                {/* InfoPilot Promotion */}
+                <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-xl p-6 border border-pink-500/30 mt-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center">
+                      <Radar className="w-10 h-10 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono">INFOPILOT EXPLORER</h3>
+                      <p className="text-purple-300/70 font-mono text-sm">The world's most intelligent information exchange platform</p>
+                      <p className="text-yellow-400/70 font-mono text-xs mt-1">Powered by InfoJet 2.0™ — smarter search, smarter decisions</p>
+                    </div>
+                    <button onClick={() => navigate("/subscribe")} className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded-lg hover:scale-[1.02]">
+                      SUBSCRIBE NOW
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
