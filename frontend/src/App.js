@@ -25,6 +25,7 @@ import {
 } from './pages';
 import ChatPage from './pages/ChatPage';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
+import StatisticsPage from './pages/StatisticsPage';
 
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
