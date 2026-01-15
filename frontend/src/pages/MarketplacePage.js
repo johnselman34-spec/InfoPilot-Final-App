@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import { Icons, ProtocolCopyButtons, AISuggestions } from '../components/shared';
+import ProtocolAnalyticsDashboard from '../components/Admin/ProtocolAnalyticsDashboard';
 
 // Constants
 const FREE_MESSAGES = [
