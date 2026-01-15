@@ -264,8 +264,53 @@ const UltimateSearchPage = ({ showToast }) => {
   const handleEditCategory = (cat, e) => {
     e.stopPropagation();
     setEditingCategory(cat);
+    setEditCategoryName(cat.name || '');
     setEditProtocol(cat.protocol || '');
     setEditIsPublic(cat.is_public || false);
+  };
+
+  // Collate with selected categories - THE ACTUAL SEARCH FUNCTION
+  const collateWithCategories = async () => {
+    if (selectedCategories.length === 0) {
+      showToast('Please select at least one category to collate', 'error');
+      return;
+    }
+    
+    setCollateLoading(true);
+    const startTime = Date.now();
+    let totalCollated = 0;
+    
+    try {
+      for (const categoryId of selectedCategories) {
+        const res = await fetch(`${API}/collate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ 
+            category_id: categoryId,
+            aggregation: aggregation
+          })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          totalCollated += data.total || 0;
+          setLastBatchId(data.batch_id);
+        }
+      }
+      
+      const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+      showToast(`✅ Collated ${totalCollated} results across ${selectedCategories.length} categories in ${totalTime}s!`, 'success');
+      fetchSearchResults();
+      fetchBatches();
+    } catch (e) {
+      console.error('Collate error:', e);
+      showToast('Failed to collate results', 'error');
+    }
+    
+    setCollateLoading(false);
   };
 
   const saveProtocol = async () => {
