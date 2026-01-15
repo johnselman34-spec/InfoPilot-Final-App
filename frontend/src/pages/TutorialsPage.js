@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import ReactMarkdown from 'react-markdown';
+import YouTubePlayer, { VideoUrlInput } from '../components/shared/YouTubePlayer';
 
 const TutorialsPage = ({ showToast }) => {
   const { token, user } = useAuth();
