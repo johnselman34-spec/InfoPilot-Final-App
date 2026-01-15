@@ -165,7 +165,8 @@ class TestPartialAdminRoles:
     def test_group(self, auth_token):
         """Create a test group for moderator testing"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.post(f"{BASE_URL}/api/social/groups", 
+        # Note: Social routes don't have /social prefix
+        response = requests.post(f"{BASE_URL}/api/groups", 
             headers=headers,
             json={
                 "name": "TEST_Moderator_Test_Group",
@@ -177,7 +178,7 @@ class TestPartialAdminRoles:
             group_id = response.json().get("id")
             yield group_id
             # Cleanup
-            requests.delete(f"{BASE_URL}/api/social/groups/{group_id}", headers=headers)
+            requests.delete(f"{BASE_URL}/api/groups/{group_id}", headers=headers)
         else:
             pytest.skip(f"Failed to create test group: {response.status_code}")
     
@@ -185,7 +186,8 @@ class TestPartialAdminRoles:
     def test_page(self, auth_token):
         """Create a test page for admin testing"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.post(f"{BASE_URL}/api/social/pages", 
+        # Note: Social routes don't have /social prefix
+        response = requests.post(f"{BASE_URL}/api/pages", 
             headers=headers,
             json={
                 "name": "TEST_Admin_Test_Page",
@@ -197,17 +199,17 @@ class TestPartialAdminRoles:
             page_id = response.json().get("id")
             yield page_id
             # Cleanup
-            requests.delete(f"{BASE_URL}/api/social/pages/{page_id}", headers=headers)
+            requests.delete(f"{BASE_URL}/api/pages/{page_id}", headers=headers)
         else:
             pytest.skip(f"Failed to create test page: {response.status_code}")
     
     def test_add_group_moderator_endpoint_exists(self, auth_token, test_group):
-        """Verify POST /api/social/groups/{id}/moderators endpoint exists"""
+        """Verify POST /api/groups/{id}/moderators endpoint exists"""
         headers = {"Authorization": f"Bearer {auth_token}"}
         
         # Try to add a fake user ID as moderator
         response = requests.post(
-            f"{BASE_URL}/api/social/groups/{test_group}/moderators",
+            f"{BASE_URL}/api/groups/{test_group}/moderators",
             headers=headers,
             json={"user_id": "fake_user_id_12345"}
         )
@@ -217,12 +219,12 @@ class TestPartialAdminRoles:
             f"Endpoint should exist, got {response.status_code}: {response.text}"
     
     def test_add_page_admin_endpoint_exists(self, auth_token, test_page):
-        """Verify POST /api/social/pages/{id}/admins endpoint exists"""
+        """Verify POST /api/pages/{id}/admins endpoint exists"""
         headers = {"Authorization": f"Bearer {auth_token}"}
         
         # Try to add a fake user ID as admin
         response = requests.post(
-            f"{BASE_URL}/api/social/pages/{test_page}/admins",
+            f"{BASE_URL}/api/pages/{test_page}/admins",
             headers=headers,
             json={"user_id": "fake_user_id_12345"}
         )
@@ -232,11 +234,11 @@ class TestPartialAdminRoles:
             f"Endpoint should exist, got {response.status_code}: {response.text}"
     
     def test_remove_group_moderator_endpoint_exists(self, auth_token, test_group):
-        """Verify DELETE /api/social/groups/{id}/moderators/{mod_id} endpoint exists"""
+        """Verify DELETE /api/groups/{id}/moderators/{mod_id} endpoint exists"""
         headers = {"Authorization": f"Bearer {auth_token}"}
         
         response = requests.delete(
-            f"{BASE_URL}/api/social/groups/{test_group}/moderators/fake_mod_id",
+            f"{BASE_URL}/api/groups/{test_group}/moderators/fake_mod_id",
             headers=headers
         )
         
@@ -245,11 +247,11 @@ class TestPartialAdminRoles:
             f"Endpoint should exist, got {response.status_code}: {response.text}"
     
     def test_remove_page_admin_endpoint_exists(self, auth_token, test_page):
-        """Verify DELETE /api/social/pages/{id}/admins/{admin_id} endpoint exists"""
+        """Verify DELETE /api/pages/{id}/admins/{admin_id} endpoint exists"""
         headers = {"Authorization": f"Bearer {auth_token}"}
         
         response = requests.delete(
-            f"{BASE_URL}/api/social/pages/{test_page}/admins/fake_admin_id",
+            f"{BASE_URL}/api/pages/{test_page}/admins/fake_admin_id",
             headers=headers
         )
         
