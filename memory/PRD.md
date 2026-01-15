@@ -199,19 +199,18 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - `POST /api/push/send` - Send notification (admin)
 - `GET /api/push/stats` - Get push stats (admin)
 
-## Testing Results (Iteration 16 - January 15, 2026)
-- **Backend: 36/36 tests passed (100%)**
+## Testing Results (Iteration 17 - January 15, 2026)
+- **Backend: 19/19 tests passed (100%)**
 - **Frontend: All UI features working (100%)**
-- Test report: `/app/test_reports/iteration_16.json`
+- Test report: `/app/test_reports/iteration_17.json`
 
-### New Features Verified:
-- Statistics Page with 6 quick stats cards (Total Users, Active 7d, Protocols, Searches, Purchases, Revenue)
-- Charts: Countries pie chart, US States bar chart, Document Types pie chart, Top 10 Words bar chart
-- Top Sellers Leaderboard with Sales Count and Revenue tabs
-- Funny titles: "The Protocol Overlord 🦁", "The Protocol Billionaire 🏦", "The Silver Searcher 🥈", "The Search Tycoon 🎩"
-- Badges: 👑 (Legend), 💰 (Money bags), 🔥 (Hot), 🤑 (Making money)
-- All 11 marketplace protocols including George Bush, William C. Gamble, Richard J. Selman
-- Statistics nav item in sidebar with 📊 icon
+### Features Verified:
+- **FREE Protocols ($0.00)**: Create, copy, and display with 🆓 FREE! badge
+- **14 Total Marketplace Protocols**: Including George Bush, William C. Gamble, Richard J. Selman, FREE Starter Protocol
+- **Copy FREE Protocol**: Works without authentication (paid protocols require auth/purchase)
+- **Statistics Dashboard**: 6 stat cards, countries pie chart, US states bar chart, document types donut chart, top 10 words
+- **Top Sellers Leaderboard**: Sales Count & Revenue tabs with funny titles ("The Protocol Overlord 🦁", "The Protocol Billionaire 🏦")
+- **Newsletter Generation**: Supernatural comedy style with book promotion
 
 ## Preview URL
 https://explorer-hub-7.preview.emergentagent.com
