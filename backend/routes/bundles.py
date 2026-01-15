@@ -173,7 +173,7 @@ async def purchase_bundle(purchase: BundlePurchase, user = Depends(get_current_u
     
     try:
         bundle = await db.protocol_bundles.find_one({"_id": ObjectId(bundle_id)})
-    except:
+    except Exception:
         raise HTTPException(status_code=400, detail="Invalid bundle ID")
     
     if not bundle:
@@ -261,7 +261,7 @@ async def confirm_bundle_payment(data: dict, user = Depends(get_current_user)):
     
     try:
         bundle = await db.protocol_bundles.find_one({"_id": ObjectId(bundle_id)})
-    except:
+    except Exception:
         raise HTTPException(status_code=400, detail="Invalid bundle ID")
     
     if not bundle:
@@ -311,7 +311,7 @@ async def confirm_bundle_payment(data: dict, user = Depends(get_current_user)):
             {"$inc": {"xp": 20}},  # Bonus XP for bundle purchase
             upsert=True
         )
-    except:
+    except Exception:
         pass
     
     return {
@@ -347,7 +347,7 @@ async def delete_bundle(bundle_id: str, user = Depends(get_current_user)):
     """Delete a bundle (creator or admin only)"""
     try:
         bundle = await db.protocol_bundles.find_one({"_id": ObjectId(bundle_id)})
-    except:
+    except Exception:
         raise HTTPException(status_code=400, detail="Invalid bundle ID")
     
     if not bundle:
