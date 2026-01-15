@@ -45,12 +45,16 @@ Remember: "Three ventures. One mission. Zero turbulence." (Okay, maybe a little 
             # Build context message
             stats_info = ""
             if context:
+                default_users = "growing faster than expected"
+                default_protocols = "several mind-blowing ones"
+                default_seller = "someone absolutely crushing it"
+                default_sales = "enough to make my accountant smile"
                 stats_info = f"""
 Here are some stats to include humorously:
-- Total Users: {context.get('total_users', 'growing faster than my uncle\'s conspiracy theories')}
-- New Protocols: {context.get('new_protocols', 'several mind-blowing ones')}
-- Top Seller: {context.get('top_seller', 'someone absolutely crushing it')}
-- Book Sales: {context.get('book_sales', 'enough to make my accountant smile')}
+- Total Users: {context.get('total_users', default_users)}
+- New Protocols: {context.get('new_protocols', default_protocols)}
+- Top Seller: {context.get('top_seller', default_seller)}
+- Book Sales: {context.get('book_sales', default_sales)}
 """
             
             user_message = UserMessage(
