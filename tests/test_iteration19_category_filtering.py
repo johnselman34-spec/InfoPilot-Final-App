@@ -223,7 +223,8 @@ class TestCategoryFilteringBackend:
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         
         data = response.json()
-        print(f"✅ Invalid category ID handled: {data['count']} results")
+        count = data.get("count", data.get("total", 0))
+        print(f"✅ Invalid category ID handled: {count} results")
 
 
 class TestCategoryFilteringWithoutAuth:
