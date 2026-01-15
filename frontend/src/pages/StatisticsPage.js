@@ -67,6 +67,8 @@ const StatisticsPage = ({ showToast }) => {
   const [stats, setStats] = useState(null);
   const [leaderboard, setLeaderboard] = useState({ sales: [], revenue: [] });
   const [mostCopied, setMostCopied] = useState({ leaderboard: [], stats: {} });
+  const [pollStats, setPollStats] = useState(null);
+  const [userPollStats, setUserPollStats] = useState(null);
   const [leaderboardTab, setLeaderboardTab] = useState('sales');
   const [loading, setLoading] = useState(true);
   const [funnyMessage] = useState(() => FUNNY_STATS_MESSAGES[Math.floor(Math.random() * FUNNY_STATS_MESSAGES.length)]);
@@ -77,7 +79,36 @@ const StatisticsPage = ({ showToast }) => {
     fetchStatistics();
     fetchLeaderboards();
     fetchMostCopied();
+    fetchPollStatistics();
   }, []);
+
+  const fetchPollStatistics = async () => {
+    try {
+      // Fetch user's poll statistics (everyone has access)
+      if (token) {
+        const userRes = await fetch(`${API}/polls/user/statistics`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setUserPollStats(userData);
+        }
+      }
+      
+      // Fetch admin poll statistics if user is admin
+      if (user?.is_admin && token) {
+        const adminRes = await fetch(`${API}/polls/admin/statistics`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (adminRes.ok) {
+          const adminData = await adminRes.json();
+          setPollStats(adminData);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch poll statistics:', error);
+    }
+  };
 
   const fetchMostCopied = async () => {
     try {
