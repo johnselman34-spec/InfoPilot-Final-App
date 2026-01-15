@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
+import ReactMarkdown from 'react-markdown';
 
 const TutorialsPage = ({ showToast }) => {
   const { token, user } = useAuth();
@@ -55,10 +56,28 @@ const TutorialsPage = ({ showToast }) => {
     return userProgress[tutorialId] || 0;
   };
 
+  const markAsComplete = async (tutorialId) => {
+    if (!token) return;
+    try {
+      await fetch(`${API}/tutorials/${tutorialId}/progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ progress: 100 })
+      });
+      setUserProgress({ ...userProgress, [tutorialId]: 100 });
+      showToast('🎉 Tutorial completed!', 'success');
+    } catch (e) {
+      console.error('Failed to mark complete:', e);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: 60 }}>
-        <div style={{ fontSize: '3rem', marginBottom: 20 }}>🎬</div>
+        <div style={{ fontSize: '3rem', marginBottom: 20 }}>📚</div>
         <p style={{ color: '#a1a1aa' }}>Loading tutorials...</p>
       </div>
     );
@@ -82,10 +101,10 @@ const TutorialsPage = ({ showToast }) => {
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent'
         }}>
-          🎬 Video Tutorials
+          📚 Tutorials & Guides
         </h1>
         <p style={{ color: '#a1a1aa', fontSize: '1.1rem', marginBottom: 15 }}>
-          Learn InfoPilot Explorer like a pro! Watch our video guides and become a search master.
+          Learn InfoPilot Explorer like a pro! Read our comprehensive guides and become a search master.
         </p>
         {user && (
           <div style={{
@@ -109,7 +128,7 @@ const TutorialsPage = ({ showToast }) => {
         flexWrap: 'wrap'
       }}>
         <button
-          onClick={() => setSelectedCategory(null)}
+          onClick={() => { setSelectedCategory(null); setSelectedTutorial(null); }}
           style={{
             padding: '10px 20px',
             borderRadius: 25,
@@ -127,7 +146,7 @@ const TutorialsPage = ({ showToast }) => {
         {categories.map(cat => (
           <button
             key={cat.id}
-            onClick={() => setSelectedCategory(cat.id)}
+            onClick={() => { setSelectedCategory(cat.id); setSelectedTutorial(null); }}
             style={{
               padding: '10px 20px',
               borderRadius: 25,
@@ -148,7 +167,7 @@ const TutorialsPage = ({ showToast }) => {
         ))}
       </div>
 
-      {/* Selected Tutorial Video Player */}
+      {/* Selected Tutorial Content */}
       {selectedTutorial && (
         <div style={{
           background: 'rgba(30, 20, 50, 0.8)',
@@ -159,6 +178,23 @@ const TutorialsPage = ({ showToast }) => {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
             <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                {categories.find(c => c.id === selectedTutorial.category) && (
+                  <span style={{
+                    background: `${categories.find(c => c.id === selectedTutorial.category).color}20`,
+                    color: categories.find(c => c.id === selectedTutorial.category).color,
+                    padding: '4px 12px',
+                    borderRadius: 15,
+                    fontSize: '0.8rem'
+                  }}>
+                    {categories.find(c => c.id === selectedTutorial.category).icon}{' '}
+                    {categories.find(c => c.id === selectedTutorial.category).name}
+                  </span>
+                )}
+                <span style={{ color: '#71717a', fontSize: '0.85rem' }}>
+                  {selectedTutorial.duration}
+                </span>
+              </div>
               <h2 style={{ color: '#f472b6', marginBottom: 8 }}>{selectedTutorial.title}</h2>
               <p style={{ color: '#a1a1aa' }}>{selectedTutorial.description}</p>
             </div>
@@ -177,59 +213,67 @@ const TutorialsPage = ({ showToast }) => {
             </button>
           </div>
           
-          {/* Video Embed */}
+          {/* Tutorial Image */}
+          {selectedTutorial.image_url && (
+            <div style={{
+              borderRadius: 12,
+              overflow: 'hidden',
+              marginBottom: 20,
+              maxHeight: 300
+            }}>
+              <img 
+                src={selectedTutorial.image_url} 
+                alt={selectedTutorial.title}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+          )}
+          
+          {/* Tutorial Content */}
           <div style={{
-            position: 'relative',
-            paddingBottom: '56.25%',
-            height: 0,
-            overflow: 'hidden',
-            borderRadius: 12
+            background: 'rgba(0, 0, 0, 0.3)',
+            borderRadius: 12,
+            padding: 25,
+            color: '#e2e8f0',
+            lineHeight: 1.8
           }}>
-            <iframe
-              src={`https://www.youtube.com/embed/${selectedTutorial.youtube_id}?autoplay=1`}
-              title={selectedTutorial.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                border: 'none'
-              }}
-            />
+            <div className="tutorial-content" style={{
+              fontSize: '1rem'
+            }}>
+              {/* Render markdown content */}
+              <ReactMarkdown
+                components={{
+                  h2: ({node, ...props}) => <h2 style={{ color: '#a78bfa', marginTop: 20, marginBottom: 10 }} {...props} />,
+                  h3: ({node, ...props}) => <h3 style={{ color: '#f472b6', marginTop: 15, marginBottom: 8 }} {...props} />,
+                  p: ({node, ...props}) => <p style={{ marginBottom: 12 }} {...props} />,
+                  ul: ({node, ...props}) => <ul style={{ paddingLeft: 25, marginBottom: 15 }} {...props} />,
+                  li: ({node, ...props}) => <li style={{ marginBottom: 6 }} {...props} />,
+                  code: ({node, inline, ...props}) => 
+                    inline 
+                      ? <code style={{ background: 'rgba(124, 58, 237, 0.3)', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace' }} {...props} />
+                      : <pre style={{ background: 'rgba(0,0,0,0.5)', padding: 15, borderRadius: 8, overflow: 'auto', marginBottom: 15 }}><code {...props} /></pre>,
+                  strong: ({node, ...props}) => <strong style={{ color: '#10b981' }} {...props} />,
+                }}
+              >
+                {selectedTutorial.content}
+              </ReactMarkdown>
+            </div>
           </div>
           
           <div style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            marginTop: 15,
+            marginTop: 20,
             padding: '15px 0',
             borderTop: '1px solid rgba(255,255,255,0.1)'
           }}>
             <span style={{ color: '#71717a' }}>
-              Duration: {selectedTutorial.duration}
+              {selectedTutorial.duration}
             </span>
             {user && (
               <button
-                onClick={async () => {
-                  try {
-                    await fetch(`${API}/tutorials/${selectedTutorial.id}/progress`, {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
-                      },
-                      body: JSON.stringify({ progress: 100 })
-                    });
-                    setUserProgress({ ...userProgress, [selectedTutorial.id]: 100 });
-                    showToast('🎉 Tutorial completed!', 'success');
-                  } catch (e) {
-                    console.error('Failed to mark complete:', e);
-                  }
-                }}
+                onClick={() => markAsComplete(selectedTutorial.id)}
                 disabled={getProgressForTutorial(selectedTutorial.id) >= 100}
                 style={{
                   padding: '10px 20px',
@@ -288,7 +332,9 @@ const TutorialsPage = ({ showToast }) => {
               <div style={{
                 position: 'relative',
                 paddingBottom: '56.25%',
-                background: `url(${tutorial.thumbnail}) center/cover`
+                background: tutorial.image_url 
+                  ? `url(${tutorial.image_url}) center/cover`
+                  : `linear-gradient(135deg, ${category?.color || '#7c3aed'} 0%, ${category?.color || '#7c3aed'}66 100%)`
               }}>
                 <div style={{
                   position: 'absolute',
@@ -296,7 +342,7 @@ const TutorialsPage = ({ showToast }) => {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  background: 'rgba(0,0,0,0.4)',
+                  background: 'rgba(0,0,0,0.3)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -311,7 +357,7 @@ const TutorialsPage = ({ showToast }) => {
                     justifyContent: 'center',
                     fontSize: '1.5rem'
                   }}>
-                    ▶️
+                    📖
                   </div>
                 </div>
                 
@@ -381,23 +427,6 @@ const TutorialsPage = ({ showToast }) => {
                 }}>
                   {tutorial.description}
                 </p>
-                
-                {/* Progress bar */}
-                {user && progress > 0 && progress < 100 && (
-                  <div style={{
-                    marginTop: 12,
-                    background: 'rgba(255,255,255,0.1)',
-                    borderRadius: 4,
-                    height: 4,
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      width: `${progress}%`,
-                      height: '100%',
-                      background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)'
-                    }} />
-                  </div>
-                )}
               </div>
             </div>
           );
@@ -406,7 +435,7 @@ const TutorialsPage = ({ showToast }) => {
 
       {filteredTutorials.length === 0 && (
         <div style={{ textAlign: 'center', padding: 60, color: '#a1a1aa' }}>
-          <div style={{ fontSize: '3rem', marginBottom: 15 }}>🎬</div>
+          <div style={{ fontSize: '3rem', marginBottom: 15 }}>📚</div>
           <p>No tutorials found in this category.</p>
         </div>
       )}
