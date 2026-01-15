@@ -18,7 +18,8 @@ from models import (
     SearchResult, ReactionUpdate,
     AdminSettings, AdminSettingsUpdate,
     CollateRequest, Message, MessageCreate,
-    NewsletterArticle, NewsletterArticleCreate
+    NewsletterArticle, NewsletterArticleCreate,
+    MarketplaceProtocol, MarketplaceSell, MarketplacePurchase, PayoutRequest, Transaction
 )
 from utils import (
     hash_password, verify_password, create_access_token, verify_token,
