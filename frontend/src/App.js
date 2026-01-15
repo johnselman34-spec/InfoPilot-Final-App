@@ -49,7 +49,7 @@ const MainApp = () => {
       case 'admin':
         return user?.is_admin ? <AdminPanel showToast={showToast} /> : <UltimateSearchPage showToast={showToast} />;
       case 'analytics':
-        return user?.is_admin ? <AnalyticsPage showToast={showToast} /> : <UltimateSearchPage showToast={showToast} />;
+        return user?.is_admin ? <AdvancedAnalytics showToast={showToast} /> : <UltimateSearchPage showToast={showToast} />;
       case 'search':
         return <UltimateSearchPage showToast={showToast} />;
       case 'marketplace':
@@ -64,6 +64,8 @@ const MainApp = () => {
         return <QuoteGalleryPage showToast={showToast} />;
       case 'messages':
         return <MessagesPage showToast={showToast} />;
+      case 'chat':
+        return <ChatPage showToast={showToast} />;
       case 'settings':
         return <SettingsPage showToast={showToast} setCurrentPage={setCurrentPage} />;
       case 'subscribe':
