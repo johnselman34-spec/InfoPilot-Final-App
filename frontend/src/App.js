@@ -5679,11 +5679,48 @@ const GlobalDatabasePage = () => {
 // Book Page - FULL SALES PAGE with new images
 const BookPage = () => {
   const [currentImage, setCurrentImage] = useState(0);
+  const [currentTagline, setCurrentTagline] = useState(0);
   const bookImages = [IMAGES.bookCoverMain, IMAGES.bookCover1, IMAGES.bookCover2, IMAGES.bookCover3, IMAGES.bookCover4];
+  
+  // Rotating hilarious taglines
+  const funnyTaglines = [
+    "The Navy Taught Me to Fly Jets. The Universe Taught Me Everything Else.",
+    "Get yourself giggling in disoriented, stupefying hee-haw laughter!",
+    "Hurricane-force winds of laughter from the most skeptical of minds!",
+    "Finally, an easy-to-read novella that flows - you won't be able to put it down!",
+    "50+ zingers in succession. Bat-shit insane? Maybe. Unforgettable? Definitely.",
+    "Written by a U.S. Naval Officer who graduated FIRST in his class!"
+  ];
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTagline((prev) => (prev + 1) % funnyTaglines.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [funnyTaglines.length]);
   
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* Hero Banner */}
+        <BookSalesBanner variant="hero" />
+        
+        {/* Hilarious Taglines Carousel */}
+        <div className="bg-gradient-to-r from-pink-900/30 via-purple-900/30 to-blue-900/30 rounded-xl p-6 border border-pink-500/30 text-center">
+          <p className="text-2xl text-pink-300 font-mono italic min-h-[60px] transition-all">
+            "{funnyTaglines[currentTagline]}"
+          </p>
+          <div className="flex justify-center gap-2 mt-4">
+            {funnyTaglines.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentTagline(i)}
+                className={`w-2 h-2 rounded-full transition-all ${currentTagline === i ? 'bg-pink-400 w-6' : 'bg-purple-500/50'}`}
+              />
+            ))}
+          </div>
+        </div>
+
         {/* Hero Section */}
         <div className="relative rounded-xl overflow-hidden">
           <img src={bookImages[currentImage]} alt="Letters to Evelyn" className="w-full h-64 md:h-96 object-cover" />
@@ -5691,6 +5728,7 @@ const BookPage = () => {
           <div className="absolute bottom-0 left-0 right-0 p-6">
             <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono mb-2">LETTERS TO EVELYN</h1>
             <p className="text-xl text-purple-300 font-mono">{BOOK_INFO.genre}</p>
+            <p className="text-yellow-400/70 font-mono text-sm mt-2">A Top Pilot Enterprises, Inc. Publication</p>
           </div>
         </div>
         
@@ -5708,9 +5746,15 @@ const BookPage = () => {
         </div>
 
         {/* Rating Banner */}
-        <div className="flex items-center justify-center gap-4 p-4 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 p-6 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500">
           <div className="flex">{[...Array(5)].map((_, i) => <Star key={i} className="w-8 h-8 fill-yellow-400 text-yellow-400" />)}</div>
-          <span className="text-2xl font-bold text-yellow-400 font-mono">19 FIVE-STAR REVIEWS</span>
+          <div className="text-center md:text-left">
+            <span className="text-2xl font-bold text-yellow-400 font-mono">19 FIVE-STAR REVIEWS</span>
+            <p className="text-purple-300/70 font-mono text-sm">From Readers' Favorite - Trusted Professional Reviews</p>
+          </div>
+          <span className="px-4 py-2 bg-pink-500/20 border border-pink-500 rounded-full text-pink-400 font-mono text-sm animate-pulse">
+            🎬 OPTIONED FOR FILM
+          </span>
         </div>
 
         {/* Author Section */}
@@ -5721,6 +5765,8 @@ const BookPage = () => {
               <h2 className="text-2xl font-bold text-pink-400 font-mono">John Selman</h2>
               <p className="text-purple-300 font-mono mb-2">World Record Aviation Holder • U.S. Navy Pilot • Author</p>
               <p className="text-purple-400/80 font-mono text-sm italic">"{BOOK_INFO.tagline}"</p>
+              <p className="text-yellow-400/60 font-mono text-xs mt-2">Graduated FIRST in his NROTC class at University of Maine</p>
+              <p className="text-purple-300/60 font-mono text-xs">Flew 10 different aircraft types • Multiple world records</p>
             </div>
           </div>
         </FuturisticFrame>
