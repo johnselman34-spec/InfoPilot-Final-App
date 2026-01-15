@@ -361,12 +361,12 @@ def start_triweekly_scheduler():
         replace_existing=True
     )
     
-    # Schedule 2: 9:05 AM UTC (Mid-Morning Edition)
+    # Schedule 2: 9:42 AM UTC (Mid-Morning Edition) - UPDATED from 9:05 AM
     triweekly_scheduler.add_job(
         lambda: asyncio.create_task(send_triweekly_newsletter("midmorning")),
-        CronTrigger(hour=9, minute=5),
+        CronTrigger(hour=9, minute=42),
         id="triweekly_midmorning",
-        name="Tri-Weekly Newsletter (9:05 AM)",
+        name="Tri-Weekly Newsletter (9:42 AM)",
         replace_existing=True
     )
     
@@ -382,7 +382,7 @@ def start_triweekly_scheduler():
     triweekly_scheduler.start()
     logger.info("📬 Tri-weekly newsletter scheduler started!")
     logger.info("   - 5:46 AM UTC (Morning Edition)")
-    logger.info("   - 9:05 AM UTC (Mid-Morning Edition)")
+    logger.info("   - 9:42 AM UTC (Mid-Morning Edition)")
     logger.info("   - 4:20 PM UTC (Afternoon Edition)")
 
 
