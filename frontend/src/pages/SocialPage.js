@@ -858,18 +858,44 @@ const SocialPage = ({ showToast }) => {
                 <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: 10, marginTop: 8 }}>
                   {page.description || 'No description'}
                 </p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span style={{ color: '#71717a', fontSize: '0.8rem' }}>
                     {page.follower_count} followers
                   </span>
-                  {!page.is_following ? (
-                    <button className="btn btn-primary btn-sm" onClick={() => followPage(page.id)}>
-                      Follow
-                    </button>
-                  ) : (
-                    <span style={{ color: '#10b981', fontSize: '0.8rem' }}>Following</span>
-                  )}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {page.is_admin && (
+                      <button 
+                        className="btn btn-secondary btn-sm" 
+                        onClick={() => openCreatePollModal('page', page.id)}
+                        data-testid={`create-poll-page-${page.id}`}
+                        title="Create Poll"
+                      >
+                        📊 Poll
+                      </button>
+                    )}
+                    {!page.is_following ? (
+                      <button className="btn btn-primary btn-sm" onClick={() => followPage(page.id)}>
+                        Follow
+                      </button>
+                    ) : (
+                      <span style={{ color: '#10b981', fontSize: '0.8rem' }}>Following</span>
+                    )}
+                  </div>
                 </div>
+                
+                {/* Polls for this page */}
+                {polls[`page_${page.id}`]?.length > 0 && (
+                  <div style={{ marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
+                    {polls[`page_${page.id}`].slice(0, 2).map(poll => (
+                      <PollCard 
+                        key={poll.id} 
+                        poll={poll}
+                        onDelete={(pollId) => handleDeletePoll(pollId, 'page', page.id)}
+                        showContext={false}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
