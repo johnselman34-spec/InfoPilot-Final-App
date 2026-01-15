@@ -218,6 +218,9 @@ const BookPromoBanner = () => {
       overflow: 'hidden',
       boxShadow: '0 25px 80px rgba(124, 58, 237, 0.5)'
     }}>
+      {/* Top Pilot Enterprises Banner */}
+      <TopPilotBanner />
+      
       {/* Animated Header Banner */}
       <div style={{
         background: 'linear-gradient(135deg, #7c3aed, #ec4899, #f97316)',
