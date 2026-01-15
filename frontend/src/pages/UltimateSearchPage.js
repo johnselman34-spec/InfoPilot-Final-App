@@ -425,7 +425,20 @@ const UltimateSearchPage = ({ showToast }) => {
             data-testid="search-input"
           />
           <button className="btn btn-primary" onClick={handleSearch} disabled={loading} data-testid="search-btn">
-            {loading ? 'Searching...' : 'Search & Collate'}
+            {loading ? 'Searching...' : 'Quick Search'}
+          </button>
+          <button 
+            className="btn btn-primary" 
+            onClick={collateWithCategories} 
+            disabled={collateLoading || selectedCategories.length === 0}
+            style={{ 
+              background: selectedCategories.length > 0 
+                ? 'linear-gradient(135deg, #10b981, #059669)' 
+                : 'rgba(107, 114, 128, 0.5)'
+            }}
+            data-testid="collate-btn"
+          >
+            {collateLoading ? '⏳ Collating...' : `🔍 Collate (${selectedCategories.length} selected)`}
           </button>
         </div>
 
