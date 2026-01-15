@@ -240,7 +240,7 @@ async def send_newsletter_background(draft_id: str, subscriber_emails: List[str]
         for email in subscriber_emails:
             try:
                 # Add unsubscribe link
-                unsubscribe_link = f"https://infopilot-network.preview.emergentagent.com/unsubscribe?email={email}"
+                unsubscribe_link = f"https://infopilot-hub.preview.emergentagent.com/unsubscribe?email={email}"
                 html_with_footer = html_content + f"""
                 <hr style="margin-top: 40px; border-color: #333;">
                 <p style="color: #888; font-size: 12px; text-align: center;">

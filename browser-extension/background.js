@@ -1,7 +1,7 @@
 // InfoJet - Background Service Worker
 // Handles context menu, keyboard shortcuts, and message passing
 
-const API_BASE = 'https://690661b4-01d4-4b31-bad2-1feff0440ace.preview.emergentagent.com/api';
+const API_BASE = 'https://infopilot-hub.preview.emergentagent.com/api';
 
 // Create context menu on install
 chrome.runtime.onInstalled.addListener(() => {

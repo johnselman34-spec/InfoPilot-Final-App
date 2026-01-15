@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = "https://infopilot-network.preview.emergentagent.com"
+BASE_URL = "https://infopilot-hub.preview.emergentagent.com"
 
 # Test credentials
 ADMIN_EMAIL = "john@infojet.com"
