@@ -329,6 +329,7 @@ const UltimateSearchPage = ({ showToast }) => {
     setEditCategoryName(cat.name || '');
     setEditProtocol(cat.protocol || '');
     setEditIsPublic(cat.is_public || false);
+    setEditPrice(cat.price ? cat.price.toString() : '');
   };
 
   // Collate with selected categories - THE ACTUAL SEARCH FUNCTION
