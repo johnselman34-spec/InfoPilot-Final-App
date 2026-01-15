@@ -1000,6 +1000,109 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+  // Chart subtitle
+  chartSubtitle: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 16,
+    fontStyle: 'italic',
+  },
+  // Funny Note
+  funnyNote: {
+    backgroundColor: colors.background,
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+  },
+  funnyNoteText: {
+    fontSize: 12,
+    color: colors.textMuted,
+    fontStyle: 'italic',
+    lineHeight: 18,
+  },
+  // Achievements
+  achievementsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  achievementCard: {
+    width: '47%',
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    marginBottom: 8,
+  },
+  achievementEarned: {
+    backgroundColor: colors.primary + '15',
+  },
+  achievementIcon: {
+    fontSize: 32,
+    marginBottom: 6,
+  },
+  achievementName: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  achievementRarity: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: colors.accent,
+    marginBottom: 4,
+  },
+  achievementDesc: {
+    fontSize: 10,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  earnedBadge: {
+    backgroundColor: colors.success,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    marginBottom: 6,
+  },
+  earnedText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: colors.white,
+  },
+  progressContainer: {
+    width: '100%',
+    height: 8,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 4,
+    marginBottom: 6,
+    position: 'relative',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 4,
+  },
+  progressText: {
+    position: 'absolute',
+    right: 0,
+    top: -14,
+    fontSize: 9,
+    color: colors.textMuted,
+  },
+  achievementTagline: {
+    fontSize: 9,
+    color: colors.primary,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
   // Book Promo
   bookPromo: {
     backgroundColor: colors.secondary,
