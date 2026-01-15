@@ -2881,6 +2881,155 @@ const MarketplacePage = () => {
   );
 };
 
+// Interactive Marketplace Map Component
+const MarketplaceMap = ({ protocols, onSelectProtocol }) => {
+  const [showMap, setShowMap] = useState(false);
+  const [selectedMarker, setSelectedMarker] = useState(null);
+  
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY || "",
+    id: 'marketplace-map-script'
+  });
+
+  const mapContainerStyle = {
+    width: '100%',
+    height: '300px',
+    borderRadius: '8px'
+  };
+
+  const defaultCenter = useMemo(() => ({ lat: 39.8283, lng: -98.5795 }), []); // Center of USA
+
+  const mapOptions = useMemo(() => ({
+    styles: [
+      { elementType: "geometry", stylers: [{ color: "#1a1a2e" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#1a1a2e" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#f59e0b" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#0f0f1a" }] },
+      { featureType: "road", elementType: "geometry", stylers: [{ color: "#2d2d44" }] },
+      { featureType: "poi", elementType: "geometry", stylers: [{ color: "#1f1f35" }] },
+    ],
+    disableDefaultUI: false,
+    zoomControl: true,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: true
+  }), []);
+
+  // Generate random locations for protocols (in real app, would come from actual location data)
+  const protocolLocations = useMemo(() => {
+    const locations = [
+      { lat: 40.7128, lng: -74.0060, city: "New York" },
+      { lat: 34.0522, lng: -118.2437, city: "Los Angeles" },
+      { lat: 41.8781, lng: -87.6298, city: "Chicago" },
+      { lat: 29.7604, lng: -95.3698, city: "Houston" },
+      { lat: 33.4484, lng: -112.0740, city: "Phoenix" },
+      { lat: 39.7392, lng: -104.9903, city: "Denver" },
+      { lat: 47.6062, lng: -122.3321, city: "Seattle" },
+      { lat: 25.7617, lng: -80.1918, city: "Miami" },
+      { lat: 42.3601, lng: -71.0589, city: "Boston" },
+      { lat: 38.9072, lng: -77.0369, city: "Washington DC" },
+    ];
+    
+    return protocols.map((p, i) => ({
+      ...p,
+      ...locations[i % locations.length],
+      offset: { lat: (Math.random() - 0.5) * 2, lng: (Math.random() - 0.5) * 2 }
+    }));
+  }, [protocols]);
+
+  if (!protocols || protocols.length === 0) return null;
+
+  return (
+    <div className="bg-slate-900/80 rounded-xl border border-yellow-500/20 p-4 mt-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-yellow-400 font-mono font-bold flex items-center gap-2">
+          <Globe className="w-5 h-5" /> WORLDWIDE PROTOCOL MAP
+        </h3>
+        <button
+          onClick={() => setShowMap(!showMap)}
+          className="px-4 py-2 bg-yellow-500/20 text-yellow-400 font-mono text-sm rounded hover:bg-yellow-500/30 flex items-center gap-2"
+        >
+          <MapPin className="w-4 h-4" />
+          {showMap ? "HIDE MAP" : "SHOW MAP"}
+        </button>
+      </div>
+      
+      {showMap && (
+        <div className="space-y-4">
+          {isLoaded ? (
+            <GoogleMap
+              mapContainerStyle={mapContainerStyle}
+              center={defaultCenter}
+              zoom={4}
+              options={mapOptions}
+            >
+              {protocolLocations.map((protocol, idx) => (
+                <Marker
+                  key={protocol.id || idx}
+                  position={{ 
+                    lat: protocol.lat + (protocol.offset?.lat || 0), 
+                    lng: protocol.lng + (protocol.offset?.lng || 0) 
+                  }}
+                  onClick={() => setSelectedMarker(protocol)}
+                  icon={{
+                    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+                      <svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40">
+                        <path d="M15 0C6.72 0 0 6.72 0 15c0 10.5 15 25 15 25s15-14.5 15-25C30 6.72 23.28 0 15 0z" fill="${protocol.is_purchased ? '#22c55e' : '#f59e0b'}"/>
+                        <circle cx="15" cy="15" r="8" fill="white"/>
+                        <text x="15" y="19" text-anchor="middle" font-size="10" font-weight="bold" fill="${protocol.is_purchased ? '#22c55e' : '#f59e0b'}">$</text>
+                      </svg>
+                    `)}`,
+                    scaledSize: { width: 30, height: 40 }
+                  }}
+                />
+              ))}
+              
+              {selectedMarker && (
+                <InfoWindow
+                  position={{ 
+                    lat: selectedMarker.lat + (selectedMarker.offset?.lat || 0), 
+                    lng: selectedMarker.lng + (selectedMarker.offset?.lng || 0) 
+                  }}
+                  onCloseClick={() => setSelectedMarker(null)}
+                >
+                  <div className="p-2 min-w-[200px]">
+                    <h4 className="font-bold text-gray-800 mb-1">{selectedMarker.name}</h4>
+                    <p className="text-gray-600 text-sm">by {selectedMarker.owner_username}</p>
+                    <p className="text-green-600 font-bold mt-1">${selectedMarker.price?.toFixed(2)}</p>
+                    <p className="text-gray-500 text-xs mt-1">{selectedMarker.city}</p>
+                    {selectedMarker.is_purchased && (
+                      <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">PURCHASED</span>
+                    )}
+                  </div>
+                </InfoWindow>
+              )}
+            </GoogleMap>
+          ) : (
+            <div className="h-[300px] bg-slate-950 rounded-lg flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
+            </div>
+          )}
+          
+          {/* Map Legend */}
+          <div className="flex items-center gap-6 justify-center">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
+              <span className="text-purple-400/60 font-mono text-xs">Available</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-green-500"></div>
+              <span className="text-purple-400/60 font-mono text-xs">Purchased</span>
+            </div>
+            <span className="text-purple-400/40 font-mono text-xs">
+              {protocols.length} protocols on map
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Google Maps Component with Category-Colored Markers
 const CategoryMap = ({ selectedCategories }) => {
   const [mapData, setMapData] = useState({ markers: [], categories: {} });
