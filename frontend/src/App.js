@@ -2367,14 +2367,20 @@ const CategoriesPage = () => {
                             <input 
                               type="number" 
                               value={newCategory.price} 
-                              onChange={(e) => setNewCategory({ ...newCategory, price: Math.max(0.75, Math.min(2.99, parseFloat(e.target.value) || 0.75)) })}
-                              min="0.75" 
-                              max="2.99" 
+                              onChange={(e) => setNewCategory({ ...newCategory, price: Math.max(0.00, Math.min(99.00, parseFloat(e.target.value) || 0.00)) })}
+                              min="0.00" 
+                              max="99.00" 
                               step="0.01"
                               className="w-24 px-3 py-2 bg-slate-950 border border-yellow-500/30 rounded text-yellow-400 font-mono focus:border-yellow-500" 
                             />
                           </div>
-                          <p className="text-xs text-purple-400/60 mt-1 font-mono">Price range: $0.75 - $2.99</p>
+                          <p className="text-xs text-purple-400/60 mt-1 font-mono">Price range: $0.00 (FREE) - $99.00</p>
+                          {newCategory.price === 0 && (
+                            <p className="text-xs text-green-400 mt-1 font-mono flex items-center gap-1">
+                              <span className="px-2 py-0.5 bg-green-500 text-white rounded text-xs font-bold">FREE</span>
+                              Protocol will be FREE to copy!
+                            </p>
+                          )}
                         </div>
                         
                         {/* Location for Map */}
@@ -2475,14 +2481,20 @@ const CategoriesPage = () => {
                             <input 
                               type="number" 
                               value={editingCategory.price} 
-                              onChange={(e) => setEditingCategory({ ...editingCategory, price: Math.max(0.75, Math.min(2.99, parseFloat(e.target.value) || 0.75)) })}
-                              min="0.75" 
-                              max="2.99" 
+                              onChange={(e) => setEditingCategory({ ...editingCategory, price: Math.max(0.00, Math.min(99.00, parseFloat(e.target.value) || 0.00)) })}
+                              min="0.00" 
+                              max="99.00" 
                               step="0.01"
                               className="w-24 px-3 py-2 bg-slate-950 border border-yellow-500/30 rounded text-yellow-400 font-mono focus:border-yellow-500" 
                             />
                           </div>
-                          <p className="text-xs text-purple-400/60 mt-1 font-mono">Price range: $0.75 - $2.99</p>
+                          <p className="text-xs text-purple-400/60 mt-1 font-mono">Price range: $0.00 (FREE) - $99.00</p>
+                          {editingCategory.price === 0 && (
+                            <p className="text-xs text-green-400 mt-1 font-mono flex items-center gap-1">
+                              <span className="px-2 py-0.5 bg-green-500 text-white rounded text-xs font-bold">FREE</span>
+                              Protocol will be FREE to copy!
+                            </p>
+                          )}
                         </div>
                         
                         {/* Location for Map */}
