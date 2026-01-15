@@ -89,10 +89,10 @@ const MaestroBistroSection = () => (
         </div>
         <div style={{ color: '#fff', fontSize: '0.85rem', lineHeight: 1.5 }}>
           <div style={{ marginBottom: 5 }}>
-            🥩 <strong style={{ color: '#f59e0b' }}>deLectaBLe Beef Chowder</strong> - Evenly spiced perfection
+            🥩 <strong style={{ color: '#f59e0b' }}>deLectaBLe Beef Rouladen</strong> - Evenly spiced perfection
           </div>
           <div style={{ marginBottom: 5 }}>
-            🥬 <strong style={{ color: '#10b981' }}>Vegetable Chowder</strong> - With Bacon! (Yes, really!)
+            🥬 <strong style={{ color: '#10b981' }}>Beef Rouladen with Vegetables and Carrots</strong> - It's German Cuisine! (Yes, really!)
           </div>
           <div>
             🐟 <strong style={{ color: '#38bdf8' }}>Fresh Fish Chowder</strong> - Maine's finest catch

@@ -27,8 +27,8 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
    - Protocol Marketplace
    - Interactive Maps
 3. **Maestro Bistro** - On the Mall, Brunswick, Maine
-   - deLectaBLe Beef Chowder - Evenly spiced perfection
-   - Vegetable Chowder - With Bacon! (Yes, really!)
+   - deLectaBLe Beef Rouladen - Evenly spiced perfection
+   - Beef Rouladen with Vegetables and Carrots - It's German Cuisine! (Yes, really!)
    - Fresh Fish Chowder - Maine's finest catch
 
 ## User Accounts
