@@ -614,6 +614,10 @@ const AdminPanel = ({ showToast }) => {
           <RevenueForecastAdmin token={token} showToast={showToast} />
         )}
 
+        {activeTab === 'protocol-forecast' && (
+          <MarketplaceProtocolForecast token={token} showToast={showToast} />
+        )}
+
         {activeTab === 'email-reports' && (
           <EmailReportsTab token={token} showToast={showToast} />
         )}
