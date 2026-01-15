@@ -186,9 +186,10 @@ class TestCategoryEndpoints:
         })
         assert response.status_code == 200, f"Failed to get categories: {response.text}"
         data = response.json()
-        assert "categories" in data, "Categories not in response"
-        print(f"✓ Categories retrieved: {len(data['categories'])} categories")
-        return data["categories"]
+        # Categories endpoint returns a list directly
+        assert isinstance(data, list), "Categories should be a list"
+        print(f"✓ Categories retrieved: {len(data)} categories")
+        return data
     
     def test_update_category(self, admin_token):
         """Test updating a category (name, protocol, visibility)"""
@@ -198,7 +199,7 @@ class TestCategoryEndpoints:
         })
         
         if response.status_code == 200:
-            categories = response.json().get("categories", [])
+            categories = response.json()  # Returns list directly
             if len(categories) > 0:
                 category = categories[0]
                 category_id = category.get("id")
