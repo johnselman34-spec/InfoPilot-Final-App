@@ -601,6 +601,10 @@ const AdminPanel = ({ showToast }) => {
         {activeTab === 'ab-testing' && (
           <ABTestDashboard showToast={showToast} />
         )}
+
+        {activeTab === 'email-reports' && (
+          <EmailReportsTab token={token} showToast={showToast} />
+        )}
       </div>
     </div>
   );
