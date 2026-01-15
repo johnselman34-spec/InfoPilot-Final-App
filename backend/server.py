@@ -42,6 +42,7 @@ from routes.messages import router as messages_router
 from routes.newsletter import router as newsletter_router
 from routes.voice import router as voice_router
 from routes.collaborate import router as collaborate_router
+from routes.polls import router as polls_router
 
 # Import services
 from services.location_service import LocationService
