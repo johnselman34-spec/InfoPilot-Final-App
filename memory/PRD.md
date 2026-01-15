@@ -4,9 +4,12 @@
 Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - **InfoJet 2.0™** - A proprietary search and categorization language
 - **Protocol Marketplace** - Buy/sell search protocols (90/10 revenue split)
-- **Social Features** - Groups, Pages, Feeds, Notifications
-- **Interactive Map** - Geolocated search results
+- **Social Features** - Friends, Groups, Pages, Feeds, Direct Messages
+- **Interactive Map** - Geolocated search results with auto-detection
 - **Gamification** - Points, levels, badges, leaderboards
+- **Voice Search** - OpenAI Whisper integration
+- **AI Newsletters** - GPT-5.2 generated marketing content
+- **Collaborative Editing** - Real-time protocol collaboration
 - **Promotional Content** - Letters to Evelyn book, InfoPilot, Maestro Bistro
 
 ## Parent Company
@@ -37,7 +40,7 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 ### Test Account
 - **test@infojet.com** / testpass123
 
-## What's Been Implemented (January 2026)
+## What's Been Implemented (January 15, 2026)
 
 ### Core Features ✅
 - [x] User authentication (Google OAuth + Email/Password)
@@ -47,6 +50,7 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - [x] Protocol parsing with abbreviation support
 - [x] Collate button showing selected category count
 - [x] Interactive Map for geolocated results
+- [x] **Category Filtering on Ultimate Search (AND/OR logic)**
 
 ### Enhanced Marketplace ✅ (COMPLETED January 15, 2026)
 - [x] World Wide Protocol Map - Interactive map with markers
