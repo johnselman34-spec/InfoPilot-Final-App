@@ -509,6 +509,9 @@ const MarketplacePage = ({ showToast }) => {
         </div>
       )}
 
+      {/* Bundles Tab */}
+      {activeTab === 'bundles' && <ProtocolBundlesSection showToast={showToast} />}
+
       {/* Sell Tab */}
       {activeTab === 'sell' && <SellForm newProtocol={newProtocol} setNewProtocol={setNewProtocol} onSubmit={handleListProtocol} adminPercent={adminPercent} />}
 
