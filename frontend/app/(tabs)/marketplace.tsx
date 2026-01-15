@@ -29,6 +29,8 @@ interface Protocol {
   category_id?: string;
   description?: string;
   purchase_count: number;
+  pay_what_you_want?: boolean;
+  from_public_category?: boolean;
   location?: {
     latitude: number;
     longitude: number;
