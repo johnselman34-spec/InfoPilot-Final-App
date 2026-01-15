@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
+import PollCard, { CreatePollModal } from '../components/shared/PollCard';
 
 const REACTION_TYPES = [
   { type: 'like', emoji: '👍', label: 'Like' },
