@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
-// Book promotional images
+// Book promotional images - including new ebook cover
 const BOOK_IMAGES = [
+  "https://customer-assets.emergentagent.com/job_protocol-hub-5/artifacts/149zoktj_ebook.jpg",
   "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/024v1r34_Letters%20to%20Evelyn%20advertisement%201.jpg",
   "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/e90a1rlq_Letters%20to%20Evelyn%20advertisement%202.jpg",
   "https://customer-assets.emergentagent.com/job_search-explorer-5/artifacts/ccdegcr8_Letters%20to%20Evelyn%20advertisement%203.jpg",
@@ -9,10 +10,19 @@ const BOOK_IMAGES = [
 ];
 
 const FUNNY_TAGLINES = [
-  { image: 0, text: "WROTE A BOOK. UNIVERSE FACT-CHECKED IT. IT PASSED.", subtext: "Now it's YOUR turn to verify!" },
-  { image: 1, text: "THERAPIST: THIS IS A LOT TO UNPACK.", subtext: "Bring snacks. Possibly a helmet." },
-  { image: 2, text: "I FLEW JETS. THEN REALITY BROKE.", subtext: "Navy pilot meets cosmic chaos." },
-  { image: 3, text: "TERROR OF THE COSMIC GULPER", subtext: "A comedy of galactic proportions!" }
+  { image: 0, text: "eBook NOW ON SALE - $2.99! 📚", subtext: "The supernatural thriller comedy that'll make you cry AND laugh!" },
+  { image: 1, text: "WROTE A BOOK. UNIVERSE FACT-CHECKED IT. IT PASSED.", subtext: "Now it's YOUR turn to verify!" },
+  { image: 2, text: "THERAPIST: THIS IS A LOT TO UNPACK.", subtext: "Bring snacks. Possibly a helmet." },
+  { image: 3, text: "I FLEW JETS. THEN REALITY BROKE.", subtext: "Navy pilot meets cosmic chaos." },
+  { image: 4, text: "TERROR OF THE COSMIC GULPER", subtext: "A comedy of galactic proportions!" }
+];
+
+// Professional Reviews from Readers' Favorite
+const PROFESSIONAL_REVIEWS = [
+  { reviewer: "Divine Zape", quote: "...a profound and unforgettable literary piece.", stars: 5 },
+  { reviewer: "Paul Zietsman", quote: "...exceedingly brilliant.", stars: 5 },
+  { reviewer: "Ruffina Oserio", quote: "...spellbinding...", stars: 5 },
+  { reviewer: "Lauren Jones", quote: "The author's imagination is off the charts.", stars: 5 }
 ];
 
 // Top Pilot Enterprises - Parent Company Banner
