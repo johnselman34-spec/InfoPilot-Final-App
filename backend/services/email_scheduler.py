@@ -231,6 +231,9 @@ async def generate_hilarious_report_html(days: int = 7) -> tuple[str, str]:
     
     overall_rate = (total_conversions / total_impressions * 100) if total_impressions > 0 else 0
     
+    # Generate AI-powered insights
+    ai_insights = await generate_ai_insights(test_stats, total_impressions, total_conversions)
+    
     # Generate the HTML
     subject = get_random_subject()
     intro = get_random_intro()
