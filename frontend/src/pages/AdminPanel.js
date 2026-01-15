@@ -610,11 +610,6 @@ const PollsAdminTab = ({ token, showToast }) => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    fetchPolls();
-    fetchStats();
-  }, [statusFilter, page]);
-
   const fetchStats = async () => {
     try {
       const res = await fetch(`${API}/polls/admin/statistics`, {
@@ -648,6 +643,12 @@ const PollsAdminTab = ({ token, showToast }) => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchPolls();
+    fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, page]);
 
   const handleClosePoll = async (pollId) => {
     if (!window.confirm('Close this poll? Users will no longer be able to vote.')) return;
