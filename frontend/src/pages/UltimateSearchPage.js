@@ -419,13 +419,37 @@ const UltimateSearchPage = ({ showToast }) => {
         <div key={cat.id}>
           <div 
             className={`category-item category-item-level-${level} ${selectedCategories.includes(cat.id) ? 'selected' : ''}`}
-            style={{ flexDirection: 'column', alignItems: 'stretch' }}
+            style={{ 
+              flexDirection: 'column', 
+              alignItems: 'stretch',
+              borderLeft: selectedCategories.includes(cat.id) ? `3px solid ${getCategoryColor(cat.id)}` : '3px solid transparent',
+              transition: 'all 0.2s'
+            }}
           >
             <div 
               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
               onClick={() => toggleCategorySelection(cat.id)}
             >
-              <span>{cat.name}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  checked={selectedCategories.includes(cat.id)}
+                  onChange={() => {}} // Handled by parent onClick
+                  style={{ 
+                    accentColor: getCategoryColor(cat.id),
+                    width: 16,
+                    height: 16,
+                    cursor: 'pointer'
+                  }}
+                  data-testid={`category-checkbox-${cat.id}`}
+                />
+                <span style={{ 
+                  color: selectedCategories.includes(cat.id) ? '#f472b6' : '#e2e8f0',
+                  fontWeight: selectedCategories.includes(cat.id) ? 600 : 400
+                }}>
+                  {cat.name}
+                </span>
+              </div>
               <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
                 {cat.is_public && <span style={{ fontSize: '0.65rem', color: '#10b981', padding: '2px 6px', background: 'rgba(16,185,129,0.2)', borderRadius: 4 }}>Public</span>}
                 <button 
