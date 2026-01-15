@@ -13,12 +13,12 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: colors.backgroundAlt,
           borderTopColor: colors.border,
-          height: Platform.OS === 'ios' ? 85 : 65,
+          height: Platform.OS === 'ios' ? 90 : 70,
           paddingBottom: Platform.OS === 'ios' ? 25 : 10,
-          paddingTop: 10,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 9,
           fontWeight: '600',
         },
         headerStyle: {
@@ -36,16 +36,16 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
+            <Ionicons name="home" size={size - 2} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="ultimate-search"
         options={{
           title: 'Search',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search" size={size} color={color} />
+            <Ionicons name="rocket" size={size - 2} color={color} />
           ),
         }}
       />
@@ -54,16 +54,25 @@ export default function TabLayout() {
         options={{
           title: 'Market',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="storefront" size={size} color={color} />
+            <Ionicons name="storefront" size={size - 2} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="categories"
+        name="social"
         options={{
-          title: 'Categories',
+          title: 'Social',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="folder" size={size} color={color} />
+            <Ionicons name="people" size={size - 2} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Chat',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbubbles" size={size - 2} color={color} />
           ),
         }}
       />
@@ -72,8 +81,23 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <Ionicons name="person" size={size - 2} color={color} />
           ),
+        }}
+      />
+      {/* Hidden tabs - accessible but not in tab bar */}
+      <Tabs.Screen
+        name="search"
+        options={{
+          href: null, // Hide from tab bar
+          title: 'Old Search',
+        }}
+      />
+      <Tabs.Screen
+        name="categories"
+        options={{
+          href: null, // Hide from tab bar
+          title: 'Categories',
         }}
       />
     </Tabs>
