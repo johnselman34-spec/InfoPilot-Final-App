@@ -265,6 +265,25 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - [x] System settings
 - [x] Newsletter management
 
+### Batch 4 - Enhanced Features ✅ (NEW - January 16, 2026)
+- [x] **Protocol Bundles UI** - Full frontend implementation
+  - Browse Bundles tab in Marketplace
+  - Create Bundle form with protocol selection
+  - Bundle cards with discount badges
+  - Purchase flow with PayPal integration
+- [x] **Tri-Weekly AI Newsletter Scheduler**
+  - Automated sends at 5:46 AM, 9:05 AM, 4:20 PM UTC
+  - Extremely funny content promoting InfoPilot and Letters to Evelyn
+  - Different intros for morning, mid-morning, and afternoon
+  - Stats banner, feature highlights, book promos
+- [x] **Map Auto-Update Feature**
+  - Manual Refresh button
+  - Auto-refresh checkbox (30 second interval)
+  - Last update timestamp
+  - Custom event listener for data changes (`infopilot-data-changed`)
+  - triggerMapRefresh() utility function
+- [x] **FREE Protocols Badge** - $0.00 protocols show "🆓 FREE!" badge
+
 ## Architecture
 
 ```
