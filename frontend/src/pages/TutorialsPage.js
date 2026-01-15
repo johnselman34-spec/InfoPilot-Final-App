@@ -213,21 +213,57 @@ const TutorialsPage = ({ showToast }) => {
               ✕ Close
             </button>
           </div>
-          
-          {/* Tutorial Image */}
-          {selectedTutorial.image_url && (
-            <div style={{
-              borderRadius: 12,
-              overflow: 'hidden',
-              marginBottom: 20,
-              maxHeight: 300
-            }}>
-              <img 
-                src={selectedTutorial.image_url} 
-                alt={selectedTutorial.title}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+
+          {/* Admin: Video URL Management */}
+          {user?.is_admin && (
+            <VideoUrlInput
+              tutorialId={selectedTutorial.id}
+              currentVideoUrl={selectedTutorial.video_url}
+              token={token}
+              onUpdate={(data) => {
+                if (data) {
+                  setSelectedTutorial({ ...selectedTutorial, video_url: data.video_url, video_id: data.video_id });
+                  const updatedTutorials = tutorials.map(t => 
+                    t.id === selectedTutorial.id ? { ...t, video_url: data.video_url, video_id: data.video_id } : t
+                  );
+                  setTutorials(updatedTutorials);
+                } else {
+                  setSelectedTutorial({ ...selectedTutorial, video_url: null, video_id: null });
+                  const updatedTutorials = tutorials.map(t => 
+                    t.id === selectedTutorial.id ? { ...t, video_url: null, video_id: null } : t
+                  );
+                  setTutorials(updatedTutorials);
+                }
+                showToast('Video updated!', 'success');
+              }}
+            />
+          )}
+
+          {/* YouTube Video Player */}
+          {(selectedTutorial.video_url || selectedTutorial.video_id) ? (
+            <div style={{ marginBottom: 20 }}>
+              <YouTubePlayer
+                videoId={selectedTutorial.video_id}
+                videoUrl={selectedTutorial.video_url}
+                title={selectedTutorial.title}
               />
             </div>
+          ) : (
+            /* Tutorial Image (fallback when no video) */
+            selectedTutorial.image_url && (
+              <div style={{
+                borderRadius: 12,
+                overflow: 'hidden',
+                marginBottom: 20,
+                maxHeight: 300
+              }}>
+                <img 
+                  src={selectedTutorial.image_url} 
+                  alt={selectedTutorial.title}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+            )
           )}
           
           {/* Tutorial Content */}
