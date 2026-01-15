@@ -640,8 +640,34 @@ const BookPromoBanner = () => {
         {/* InfoPilot Promo */}
         <InfoPilotSection />
         
-        {/* Maestro Bistro Promo */}
-        <MaestroBistroSection />
+        {/* Admin Control for Maestro Bistro */}
+        {canHideAds && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: 15
+          }}>
+            <button
+              onClick={toggleMaestroBistro}
+              style={{
+                padding: '8px 16px',
+                background: hideMaestroBistro ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                border: `1px solid ${hideMaestroBistro ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)'}`,
+                borderRadius: 20,
+                color: hideMaestroBistro ? '#10b981' : '#f87171',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                fontWeight: 600
+              }}
+              data-testid="toggle-maestro-bistro"
+            >
+              {hideMaestroBistro ? '👁️ Show Maestro Bistro Ads' : '🙈 Hide Maestro Bistro Ads'}
+            </button>
+          </div>
+        )}
+        
+        {/* Maestro Bistro Promo - Hidden if admin toggled off */}
+        {!hideMaestroBistro && <MaestroBistroSection />}
         
         {/* Footer */}
         <div style={{
