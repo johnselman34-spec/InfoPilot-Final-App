@@ -1168,6 +1168,82 @@ const UltimateSearchPage = ({ showToast }) => {
                   Set a price ($1-$99) to sell this protocol on the marketplace, or leave empty/0 for FREE.
                 </p>
               </div>
+
+              {/* PayPal Signup for Selling Protocols */}
+              {editPrice && parseFloat(editPrice) > 0 && !user?.paypal_connected && (
+                <div style={{ 
+                  padding: '15px',
+                  background: 'linear-gradient(135deg, rgba(0, 112, 186, 0.15) 0%, rgba(0, 48, 135, 0.15) 100%)',
+                  borderRadius: 10,
+                  border: '1px solid rgba(0, 112, 186, 0.3)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                    <span style={{ fontSize: '1.5rem' }}>💳</span>
+                    <div>
+                      <h4 style={{ color: '#0070ba', margin: 0 }}>Connect PayPal to Sell</h4>
+                      <p style={{ color: '#a1a1aa', fontSize: '0.75rem', margin: 0 }}>
+                        Connect your PayPal to receive payments when users buy your protocol
+                      </p>
+                    </div>
+                  </div>
+                  <div 
+                    id="paypal-connect-container"
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      marginTop: 10
+                    }}
+                  >
+                    <a
+                      href="https://www.paypal.com/connect?flowEntry=static&client_id=BAABmhMWqe1WrfJkqJ7RRzEZwoAfxSF2bclm8_HY2BuU9C-7pnakTdjFVCvSJyWh63-wUWmKN1cT1hdMIY&scope=openid email&redirect_uri=https://infopilotexplorer.biz/paypal-callback"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '12px 24px',
+                        background: '#0070ba',
+                        color: 'white',
+                        borderRadius: 25,
+                        textDecoration: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.95rem',
+                        transition: 'background 0.2s'
+                      }}
+                      data-testid="paypal-connect-btn"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .757-.638h6.527c2.168 0 3.804.533 4.861 1.583.996.99 1.362 2.388 1.087 4.159a7.09 7.09 0 0 1-.178.74c-.554 2.022-1.645 3.534-3.238 4.492-1.505.905-3.335 1.364-5.439 1.364H7.724a.955.955 0 0 0-.944.803l-.86 5.452a.64.64 0 0 1-.632.538l-.212.004z"/>
+                      </svg>
+                      Connect with PayPal
+                    </a>
+                  </div>
+                  <p style={{ fontSize: '0.7rem', color: '#71717a', margin: '10px 0 0 0', textAlign: 'center' }}>
+                    You'll receive 90% of each sale. PayPal fees apply.
+                  </p>
+                </div>
+              )}
+
+              {user?.paypal_connected && editPrice && parseFloat(editPrice) > 0 && (
+                <div style={{ 
+                  padding: '12px 15px',
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  borderRadius: 10,
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10
+                }}>
+                  <span style={{ fontSize: '1.5rem' }}>✅</span>
+                  <div>
+                    <p style={{ color: '#10b981', fontWeight: 600, margin: 0 }}>PayPal Connected</p>
+                    <p style={{ color: '#a1a1aa', fontSize: '0.75rem', margin: 0 }}>
+                      You'll receive payments to your connected PayPal account
+                    </p>
+                  </div>
+                </div>
+              )}
               
               <div style={{ 
                 background: 'rgba(16, 185, 129, 0.1)', 
