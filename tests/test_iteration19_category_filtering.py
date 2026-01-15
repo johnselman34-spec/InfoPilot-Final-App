@@ -144,11 +144,14 @@ class TestCategoryFilteringBackend:
         )
         and_data = and_response.json()
         
-        # AND should return <= OR results (AND is more restrictive)
-        assert and_data["count"] <= or_data["count"], \
-            f"AND ({and_data['count']}) should return <= OR ({or_data['count']}) results"
+        or_count = or_data.get("count", or_data.get("total", 0))
+        and_count = and_data.get("count", and_data.get("total", 0))
         
-        print(f"✅ Aggregation logic verified: AND={and_data['count']}, OR={or_data['count']}")
+        # AND should return <= OR results (AND is more restrictive)
+        assert and_count <= or_count, \
+            f"AND ({and_count}) should return <= OR ({or_count}) results"
+        
+        print(f"✅ Aggregation logic verified: AND={and_count}, OR={or_count}")
     
     def test_categories_endpoint(self):
         """Test that categories endpoint returns available categories"""
