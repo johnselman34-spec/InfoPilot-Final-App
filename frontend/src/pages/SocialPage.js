@@ -994,6 +994,18 @@ const SocialPage = ({ showToast }) => {
           </div>
         </div>
       )}
+
+      {/* Create Poll Modal */}
+      <CreatePollModal
+        isOpen={showCreatePollModal}
+        onClose={() => {
+          setShowCreatePollModal(false);
+          setPollContext({ type: null, id: null });
+        }}
+        onSubmit={createPoll}
+        parentType={pollContext.type}
+        parentId={pollContext.id}
+      />
     </div>
   );
 };
