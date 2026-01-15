@@ -635,6 +635,16 @@ const UltimateSearchPage = ({ showToast }) => {
         {showTemplates && <ProtocolTemplates showToast={showToast} onApplyTemplate={handleApplyTemplate} />}
       </div>
 
+      {/* AI-Powered Protocol Suggestions */}
+      <AISuggestions 
+        showToast={showToast} 
+        onViewProtocol={(protocolId) => {
+          // Navigate to marketplace with protocol selected
+          window.location.hash = `#marketplace?protocol=${protocolId}`;
+          showToast('Opening protocol in marketplace...', 'success');
+        }}
+      />
+
       {/* Interactive Map for filtered results */}
       {showMap && (
         <div className="card" style={{ marginBottom: 20 }}>
