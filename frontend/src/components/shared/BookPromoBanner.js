@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useVariant } from '../ABTesting/ABTestProvider';
+import { useAuth } from '../../contexts/AuthContext';
 import { API } from '../../utils/api';
+
+// Admin emails that can hide Maestro Bistro ads
+const ADMIN_EMAILS = [
+  'jjspilot24@gmail.com',
+  'johnselman34@gmail.com', 
+  'john.1976.selman@gmail.com'
+];
 
 // Book promotional images - including new ebook cover
 const BOOK_IMAGES = [
