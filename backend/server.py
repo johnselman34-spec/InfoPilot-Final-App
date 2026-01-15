@@ -47,6 +47,7 @@ from routes.tutorials import router as tutorials_router
 from routes.rate_limiting import router as rate_limiting_router
 from routes.webhooks import router as webhooks_router
 from routes.ai_suggestions import router as ai_suggestions_router
+from routes.protocol_analytics import router as protocol_analytics_router
 
 # Import services
 from services.location_service import LocationService
