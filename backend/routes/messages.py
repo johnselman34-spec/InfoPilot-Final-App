@@ -18,6 +18,71 @@ from routes.auth import get_current_user
 
 router = APIRouter(tags=["Direct Messages"])
 
+
+# ==================== PUSH NOTIFICATION HELPER ====================
+
+async def send_dm_push_notification(recipient_id: str, sender_name: str, message_preview: str, conversation_id: str):
+    """Send push notification for new DM to offline users"""
+    try:
+        from pywebpush import webpush, WebPushException
+        import json
+        
+        VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")
+        VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "BNbxGYNMhEIi9RHkdj8mOJQq2X3e5_gYpLMgYbZ3Y4qLk_ZMHR8f_4T_Kp0vKqZJhJxN0TqB5Fq8K4LfWqRd9Hs")
+        VAPID_CLAIMS = {"sub": "mailto:admin@infopilot.com"}
+        
+        # Get user's push subscription
+        subscription = await db.push_subscriptions.find_one({
+            "user_id": recipient_id,
+            "is_active": True
+        })
+        
+        if not subscription:
+            logger.info(f"No active push subscription for user {recipient_id}")
+            return
+        
+        # Prepare notification payload
+        payload = json.dumps({
+            "title": f"📬 New message from {sender_name}",
+            "body": message_preview,
+            "icon": "/logo192.png",
+            "badge": "/logo192.png",
+            "data": {
+                "url": f"/messages?conversation={conversation_id}",
+                "type": "direct_message",
+                "conversation_id": conversation_id
+            }
+        })
+        
+        subscription_info = {
+            "endpoint": subscription.get("endpoint"),
+            "keys": subscription.get("keys")
+        }
+        
+        if VAPID_PRIVATE_KEY:
+            try:
+                webpush(
+                    subscription_info=subscription_info,
+                    data=payload,
+                    vapid_private_key=VAPID_PRIVATE_KEY,
+                    vapid_claims=VAPID_CLAIMS
+                )
+                logger.info(f"Push notification sent to {recipient_id} for DM from {sender_name}")
+            except WebPushException as e:
+                logger.error(f"Push notification failed: {e}")
+                # Mark subscription as inactive if it's gone
+                if e.response and e.response.status_code in [404, 410]:
+                    await db.push_subscriptions.update_one(
+                        {"_id": subscription["_id"]},
+                        {"$set": {"is_active": False}}
+                    )
+        else:
+            # Simulation mode if no VAPID key
+            logger.info(f"[SIMULATION] Push notification to {recipient_id}: New message from {sender_name}")
+            
+    except Exception as e:
+        logger.error(f"Error sending DM push notification: {e}")
+
 # Upload directory for message images
 DM_UPLOAD_DIR = "/app/backend/uploads/messages"
 os.makedirs(DM_UPLOAD_DIR, exist_ok=True)
