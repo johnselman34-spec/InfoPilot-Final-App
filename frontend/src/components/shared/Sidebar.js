@@ -10,6 +10,7 @@ const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
   const navItems = [
     { id: 'search', label: 'Ultimate Search', icon: Icons.Search },
     { id: 'marketplace', label: 'Marketplace', icon: Icons.Shop },
+    { id: 'statistics', label: '📊 Statistics', icon: Icons.Chart },
     { id: 'chat', label: '💬 Chat', icon: Icons.Message },
     { id: 'achievements', label: 'Achievements', icon: Icons.Trophy },
     { id: 'social', label: 'Social', icon: Icons.Users },
