@@ -371,8 +371,9 @@ const MarketplacePage = ({ showToast }) => {
   const [purchases, setPurchases] = useState([]);
   const [dashboard, setDashboard] = useState(null);
 
-  // Random FREE message - use useMemo to avoid recalculating on every render
-  const freeMessage = React.useMemo(() => FREE_MESSAGES[Math.floor(Math.random() * FREE_MESSAGES.length)], []);
+  // Random FREE message - set once using ref to avoid impure render
+  const freeMessageRef = useRef(getRandomFreeMessage());
+  const freeMessage = freeMessageRef.current;
 
   const fetchProtocols = useCallback(async () => {
     try {
