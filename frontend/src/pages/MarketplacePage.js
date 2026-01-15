@@ -1033,16 +1033,31 @@ const MarketplacePage = ({ showToast }) => {
             />
             <div style={{ display: 'flex', gap: 15 }}>
               <div style={{ flex: 1 }}>
-                <label style={{ color: '#a1a1aa', fontSize: '0.8rem' }}>Price ($0.99 - $99.99)</label>
+                <label style={{ color: '#a1a1aa', fontSize: '0.8rem' }}>
+                  Price ($0.00 FREE or $0.01 - $99.99)
+                </label>
                 <input
                   className="input"
                   type="number"
-                  min="0.99"
+                  min="0"
                   max="99.99"
                   step="0.01"
                   value={newProtocol.price}
-                  onChange={(e) => setNewProtocol({ ...newProtocol, price: parseFloat(e.target.value) || 0.99 })}
+                  onChange={(e) => setNewProtocol({ ...newProtocol, price: parseFloat(e.target.value) || 0 })}
                 />
+                {newProtocol.price === 0 && (
+                  <div style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#fff',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    marginTop: 8,
+                    fontSize: '0.85rem',
+                    textAlign: 'center'
+                  }}>
+                    🆓 Your protocol will be FREE TO COPY! Great for building reputation!
+                  </div>
+                )}
               </div>
               <div style={{ flex: 1 }}>
                 <label style={{ color: '#a1a1aa', fontSize: '0.8rem' }}>Category</label>
@@ -1057,6 +1072,11 @@ const MarketplacePage = ({ showToast }) => {
                   <option>Business & Finance</option>
                   <option>Technology</option>
                   <option>Entertainment</option>
+                  <option>History & Politics</option>
+                  <option>History & Military</option>
+                  <option>Aviation & Military</option>
+                  <option>Education</option>
+                  <option>Health & Medical</option>
                 </select>
               </div>
             </div>
