@@ -592,20 +592,32 @@ async def get_my_purchases(user = Depends(get_current_user)):
     """Get all protocols purchased by the current user"""
     purchases = await db.marketplace_purchases.find({"user_id": str(user["_id"])}).to_list(1000)
     
-    protocols = []
+    # Bulk fetch all protocols at once (N+1 query optimization)
+    protocol_ids = [ObjectId(p["protocol_id"]) for p in purchases if p.get("protocol_id")]
+    protocols_map = {}
+    
+    if protocol_ids:
+        protocols_cursor = db.marketplace_protocols.find({"_id": {"$in": protocol_ids}})
+        async for protocol in protocols_cursor:
+            protocols_map[str(protocol["_id"])] = protocol
+    
+    # Build response
+    result = []
     for p in purchases:
-        protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(p["protocol_id"])})
+        protocol = protocols_map.get(p["protocol_id"])
         if protocol:
-            protocols.append({
+            result.append({
                 "id": str(protocol["_id"]),
                 "name": protocol["name"],
                 "protocol": protocol["protocol"],
+                "protocol_string": protocol["protocol"],  # Also include as protocol_string for frontend
                 "category": protocol["category"],
                 "purchased_at": p["created_at"].isoformat(),
-                "price_paid": p["price"]
+                "price_paid": p["price"],
+                "price": p["price"]
             })
     
-    return {"purchases": protocols, "count": len(protocols)}
+    return {"purchases": result, "count": len(result)}
 
 
 # ==================== REVIEWS ====================
