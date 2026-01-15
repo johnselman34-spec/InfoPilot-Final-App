@@ -79,6 +79,21 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - [x] Area charts, Bar charts, Line charts, Pie charts
 - [x] Export to JSON/CSV
 
+### Statistics Page ✅ (NEW - January 15, 2026)
+- [x] Statistics Central hero banner with funny facts
+- [x] Quick Stats Grid: Total Users, Active (7d), Protocols, Searches, Purchases, Revenue
+- [x] Countries Pie Chart - 10 countries with percentages
+- [x] US States Bar Chart - 11 states including Maine (Brunswick connection!)
+- [x] Document Types Donut Chart - Webpage, News, PDF, Academic, MS Word
+- [x] Top 10 Words in Protocols - Horizontal bar chart
+- [x] **Top Sellers Leaderboard** with tabs:
+  - By Sales Count tab
+  - By Revenue tab
+- [x] Funny titles for top sellers: "The Protocol Overlord 🦁", "The Protocol Billionaire 🏦", "The Silver Searcher 🥈", "The Search Tycoon 🎩"
+- [x] Badges: 👑 (Legend 500+ sales), 💎 (Diamond 200+), 🏆 (Champion 100+), ⭐ (Star 50+), 🔥 (Hot 20+)
+- [x] Revenue badges: 💰 ($1000+), 💵 ($500+), 💲 ($200+), 🤑 ($100+)
+- [x] Book promo section with supernatural comedy marketing
+
 ### Push Notifications ✅ (NEW)
 - [x] VAPID key endpoint
 - [x] Push subscription management
