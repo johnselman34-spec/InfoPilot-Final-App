@@ -7506,6 +7506,7 @@ const AdminPage = () => {
           {[
             { id: "dashboard", label: "Dashboard", icon: Shield },
             { id: "moderation", label: "Moderation", icon: Users },
+            { id: "marketing", label: "AI Marketing", icon: Sparkles },
             { id: "email-digest", label: "Email Digest", icon: Mail },
             { id: "search-pages", label: "Search Pages", icon: Search },
             { id: "database", label: "Database Limits", icon: BarChart3 },
