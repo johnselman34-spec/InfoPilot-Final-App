@@ -3,7 +3,7 @@ InfoPilot Explorer - Gamification Routes
 User achievements, badges, and leaderboards
 """
 from fastapi import APIRouter, HTTPException, Depends
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson import ObjectId
 
 from config import db
