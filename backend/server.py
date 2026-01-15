@@ -1079,7 +1079,13 @@ class InfoPilot2Parser:
         
         def phrase_matches(phrase: str, text: str) -> bool:
             """Check if a phrase/word matches in text using word boundaries.
-            Handles multi-word phrases like 'William C. Gamble' as complete phrases.
+            
+            Handles:
+            - Multi-word phrases like 'William C. Gamble' as complete phrases
+            - Abbreviations like 'Ph.D.', 'etc.', 'U.S.', 'Dr.'
+            - Personal pronouns with periods like 'C.' in names
+            - Case-insensitive matching
+            
             Uses simple string operations first for speed, then regex for edge cases.
             """
             phrase_lower = phrase.lower().strip()
@@ -1094,7 +1100,25 @@ class InfoPilot2Parser:
                 words_in_text = set(re.findall(r'\b\w+\b', text))
                 return phrase_lower in words_in_text
             
-            # For multi-word phrases or phrases with punctuation, use regex
+            # For abbreviations (contains periods), handle specially
+            if '.' in phrase_lower:
+                # Build a pattern that treats periods as literal dots
+                # And allows for optional spaces around periods in abbreviations
+                # E.g., "William C. Gamble" should match "William C. Gamble" and "William C Gamble"
+                escaped_parts = []
+                parts = phrase_lower.split('.')
+                for i, part in enumerate(parts):
+                    escaped_parts.append(re.escape(part.strip()))
+                    if i < len(parts) - 1:  # Don't add after last part
+                        # Allow optional period and optional space
+                        escaped_parts.append(r'\.?\s*')
+                
+                # Join and create pattern with word boundaries
+                pattern_core = ''.join(escaped_parts).rstrip(r'\.?\s*')
+                pattern = r'(?:^|[\s\.,;:!?\-\(\)\[\]"])' + pattern_core + r'(?:[\s\.,;:!?\-\(\)\[\]"]|$)'
+                return bool(re.search(pattern, text, re.IGNORECASE))
+            
+            # For multi-word phrases without periods, use standard matching
             escaped_phrase = re.escape(phrase_lower)
             pattern = r'(?:^|[\s\.,;:!?\-\(\)\[\]"])' + escaped_phrase + r'(?:[\s\.,;:!?\-\(\)\[\]"]|$)'
             return bool(re.search(pattern, text))
