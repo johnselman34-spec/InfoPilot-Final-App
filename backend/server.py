@@ -43,6 +43,9 @@ from routes.newsletter import router as newsletter_router
 from routes.voice import router as voice_router
 from routes.collaborate import router as collaborate_router
 from routes.polls import router as polls_router
+from routes.tutorials import router as tutorials_router
+from routes.rate_limiting import router as rate_limiting_router
+from routes.webhooks import router as webhooks_router
 
 # Import services
 from services.location_service import LocationService
