@@ -293,9 +293,235 @@ async def delete_marketplace_protocol(protocol_id: str, user = Depends(get_curre
 
 # ==================== PURCHASES ====================
 
+@router.post("/initiate-purchase", response_model=dict)
+async def initiate_purchase(data: dict, user = Depends(get_current_user)):
+    """
+    Initiate a Pay-What-You-Want purchase flow.
+    Returns PayPal payment URL for the user to complete.
+    """
+    from config import PAYPAL_PAYMENT_LINK
+    
+    protocol_id = data.get("protocol_id")
+    custom_amount = data.get("amount")  # For Pay-What-You-Want
+    
+    if not protocol_id:
+        raise HTTPException(status_code=400, detail="Protocol ID required")
+    
+    protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(protocol_id)})
+    
+    if not protocol:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    
+    if protocol["creator_id"] == str(user["_id"]):
+        raise HTTPException(status_code=400, detail="You cannot purchase your own protocol")
+    
+    # Check if already purchased
+    existing = await db.marketplace_purchases.find_one({
+        "protocol_id": protocol_id,
+        "user_id": str(user["_id"])
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="You already own this protocol")
+    
+    # Pay-What-You-Want: Use custom amount or minimum price
+    # Allow $0.00 (free) or any amount >= minimum price
+    min_price = protocol.get("min_price", 0)  # Allow $0 for "Pay What You Want"
+    suggested_price = protocol["price"]
+    
+    if custom_amount is not None:
+        if custom_amount < 0:
+            raise HTTPException(status_code=400, detail="Amount cannot be negative")
+        final_amount = custom_amount
+    else:
+        final_amount = suggested_price
+    
+    # Create pending purchase record
+    pending = {
+        "protocol_id": protocol_id,
+        "user_id": str(user["_id"]),
+        "amount": final_amount,
+        "suggested_price": suggested_price,
+        "status": "pending",
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.pending_purchases.insert_one(pending)
+    pending_id = str(result.inserted_id)
+    
+    # Generate PayPal payment URL
+    # If amount is 0, skip payment and complete immediately
+    if final_amount == 0:
+        # Free purchase - complete immediately
+        return await complete_free_purchase(protocol_id, str(user["_id"]), pending_id)
+    
+    # PayPal payment link with amount
+    payment_url = PAYPAL_PAYMENT_LINK or f"https://www.paypal.com/paypalme/TopPilotEnterprises/{final_amount}"
+    
+    return {
+        "success": True,
+        "pending_id": pending_id,
+        "payment_url": payment_url,
+        "amount": final_amount,
+        "protocol_name": protocol["name"],
+        "message": f"Complete payment of ${final_amount:.2f} via PayPal, then confirm your purchase."
+    }
+
+
+async def complete_free_purchase(protocol_id: str, user_id: str, pending_id: str):
+    """Complete a free ($0) purchase"""
+    protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(protocol_id)})
+    
+    # Record purchase
+    purchase_record = {
+        "protocol_id": protocol_id,
+        "user_id": user_id,
+        "payment_id": f"FREE-{pending_id}",
+        "price": 0,
+        "creator_earnings": 0,
+        "platform_fee": 0,
+        "status": "completed",
+        "is_free": True,
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.marketplace_purchases.insert_one(purchase_record)
+    
+    # Update protocol stats
+    await db.marketplace_protocols.update_one(
+        {"_id": ObjectId(protocol_id)},
+        {"$inc": {"total_sales": 1}}
+    )
+    
+    # Mark pending as completed
+    await db.pending_purchases.update_one(
+        {"_id": ObjectId(pending_id)},
+        {"$set": {"status": "completed"}}
+    )
+    
+    return {
+        "success": True,
+        "message": "Protocol acquired for FREE! You're amazing!",
+        "protocol": protocol["protocol"],
+        "name": protocol["name"],
+        "is_free": True
+    }
+
+
+@router.post("/confirm-payment", response_model=dict)
+async def confirm_payment(data: dict, user = Depends(get_current_user)):
+    """
+    Confirm PayPal payment and complete purchase.
+    Handles revenue splitting and accumulated payouts for amounts < $1.00.
+    """
+    protocol_id = data.get("protocol_id")
+    transaction_id = data.get("transaction_id")
+    amount = data.get("amount", 0)
+    
+    if not protocol_id or not transaction_id:
+        raise HTTPException(status_code=400, detail="Protocol ID and Transaction ID required")
+    
+    protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(protocol_id)})
+    
+    if not protocol:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    
+    # Check if already purchased
+    existing = await db.marketplace_purchases.find_one({
+        "protocol_id": protocol_id,
+        "user_id": str(user["_id"])
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="You already own this protocol")
+    
+    # Get current platform fee rate
+    platform_fee_rate = await get_platform_fee()
+    
+    # Calculate revenue split
+    creator_share = amount * (1 - platform_fee_rate)
+    platform_share = amount * platform_fee_rate
+    
+    # Record purchase
+    purchase_record = {
+        "protocol_id": protocol_id,
+        "user_id": str(user["_id"]),
+        "payment_id": transaction_id,
+        "price": amount,
+        "creator_earnings": creator_share,
+        "platform_fee": platform_share,
+        "status": "completed",
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.marketplace_purchases.insert_one(purchase_record)
+    
+    # Update protocol stats
+    await db.marketplace_protocols.update_one(
+        {"_id": ObjectId(protocol_id)},
+        {
+            "$inc": {
+                "total_sales": 1,
+                "total_revenue": amount,
+                "creator_earnings": creator_share
+            }
+        }
+    )
+    
+    # Update creator's accumulated earnings (for PayPal minimum payout handling)
+    creator_id = protocol["creator_id"]
+    await db.users.update_one(
+        {"_id": ObjectId(creator_id)},
+        {"$inc": {"accumulated_earnings": creator_share}}
+    )
+    
+    # Update admin's accumulated platform fees
+    admin_users = await db.users.find({"is_admin": True}).to_list(10)
+    if admin_users:
+        per_admin_share = platform_share / len(admin_users)
+        for admin in admin_users:
+            await db.users.update_one(
+                {"_id": admin["_id"]},
+                {"$inc": {"accumulated_platform_fees": per_admin_share}}
+            )
+    
+    # Record in payout ledger for tracking
+    await db.payout_ledger.insert_one({
+        "purchase_id": str(purchase_record.get("_id", transaction_id)),
+        "protocol_id": protocol_id,
+        "creator_id": creator_id,
+        "creator_share": creator_share,
+        "platform_share": platform_share,
+        "total_amount": amount,
+        "status": "accumulated",  # Will change to "paid" when threshold met
+        "created_at": datetime.utcnow()
+    })
+    
+    # Check if creator has reached payout threshold
+    creator = await db.users.find_one({"_id": ObjectId(creator_id)})
+    accumulated = creator.get("accumulated_earnings", 0) if creator else 0
+    payout_message = ""
+    
+    if accumulated >= PAYPAL_MIN_PAYOUT:
+        payout_message = f" Creator has ${accumulated:.2f} ready for payout!"
+    else:
+        remaining = PAYPAL_MIN_PAYOUT - accumulated
+        payout_message = f" Creator earnings: ${accumulated:.2f} (${remaining:.2f} more to reach payout threshold)"
+    
+    return {
+        "success": True,
+        "message": f"Protocol purchased successfully!{payout_message}",
+        "protocol": protocol["protocol"],
+        "name": protocol["name"],
+        "amount_paid": amount,
+        "creator_earned": creator_share,
+        "platform_fee": platform_share
+    }
+
+
 @router.post("/purchase", response_model=dict)
 async def purchase_protocol(purchase: MarketplacePurchase, user = Depends(get_current_user)):
-    """Purchase a protocol from the marketplace"""
+    """Purchase a protocol from the marketplace (legacy endpoint)"""
     protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(purchase.protocol_id)})
     
     if not protocol:
@@ -313,10 +539,13 @@ async def purchase_protocol(purchase: MarketplacePurchase, user = Depends(get_cu
     if existing:
         raise HTTPException(status_code=400, detail="You already own this protocol")
     
-    # Calculate earnings (90% to creator, 10% platform)
+    # Get current platform fee rate
+    platform_fee_rate = await get_platform_fee()
+    
+    # Calculate earnings
     price = protocol["price"]
-    creator_earnings = price * (1 - MARKETPLACE_PLATFORM_FEE)  # 90%
-    platform_fee = price * MARKETPLACE_PLATFORM_FEE  # 10%
+    creator_earnings = price * (1 - platform_fee_rate)
+    platform_fee = price * platform_fee_rate
     
     # Record purchase
     purchase_record = {
@@ -344,10 +573,10 @@ async def purchase_protocol(purchase: MarketplacePurchase, user = Depends(get_cu
         }
     )
     
-    # Update creator's earnings balance
+    # Update creator's accumulated earnings
     await db.users.update_one(
         {"_id": ObjectId(protocol["creator_id"])},
-        {"$inc": {"marketplace_earnings": creator_earnings}}
+        {"$inc": {"accumulated_earnings": creator_earnings}}
     )
     
     return {
