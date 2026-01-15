@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
-import { Icons } from '../components/shared';
 
 const AchievementsPage = ({ showToast }) => {
   const { token, user } = useAuth();
-  const [achievements, setAchievements] = useState({ earned: [], unearned: [] });
+  const [achievements, setAchievements] = useState({ earned: [], unearned: [], total_points: 0, level: 1 });
   const [allAchievements, setAllAchievements] = useState([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
   const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
@@ -24,13 +23,18 @@ const AchievementsPage = ({ showToast }) => {
         fetch(`${API}/gamification/leaderboard/all-time`)
       ]);
 
-      const allData = await allRes.json();
-      const weeklyData = await weeklyRes.json();
-      const allTimeData = await allTimeRes.json();
-
-      setAllAchievements(allData.achievements || []);
-      setWeeklyLeaderboard(weeklyData.leaderboard || []);
-      setAllTimeLeaderboard(allTimeData.leaderboard || []);
+      if (allRes.ok) {
+        const allData = await allRes.json();
+        setAllAchievements(allData.achievements || []);
+      }
+      if (weeklyRes.ok) {
+        const weeklyData = await weeklyRes.json();
+        setWeeklyLeaderboard(weeklyData.leaderboard || []);
+      }
+      if (allTimeRes.ok) {
+        const allTimeData = await allTimeRes.json();
+        setAllTimeLeaderboard(allTimeData.leaderboard || []);
+      }
 
       // Fetch user's achievements if logged in
       if (token) {
@@ -60,7 +64,6 @@ const AchievementsPage = ({ showToast }) => {
           data.new_achievements.forEach(achievement => {
             showToast(`🏆 Achievement Unlocked: ${achievement.icon} ${achievement.name}!`, 'success');
           });
-          // Refresh data
           fetchData();
         } else {
           showToast(data.message || 'Keep going! More achievements await!', 'info');
@@ -88,66 +91,10 @@ const AchievementsPage = ({ showToast }) => {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-      if (res.ok) {
-        const data = await res.json();
-        setMonthlyLeaderboard(data.leaderboard || []);
-      }
-    } catch (e) {
-      console.error('Failed to fetch monthly leaderboard');
-    }
-  }, []);
-
-  const trackLogin = useCallback(async () => {
-    try {
-      await fetch(`${API}/gamification/track-login`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-    } catch (e) {
-      console.error('Failed to track login');
-    }
-  }, [token]);
-
-  useEffect(() => {
-    fetchData();
-    trackLogin();
-  }, [fetchData, trackLogin]);
-
-  useEffect(() => {
-    if (activeTab === 'leaderboard') {
-      if (leaderboardPeriod === 'weekly') fetchWeeklyLeaderboard();
-      else if (leaderboardPeriod === 'monthly') fetchMonthlyLeaderboard();
-    }
-  }, [activeTab, leaderboardPeriod, fetchWeeklyLeaderboard, fetchMonthlyLeaderboard]);
-
-  const shareBadge = async (badge) => {
-    try {
-      const res = await fetch(`${API}/gamification/share-badge`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ badge_id: badge.id })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setShareModal(data);
-      } else {
-        showToast('Failed to generate share link', 'error');
-      }
-    } catch (e) {
-      showToast('Failed to share badge', 'error');
-    }
-  };
-
   const copyShareText = async () => {
-    if (shareModal?.share_text) {
+    if (shareModal?.share_message) {
       try {
-        await navigator.clipboard.writeText(shareModal.share_text);
+        await navigator.clipboard.writeText(shareModal.share_message);
         showToast('Copied to clipboard!', 'success');
       } catch (e) {
         showToast('Failed to copy', 'error');
@@ -155,293 +102,240 @@ const AchievementsPage = ({ showToast }) => {
     }
   };
 
-  const getRarityColor = (rarity) => {
-    switch (rarity) {
-      case 'legendary': return 'linear-gradient(135deg, #fbbf24, #f59e0b)';
-      case 'rare': return 'linear-gradient(135deg, #a78bfa, #7c3aed)';
-      case 'uncommon': return 'linear-gradient(135deg, #34d399, #10b981)';
-      default: return 'linear-gradient(135deg, #94a3b8, #64748b)';
-    }
-  };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   if (loading) {
     return (
-      <div className="card" style={{ textAlign: 'center', padding: 60 }}>
-        <div className="spinner" style={{ margin: '0 auto' }}></div>
-        <p style={{ color: '#a1a1aa', marginTop: 20 }}>Loading achievements...</p>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', color: '#fff' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: 20 }}>🏆</div>
+          <p>Loading your glorious achievements...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="card" data-testid="achievements-page">
-      <div className="card-header">
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Icons.Trophy />
-          Achievements & Rewards
-        </h2>
-        <p style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>
-          Earn badges, gain XP, and climb the leaderboard!
+    <div style={{ padding: '20px 0' }}>
+      {/* Hero Section */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(139, 92, 246, 0.2) 100%)',
+        borderRadius: 20,
+        padding: 30,
+        marginBottom: 30,
+        border: '1px solid rgba(245, 158, 11, 0.3)',
+        textAlign: 'center'
+      }}>
+        <h1 style={{ 
+          fontSize: '2.5rem', 
+          fontWeight: 800, 
+          marginBottom: 10,
+          background: 'linear-gradient(135deg, #f59e0b 0%, #ec4899 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
+          🏆 Achievement Center
+        </h1>
+        <p style={{ color: '#a1a1aa', fontSize: '1.1rem', marginBottom: 20 }}>
+          Collect badges, climb leaderboards, and prove you&apos;re the ultimate InfoPilot!
         </p>
+        
+        {/* User Stats */}
+        {token && (
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 30, flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '2.5rem', color: '#f59e0b', fontWeight: 700 }}>{achievements.total_points}</div>
+              <div style={{ color: '#a1a1aa' }}>Total Points</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '2.5rem', color: '#8b5cf6', fontWeight: 700 }}>Lv.{achievements.level}</div>
+              <div style={{ color: '#a1a1aa' }}>{achievements.level_name}</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '2.5rem', color: '#10b981', fontWeight: 700 }}>{achievements.earned?.length || 0}</div>
+              <div style={{ color: '#a1a1aa' }}>Achievements</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '2.5rem', color: '#ec4899', fontWeight: 700 }}>{achievements.completion_percentage || 0}%</div>
+              <div style={{ color: '#a1a1aa' }}>Complete</div>
+            </div>
+          </div>
+        )}
+        
+        {token && (
+          <button 
+            onClick={checkNewAchievements}
+            disabled={checkingNew}
+            style={{
+              marginTop: 20,
+              padding: '12px 30px',
+              background: checkingNew ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #f59e0b 0%, #ec4899 100%)',
+              border: 'none',
+              borderRadius: 30,
+              color: '#fff',
+              fontWeight: 600,
+              cursor: checkingNew ? 'wait' : 'pointer'
+            }}
+          >
+            {checkingNew ? '🔍 Checking...' : '🎯 Check for New Achievements'}
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 25 }}>
-        {['profile', 'badges', 'leaderboard'].map(tab => (
+      <div style={{ display: 'flex', gap: 10, marginBottom: 25, flexWrap: 'wrap' }}>
+        {['my-achievements', 'all-achievements', 'weekly-leaderboard', 'all-time-leaderboard'].map(tab => (
           <button
             key={tab}
-            className={`btn ${activeTab === tab ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setActiveTab(tab)}
-            data-testid={`achievements-tab-${tab}`}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 10,
+              border: 'none',
+              background: activeTab === tab 
+                ? 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)' 
+                : 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
           >
-            {tab === 'profile' && '👤 My Progress'}
-            {tab === 'badges' && '🏅 All Badges'}
-            {tab === 'leaderboard' && '🏆 Leaderboard'}
+            {tab === 'my-achievements' && '🏅 My Achievements'}
+            {tab === 'all-achievements' && '📋 All Achievements'}
+            {tab === 'weekly-leaderboard' && '📊 Weekly Top'}
+            {tab === 'all-time-leaderboard' && '🌟 All-Time Legends'}
           </button>
         ))}
       </div>
 
-      {/* Profile Tab */}
-      {activeTab === 'profile' && profile && (
+      {/* My Achievements Tab */}
+      {activeTab === 'my-achievements' && (
         <div>
-          {/* Level & XP Card */}
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(236, 72, 153, 0.3))',
-            borderRadius: 16,
-            padding: 25,
-            marginBottom: 25,
-            border: '1px solid rgba(124, 58, 237, 0.5)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
-              <div>
-                <h3 style={{ color: '#fff', fontSize: '1.8rem', marginBottom: 5 }}>
-                  Level {profile.level?.level || 1}
-                </h3>
-                <p style={{ color: '#a1a1aa' }}>{profile.username}</p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ color: '#fbbf24', fontSize: '1.5rem', fontWeight: 700 }}>
-                  {profile.level?.total_xp || 0} XP
-                </div>
-                <p style={{ color: '#a1a1aa', fontSize: '0.85rem' }}>
-                  Rank #{profile.rank?.position || '?'} (Top {profile.rank?.percentile || 0}%)
-                </p>
-              </div>
-            </div>
-
-            {/* XP Progress Bar */}
-            <div style={{ marginBottom: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#a1a1aa', marginBottom: 5 }}>
-                <span>Progress to Level {(profile.level?.level || 1) + 1}</span>
-                <span>{profile.level?.current_xp || 0} / {profile.level?.xp_for_next_level || 100} XP</span>
-              </div>
-              <div style={{ background: 'rgba(0,0,0,0.3)', borderRadius: 10, height: 12, overflow: 'hidden' }}>
-                <div style={{
-                  background: 'linear-gradient(90deg, #f472b6, #a78bfa)',
-                  height: '100%',
-                  width: `${profile.level?.progress_percent || 0}%`,
-                  borderRadius: 10,
-                  transition: 'width 0.5s ease'
-                }} />
-              </div>
-            </div>
-
-            {/* Login Streak */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 15 }}>
-              <span style={{ fontSize: '1.2rem' }}>🔥</span>
-              <span style={{ color: '#ef4444', fontWeight: 600 }}>{profile.stats?.login_streak || 0} day streak</span>
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <h3 style={{ color: '#f472b6', marginBottom: 15 }}>Your Stats</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 25 }}>
-            {[
-              { label: 'Searches', value: profile.stats?.searches || 0, icon: '🔍' },
-              { label: 'Protocols Created', value: profile.stats?.protocols_created || 0, icon: '📝' },
-              { label: 'Protocols Sold', value: profile.stats?.protocols_sold || 0, icon: '💰' },
-              { label: 'Protocols Bought', value: profile.stats?.protocols_purchased || 0, icon: '🛒' },
-              { label: 'Friends', value: profile.stats?.friends || 0, icon: '👥' },
-              { label: 'Reviews', value: profile.stats?.reviews || 0, icon: '⭐' }
-            ].map(stat => (
-              <div key={stat.label} style={{
-                background: 'rgba(30, 20, 50, 0.5)',
-                borderRadius: 12,
-                padding: 15,
-                textAlign: 'center'
-              }}>
-                <div style={{ fontSize: '1.5rem', marginBottom: 5 }}>{stat.icon}</div>
-                <div style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 700 }}>{stat.value}</div>
-                <div style={{ color: '#a1a1aa', fontSize: '0.75rem' }}>{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* My Badges */}
-          <h3 style={{ color: '#f472b6', marginBottom: 15 }}>My Badges ({profile.badges?.length || 0})</h3>
-          {profile.badges?.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 30, background: 'rgba(30, 20, 50, 0.5)', borderRadius: 12 }}>
-              <p style={{ color: '#a1a1aa' }}>No badges yet. Start exploring to earn your first badge!</p>
+          {!token ? (
+            <div style={{ textAlign: 'center', padding: 40, color: '#a1a1aa' }}>
+              <div style={{ fontSize: '3rem', marginBottom: 15 }}>🔐</div>
+              <p>Log in to track your achievements!</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-              {profile.badges?.map(badge => (
-                <div
-                  key={badge.id}
-                  style={{
-                    background: getRarityColor(badge.rarity),
-                    borderRadius: 12,
-                    padding: '12px 16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    minWidth: 180,
-                    position: 'relative'
-                  }}
-                  title={badge.description}
-                >
-                  <span style={{ fontSize: '1.5rem' }}>{badge.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.9rem' }}>{badge.name}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.7rem', textTransform: 'uppercase' }}>{badge.rarity}</div>
+            <>
+              <h2 style={{ color: '#10b981', marginBottom: 20 }}>✅ Earned ({achievements.earned?.length || 0})</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 15, marginBottom: 30 }}>
+                {achievements.earned?.map((achievement, i) => (
+                  <div key={i} style={{
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(139, 92, 246, 0.1))',
+                    borderRadius: 15,
+                    padding: 20,
+                    border: '1px solid rgba(16, 185, 129, 0.3)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 15, marginBottom: 10 }}>
+                      <span style={{ fontSize: '2rem' }}>{achievement.icon}</span>
+                      <div>
+                        <div style={{ color: '#fff', fontWeight: 600 }}>{achievement.name}</div>
+                        <div style={{ color: '#10b981', fontSize: '0.8rem' }}>+{achievement.points} pts</div>
+                      </div>
+                    </div>
+                    <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: 10 }}>{achievement.description}</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#71717a', fontSize: '0.75rem' }}>
+                        Earned: {new Date(achievement.earned_at).toLocaleDateString()}
+                      </span>
+                      <button 
+                        onClick={() => handleShareAchievement(achievement.id)}
+                        style={{
+                          padding: '5px 12px',
+                          background: 'rgba(255,255,255,0.1)',
+                          border: 'none',
+                          borderRadius: 15,
+                          color: '#8b5cf6',
+                          fontSize: '0.8rem',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        📤 Share
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => shareBadge(badge)}
-                    style={{
-                      background: 'rgba(255,255,255,0.2)',
-                      border: 'none',
-                      borderRadius: '50%',
-                      width: 28,
-                      height: 28,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem'
-                    }}
-                    title="Share this badge"
-                    data-testid={`share-badge-${badge.id}`}
-                  >
-                    📤
-                  </button>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+
+              <h2 style={{ color: '#f59e0b', marginBottom: 20 }}>🎯 Not Yet Earned ({achievements.unearned?.length || 0})</h2>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 15 }}>
+                {achievements.unearned?.map((achievement, i) => (
+                  <div key={i} style={{
+                    background: 'rgba(30, 20, 50, 0.5)',
+                    borderRadius: 15,
+                    padding: 20,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    opacity: 0.7
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 15, marginBottom: 10 }}>
+                      <span style={{ fontSize: '2rem', filter: 'grayscale(100%)' }}>{achievement.icon}</span>
+                      <div>
+                        <div style={{ color: '#fff', fontWeight: 600 }}>{achievement.name}</div>
+                        <div style={{ color: '#f59e0b', fontSize: '0.8rem' }}>+{achievement.points} pts</div>
+                      </div>
+                    </div>
+                    <p style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>{achievement.description}</p>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}
 
-      {/* All Badges Tab */}
-      {activeTab === 'badges' && (
-        <div>
-          <p style={{ color: '#a1a1aa', marginBottom: 20 }}>
-            Collect all badges by completing various activities on InfoPilot!
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 15 }}>
-            {allBadges.map(badge => {
-              const isEarned = profile?.badges?.some(b => b.id === badge.id);
-              return (
-                <div
-                  key={badge.id}
-                  style={{
-                    background: isEarned ? getRarityColor(badge.rarity) : 'rgba(30, 20, 50, 0.5)',
-                    borderRadius: 12,
-                    padding: 20,
-                    opacity: isEarned ? 1 : 0.6,
-                    border: isEarned ? 'none' : '1px dashed rgba(124, 58, 237, 0.3)',
-                    position: 'relative'
-                  }}
-                >
-                  {isEarned && (
-                    <span style={{
-                      position: 'absolute',
-                      top: -8,
-                      right: -8,
-                      background: '#10b981',
-                      color: '#fff',
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.8rem'
-                    }}>✓</span>
-                  )}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ fontSize: '2rem', filter: isEarned ? 'none' : 'grayscale(1)' }}>{badge.icon}</span>
-                    <div>
-                      <div style={{ color: '#fff', fontWeight: 600 }}>{badge.name}</div>
-                      <div style={{ color: isEarned ? 'rgba(255,255,255,0.8)' : '#71717a', fontSize: '0.8rem', marginTop: 3 }}>
-                        {badge.description}
-                      </div>
-                      <div style={{ 
-                        color: isEarned ? 'rgba(255,255,255,0.6)' : '#52525b', 
-                        fontSize: '0.7rem', 
-                        textTransform: 'uppercase',
-                        marginTop: 5
-                      }}>
-                        {badge.rarity}
-                      </div>
-                    </div>
-                  </div>
+      {/* All Achievements Tab */}
+      {activeTab === 'all-achievements' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 15 }}>
+          {allAchievements.map((achievement, i) => (
+            <div key={i} style={{
+              background: 'rgba(30, 20, 50, 0.6)',
+              borderRadius: 15,
+              padding: 20,
+              border: '1px solid rgba(139, 92, 246, 0.2)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 15, marginBottom: 10 }}>
+                <span style={{ fontSize: '2rem' }}>{achievement.icon}</span>
+                <div>
+                  <div style={{ color: '#fff', fontWeight: 600 }}>{achievement.name}</div>
+                  <div style={{ color: '#8b5cf6', fontSize: '0.8rem' }}>+{achievement.points} pts • {achievement.category}</div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+              <p style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>{achievement.description}</p>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Leaderboard Tab */}
-      {activeTab === 'leaderboard' && (
-        <div>
-          {/* Period Selector */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-            {[
-              { id: 'all', label: '🏆 All Time' },
-              { id: 'weekly', label: '📅 This Week' },
-              { id: 'monthly', label: '📆 This Month' }
-            ].map(period => (
-              <button
-                key={period.id}
-                className={`btn ${leaderboardPeriod === period.id ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setLeaderboardPeriod(period.id)}
-                style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-                data-testid={`leaderboard-${period.id}`}
-              >
-                {period.label}
-              </button>
-            ))}
-          </div>
-
-          <p style={{ color: '#a1a1aa', marginBottom: 20 }}>
-            {leaderboardPeriod === 'all' && 'Top InfoPilot users ranked by total XP'}
-            {leaderboardPeriod === 'weekly' && 'Top performers this week (resets Monday)'}
-            {leaderboardPeriod === 'monthly' && 'Top performers this month (resets 1st)'}
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {(leaderboardPeriod === 'all' ? leaderboard : 
-              leaderboardPeriod === 'weekly' ? weeklyLeaderboard : monthlyLeaderboard
-            ).map((entry, index) => {
-              const isCurrentUser = entry.user_id === profile?.user_id;
-              const xpValue = leaderboardPeriod === 'weekly' ? entry.weekly_xp : 
-                              leaderboardPeriod === 'monthly' ? entry.monthly_xp : entry.xp;
-              return (
-                <div
-                  key={entry.user_id}
-                  style={{
-                    background: isCurrentUser 
-                      ? 'linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(124, 58, 237, 0.3))'
-                      : 'rgba(30, 20, 50, 0.5)',
-                    borderRadius: 12,
-                    padding: '15px 20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 15,
-                    border: isCurrentUser ? '2px solid #f472b6' : '1px solid rgba(124, 58, 237, 0.2)'
-                  }}
-                >
+      {/* Weekly Leaderboard Tab */}
+      {activeTab === 'weekly-leaderboard' && (
+        <div style={{
+          background: 'rgba(30, 20, 50, 0.6)',
+          borderRadius: 20,
+          padding: 25,
+          border: '1px solid rgba(245, 158, 11, 0.2)'
+        }}>
+          <h2 style={{ color: '#f59e0b', marginBottom: 20 }}>📊 This Week&apos;s Top Sellers</h2>
+          {weeklyLeaderboard.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: '#a1a1aa' }}>
+              <div style={{ fontSize: '3rem', marginBottom: 15 }}>🏆</div>
+              <p>No sales yet this week. Be the first to claim the crown!</p>
+            </div>
+          ) : (
+            <div>
+              {weeklyLeaderboard.map((entry, i) => (
+                <div key={i} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 20,
+                  padding: 15,
+                  background: i === 0 ? 'rgba(255, 215, 0, 0.1)' : 'transparent',
+                  borderRadius: 10,
+                  marginBottom: 10,
+                  border: i === 0 ? '1px solid rgba(255, 215, 0, 0.3)' : 'none'
+                }}>
                   <div style={{
                     width: 40,
                     height: 40,
@@ -449,144 +343,156 @@ const AchievementsPage = ({ showToast }) => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontWeight: 700,
-                    fontSize: '1.1rem',
-                    background: index === 0 ? '#fbbf24' : index === 1 ? '#94a3b8' : index === 2 ? '#cd7f32' : 'rgba(124, 58, 237, 0.3)',
-                    color: index < 3 ? '#000' : '#fff'
+                    background: i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : 'rgba(255,255,255,0.1)',
+                    color: i < 3 ? '#000' : '#fff',
+                    fontWeight: 700
                   }}>
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : entry.rank}
+                    {entry.rank}
                   </div>
-                  
                   <div style={{ flex: 1 }}>
-                    <div style={{ color: '#fff', fontWeight: 600 }}>
-                      {entry.username}
-                      {isCurrentUser && <span style={{ color: '#f472b6', marginLeft: 8, fontSize: '0.8rem' }}>(You)</span>}
-                    </div>
+                    <div style={{ color: '#fff', fontWeight: 600 }}>{entry.username}</div>
                     <div style={{ color: '#a1a1aa', fontSize: '0.8rem' }}>
-                      Level {entry.level || '?'} • {entry.badge_count || 0} badges
+                      {entry.weekly_sales} sales • ${entry.weekly_revenue?.toFixed(2)} earned
                     </div>
                   </div>
-                  
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ color: '#fbbf24', fontWeight: 700 }}>{(xpValue || 0).toLocaleString()} XP</div>
-                  </div>
+                  {i === 0 && <span style={{ fontSize: '1.5rem' }}>👑</span>}
                 </div>
-              );
-            })}
-            {(leaderboardPeriod === 'all' ? leaderboard : 
-              leaderboardPeriod === 'weekly' ? weeklyLeaderboard : monthlyLeaderboard
-            ).length === 0 && (
-              <div style={{ textAlign: 'center', padding: 30, background: 'rgba(30, 20, 50, 0.5)', borderRadius: 12 }}>
-                <p style={{ color: '#a1a1aa' }}>
-                  {leaderboardPeriod === 'weekly' && 'No activity this week yet. Be the first!'}
-                  {leaderboardPeriod === 'monthly' && 'No activity this month yet. Be the first!'}
-                  {leaderboardPeriod === 'all' && 'No users on the leaderboard yet.'}
-                </p>
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Share Badge Modal */}
-      {shareModal && (
-        <div 
-          className="modal-overlay"
-          onClick={() => setShareModal(null)}
-          style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(0,0,0,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
-        >
-          <div 
-            className="modal"
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
-              borderRadius: 20,
-              padding: 30,
-              maxWidth: 450,
-              width: '90%',
-              border: '2px solid rgba(251, 191, 36, 0.5)'
-            }}
-          >
-            <h3 style={{ color: '#fbbf24', marginBottom: 15 }}>🏆 Share Your Badge!</h3>
-            
-            <div style={{
-              background: getRarityColor(shareModal.badge?.rarity),
-              borderRadius: 12,
-              padding: 20,
-              marginBottom: 20,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 15
-            }}>
-              <span style={{ fontSize: '2.5rem' }}>{shareModal.badge?.icon}</span>
-              <div>
-                <div style={{ color: '#fff', fontWeight: 700, fontSize: '1.1rem' }}>{shareModal.badge?.name}</div>
-                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem' }}>{shareModal.badge?.description}</div>
-              </div>
+      {/* All-Time Leaderboard Tab */}
+      {activeTab === 'all-time-leaderboard' && (
+        <div style={{
+          background: 'rgba(30, 20, 50, 0.6)',
+          borderRadius: 20,
+          padding: 25,
+          border: '1px solid rgba(139, 92, 246, 0.2)'
+        }}>
+          <h2 style={{ color: '#8b5cf6', marginBottom: 20 }}>🌟 All-Time Achievement Legends</h2>
+          {allTimeLeaderboard.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: '#a1a1aa' }}>
+              <div style={{ fontSize: '3rem', marginBottom: 15 }}>🏆</div>
+              <p>Start earning achievements to climb the leaderboard!</p>
             </div>
+          ) : (
+            <div>
+              {allTimeLeaderboard.map((entry, i) => (
+                <div key={i} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 20,
+                  padding: 15,
+                  background: i === 0 ? 'rgba(139, 92, 246, 0.2)' : 'transparent',
+                  borderRadius: 10,
+                  marginBottom: 10,
+                  border: i === 0 ? '1px solid rgba(139, 92, 246, 0.3)' : 'none'
+                }}>
+                  <div style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: i === 0 ? 'linear-gradient(135deg, #8b5cf6, #ec4899)' : 'rgba(255,255,255,0.1)',
+                    color: '#fff',
+                    fontWeight: 700
+                  }}>
+                    {entry.rank}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ color: '#fff', fontWeight: 600 }}>{entry.username}</div>
+                    <div style={{ color: '#a1a1aa', fontSize: '0.8rem' }}>
+                      {entry.total_points} points • {entry.achievement_count} achievements • {entry.level_name}
+                    </div>
+                  </div>
+                  {i === 0 && <span style={{ fontSize: '1.5rem' }}>🏆</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <a
-                href={shareModal.share_urls?.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn"
-                style={{ 
-                  background: '#1DA1F2', 
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  textDecoration: 'none'
-                }}
-              >
-                🐦 Share on Twitter
-              </a>
-              <a
-                href={shareModal.share_urls?.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn"
-                style={{ 
-                  background: '#4267B2', 
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  textDecoration: 'none'
-                }}
-              >
-                📘 Share on Facebook
-              </a>
-              <button
-                className="btn btn-secondary"
+      {/* Share Modal */}
+      {shareModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }} onClick={() => setShareModal(null)}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+            borderRadius: 20,
+            padding: 30,
+            maxWidth: 500,
+            width: '90%',
+            border: '1px solid rgba(139, 92, 246, 0.3)'
+          }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color: '#fff', marginBottom: 20 }}>📤 Share Your Achievement!</h3>
+            <div style={{
+              background: 'rgba(0,0,0,0.3)',
+              padding: 15,
+              borderRadius: 10,
+              marginBottom: 20
+            }}>
+              <p style={{ color: '#e0e0e0', fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>
+                {shareModal.share_message}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button 
                 onClick={copyShareText}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8
+                  flex: 1,
+                  padding: '12px 20px',
+                  background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                  border: 'none',
+                  borderRadius: 10,
+                  color: '#fff',
+                  fontWeight: 600,
+                  cursor: 'pointer'
                 }}
               >
-                📋 Copy to Clipboard
+                📋 Copy Text
               </button>
-              <button
-                className="btn"
+              <a 
+                href={shareModal.platforms?.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  flex: 1,
+                  padding: '12px 20px',
+                  background: '#1da1f2',
+                  border: 'none',
+                  borderRadius: 10,
+                  color: '#fff',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                  textAlign: 'center'
+                }}
+              >
+                🐦 Twitter
+              </a>
+              <button 
                 onClick={() => setShareModal(null)}
-                style={{ 
-                  background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  color: '#a1a1aa'
+                style={{
+                  padding: '12px 20px',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  borderRadius: 10,
+                  color: '#fff',
+                  cursor: 'pointer'
                 }}
               >
                 Close
@@ -595,6 +501,39 @@ const AchievementsPage = ({ showToast }) => {
           </div>
         </div>
       )}
+
+      {/* Book Promo */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
+        borderRadius: 20,
+        padding: 30,
+        marginTop: 30,
+        border: '1px solid rgba(236, 72, 153, 0.3)',
+        textAlign: 'center'
+      }}>
+        <h3 style={{ color: '#f472b6', marginBottom: 15, fontSize: '1.3rem' }}>
+          📚 Achievement Unlocked: Book Reader!
+        </h3>
+        <p style={{ color: '#fff', fontSize: '1rem', marginBottom: 15, maxWidth: 600, margin: '0 auto 15px' }}>
+          Want the ultimate achievement? Read &quot;Letters to Evelyn&quot; - a supernatural thriller comedy 
+          so good, even the ghosts wrote 5-star reviews! (Well, they would have if they had Amazon accounts...)
+        </p>
+        <button 
+          onClick={() => window.open('https://www.amazon.com/dp/B0DC735Q4W', '_blank')}
+          style={{
+            background: 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+            color: '#fff',
+            border: 'none',
+            padding: '15px 40px',
+            borderRadius: 30,
+            fontWeight: 700,
+            fontSize: '1rem',
+            cursor: 'pointer'
+          }}
+        >
+          📖 Unlock the Book Achievement - Only $2.99!
+        </button>
+      </div>
     </div>
   );
 };
