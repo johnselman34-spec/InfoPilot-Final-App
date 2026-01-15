@@ -1,18 +1,26 @@
 """
 InfoPilot Explorer - Video Tutorials System
-Provides text and image-based guides and tutorials for all application features
+Provides text, image, and YouTube video-based guides and tutorials for all application features
 """
 from fastapi import APIRouter, HTTPException, Depends
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from bson import ObjectId
+from pydantic import BaseModel
 
 from config import db, logger
 from routes.auth import get_current_user, get_optional_user
 
 router = APIRouter(prefix="/tutorials", tags=["Tutorials"])
 
-# Tutorial data - text and image-based tutorials
+
+class VideoUrlUpdate(BaseModel):
+    video_url: Optional[str] = None
+    video_id: Optional[str] = None  # YouTube video ID
+
+
+# Tutorial data - text, image, and video-based tutorials
+# video_url and video_id can be updated by admins
 TUTORIALS = [
     {
         "id": "getting-started",
@@ -44,6 +52,8 @@ InfoPilot Explorer is your ultimate search companion. Here's how to get started:
 - 🏆 Earn achievements by using different features!
         """,
         "image_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800",
+        "video_url": None,  # YouTube URL - to be added by admin
+        "video_id": None,   # YouTube video ID - to be added by admin
         "duration": "5 min read",
         "category": "basics",
         "order": 1
