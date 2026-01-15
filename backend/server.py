@@ -38,6 +38,13 @@ from routes.push_notifications import router as push_router, init_router as init
 from routes.chat import router as chat_router, init_router as init_chat_router
 from routes.statistics import router as statistics_router
 from routes.gamification import router as gamification_router
+from routes.messages import router as messages_router
+from routes.newsletter import router as newsletter_router
+from routes.voice import router as voice_router
+from routes.collaborate import router as collaborate_router
+
+# Import services
+from services.location_service import LocationService
 
 # DuckDuckGo Search library
 try:
