@@ -117,17 +117,59 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - [x] InfoPilot Explorer - InfoJet 2.0™, Interactive Maps, Protocol Marketplace
 - [x] Maestro Bistro - Brunswick, ME with chowder menu
 
-### Social Features ✅
-- [x] Groups (create, join, post)
-- [x] Pages (create, follow)
-- [x] Friends system
+### Social Features ✅ (MAJOR UPDATE - January 15, 2026)
+- [x] **Friends System** - Search users, send/accept/reject requests, friends list
+- [x] **Groups** - Create, join, leave, member management
+- [x] **Pages** - Create, follow, unfollow, category support
+- [x] **Social Feed** - Personalized posts from friends/groups/pages
+- [x] **Posts with Photos** - Up to 6.9MB per photo, up to 10 photos per post
+- [x] **Reactions** - Like, Love, Haha, Wow, Sad, Angry (Facebook-style)
+- [x] **Comments** - Comment on posts with reactions
 - [x] Real-time notifications (WebSockets)
 
-### Gamification ✅
-- [x] Points system
-- [x] Badges (First Search, Power User, etc.)
-- [x] Leaderboard
-- [x] User profiles with stats
+### Direct Messaging ✅ (NEW - January 15, 2026)
+- [x] **Private Conversations** - 1-on-1 messaging
+- [x] **Real-time Chat** - WebSocket updates
+- [x] **Image Sharing** - Up to 6.9MB per image
+- [x] **Read Receipts** - Know when messages are read
+- [x] **Typing Indicators** - See when someone is typing
+- [x] **Online Status** - See who's online
+- [x] **Conversation List** - Unread counts, last message preview
+
+### AI Newsletter System ✅ (NEW - January 15, 2026)
+- [x] **GPT-5.2 Integration** - AI-generated funny marketing content
+- [x] **Newsletter Drafts** - Save and edit before sending
+- [x] **Subscriber Management** - Subscribe/unsubscribe
+- [x] **Campaign History** - Track sent newsletters
+- [x] **Batch Sending** - Send to all subscribers
+- [x] **Test Emails** - Send test before broadcast
+
+### Voice Search ✅ (NEW - January 15, 2026)
+- [x] **OpenAI Whisper** - Speech-to-text transcription
+- [x] **Browser Recording** - Record audio directly in browser
+- [x] **Voice History** - Track past voice searches
+- [x] **Voice Stats** - Admin analytics on voice usage
+
+### Collaborative Protocol Editing ✅ (NEW - January 15, 2026)
+- [x] **Real-time Collaboration** - Multiple users editing same protocol
+- [x] **User Cursors** - See where others are editing
+- [x] **Version History** - Restore previous versions
+- [x] **Protocol Comments** - Comment on specific lines
+- [x] **Resolve Comments** - Mark comments as resolved
+
+### Location Auto-Detection ✅ (NEW - January 15, 2026)
+- [x] **Geo-extraction** - Extract locations from search results
+- [x] **50 US States** - Full state coordinate database
+- [x] **Major US Cities** - 20+ city coordinates
+- [x] **Countries** - World coverage
+- [x] **Auto-populate Map** - Results appear on map automatically
+
+### Gamification ✅ (ENHANCED - January 15, 2026)
+- [x] **22 Achievements** across 6 categories
+- [x] **Level System** - 10 levels with fun names
+- [x] **Points System** - 2,895 total possible points
+- [x] **Shareable Badges** - Twitter/Facebook share
+- [x] **Weekly/All-Time Leaderboards**
 
 ### Admin Features ✅
 - [x] Admin dashboard with statistics
