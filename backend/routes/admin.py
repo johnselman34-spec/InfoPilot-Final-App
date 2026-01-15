@@ -79,11 +79,17 @@ async def init_settings(user = Depends(require_admin)):
         {"key": "max_search_pages", "value": 99, "description": "Max search pages (1-99)"},
         {"key": "unpaid_max_pages", "value": 1, "description": "Max pages for unpaid users"},
         {"key": "daily_collate_limit", "value": 100, "description": "Max collations per day"},
+        {"key": "collation_limit", "value": 40, "description": "Results per Search and Collate (default: 40)"},
+        {"key": "allow_multiple_categories", "value": True, "description": "Allow assigning to multiple categories"},
         {"key": "max_category_levels", "value": 100, "description": "Max category hierarchy depth"},
+        {"key": "platform_fee_percent", "value": 15, "description": "Platform fee percentage (default: 15%)"},
+        {"key": "min_payout_threshold", "value": 1.00, "description": "PayPal minimum payout ($1.00)"},
         {"key": "phd_min_words", "value": 1500, "description": "Min words for Ph.D. classification"},
         {"key": "phd_keyword_count", "value": 3, "description": "Min Ph.D. keywords required"},
         {"key": "tutorial_video_url", "value": "", "description": "YouTube tutorial video URL"},
         {"key": "paypal_link", "value": PAYPAL_PAYMENT_LINK, "description": "PayPal payment link"},
+        {"key": "bundle_of_week_id", "value": "", "description": "Featured Bundle of the Week ID"},
+        {"key": "maps_free_for_all", "value": True, "description": "Maps are FREE (no premium gate)"},
     ]
     
     for setting in default_settings:
