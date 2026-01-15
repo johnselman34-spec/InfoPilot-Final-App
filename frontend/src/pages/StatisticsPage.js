@@ -125,6 +125,97 @@ const StatisticsPage = ({ showToast }) => {
     }
   };
 
+  // Populate map markers when a stat is clicked
+  const populateMapForStat = (statType, data) => {
+    setSelectedStatType(statType);
+    const markers = [];
+    
+    if (statType === 'countries') {
+      // Show country markers
+      (data || []).forEach((item, idx) => {
+        const coords = COUNTRY_COORDINATES[item.name];
+        if (coords) {
+          markers.push({
+            id: `country-${idx}`,
+            position: coords,
+            label: item.name,
+            value: item.value || item.searches || 0,
+            color: COLORS[idx % COLORS.length],
+            type: 'country'
+          });
+        }
+      });
+    } else if (statType === 'us_states') {
+      // Show US state markers
+      (data || []).forEach((item, idx) => {
+        const coords = STATE_COORDINATES[item.name];
+        if (coords) {
+          markers.push({
+            id: `state-${idx}`,
+            position: coords,
+            label: item.name,
+            value: item.value || item.searches || 0,
+            color: COLORS[idx % COLORS.length],
+            type: 'state'
+          });
+        }
+      });
+    } else if (statType === 'top_sellers') {
+      // Show top seller locations (simulated across US)
+      (data || []).forEach((item, idx) => {
+        // Distribute sellers across different states
+        const stateNames = Object.keys(STATE_COORDINATES);
+        const randomState = stateNames[idx % stateNames.length];
+        const coords = STATE_COORDINATES[randomState];
+        if (coords) {
+          markers.push({
+            id: `seller-${idx}`,
+            position: [coords[0] + (Math.random() - 0.5) * 2, coords[1] + (Math.random() - 0.5) * 2],
+            label: item.username || item.name,
+            value: item.total_sales || item.total_revenue || 0,
+            color: COLORS[idx % COLORS.length],
+            type: 'seller'
+          });
+        }
+      });
+    } else if (statType === 'most_copied') {
+      // Show most copied protocol locations
+      (mostCopied.leaderboard || []).forEach((item, idx) => {
+        const stateNames = Object.keys(STATE_COORDINATES);
+        const randomState = stateNames[idx % stateNames.length];
+        const coords = STATE_COORDINATES[randomState];
+        if (coords) {
+          markers.push({
+            id: `copied-${idx}`,
+            position: [coords[0] + (Math.random() - 0.5) * 2, coords[1] + (Math.random() - 0.5) * 2],
+            label: item.name,
+            value: item.copy_count || 0,
+            color: COLORS[idx % COLORS.length],
+            type: 'protocol'
+          });
+        }
+      });
+    }
+    
+    setMapMarkers(markers);
+  };
+
+  // Create custom marker icon
+  const createStatMarker = (color, size = 20) => L.divIcon({
+    className: 'custom-stat-marker',
+    html: `<div style="
+      background: ${color};
+      width: ${size}px;
+      height: ${size}px;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    "></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size/2, size/2],
+    popupAnchor: [0, -size/2],
+  });
+
   if (loading) {
     return (
       <div style={{ 
