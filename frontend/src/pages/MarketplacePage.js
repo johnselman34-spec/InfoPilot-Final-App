@@ -424,6 +424,26 @@ const MarketplacePage = ({ showToast }) => {
     }
   }, [token]);
 
+  // Fetch admin revenue settings
+  useEffect(() => {
+    const fetchRevenueSettings = async () => {
+      if (user?.is_admin && token) {
+        try {
+          const res = await fetch(`${API}/marketplace/admin/revenue-settings`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setAdminPercent(data.admin_percent || 10);
+          }
+        } catch (e) {
+          console.error('Failed to fetch revenue settings:', e);
+        }
+      }
+    };
+    fetchRevenueSettings();
+  }, [user, token]);
+
   useEffect(() => {
     fetchProtocols();
     fetchCategories();
