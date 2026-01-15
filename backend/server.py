@@ -6738,6 +6738,93 @@ async def get_badges_leaderboard(user: dict = Depends(require_user)):
     return {"leaderboard": leaderboard[:20]}
 
 # ============================================
+# TOP SELLERS LEADERBOARD (Sales Count & Revenue)
+# ============================================
+
+@api_router.get("/marketplace/top-sellers")
+async def get_top_sellers(
+    tab: str = Query("sales", description="Tab: 'sales' for count or 'revenue' for earnings"),
+    limit: int = Query(20, ge=1, le=100),
+    user: dict = Depends(require_user)
+):
+    """Get top sellers leaderboard with tabs for sales count and revenue"""
+    
+    # Aggregate sales data by seller
+    pipeline = [
+        {"$match": {"status": "completed"}},
+        {"$group": {
+            "_id": "$seller_id",
+            "sales_count": {"$sum": 1},
+            "total_revenue": {"$sum": "$amount"},
+            "protocols_sold": {"$addToSet": "$protocol_id"}
+        }}
+    ]
+    
+    sales_data = await db.protocol_purchases.aggregate(pipeline).to_list(1000)
+    
+    # Enrich with user data
+    leaderboard = []
+    for seller in sales_data:
+        seller_user = await db.users.find_one({"id": seller["_id"]}, {"_id": 0, "username": 1, "email": 1, "profile_picture": 1})
+        if seller_user:
+            leaderboard.append({
+                "user_id": seller["_id"],
+                "username": seller_user.get("username", "Unknown"),
+                "profile_picture": seller_user.get("profile_picture"),
+                "sales_count": seller["sales_count"],
+                "total_revenue": round(seller["total_revenue"], 2),
+                "unique_protocols_sold": len(seller["protocols_sold"]),
+                "earnings_after_split": round(seller["total_revenue"] * 0.90, 2)  # 90% goes to seller
+            })
+    
+    # Sort based on tab
+    if tab == "revenue":
+        leaderboard.sort(key=lambda x: -x["total_revenue"])
+    else:  # Default to sales count
+        leaderboard.sort(key=lambda x: -x["sales_count"])
+    
+    # Add rank
+    for i, seller in enumerate(leaderboard[:limit], 1):
+        seller["rank"] = i
+    
+    return {
+        "tab": tab,
+        "leaderboard": leaderboard[:limit],
+        "total_sellers": len(leaderboard)
+    }
+
+@api_router.get("/marketplace/my-sales")
+async def get_my_sales(user: dict = Depends(require_user)):
+    """Get current user's sales statistics"""
+    user_id = user["id"]
+    
+    # Get completed sales
+    sales = await db.protocol_purchases.find(
+        {"seller_id": user_id, "status": "completed"},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    total_revenue = sum(s.get("amount", 0) for s in sales)
+    earnings_after_split = total_revenue * 0.90
+    
+    # Get pending sales
+    pending_sales = await db.protocol_purchases.count_documents(
+        {"seller_id": user_id, "status": "pending"}
+    )
+    
+    # Get unique buyers
+    unique_buyers = len(set(s.get("buyer_id") for s in sales))
+    
+    return {
+        "total_sales": len(sales),
+        "total_revenue": round(total_revenue, 2),
+        "earnings_after_split": round(earnings_after_split, 2),
+        "pending_sales": pending_sales,
+        "unique_buyers": unique_buyers,
+        "platform_fee_percentage": 10
+    }
+
+# ============================================
 # API ROUTES - USER SEARCH RESULTS MANAGEMENT
 # ============================================
 
