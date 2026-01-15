@@ -2791,6 +2791,12 @@ const MarketplacePage = () => {
                     </button>
                   </div>
                 </div>
+                
+                {/* Interactive Marketplace Map */}
+                <MarketplaceMap protocols={filteredProtocols} onSelectProtocol={(p) => console.log("Selected:", p)} />
+                
+                {/* Book Promotion */}
+                <BookSalesBanner variant="compact" />
               </div>
             )}
 
