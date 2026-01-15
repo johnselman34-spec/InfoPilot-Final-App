@@ -910,11 +910,39 @@ const MarketplacePage = ({ showToast }) => {
                       </div>
                       
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#10b981', fontSize: '1.2rem', fontWeight: 700 }}>
-                          ${protocol.price.toFixed(2)}
-                        </span>
+                        {protocol.price === 0 || protocol.is_free ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              color: '#fff',
+                              padding: '4px 12px',
+                              borderRadius: 20,
+                              fontSize: '0.85rem',
+                              fontWeight: 700,
+                              animation: 'pulse 2s infinite'
+                            }}>
+                              🆓 FREE!
+                            </span>
+                          </div>
+                        ) : (
+                          <span style={{ color: '#10b981', fontSize: '1.2rem', fontWeight: 700 }}>
+                            ${protocol.price.toFixed(2)}
+                          </span>
+                        )}
                         {protocol.is_owned ? (
                           <span style={{ color: '#10b981', fontSize: '0.85rem' }}>✓ Owned</span>
+                        ) : protocol.price === 0 || protocol.is_free ? (
+                          <button 
+                            className="btn btn-primary"
+                            onClick={() => handleCopyFreeProtocol(protocol)}
+                            style={{ 
+                              padding: '6px 15px', 
+                              fontSize: '0.85rem',
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                            }}
+                          >
+                            📋 Copy FREE
+                          </button>
                         ) : (
                           <button 
                             className="btn btn-primary"
