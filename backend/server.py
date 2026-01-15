@@ -54,6 +54,20 @@ GOOGLE_IOS_CLIENT_ID = os.environ.get('GOOGLE_IOS_CLIENT_ID', '')
 # All valid Google Client IDs (for token verification)
 GOOGLE_CLIENT_IDS = [GOOGLE_WEB_CLIENT_ID, GOOGLE_ANDROID_CLIENT_ID, GOOGLE_IOS_CLIENT_ID]
 
+# Admin email addresses - these accounts get automatic admin privileges
+ADMIN_EMAILS = [
+    "jjspilot24@gmail.com",
+    "johnselman34@gmail.com", 
+    "john.1976.selman@gmail.com",
+    # Case variations
+    "JohnSelman34@gmail.com",
+    "John.1976.Selman@gmail.com"
+]
+
+def is_admin_email(email: str) -> bool:
+    """Check if email is an admin email (case-insensitive)"""
+    return email.lower() in [e.lower() for e in ADMIN_EMAILS]
+
 # Stripe Configuration
 STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
 STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
