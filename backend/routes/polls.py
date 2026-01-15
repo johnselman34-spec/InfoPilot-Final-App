@@ -230,8 +230,13 @@ async def vote_on_poll(poll_id: str, vote: PollVote, user = Depends(get_current_
     if not poll.get("is_active"):
         raise HTTPException(status_code=400, detail="Poll is no longer active")
     
-    if poll.get("expires_at") and poll["expires_at"] < datetime.now(timezone.utc):
-        raise HTTPException(status_code=400, detail="Poll has expired")
+    # Handle timezone-aware comparison
+    expires_at = poll.get("expires_at")
+    if expires_at:
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at < datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Poll has expired")
     
     # Validate option index
     if vote.option_index < 0 or vote.option_index >= len(poll.get("options", [])):
