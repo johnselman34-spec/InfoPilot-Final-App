@@ -1510,7 +1510,16 @@ async def register(data: UserCreate):
 @api_router.post("/auth/login", response_model=TokenResponse)
 async def login(data: UserLogin):
     user = await db.users.find_one({"email": data.email})
-    if not user or not verify_password(data.password, user["password_hash"]):
+    logger.info(f"Login attempt for {data.email}: found={user is not None}")
+    
+    if not user:
+        logger.warning(f"User not found: {data.email}")
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    pw_valid = verify_password(data.password, user.get("password_hash", ""))
+    logger.info(f"Password valid: {pw_valid}, hash exists: {bool(user.get('password_hash'))}")
+    
+    if not pw_valid:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = create_token(user["id"])
