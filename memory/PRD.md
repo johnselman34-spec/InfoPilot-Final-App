@@ -318,3 +318,16 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
   14. **Iteration 18 Testing** - 73% backend / 100% frontend pass rate
      - All admin logins verified working
      - All Marketplace enhancements verified
+  15. **Enhanced Book Promotions** (Jan 15, 2026)
+     - New "hero" variant of BookSalesBanner with stars background
+     - Rotating hilarious taglines carousel (6 different taglines)
+     - "mini" variant for sidebars
+     - Enhanced compact variant with rotating quotes
+     - Book page completely overhauled with hero banner
+     - Strategic placements throughout the app
+  16. **Interactive Marketplace Map** (Jan 15, 2026)
+     - Google Maps integration showing protocol locations
+     - Custom markers (yellow for available, green for purchased)
+     - InfoWindow popups with protocol details
+     - Toggle to show/hide map
+     - Map legend with protocol count
