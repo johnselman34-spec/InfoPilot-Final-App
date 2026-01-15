@@ -37,6 +37,7 @@ from routes.bundles import router as bundles_router, init_router as init_bundles
 from routes.push_notifications import router as push_router, init_router as init_push_router
 from routes.chat import router as chat_router, init_router as init_chat_router
 from routes.statistics import router as statistics_router
+from routes.gamification import router as gamification_router
 
 # DuckDuckGo Search library
 try:
