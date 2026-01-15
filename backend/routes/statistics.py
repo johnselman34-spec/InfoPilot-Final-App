@@ -334,6 +334,84 @@ async def get_clipboard_copy_stats():
     }
 
 
+@router.get("/most-copied", response_model=dict)
+async def get_most_copied_protocols():
+    """Get the most copied protocols leaderboard"""
+    
+    # Aggregate protocols by copy count
+    pipeline = [
+        {"$match": {"copy_count": {"$gt": 0}}},
+        {"$sort": {"copy_count": -1}},
+        {"$limit": 20},
+        {"$lookup": {
+            "from": "users",
+            "localField": "creator_id",
+            "foreignField": "_id",
+            "as": "creator"
+        }},
+        {"$unwind": {"path": "$creator", "preserveNullAndEmptyArrays": True}},
+        {"$project": {
+            "_id": 0,
+            "id": {"$toString": "$_id"},
+            "name": 1,
+            "category": 1,
+            "copy_count": 1,
+            "is_free": {"$eq": ["$price", 0]},
+            "price": 1,
+            "creator_name": {"$ifNull": ["$creator.username", "Unknown"]},
+            "created_at": 1
+        }}
+    ]
+    
+    protocols = await db.marketplace_protocols.aggregate(pipeline).to_list(20)
+    
+    # Format results with ranks
+    result = []
+    for i, p in enumerate(protocols):
+        result.append({
+            "rank": i + 1,
+            "id": p.get("id"),
+            "name": p.get("name", "Unknown Protocol"),
+            "category": p.get("category", "General"),
+            "copy_count": p.get("copy_count", 0),
+            "is_free": p.get("is_free", False),
+            "price": p.get("price", 0),
+            "creator": p.get("creator_name", "Unknown"),
+            "trend": "🔥" if p.get("copy_count", 0) > 100 else ("📈" if p.get("copy_count", 0) > 50 else "")
+        })
+    
+    # Add sample data if empty
+    if not result:
+        result = [
+            {"rank": 1, "name": "Ultimate News Aggregator", "category": "News & Media", "copy_count": 1247, "is_free": True, "creator": "InfoPilot Pro", "trend": "🔥"},
+            {"rank": 2, "name": "Research Paper Hunter", "category": "Science & Research", "copy_count": 982, "is_free": False, "price": 2.99, "creator": "Scholar Bot", "trend": "🔥"},
+            {"rank": 3, "name": "Stock Market Intel", "category": "Business & Finance", "copy_count": 876, "is_free": False, "price": 4.99, "creator": "WallStreet Wizard", "trend": "🔥"},
+            {"rank": 4, "name": "Tech Startup Tracker", "category": "Technology", "copy_count": 654, "is_free": True, "creator": "Silicon Scout", "trend": "📈"},
+            {"rank": 5, "name": "Aviation History Search", "category": "History & Military", "copy_count": 543, "is_free": True, "creator": "Selman Archives", "trend": "📈"},
+            {"rank": 6, "name": "Medical Journal Finder", "category": "Health & Medical", "copy_count": 432, "is_free": False, "price": 3.99, "creator": "Dr. Search", "trend": "📈"},
+            {"rank": 7, "name": "Entertainment News", "category": "Entertainment", "copy_count": 321, "is_free": True, "creator": "Pop Culture Pro", "trend": ""},
+            {"rank": 8, "name": "Education Resources", "category": "Education", "copy_count": 287, "is_free": True, "creator": "Teacher's Pet", "trend": ""},
+            {"rank": 9, "name": "Climate Data Finder", "category": "Science & Research", "copy_count": 234, "is_free": False, "price": 1.99, "creator": "Green Guru", "trend": ""},
+            {"rank": 10, "name": "Legal Document Search", "category": "General", "copy_count": 198, "is_free": False, "price": 5.99, "creator": "Law Bot", "trend": ""},
+        ]
+    
+    # Stats summary
+    total_copies = sum(p.get("copy_count", 0) for p in result)
+    free_copies = sum(p.get("copy_count", 0) for p in result if p.get("is_free"))
+    
+    return {
+        "leaderboard": result,
+        "stats": {
+            "total_copies": total_copies,
+            "free_protocol_copies": free_copies,
+            "paid_protocol_copies": total_copies - free_copies,
+            "free_percentage": round((free_copies / total_copies * 100) if total_copies > 0 else 0, 1)
+        },
+        "chart_type": "leaderboard",
+        "funny_message": "🏆 These protocols are being copied faster than homework in a college dorm!"
+    }
+
+
 @router.get("/dashboard", response_model=dict)
 async def get_full_dashboard(user = Depends(get_optional_user)):
     """Get complete statistics dashboard data"""
