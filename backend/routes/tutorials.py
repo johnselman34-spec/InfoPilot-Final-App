@@ -1,6 +1,6 @@
 """
 InfoPilot Explorer - Video Tutorials System
-Provides video guides and tutorials for all application features
+Provides text and image-based guides and tutorials for all application features
 """
 from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
@@ -12,107 +12,399 @@ from routes.auth import get_current_user, get_optional_user
 
 router = APIRouter(prefix="/tutorials", tags=["Tutorials"])
 
-# Video tutorial data - embedded YouTube videos
+# Tutorial data - text and image-based tutorials
 TUTORIALS = [
     {
         "id": "getting-started",
         "title": "Getting Started with InfoPilot Explorer",
         "description": "Learn the basics of InfoPilot Explorer and set up your account for success!",
-        "youtube_id": "dQw4w9WgXcQ",  # Placeholder - replace with actual tutorial
-        "duration": "5:30",
+        "content": """
+## Welcome to InfoPilot Explorer! 🚀
+
+InfoPilot Explorer is your ultimate search companion. Here's how to get started:
+
+### Step 1: Create Your Account
+1. Click the **Register** button
+2. Enter your email and create a password
+3. You'll be automatically connected with our admin as your first friend!
+
+### Step 2: Explore Ultimate Search
+1. Navigate to **Ultimate Search** from the sidebar
+2. Enter your search query in the search box
+3. Use the map to visualize results geographically
+
+### Step 3: Create Your First Protocol
+1. Click **+ Add Category** to create a new search category
+2. Give it a name and write your protocol
+3. Use operators like `(word1 or word2)` for flexible searches
+
+### Pro Tips:
+- 💡 Use the voice search feature for hands-free searching
+- 📊 Check the Statistics page to see community trends
+- 🏆 Earn achievements by using different features!
+        """,
+        "image_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800",
+        "duration": "5 min read",
         "category": "basics",
-        "order": 1,
-        "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+        "order": 1
     },
     {
         "id": "ultimate-search",
         "title": "Mastering Ultimate Search",
         "description": "Discover how to create powerful search protocols and get the best results.",
-        "youtube_id": "dQw4w9WgXcQ",
-        "duration": "8:45",
+        "content": """
+## Ultimate Search Mastery 🔍
+
+Learn to harness the full power of InfoPilot's search engine!
+
+### Protocol Syntax Guide
+
+**Basic Operators:**
+- `(word1 or word2)` - Match ANY word (OR logic)
+- `(word1 or word2)+` - Match ALL words (INCLUDE ALL)
+- `(word1 or word2)^` - EXCLUDE ALL words
+- `&` - Combine groups (AND between groups)
+- `"multi word phrase"` - Match exact phrase
+
+### Example Protocol:
+```
+(george or bush or president) & (career or biography) & (pilot or aviation)^
+```
+This searches for George Bush's career, excluding pilot/aviation content.
+
+### Map Integration
+- Results automatically appear on the interactive map
+- Click markers for detailed information
+- Use filters to narrow by category
+
+### Voice Search
+- Click the 🎤 icon to search by voice
+- Speak naturally - our AI understands context!
+        """,
+        "image_url": "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800",
+        "duration": "8 min read",
         "category": "search",
-        "order": 2,
-        "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+        "order": 2
     },
     {
         "id": "protocol-marketplace",
         "title": "Buying & Selling in the Marketplace",
         "description": "Turn your search expertise into cash! Learn how to list and sell protocols.",
-        "youtube_id": "dQw4w9WgXcQ",
-        "duration": "7:15",
+        "content": """
+## Protocol Marketplace 💰
+
+Turn your search expertise into revenue!
+
+### Selling Your Protocols
+
+1. **Create a Protocol**
+   - Go to Ultimate Search
+   - Create a useful search protocol
+   
+2. **Set Your Price**
+   - Edit the category
+   - Set a price ($1-$99) or leave free
+   
+3. **Connect PayPal**
+   - If selling, connect your PayPal account
+   - You receive 90% of each sale!
+
+### Buying Protocols
+
+1. Browse the marketplace
+2. Preview protocol descriptions
+3. Pay What You Want for most protocols
+4. Instantly add to your collection
+
+### Tips for Sellers:
+- 📝 Write detailed descriptions
+- 🏷️ Price competitively
+- ⭐ Build your reputation with quality protocols
+        """,
+        "image_url": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800",
+        "duration": "7 min read",
         "category": "marketplace",
-        "order": 3,
-        "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+        "order": 3
     },
     {
         "id": "social-features",
         "title": "Social Hub: Friends, Groups & Pages",
         "description": "Connect with fellow researchers and build your InfoPilot community.",
-        "youtube_id": "dQw4w9WgXcQ",
-        "duration": "6:30",
+        "content": """
+## Social Hub Guide 👥
+
+Build your research community!
+
+### Friends
+- Search for users by email
+- Send friend requests
+- Chat directly with friends
+
+### Groups
+- Create or join topic-based groups
+- Share protocols with group members
+- Create polls to engage your community
+
+### Pages
+- Create pages for organizations
+- Build a following
+- Post updates and announcements
+
+### Polls Feature
+- Create engaging polls in groups/pages
+- Multiple choice options
+- Set expiration times
+- View real-time results
+
+### Moderation
+- Group admins can add moderators
+- Moderators can manage posts
+- Keep your community healthy!
+        """,
+        "image_url": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800",
+        "duration": "6 min read",
         "category": "social",
-        "order": 4,
-        "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+        "order": 4
     },
     {
         "id": "direct-messaging",
         "title": "Direct Messaging & Real-time Chat",
         "description": "Stay connected with your network through instant messaging.",
-        "youtube_id": "dQw4w9WgXcQ",
-        "duration": "4:00",
+        "content": """
+## Direct Messaging 💬
+
+Real-time communication made easy!
+
+### Starting a Conversation
+1. Go to Messages from the sidebar
+2. Click **New Message**
+3. Select a friend to chat with
+
+### Features
+- ✉️ Text messages
+- 🖼️ Image sharing
+- 🔔 Push notifications when offline
+- ✅ Read receipts
+
+### Group Chat
+- Join the community chat room
+- Discuss protocols with everyone
+- Share tips and tricks
+
+### Privacy
+- Only friends can message you
+- Block unwanted contacts
+- Report inappropriate behavior
+        """,
+        "image_url": "https://images.unsplash.com/photo-1611606063065-ee7946f0787a?w=800",
+        "duration": "4 min read",
         "category": "social",
-        "order": 5,
-        "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+        "order": 5
     },
     {
         "id": "achievements",
         "title": "Gamification & Achievements",
         "description": "Level up your profile and unlock exclusive badges and rewards!",
-        "youtube_id": "dQw4w9WgXcQ",
-        "duration": "5:00",
+        "content": """
+## Achievements System 🏆
+
+Level up and earn rewards!
+
+### How Points Work
+- 🔍 Search: 5 points per search
+- 📝 Create Protocol: 25 points
+- 💰 Sell Protocol: 50 points
+- 👥 Make a Friend: 15 points
+
+### Levels
+1. **Beginner** (0-100 pts)
+2. **Explorer** (100-500 pts)
+3. **Researcher** (500-1000 pts)
+4. **Expert** (1000-2500 pts)
+5. **Master** (2500+ pts)
+
+### Badges
+- 🌟 First Search
+- 💎 Protocol Master
+- 🤝 Social Butterfly
+- 💰 Money Maker
+- And many more!
+
+### Sharing
+- Share badges on Twitter
+- Show off on Facebook
+- Build your reputation!
+        """,
+        "image_url": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=800",
+        "duration": "5 min read",
         "category": "gamification",
-        "order": 6,
-        "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+        "order": 6
     },
     {
         "id": "voice-search",
         "title": "Voice Search with AI",
         "description": "Search hands-free using our advanced voice recognition powered by AI.",
-        "youtube_id": "dQw4w9WgXcQ",
-        "duration": "3:45",
+        "content": """
+## Voice Search 🎤
+
+Hands-free searching powered by OpenAI Whisper!
+
+### How to Use
+1. Click the microphone icon 🎤
+2. Speak your search query clearly
+3. Wait for transcription
+4. Review and search!
+
+### Tips for Best Results
+- Speak clearly and naturally
+- Reduce background noise
+- Use specific keywords
+- Shorter queries work better
+
+### Supported Languages
+- English (primary)
+- Spanish
+- French
+- German
+- And more!
+
+### Pro Tips
+- Combine voice with protocol selection
+- Use for quick searches
+- Perfect for mobile use
+        """,
+        "image_url": "https://images.unsplash.com/photo-1589254065878-42c9da997008?w=800",
+        "duration": "4 min read",
         "category": "search",
-        "order": 7,
-        "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+        "order": 7
     },
     {
         "id": "polls",
         "title": "Creating Polls for Engagement",
         "description": "Boost engagement in your groups and pages with interactive polls.",
-        "youtube_id": "dQw4w9WgXcQ",
-        "duration": "4:30",
+        "content": """
+## Polls Feature 📊
+
+Engage your community with polls!
+
+### Creating a Poll
+1. Navigate to a Group or Page you manage
+2. Click the **📊 Poll** button
+3. Enter your question
+4. Add 2-10 options
+5. Set duration (optional)
+6. Publish!
+
+### Poll Options
+- **Duration**: 1 hour to 7 days
+- **Multiple Choice**: Allow multiple selections
+- **Anonymous**: Hide voter identities
+
+### Viewing Results
+- Real-time vote counts
+- Percentage breakdown
+- Visual progress bars
+- Total participation stats
+
+### Use Cases
+- Community decisions
+- Feedback collection
+- Topic preferences
+- Fun engagement
+        """,
+        "image_url": "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=800",
+        "duration": "4 min read",
         "category": "social",
-        "order": 8,
-        "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+        "order": 8
     },
     {
         "id": "admin-features",
         "title": "Group & Page Administration",
         "description": "Learn how to manage moderators, admins, and member permissions.",
-        "youtube_id": "dQw4w9WgXcQ",
-        "duration": "6:00",
+        "content": """
+## Administration Guide ⚙️
+
+Manage your communities effectively!
+
+### Group Roles
+
+**Owner** (You, the creator)
+- Full control
+- Add/remove admins
+- Delete group
+
+**Admin**
+- Add/remove moderators
+- Remove members
+- Edit group settings
+- Manage polls
+
+**Moderator**
+- Delete posts
+- Mute members
+- Approve posts
+- Manage polls
+
+### Adding Roles
+1. Go to your Group/Page
+2. Click **Manage Roles**
+3. Select a member
+4. Choose their role
+5. They'll be notified!
+
+### Best Practices
+- Have at least 2 admins
+- Set clear community guidelines
+- Be fair with moderation
+- Engage with your community
+        """,
+        "image_url": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800",
+        "duration": "6 min read",
         "category": "admin",
-        "order": 9,
-        "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+        "order": 9
     },
     {
         "id": "mobile-extension",
         "title": "Mobile App & Browser Extension",
         "description": "Access InfoPilot on the go with our mobile app and browser extension.",
-        "youtube_id": "dQw4w9WgXcQ",
-        "duration": "5:15",
+        "content": """
+## Access Anywhere 📱
+
+Use InfoPilot everywhere!
+
+### Browser Extension (InfoJet)
+1. Install from Chrome Web Store
+2. Click extension icon
+3. Search instantly from any page
+4. Select text → Right-click → Search
+
+### Mobile App
+1. Download from App Store/Play Store
+2. Log in with your account
+3. All features available!
+4. Offline protocol access
+
+### Extension Features
+- 🔍 Quick search popup
+- 📋 Access your protocols
+- 🖱️ Context menu integration
+- ⌨️ Keyboard shortcuts
+
+### Mobile Features
+- 📍 Location-based search
+- 🎤 Voice search
+- 📊 Full statistics
+- 💬 Real-time messaging
+
+### Sync
+- All devices stay in sync
+- Protocols available everywhere
+- Settings preserved
+        """,
+        "image_url": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800",
+        "duration": "5 min read",
         "category": "basics",
-        "order": 10,
-        "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+        "order": 10
     }
 ]
 
@@ -128,7 +420,7 @@ CATEGORIES = [
 
 @router.get("", response_model=dict)
 async def get_tutorials(category: Optional[str] = None):
-    """Get all video tutorials"""
+    """Get all tutorials"""
     tutorials = TUTORIALS.copy()
     
     if category:
@@ -188,17 +480,6 @@ async def track_progress(tutorial_id: str, progress: int, user = Depends(get_cur
         },
         upsert=True
     )
-    
-    # Award achievement if completed first tutorial
-    if progress >= 100:
-        completed_count = await db.tutorial_progress.count_documents({
-            "user_id": user_id,
-            "completed": True
-        })
-        
-        if completed_count == 1:
-            # First tutorial completed - could award achievement here
-            pass
     
     return {"success": True, "progress": progress}
 
