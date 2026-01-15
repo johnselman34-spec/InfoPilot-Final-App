@@ -3,7 +3,7 @@ InfoPilot Explorer - Polls Feature
 Allows Group/Page/USP owners to create polls for visitors
 """
 from fastapi import APIRouter, HTTPException, Depends
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from bson import ObjectId
 from pydantic import BaseModel
