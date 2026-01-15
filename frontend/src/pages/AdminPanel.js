@@ -5,6 +5,7 @@ import ABTestDashboard from '../components/ABTesting/ABTestDashboard';
 import YouTubeTutorialAdmin from '../components/Admin/YouTubeTutorialAdmin';
 import ABOptimizerAdmin from '../components/Admin/ABOptimizerAdmin';
 import RevenueForecastAdmin from '../components/Admin/RevenueForecastAdmin';
+import MarketplaceProtocolForecast from '../components/Admin/MarketplaceProtocolForecast';
 
 const AdminPanel = ({ showToast }) => {
   const { token } = useAuth();
