@@ -582,7 +582,7 @@ class CategoryCreate(BaseModel):
     parent_id: Optional[str] = None  # For subcategories
     is_public: bool = True
     for_sale: bool = False  # Whether protocol can be purchased
-    price: Optional[float] = Field(None, ge=0.75, le=2.99)  # Price range $0.75-$2.99
+    price: Optional[float] = Field(None, ge=0.00, le=99.00)  # Price range $0.00-$99.00 (FREE allowed)
     location: Optional[ProtocolLocation] = None  # Location data for marketplace map
 
 class CategoryUpdate(BaseModel):
@@ -590,7 +590,7 @@ class CategoryUpdate(BaseModel):
     protocol_string: Optional[str] = None
     is_public: Optional[bool] = None
     for_sale: Optional[bool] = None
-    price: Optional[float] = Field(None, ge=0.75, le=2.99)
+    price: Optional[float] = Field(None, ge=0.00, le=99.00)
     location: Optional[ProtocolLocation] = None  # Location data for marketplace map
 
 class CategoryResponse(BaseModel):
@@ -2504,7 +2504,7 @@ async def update_category_visibility(category_id: str, is_public: bool, user: di
 async def update_category_sale_settings(
     category_id: str, 
     for_sale: bool, 
-    price: float = 0.75, 
+    price: float = 0.00, 
     user: dict = Depends(require_user)
 ):
     """Update a category's for-sale status and price"""
@@ -2516,13 +2516,14 @@ async def update_category_sale_settings(
     if category.get("is_public", True):
         raise HTTPException(status_code=400, detail="Public protocols cannot be sold")
     
-    # Validate price
-    if for_sale and (price < 0.75 or price > 2.99):
-        raise HTTPException(status_code=400, detail="Price must be between $0.75 and $2.99")
+    # Validate price - allow $0.00 (FREE) up to $99.00
+    if for_sale and (price < 0.00 or price > 99.00):
+        raise HTTPException(status_code=400, detail="Price must be between $0.00 (FREE) and $99.00")
     
     update_data = {
         "for_sale": for_sale,
-        "price": price if for_sale else None
+        "price": price if for_sale else None,
+        "is_free": price == 0.00 if for_sale else False  # Mark as FREE if price is $0.00
     }
     
     await db.categories.update_one(
@@ -2530,7 +2531,8 @@ async def update_category_sale_settings(
         {"$set": update_data}
     )
     
-    return {"message": "Sale settings updated", "for_sale": for_sale, "price": price if for_sale else None}
+    price_str = "FREE" if price == 0.00 else f"${price:.2f}"
+    return {"message": f"Protocol {'listed for sale at ' + price_str if for_sale else 'removed from sale'}", "for_sale": for_sale, "price": price if for_sale else None, "is_free": price == 0.00 if for_sale else False}
 
 # ============================================
 # API ROUTES - PROTOCOL MARKETPLACE
