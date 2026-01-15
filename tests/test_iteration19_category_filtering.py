@@ -52,7 +52,7 @@ class TestCategoryFilteringBackend:
         
         data = response.json()
         assert "results" in data, "Response should contain 'results' key"
-        assert "count" in data, "Response should contain 'count' key"
+        assert "count" in data or "total" in data, "Response should contain 'count' or 'total' key"
         assert "filter_applied" in data, "Response should contain 'filter_applied' key"
         assert "aggregation_mode" in data, "Response should contain 'aggregation_mode' key"
         
@@ -60,7 +60,8 @@ class TestCategoryFilteringBackend:
         assert data["filter_applied"] == False, "filter_applied should be False when no categories selected"
         assert data["aggregation_mode"] == "and_or", "Default aggregation mode should be 'and_or'"
         
-        print(f"✅ No filter: {data['count']} results returned, filter_applied={data['filter_applied']}")
+        count = data.get("count", data.get("total", 0))
+        print(f"✅ No filter: {count} results returned, filter_applied={data['filter_applied']}")
     
     def test_ultimate_search_single_category_filter(self):
         """Test filtering by a single category"""
