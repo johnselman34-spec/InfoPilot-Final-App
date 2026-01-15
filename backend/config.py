@@ -54,6 +54,12 @@ SERPAPI_KEY = os.environ.get('SERPAPI_KEY')
 MARKETPLACE_PLATFORM_FEE = 0.10  # 10% platform fee, 90% to creators
 MARKETPLACE_MIN_PRICE = 0.00  # Allow FREE protocols ($0.00)
 MARKETPLACE_MAX_PRICE = 99.99
+MARKETPLACE_MIN_PAYOUT = 1.00  # PayPal minimum payout threshold
+
+# Collation Settings (Admin Controllable)
+DEFAULT_COLLATION_LIMIT = 40  # Default: 40 results per Search and Collate
+MAX_COLLATION_LIMIT = 200  # Maximum allowed collation limit
+ALLOW_MULTIPLE_CATEGORIES = True  # Allow assigning results to multiple categories
 
 # Book Promotion Data
 BOOK_PROMO = {
