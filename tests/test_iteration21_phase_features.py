@@ -343,7 +343,7 @@ class TestUltimateSearch:
             "aggregation_type": "and_or",
             "page": 1
         }
-        res = requests.post(f"{BASE_URL}/api/search/ultimate", json=search_data, headers=headers)
+        res = requests.post(f"{BASE_URL}/api/ultimate-search", json=search_data, headers=headers)
         # May return 200 or 400 depending on if categories are required
         assert res.status_code in [200, 400]
         print("✅ Ultimate search endpoint accessible")
