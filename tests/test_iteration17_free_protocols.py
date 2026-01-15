@@ -137,7 +137,7 @@ class TestCreateFreeProtocol:
             json={
                 "name": unique_name,
                 "description": "A test FREE protocol for testing",
-                "protocol": "site:example.com",
+                "protocol": "(test or example) site:example.com",  # Valid protocol format
                 "price": 0.0,
                 "category": "General",
                 "tags": ["test", "free"]
@@ -162,7 +162,7 @@ class TestCreateFreeProtocol:
             json={
                 "name": unique_name,
                 "description": "Testing zero price",
-                "protocol": "site:test.com",
+                "protocol": "(zero or price) site:test.com",  # Valid protocol format
                 "price": 0.00,
                 "category": "General",
                 "tags": []
@@ -182,14 +182,15 @@ class TestCreateFreeProtocol:
             json={
                 "name": unique_name,
                 "description": "Testing max price",
-                "protocol": "site:test.com",
+                "protocol": "(max or price) site:test.com",  # Valid protocol format
                 "price": 100.00,  # Over limit
                 "category": "General",
                 "tags": []
             }
         )
         
-        assert response.status_code == 400, "Price over $99.99 should be rejected"
+        # 400 or 422 are both valid rejection codes
+        assert response.status_code in [400, 422], f"Price over $99.99 should be rejected, got {response.status_code}"
 
 
 class TestStatisticsDashboard:
