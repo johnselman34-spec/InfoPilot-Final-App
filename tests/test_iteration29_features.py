@@ -289,20 +289,20 @@ class TestSocialEndpoints:
             return response.json().get("token")
         pytest.skip("Admin login failed")
     
-    def test_social_feed(self, admin_token):
-        """Test social feed endpoint"""
+    def test_social_friends(self, admin_token):
+        """Test social friends endpoint"""
         response = requests.get(
-            f"{BASE_URL}/api/social/feed",
+            f"{BASE_URL}/api/friends",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Social feed endpoint working")
+        print(f"✅ Social friends endpoint working")
     
     def test_social_groups(self, admin_token):
         """Test social groups endpoint"""
         response = requests.get(
-            f"{BASE_URL}/api/social/groups",
+            f"{BASE_URL}/api/groups",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
@@ -312,7 +312,7 @@ class TestSocialEndpoints:
     def test_social_pages(self, admin_token):
         """Test social pages endpoint"""
         response = requests.get(
-            f"{BASE_URL}/api/social/pages",
+            f"{BASE_URL}/api/pages",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
