@@ -112,22 +112,17 @@ async def get_ab_dashboard_data(days: int = 7) -> dict:
 
 
 async def send_ab_report_email(recipient: str, days: int = 7) -> dict:
-    """Generate and send A/B test report email"""
-    # Get dashboard data
-    report_data = await get_ab_dashboard_data(days)
+    """Generate and send A/B test report email with EXTREME HUMOR"""
+    from services.email_scheduler import generate_hilarious_report_html
     
-    # Generate email content
-    html_content = generate_ab_test_report_html(report_data)
-    plain_content = generate_ab_test_report_plain(report_data)
+    # Generate hilarious email content
+    subject, html_content = await generate_hilarious_report_html(days)
     
     # Send email
-    subject = f"🧪 A/B Test Weekly Report - InfoPilot Explorer ({datetime.now().strftime('%b %d, %Y')})"
-    
     result = await send_email(
         to_email=recipient,
         subject=subject,
-        html_content=html_content,
-        plain_content=plain_content
+        html_content=html_content
     )
     
     # Log the report
