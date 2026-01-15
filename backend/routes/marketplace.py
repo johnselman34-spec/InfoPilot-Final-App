@@ -997,5 +997,211 @@ async def get_map_data():
     }
 
 
+# ==================== TOP SELLERS LEADERBOARD ====================
+
+@router.get("/leaderboard/sales", response_model=dict)
+async def get_leaderboard_by_sales():
+    """Get top sellers by total sales count"""
+    pipeline = [
+        {"$match": {"status": "active"}},
+        {"$group": {
+            "_id": "$creator_id",
+            "creator_name": {"$first": "$creator_name"},
+            "total_sales": {"$sum": "$total_sales"},
+            "protocol_count": {"$sum": 1},
+            "avg_rating": {"$avg": "$rating"}
+        }},
+        {"$sort": {"total_sales": -1}},
+        {"$limit": 20}
+    ]
+    
+    results = await db.marketplace_protocols.aggregate(pipeline).to_list(20)
+    
+    leaderboard = []
+    for i, r in enumerate(results):
+        user = await db.users.find_one({"_id": ObjectId(r["_id"])}) if r["_id"] else None
+        leaderboard.append({
+            "rank": i + 1,
+            "creator_id": r["_id"],
+            "creator_name": r["creator_name"] or (user.get("callsign") if user else "Unknown"),
+            "total_sales": r["total_sales"],
+            "protocol_count": r["protocol_count"],
+            "avg_rating": round(r["avg_rating"] or 0, 1),
+            "badge": _get_seller_badge(r["total_sales"]),
+            "title": _get_seller_title(i + 1)
+        })
+    
+    return {
+        "leaderboard": leaderboard,
+        "last_updated": datetime.utcnow().isoformat(),
+        "type": "sales"
+    }
+
+
+@router.get("/leaderboard/revenue", response_model=dict)
+async def get_leaderboard_by_revenue():
+    """Get top sellers by total revenue earned"""
+    pipeline = [
+        {"$match": {"status": "active"}},
+        {"$group": {
+            "_id": "$creator_id",
+            "creator_name": {"$first": "$creator_name"},
+            "total_revenue": {"$sum": "$total_revenue"},
+            "creator_earnings": {"$sum": "$creator_earnings"},
+            "total_sales": {"$sum": "$total_sales"},
+            "protocol_count": {"$sum": 1}
+        }},
+        {"$sort": {"total_revenue": -1}},
+        {"$limit": 20}
+    ]
+    
+    results = await db.marketplace_protocols.aggregate(pipeline).to_list(20)
+    
+    leaderboard = []
+    for i, r in enumerate(results):
+        user = await db.users.find_one({"_id": ObjectId(r["_id"])}) if r["_id"] else None
+        leaderboard.append({
+            "rank": i + 1,
+            "creator_id": r["_id"],
+            "creator_name": r["creator_name"] or (user.get("callsign") if user else "Unknown"),
+            "total_revenue": round(r["total_revenue"], 2),
+            "creator_earnings": round(r["creator_earnings"], 2),
+            "total_sales": r["total_sales"],
+            "protocol_count": r["protocol_count"],
+            "badge": _get_revenue_badge(r["total_revenue"]),
+            "title": _get_revenue_title(i + 1)
+        })
+    
+    return {
+        "leaderboard": leaderboard,
+        "last_updated": datetime.utcnow().isoformat(),
+        "type": "revenue"
+    }
+
+
+def _get_seller_badge(sales: int) -> str:
+    """Get badge emoji based on sales count"""
+    if sales >= 500:
+        return "👑"  # Legend
+    elif sales >= 200:
+        return "💎"  # Diamond
+    elif sales >= 100:
+        return "🏆"  # Champion
+    elif sales >= 50:
+        return "⭐"  # Star
+    elif sales >= 20:
+        return "🔥"  # Hot
+    elif sales >= 10:
+        return "✨"  # Rising
+    return "🌱"  # Newbie
+
+
+def _get_seller_title(rank: int) -> str:
+    """Get funny title based on rank"""
+    titles = {
+        1: "The Protocol Overlord 🦁",
+        2: "The Silver Searcher 🥈",
+        3: "The Bronze Boolean 🥉",
+        4: "The Query Wizard 🧙‍♂️",
+        5: "The Data Dynamo 💪",
+    }
+    return titles.get(rank, f"Protocol Pioneer #{rank}")
+
+
+def _get_revenue_badge(revenue: float) -> str:
+    """Get badge emoji based on revenue"""
+    if revenue >= 1000:
+        return "💰"  # Money bags
+    elif revenue >= 500:
+        return "💵"  # Rich
+    elif revenue >= 200:
+        return "💲"  # Good earner
+    elif revenue >= 100:
+        return "🤑"  # Making money
+    elif revenue >= 50:
+        return "💸"  # Earning
+    return "🪙"  # Starting out
+
+
+def _get_revenue_title(rank: int) -> str:
+    """Get funny revenue title based on rank"""
+    titles = {
+        1: "The Protocol Billionaire 🏦",
+        2: "The Search Tycoon 🎩",
+        3: "The Boolean Baron 🏰",
+        4: "The Query Capitalist 📈",
+        5: "The Data Investor 💼",
+    }
+    return titles.get(rank, f"Marketplace Mogul #{rank}")
+
+
+# ==================== AUTO-SYNC PUBLIC CATEGORIES ====================
+
+@router.post("/admin/sync-public-categories", response_model=dict)
+async def sync_public_categories_to_marketplace(user = Depends(get_current_user)):
+    """Auto-list all public categories to marketplace (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get all public categories
+    public_categories = await db.categories.find({"is_public": True}).to_list(1000)
+    
+    # Get existing marketplace protocols
+    existing = await db.marketplace_protocols.find({}).to_list(1000)
+    existing_names = set(p["name"].lower() for p in existing)
+    
+    added = []
+    for cat in public_categories:
+        cat_name_lower = cat["name"].lower()
+        
+        # Skip if already in marketplace (fuzzy match on first 3 words)
+        first_words = " ".join(cat_name_lower.split()[:3])
+        if any(first_words in e for e in existing_names):
+            continue
+        
+        # Get category owner
+        owner = await db.users.find_one({"_id": ObjectId(cat["user_id"])}) if cat.get("user_id") else None
+        creator_name = owner.get("callsign", owner.get("username", "InfoPilot User")) if owner else "InfoPilot User"
+        
+        # Auto-generate price based on protocol complexity
+        protocol_length = len(cat.get("protocol", ""))
+        base_price = 1.99
+        if protocol_length > 200:
+            base_price = 4.99
+        elif protocol_length > 100:
+            base_price = 2.99
+        
+        # Create marketplace listing
+        new_protocol = {
+            "name": cat["name"],
+            "description": f"Automatically listed from public category. Protocol: {cat.get('protocol', 'Custom search protocol')[:200]}...",
+            "protocol": cat.get("protocol", ""),
+            "price": base_price,
+            "category": "User Created",
+            "tags": ["auto-listed", "public", "community"],
+            "creator_name": creator_name,
+            "total_sales": 0,
+            "total_revenue": 0,
+            "creator_earnings": 0,
+            "rating": 0,
+            "review_count": 0,
+            "is_featured": False,
+            "creator_id": cat.get("user_id", ""),
+            "category_id": str(cat["_id"]),
+            "status": "active",
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.marketplace_protocols.insert_one(new_protocol)
+        added.append(cat["name"])
+    
+    return {
+        "success": True,
+        "message": f"Synced {len(added)} public categories to marketplace",
+        "added": added,
+        "total_in_marketplace": await db.marketplace_protocols.count_documents({})
+    }
+
+
 # Import timedelta at the top
 from datetime import timedelta
