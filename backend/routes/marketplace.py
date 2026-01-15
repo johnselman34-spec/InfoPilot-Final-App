@@ -326,7 +326,6 @@ async def initiate_purchase(data: dict, user = Depends(get_current_user)):
     
     # Pay-What-You-Want: Use custom amount or minimum price
     # Allow $0.00 (free) or any amount >= minimum price
-    min_price = protocol.get("min_price", 0)  # Allow $0 for "Pay What You Want"
     suggested_price = protocol["price"]
     
     if custom_amount is not None:
