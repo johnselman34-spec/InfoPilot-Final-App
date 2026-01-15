@@ -100,6 +100,67 @@ const SocialPage = ({ showToast }) => {
     }
   }, [token]);
 
+  // Fetch polls for a specific group or page
+  const fetchPolls = useCallback(async (parentType, parentId) => {
+    try {
+      const res = await fetch(`${API}/polls/parent/${parentType}/${parentId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPolls(prev => ({
+          ...prev,
+          [`${parentType}_${parentId}`]: data.polls || []
+        }));
+      }
+    } catch (e) {
+      console.error('Polls fetch error:', e);
+    }
+  }, [token]);
+
+  // Create a new poll
+  const createPoll = async (pollData) => {
+    try {
+      const res = await fetch(`${API}/polls?parent_type=${pollData.parent_type}&parent_id=${pollData.parent_id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          question: pollData.question,
+          options: pollData.options,
+          expires_in_hours: pollData.expires_in_hours,
+          allow_multiple: pollData.allow_multiple
+        })
+      });
+      
+      if (res.ok) {
+        showToast('Poll created! 📊', 'success');
+        // Refresh polls for this parent
+        fetchPolls(pollData.parent_type, pollData.parent_id);
+      } else {
+        const data = await res.json();
+        showToast(data.detail || 'Failed to create poll', 'error');
+      }
+    } catch (e) {
+      showToast('Error creating poll', 'error');
+    }
+  };
+
+  const handleDeletePoll = (pollId, parentType, parentId) => {
+    setPolls(prev => ({
+      ...prev,
+      [`${parentType}_${parentId}`]: (prev[`${parentType}_${parentId}`] || []).filter(p => p.id !== pollId)
+    }));
+    showToast('Poll deleted', 'success');
+  };
+
+  const openCreatePollModal = (type, id) => {
+    setPollContext({ type, id });
+    setShowCreatePollModal(true);
+  };
+
   useEffect(() => {
     if (token) {
       fetchFeed();
@@ -108,6 +169,24 @@ const SocialPage = ({ showToast }) => {
       fetchPages();
     }
   }, [token, fetchFeed, fetchFriends, fetchGroups, fetchPages]);
+
+  // Fetch polls when viewing groups or pages
+  useEffect(() => {
+    if (token && activeTab === 'groups') {
+      groups.forEach(group => {
+        if (group.is_admin || group.is_member) {
+          fetchPolls('group', group.id);
+        }
+      });
+    }
+    if (token && activeTab === 'pages') {
+      pages.forEach(page => {
+        if (page.is_admin || page.is_following) {
+          fetchPolls('page', page.id);
+        }
+      });
+    }
+  }, [token, activeTab, groups, pages, fetchPolls]);
 
   const searchUsers = async () => {
     if (searchQuery.length < 2) return;
