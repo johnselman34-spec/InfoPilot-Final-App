@@ -2385,6 +2385,16 @@ async def update_category(category_id: str, data: CategoryUpdate, user: dict = D
     if data.price is not None and data.for_sale is not False:
         update_data["price"] = data.price
     
+    # Update location data
+    if data.location is not None:
+        update_data["location"] = {
+            "city": data.location.city,
+            "state": data.location.state,
+            "country": data.location.country,
+            "lat": data.location.lat,
+            "lng": data.location.lng
+        }
+    
     if not update_data:
         raise HTTPException(status_code=400, detail="No updates provided")
     
