@@ -209,3 +209,179 @@ async def get_user_achievements(user_id: str, current_user = Depends(get_optiona
             if a["id"] in ACHIEVEMENTS
         ]
     }
+
+
+
+# ==================== LAUGH-O-METER ENDPOINTS ====================
+
+@router.get("/laugh-stats", response_model=dict)
+async def get_laugh_stats(user = Depends(get_current_user)):
+    """Get user's Laugh-O-Meter statistics"""
+    user_id = str(user["_id"])
+    
+    # Get or create laugh stats
+    stats = await db.laugh_stats.find_one({"user_id": user_id})
+    
+    if not stats:
+        # Initialize stats
+        stats = {
+            "user_id": user_id,
+            "totalLaughs": 0,
+            "todayLaughs": 0,
+            "easterEggsFound": 0,
+            "badges": [],
+            "xp": 0,
+            "level": 1,
+            "title": "Giggle Rookie",
+            "lastLaugh": None,
+            "created_at": datetime.utcnow()
+        }
+        await db.laugh_stats.insert_one(stats)
+    
+    # Reset today's count if it's a new day
+    if stats.get("lastLaugh"):
+        last_date = stats["lastLaugh"].date() if isinstance(stats["lastLaugh"], datetime) else None
+        if last_date and last_date < datetime.utcnow().date():
+            await db.laugh_stats.update_one(
+                {"user_id": user_id},
+                {"$set": {"todayLaughs": 0}}
+            )
+            stats["todayLaughs"] = 0
+    
+    return {
+        "totalLaughs": stats.get("totalLaughs", 0),
+        "todayLaughs": stats.get("todayLaughs", 0),
+        "easterEggsFound": stats.get("easterEggsFound", 0),
+        "badges": stats.get("badges", []),
+        "xp": stats.get("xp", 0),
+        "level": stats.get("level", 1),
+        "title": stats.get("title", "Giggle Rookie"),
+        "lastLaugh": stats.get("lastLaugh").isoformat() if stats.get("lastLaugh") else None
+    }
+
+
+@router.post("/record-laugh", response_model=dict)
+async def record_laugh(data: dict, user = Depends(get_current_user)):
+    """Record a laugh/funny message encounter for Laugh-O-Meter"""
+    user_id = str(user["_id"])
+    source = data.get("source", "general")
+    
+    # Update stats
+    result = await db.laugh_stats.update_one(
+        {"user_id": user_id},
+        {
+            "$inc": {
+                "totalLaughs": 1,
+                "todayLaughs": 1,
+                "xp": 1
+            },
+            "$set": {
+                "lastLaugh": datetime.utcnow()
+            },
+            "$setOnInsert": {
+                "badges": [],
+                "easterEggsFound": 0,
+                "level": 1,
+                "title": "Giggle Rookie",
+                "created_at": datetime.utcnow()
+            }
+        },
+        upsert=True
+    )
+    
+    # Log the laugh
+    await db.laugh_log.insert_one({
+        "user_id": user_id,
+        "source": source,
+        "timestamp": datetime.utcnow()
+    })
+    
+    return {"success": True, "message": "😂 Laugh recorded!"}
+
+
+@router.post("/record-easter-egg", response_model=dict)
+async def record_easter_egg(data: dict, user = Depends(get_current_user)):
+    """Record an Easter egg discovery for Laugh-O-Meter"""
+    user_id = str(user["_id"])
+    egg_id = data.get("eggId")
+    
+    if not egg_id:
+        raise HTTPException(status_code=400, detail="Easter egg ID required")
+    
+    # XP values for Easter eggs
+    EGG_XP = {
+        "egg_hunter": 100,
+        "night_owl_laugh": 75,
+        "early_bird_smile": 75,
+        "rapid_fire": 150,
+        "joke_collector": 50,
+        "bundle_comedian": 200,
+        "evelyn_fan": 100,
+        "konami_master": 500
+    }
+    
+    xp_earned = EGG_XP.get(egg_id, 50)
+    
+    # Update stats
+    await db.laugh_stats.update_one(
+        {"user_id": user_id},
+        {
+            "$addToSet": {"badges": egg_id},
+            "$inc": {
+                "easterEggsFound": 1,
+                "xp": xp_earned
+            },
+            "$setOnInsert": {
+                "totalLaughs": 0,
+                "todayLaughs": 0,
+                "level": 1,
+                "title": "Giggle Rookie",
+                "created_at": datetime.utcnow()
+            }
+        },
+        upsert=True
+    )
+    
+    # Log the discovery
+    await db.easter_egg_discoveries.insert_one({
+        "user_id": user_id,
+        "egg_id": egg_id,
+        "xp_earned": xp_earned,
+        "discovered_at": datetime.utcnow()
+    })
+    
+    return {
+        "success": True,
+        "egg_id": egg_id,
+        "xp_earned": xp_earned,
+        "message": f"🥚 Easter egg discovered! +{xp_earned} XP!"
+    }
+
+
+@router.get("/laugh-leaderboard", response_model=dict)
+async def get_laugh_leaderboard(limit: int = 20):
+    """Get the Laugh-O-Meter leaderboard"""
+    top_laughers = await db.laugh_stats.find({}).sort("xp", -1).limit(limit).to_list(limit)
+    
+    leaderboard = []
+    for i, stats in enumerate(top_laughers):
+        # Get username
+        user = await db.users.find_one({"_id": ObjectId(stats["user_id"])})
+        username = "Anonymous Laugher"
+        if user:
+            username = user.get("callsign", user.get("username", user.get("email", "Unknown")))
+        
+        leaderboard.append({
+            "rank": i + 1,
+            "username": username,
+            "totalLaughs": stats.get("totalLaughs", 0),
+            "xp": stats.get("xp", 0),
+            "level": stats.get("level", 1),
+            "title": stats.get("title", "Giggle Rookie"),
+            "badges_count": len(stats.get("badges", []))
+        })
+    
+    return {
+        "leaderboard": leaderboard,
+        "total_participants": await db.laugh_stats.count_documents({})
+    }
