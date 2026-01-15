@@ -49,6 +49,7 @@ from routes.webhooks import router as webhooks_router
 from routes.ai_suggestions import router as ai_suggestions_router
 from routes.protocol_analytics import router as protocol_analytics_router
 from routes.ab_testing import router as ab_testing_router
+from routes.ab_optimizer import router as ab_optimizer_router
 from routes.email_reports import router as email_reports_router
 
 # Import services
