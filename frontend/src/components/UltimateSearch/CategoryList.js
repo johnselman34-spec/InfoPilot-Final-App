@@ -179,14 +179,34 @@ const CategoryCard = ({
         </div>
       )}
 
-      {/* Category Name */}
+      {/* Category Name with Count */}
       <h4 style={{ 
         color: '#fff', 
-        margin: '0 0 8px 0',
+        margin: resultCount > 0 ? '20px 0 8px 0' : '0 0 8px 0',
         paddingRight: 30,
         fontSize: '1rem'
       }}>
         {category.name}
+        {resultCount > 0 && (
+          <span style={{ 
+            color: '#10b981', 
+            fontWeight: 400, 
+            fontSize: '0.85rem',
+            marginLeft: 8
+          }}>
+            ({resultCount})
+          </span>
+        )}
+        {subcategoryCount > 0 && (
+          <span style={{ 
+            color: '#a78bfa', 
+            fontWeight: 400, 
+            fontSize: '0.75rem',
+            marginLeft: 5
+          }}>
+            📁{subcategoryCount}
+          </span>
+        )}
       </h4>
 
       {/* Protocol Preview */}
