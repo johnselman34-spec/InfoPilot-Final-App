@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
+import ABTestDashboard from '../components/ABTesting/ABTestDashboard';
 
 const AdminPanel = ({ showToast }) => {
   const { token } = useAuth();
