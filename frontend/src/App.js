@@ -51,7 +51,7 @@ const MainApp = () => {
       case 'admin':
         return user?.is_admin ? <AdminPanel showToast={showToast} /> : <UltimateSearchPage showToast={showToast} />;
       case 'analytics':
-        return user?.is_admin ? <AdvancedAnalytics showToast={showToast} /> : <UltimateSearchPage showToast={showToast} />;
+        return <AnalyticsPage showToast={showToast} />;
       case 'statistics':
         return <StatisticsPage showToast={showToast} />;
       case 'search':
