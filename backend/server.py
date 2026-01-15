@@ -634,16 +634,34 @@ BADGE_DEFINITIONS = {
     "creator_novice": {"name": "Protocol Creator", "icon": "📝", "description": "Created your first protocol", "threshold": 1, "type": "creator"},
     "creator_prolific": {"name": "Prolific Creator", "icon": "✍️", "description": "Created 10 protocols", "threshold": 10, "type": "creator"},
     "creator_master": {"name": "Master Creator", "icon": "🎨", "description": "Created 25 protocols", "threshold": 25, "type": "creator"},
+    "creator_legend": {"name": "Protocol Legend", "icon": "🌟", "description": "Created 50 protocols", "threshold": 50, "type": "creator"},
     
     # Marketplace badges
     "first_sale": {"name": "First Sale", "icon": "💰", "description": "Made your first protocol sale", "threshold": 1, "type": "sales"},
     "seller_bronze": {"name": "Bronze Seller", "icon": "🥉", "description": "Made 5 sales", "threshold": 5, "type": "sales"},
     "seller_silver": {"name": "Silver Seller", "icon": "🥈", "description": "Made 10 sales", "threshold": 10, "type": "sales"},
     "seller_gold": {"name": "Gold Seller", "icon": "🥇", "description": "Made 25 sales", "threshold": 25, "type": "sales"},
+    "seller_platinum": {"name": "Platinum Seller", "icon": "💎", "description": "Made 50 sales", "threshold": 50, "type": "sales"},
     
     # Collector badges
     "collector_novice": {"name": "Collector", "icon": "🛒", "description": "Purchased your first protocol", "threshold": 1, "type": "purchases"},
     "collector_avid": {"name": "Avid Collector", "icon": "📚", "description": "Purchased 10 protocols", "threshold": 10, "type": "purchases"},
+    "collector_master": {"name": "Master Collector", "icon": "🏅", "description": "Purchased 25 protocols", "threshold": 25, "type": "purchases"},
+    
+    # Social badges
+    "social_butterfly": {"name": "Social Butterfly", "icon": "🦋", "description": "Made 10 friends", "threshold": 10, "type": "social"},
+    "group_leader": {"name": "Group Leader", "icon": "👥", "description": "Created a group", "threshold": 1, "type": "social"},
+    "influencer": {"name": "Influencer", "icon": "📢", "description": "Created a page", "threshold": 1, "type": "social"},
+    "messenger": {"name": "Messenger", "icon": "💬", "description": "Sent 50 messages", "threshold": 50, "type": "social"},
+    
+    # Search badges  
+    "researcher": {"name": "Researcher", "icon": "🔬", "description": "Collated 100 results", "threshold": 100, "type": "search"},
+    "data_miner": {"name": "Data Miner", "icon": "⛏️", "description": "Collated 500 results", "threshold": 500, "type": "search"},
+    "intel_master": {"name": "Intelligence Master", "icon": "🧠", "description": "Collated 1000 results", "threshold": 1000, "type": "search"},
+    
+    # Engagement badges
+    "reactor": {"name": "Reactor", "icon": "👍", "description": "Added 50 reactions", "threshold": 50, "type": "engagement"},
+    "commentator": {"name": "Commentator", "icon": "💭", "description": "Posted 25 comments", "threshold": 25, "type": "engagement"},
 }
 
 # Protocol Recommendation Models
