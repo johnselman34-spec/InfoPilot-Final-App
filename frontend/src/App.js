@@ -2109,6 +2109,7 @@ const CategoriesPage = () => {
   const [creating, setCreating] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [viewRecsCategory, setViewRecsCategory] = useState(null);
+  const [geocoding, setGeocoding] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -2121,6 +2122,33 @@ const CategoriesPage = () => {
   }, [user?.id]);
 
   useEffect(() => { fetchCategories(); }, [fetchCategories]);
+
+  // Geocode location from city/state
+  const geocodeLocation = async (city, state, isEditing = false) => {
+    if (!city) return;
+    setGeocoding(true);
+    try {
+      const res = await axios.post(`${API}/geocode`, { city, state, country: "USA" });
+      if (res.data.success) {
+        if (isEditing) {
+          setEditingCategory(prev => ({
+            ...prev,
+            location: { ...prev.location, lat: res.data.lat, lng: res.data.lng }
+          }));
+        } else {
+          setNewCategory(prev => ({
+            ...prev,
+            location: { ...prev.location, lat: res.data.lat, lng: res.data.lng }
+          }));
+        }
+        toast.success(`Location found: ${res.data.formatted_address}`);
+      }
+    } catch (error) {
+      console.log("Geocoding not available");
+    } finally {
+      setGeocoding(false);
+    }
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
