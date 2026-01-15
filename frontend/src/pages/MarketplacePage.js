@@ -1100,7 +1100,7 @@ const MarketplacePage = ({ showToast }) => {
 
       {/* Admin Settings Tab */}
       {activeTab === 'admin' && user?.is_admin && (
-        <div style={{ maxWidth: 500 }}>
+        <div style={{ maxWidth: 600 }}>
           <h3 style={{ color: '#f472b6', marginBottom: 20 }}>⚙️ Admin Revenue Settings</h3>
           
           <div style={{ marginBottom: 20 }}>
@@ -1154,7 +1154,8 @@ const MarketplacePage = ({ showToast }) => {
             background: 'rgba(239, 68, 68, 0.1)',
             padding: 15,
             borderRadius: 10,
-            border: '1px solid rgba(239, 68, 68, 0.3)'
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            marginBottom: 20
           }}>
             <p style={{ color: '#ef4444', margin: 0, fontSize: '0.85rem' }}>
               ⚠️ <strong>PayPal Note:</strong> PayPal requires minimum $1.00 per payout. 
@@ -1166,9 +1167,52 @@ const MarketplacePage = ({ showToast }) => {
             </p>
           </div>
           
-          <button className="btn btn-primary" style={{ marginTop: 20, width: '100%' }}>
-            Save Revenue Settings
+          <button 
+            className="btn btn-primary" 
+            style={{ marginTop: 10, width: '100%' }}
+            onClick={async () => {
+              try {
+                const res = await fetch(`${API}/marketplace/admin/revenue-settings`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                  },
+                  body: JSON.stringify({ admin_percent: adminPercent })
+                });
+                if (res.ok) {
+                  showToast('Revenue settings saved successfully!', 'success');
+                } else {
+                  showToast('Failed to save settings', 'error');
+                }
+              } catch (e) {
+                showToast('Failed to save settings', 'error');
+              }
+            }}
+          >
+            💾 Save Revenue Settings
           </button>
+
+          {/* Payout Management Section */}
+          <div style={{ marginTop: 30 }}>
+            <h3 style={{ color: '#f472b6', marginBottom: 15 }}>💳 Payout Management</h3>
+            <button 
+              className="btn btn-secondary"
+              onClick={async () => {
+                try {
+                  const res = await fetch(`${API}/marketplace/admin/payouts`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
+                  const data = await res.json();
+                  alert(`Ready for Payout: ${data.ready_for_payout?.length || 0} users ($${data.total_ready_amount?.toFixed(2) || '0.00'})\nAccumulating: ${data.accumulating?.length || 0} users ($${data.total_accumulating_amount?.toFixed(2) || '0.00'})\nAdmin Platform Fees: $${data.admin_platform_fees?.toFixed(2) || '0.00'}`);
+                } catch (e) {
+                  showToast('Failed to fetch payout data', 'error');
+                }
+              }}
+            >
+              📊 View Pending Payouts
+            </button>
+          </div>
         </div>
       )}
 
