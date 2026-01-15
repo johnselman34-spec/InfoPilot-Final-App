@@ -25,7 +25,17 @@ import "@/App.css";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { Layout } from "./components/layout/Layout";
 import { FuturisticFrame } from "./components/common/FuturisticFrame";
+import { WelcomeSaleBanner, BookSalesBanner } from "./components/common";
 import { BACKEND_URL, API, GOOGLE_MAPS_API_KEY, GOOGLE_CLIENT_ID, stripeKey, IMAGES, BOOK_INFO, SALE_PRICE, REGULAR_PRICE } from "./utils/constants";
+
+// Import extracted pages
+import { 
+  StatisticsPage, 
+  BookPage, 
+  FriendsPage, 
+  PrivacyPolicyPage, 
+  TermsOfServicePage 
+} from "./pages";
 
 // Stripe Promise - Only initialize if key exists (app is now FREE, Stripe optional)
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
