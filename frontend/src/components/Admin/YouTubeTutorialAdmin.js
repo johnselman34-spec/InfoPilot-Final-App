@@ -84,7 +84,7 @@ const YouTubeTutorialAdmin = ({ token, showToast }) => {
     if (!window.confirm('Remove video from this tutorial?')) return;
 
     try {
-      const res = await fetch(`${API}/tutorials/${tutorialId}/video`, {
+      const res = await fetch(`${API}/tutorials/admin/${tutorialId}/video`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
