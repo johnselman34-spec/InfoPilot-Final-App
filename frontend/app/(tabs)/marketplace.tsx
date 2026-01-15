@@ -1031,6 +1031,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   // New styles for scrolling fix and enhancements
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
+  },
   flatList: {
     flex: 1,
   },
