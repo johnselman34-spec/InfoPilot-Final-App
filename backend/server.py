@@ -2392,6 +2392,43 @@ async def update_category_visibility(category_id: str, is_public: bool, user: di
 # API ROUTES - PROTOCOL MARKETPLACE
 # ============================================
 
+@api_router.get("/marketplace/stats")
+async def get_marketplace_stats(user: dict = Depends(require_user)):
+    """Get marketplace statistics for display"""
+    # Count protocols for sale
+    total_protocols = await db.categories.count_documents({"for_sale": True, "is_public": False})
+    
+    # Get total sales and revenue
+    pipeline = [
+        {"$match": {"status": "completed"}},
+        {"$group": {
+            "_id": None,
+            "total_sales": {"$sum": 1},
+            "total_revenue": {"$sum": "$amount"}
+        }}
+    ]
+    sales_stats = await db.protocol_purchases.aggregate(pipeline).to_list(1)
+    
+    total_sales = 0
+    total_revenue = 0
+    if sales_stats:
+        total_sales = sales_stats[0].get("total_sales", 0)
+        total_revenue = sales_stats[0].get("total_revenue", 0)
+    
+    # Count unique sellers
+    active_sellers_pipeline = [
+        {"$match": {"for_sale": True, "is_public": False}},
+        {"$group": {"_id": "$user_id"}}
+    ]
+    active_sellers = await db.categories.aggregate(active_sellers_pipeline).to_list(None)
+    
+    return {
+        "total_protocols": total_protocols,
+        "total_sales": total_sales,
+        "total_revenue": total_revenue,
+        "active_sellers": len(active_sellers)
+    }
+
 @api_router.get("/marketplace/protocols")
 async def get_protocols_for_sale(user: dict = Depends(require_user)):
     """Get all protocols listed for sale"""
@@ -2404,7 +2441,7 @@ async def get_protocols_for_sale(user: dict = Depends(require_user)):
     for protocol in protocols:
         # Get owner info
         owner = await db.users.find_one({"id": protocol["user_id"]})
-        owner_name = owner.get("callsign", owner.get("email", "Unknown")) if owner else "Unknown"
+        owner_name = owner.get("username", owner.get("callsign", owner.get("email", "Unknown"))) if owner else "Unknown"
         
         # Check if user already purchased this protocol
         purchase = await db.protocol_purchases.find_one({
@@ -2413,6 +2450,9 @@ async def get_protocols_for_sale(user: dict = Depends(require_user)):
             "status": "completed"
         })
         
+        # Create protocol preview (first 50 chars)
+        protocol_preview = protocol.get("protocol_string", "")[:50] + "..." if protocol.get("protocol_string") else None
+        
         result.append({
             "id": protocol["id"],
             "name": protocol["name"],
@@ -2420,6 +2460,7 @@ async def get_protocols_for_sale(user: dict = Depends(require_user)):
             "owner_username": owner_name,
             "price": protocol.get("price", 0.75),
             "is_purchased": purchase is not None,
+            "protocol_preview": protocol_preview,
             "created_at": protocol.get("created_at")
         })
     
