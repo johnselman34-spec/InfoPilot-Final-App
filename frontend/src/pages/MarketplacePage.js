@@ -371,9 +371,8 @@ const MarketplacePage = ({ showToast }) => {
   const [purchases, setPurchases] = useState([]);
   const [dashboard, setDashboard] = useState(null);
 
-  // Random FREE message - set once using ref to avoid impure render
-  const freeMessageRef = useRef(getRandomFreeMessage());
-  const freeMessage = freeMessageRef.current;
+  // Random FREE message - initialized once with lazy initializer
+  const [freeMessage] = useState(() => getRandomFreeMessage());
 
   const fetchProtocols = useCallback(async () => {
     try {
