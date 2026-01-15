@@ -387,7 +387,8 @@ const UltimateSearchPage = ({ showToast }) => {
         body: JSON.stringify({ 
           name: editCategoryName,
           protocol: editProtocol,
-          is_public: editIsPublic
+          is_public: editIsPublic,
+          price: editPrice ? parseFloat(editPrice) : null
         })
       });
       
