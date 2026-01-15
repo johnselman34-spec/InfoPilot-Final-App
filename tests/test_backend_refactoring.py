@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://info-navigator-1.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://protocol-market-1.preview.emergentagent.com').rstrip('/')
 
 
 class TestHealthAndPublicEndpoints:
