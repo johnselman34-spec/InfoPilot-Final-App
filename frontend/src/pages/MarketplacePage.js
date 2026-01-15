@@ -918,6 +918,15 @@ const MarketplacePage = ({ showToast }) => {
                         {protocol.description?.substring(0, 80)}...
                       </p>
                       
+                      {/* Copy Buttons - Title always, Protocol if owned/free */}
+                      <ProtocolCopyButtons
+                        title={protocol.name}
+                        protocol={protocol.protocol_string}
+                        hasAccess={protocol.is_owned || protocol.price === 0 || protocol.is_free}
+                        showToast={showToast}
+                        style={{ marginBottom: 10 }}
+                      />
+                      
                       <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 10 }}>
                         <span style={{ 
                           background: 'rgba(124, 58, 237, 0.2)', 
