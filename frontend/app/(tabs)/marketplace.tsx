@@ -59,7 +59,7 @@ export default function MarketplaceScreen() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
-  const [priceRange] = useState({ min: 1.01, max: 2.99 });
+  const [priceRange] = useState({ min: 0, max: 99.00 }); // Updated: $0 to $99
   const [sortBy, setSortBy] = useState<'price' | 'popularity' | 'recent'>('popularity');
   const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
   const [selectedProtocol, setSelectedProtocol] = useState<Protocol | null>(null);
@@ -83,8 +83,8 @@ export default function MarketplaceScreen() {
         max_price: priceRange.max,
       });
       
-      // Add mock location data for demo (in real app, this comes from backend)
-      const protocolsWithLocation = (response.data.protocols || []).map((p: Protocol, index: number) => ({
+      // Use data from backend (includes auto-listed public categories now!)
+      const protocolsWithLocation = (response.data?.protocols || response.protocols || []).map((p: Protocol, index: number) => ({
         ...p,
         location: p.location || generateMockLocation(index),
       }));
