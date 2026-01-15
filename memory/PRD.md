@@ -166,7 +166,7 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - Test report: `/app/test_reports/iteration_14.json`
 
 ## Preview URL
-https://protocol-hub-5.preview.emergentagent.com
+https://explorer-hub-7.preview.emergentagent.com
 
 ## Third-Party Integrations
 - **SerpAPI** - Web search
