@@ -32,6 +32,11 @@ const SocialPage = ({ showToast }) => {
   const [newPageName, setNewPageName] = useState('');
   const [newPageDesc, setNewPageDesc] = useState('');
   const [newPageCategory, setNewPageCategory] = useState('General');
+  
+  // Polls state
+  const [polls, setPolls] = useState({});  // { groupId: [polls], pageId: [polls] }
+  const [showCreatePollModal, setShowCreatePollModal] = useState(false);
+  const [pollContext, setPollContext] = useState({ type: null, id: null }); // For creating polls
 
   const fetchFeed = useCallback(async () => {
     try {
