@@ -3573,6 +3573,92 @@ async def get_map_data(user: dict = Depends(require_user)):
         "total_markers": len(markers)
     }
 
+@api_router.get("/marketplace/global-map")
+async def get_marketplace_global_map(user: dict = Depends(require_user)):
+    """Get aggregated map data from ALL users' search results for the Marketplace map.
+    This provides a global view of all research activity across the platform.
+    """
+    # Get all results from all users that have locations
+    all_results = await db.search_results.find(
+        {"locations": {"$exists": True, "$ne": []}},
+        {"_id": 0, "id": 1, "title": 1, "url": 1, "snippet": 1, "locations": 1, 
+         "categories": 1, "user_id": 1, "collated_at": 1, "article_type": 1, "document_type": 1}
+    ).to_list(2000)  # Limit to prevent performance issues
+    
+    # Get all categories for color coding
+    all_categories = await db.categories.find({}, {"_id": 0, "id": 1, "name": 1, "user_id": 1}).to_list(5000)
+    category_map = {cat["id"]: cat for cat in all_categories}
+    
+    # Get usernames for attribution
+    user_ids = list(set(r.get("user_id") for r in all_results if r.get("user_id")))
+    users = await db.users.find({"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "username": 1}).to_list(1000)
+    user_map = {u["id"]: u.get("username", "Unknown") for u in users}
+    
+    # Assign colors to unique categories
+    colors = [
+        "#ec4899", "#a855f7", "#3b82f6", "#22c55e", "#f59e0b", 
+        "#ef4444", "#06b6d4", "#8b5cf6", "#f97316", "#14b8a6",
+        "#e879f9", "#60a5fa", "#4ade80", "#fbbf24", "#f87171"
+    ]
+    
+    # Build global map markers
+    markers = []
+    location_counts = {}  # Track how many results per location
+    
+    for result in all_results:
+        for location in result.get("locations", []):
+            loc_name = location.get("name", "Unknown")
+            loc_key = f"{location.get('lat', 0)},{location.get('lng', 0)}"
+            
+            # Count results per location
+            location_counts[loc_key] = location_counts.get(loc_key, 0) + 1
+            
+            for cat_id in result.get("categories", [])[:3]:  # Limit to 3 categories per result
+                cat_info = category_map.get(cat_id, {"name": "Unknown"})
+                username = user_map.get(result.get("user_id"), "Unknown")
+                
+                markers.append({
+                    "id": f"global_{result['id']}_{loc_name}_{cat_id}",
+                    "result_id": result["id"],
+                    "title": result["title"],
+                    "url": result["url"],
+                    "snippet": result.get("snippet", "")[:200],  # Truncate for performance
+                    "location_name": loc_name,
+                    "lat": location["lat"],
+                    "lng": location["lng"],
+                    "category_name": cat_info.get("name", "Unknown"),
+                    "researcher": username,
+                    "article_type": result.get("article_type", ""),
+                    "document_type": result.get("document_type", ""),
+                    "collated_at": result.get("collated_at", "")
+                })
+    
+    # Get unique locations with counts
+    unique_locations = []
+    seen_locs = set()
+    for marker in markers:
+        loc_key = f"{marker['lat']},{marker['lng']}"
+        if loc_key not in seen_locs:
+            seen_locs.add(loc_key)
+            unique_locations.append({
+                "name": marker["location_name"],
+                "lat": marker["lat"],
+                "lng": marker["lng"],
+                "result_count": location_counts.get(loc_key, 1)
+            })
+    
+    # Sort by result count
+    unique_locations.sort(key=lambda x: -x["result_count"])
+    
+    return {
+        "markers": markers[:1000],  # Limit markers for performance
+        "unique_locations": unique_locations[:50],  # Top 50 locations
+        "total_results": len(all_results),
+        "total_markers": len(markers),
+        "total_researchers": len(user_ids),
+        "hot_spots": unique_locations[:10]  # Top 10 most researched locations
+    }
+
 # ============================================
 # API ROUTES - ULTIMATE SEARCH PAGE CUSTOMIZATION
 # ============================================
