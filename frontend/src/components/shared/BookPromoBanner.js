@@ -489,6 +489,43 @@ const BookPromoBanner = () => {
           </div>
         </div>
       </div>
+
+      {/* Other Top Pilot Enterprises Ventures */}
+      <div style={{ padding: '0 25px 25px 25px' }}>
+        <div style={{
+          textAlign: 'center',
+          color: '#a1a1aa',
+          fontSize: '0.8rem',
+          marginBottom: 15,
+          fontWeight: 600,
+          letterSpacing: '1px',
+          textTransform: 'uppercase'
+        }}>
+          — More from Top Pilot Enterprises, Inc. —
+        </div>
+        
+        {/* InfoPilot Promo */}
+        <InfoPilotSection />
+        
+        {/* Maestro Bistro Promo */}
+        <MaestroBistroSection />
+        
+        {/* Footer */}
+        <div style={{
+          textAlign: 'center',
+          marginTop: 20,
+          padding: 15,
+          background: 'rgba(0,0,0,0.3)',
+          borderRadius: 12
+        }}>
+          <div style={{ color: '#fbbf24', fontSize: '0.85rem', fontWeight: 700, marginBottom: 5 }}>
+            ✈️ Top Pilot Enterprises, Inc.
+          </div>
+          <div style={{ color: '#a1a1aa', fontSize: '0.7rem', fontStyle: 'italic' }}>
+            "Where every venture reaches cruising altitude" • Cleared for takeoff since Day One
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
