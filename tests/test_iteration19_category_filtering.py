@@ -30,6 +30,7 @@ class TestCategoryFilteringBackend:
         """Setup test session with authentication"""
         self.session = requests.Session()
         self.session.headers.update({"Content-Type": "application/json"})
+        self.token = None
         
         # Login to get token
         login_response = self.session.post(f"{BASE_URL}/api/auth/login", json={
@@ -38,9 +39,14 @@ class TestCategoryFilteringBackend:
         })
         
         if login_response.status_code == 200:
-            token = login_response.json().get("access_token")
-            self.session.headers.update({"Authorization": f"Bearer {token}"})
-            self.token = token
+            data = login_response.json()
+            # Token can be in 'token' or 'access_token' field
+            token = data.get("token") or data.get("access_token")
+            if token:
+                self.session.headers.update({"Authorization": f"Bearer {token}"})
+                self.token = token
+            else:
+                pytest.skip("No token in login response")
         else:
             pytest.skip(f"Authentication failed: {login_response.status_code}")
     
