@@ -27,7 +27,6 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
    - deLectaBLe Beef Chowder - Evenly spiced perfection
    - Vegetable Chowder - With Bacon! (Yes, really!)
    - Fresh Fish Chowder - Maine's finest catch
-   - "Appropriate & conscientable prices for appropriately & conscientiously AMAZING food!"
 
 ## User Accounts
 ### Admin Accounts (All have is_admin: true)
@@ -42,37 +41,62 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 
 ### Core Features ✅
 - [x] User authentication (Google OAuth + Email/Password)
-- [x] **Admin badge displays correctly for Google OAuth logins**
+- [x] Admin badge displays correctly for Google OAuth logins
 - [x] Ultimate Search with InfoJet 2.0 protocol language
-- [x] **Category editing saves name, protocol, AND visibility**
-- [x] Protocol parsing with abbreviation support (William C. Gamble, etc.)
-- [x] **Collate button showing selected category count**
+- [x] Category editing saves name, protocol, AND visibility
+- [x] Protocol parsing with abbreviation support
+- [x] Collate button showing selected category count
 - [x] Interactive Map for geolocated results
-- [x] Statistics/Analytics page
 
-### Enhanced Marketplace ✅ (NEW)
-- [x] **World Wide Protocol Map** - Interactive map with markers
-- [x] **Statistics Dashboard** - Total Protocols, Total Sales, Avg Price, Top Category
-- [x] **AI-Powered Search** - Intelligent search input
-- [x] **Search Logic Radio Buttons** - AND/OR (default), AND, OR
-- [x] **Document Type Checkboxes** - Webpage, News Article, PDF, MS Word (all checked by default)
-- [x] **Protocol Selection Checkboxes** - Select multiple protocols
-- [x] Buy/sell protocols ($0.99-$99.99, 90% to creator)
-- [x] PayPal integration for payments
-- [x] Seller dashboard with earnings
+### Enhanced Marketplace ✅
+- [x] World Wide Protocol Map - Interactive map with markers
+- [x] Statistics Dashboard - Total Protocols, Total Sales, Avg Price, Top Category
+- [x] AI-Powered Search - Intelligent search input
+- [x] Search Logic Radio Buttons - AND/OR, AND, OR
+- [x] Document Type Checkboxes - Webpage, News Article, PDF, MS Word
+- [x] Protocol Selection Checkboxes - Select multiple protocols
+- [x] Protocol Bundles - Buy curated collections at discount
+
+### Real-Time Chat ✅ (NEW)
+- [x] Chat page with sidebar and main chat area
+- [x] WebSocket real-time messaging
+- [x] Create new chat rooms
+- [x] Online users indicator
+- [x] Typing indicators
+- [x] Message timestamps
+
+### Advanced Analytics Dashboard ✅ (NEW)
+- [x] Recharts integration - Beautiful charts
+- [x] Summary cards (6 metrics: Users, Active, Searches, Protocols, Revenue, Avg Session)
+- [x] Time range selector (7, 30, 90 days)
+- [x] Chart tabs (Overview, Revenue, Users, Categories, Top Protocols)
+- [x] Area charts, Bar charts, Line charts, Pie charts
+- [x] Export to JSON/CSV
+
+### Push Notifications ✅ (NEW)
+- [x] VAPID key endpoint
+- [x] Push subscription management
+- [x] Admin broadcast capability
+- [x] Push notification stats
+
+### Multi-Language Support (i18n) ✅ (NEW)
+- [x] English (default)
+- [x] Spanish (Español)
+- [x] French (Français)
+- [x] German (Deutsch)
+- [x] Language switcher helper
 
 ### Promotional Content ✅
-- [x] **Top Pilot Enterprises, Inc.** banner and branding
-- [x] **Letters to Evelyn** - Rotating book images, reviews, buy links ($2.99 eBook)
-- [x] **InfoPilot Explorer** - InfoJet 2.0™, Interactive Maps, Protocol Marketplace
-- [x] **Maestro Bistro** - Brunswick, ME with chowder menu
+- [x] Top Pilot Enterprises, Inc. banner and branding
+- [x] Letters to Evelyn - Rotating book images, reviews, buy links ($2.99 eBook)
+- [x] InfoPilot Explorer - InfoJet 2.0™, Interactive Maps, Protocol Marketplace
+- [x] Maestro Bistro - Brunswick, ME with chowder menu
 
 ### Social Features ✅
 - [x] Groups (create, join, post)
 - [x] Pages (create, follow)
 - [x] Friends system
 - [x] Real-time notifications (WebSockets)
-- [x] Web Push notification infrastructure
 
 ### Gamification ✅
 - [x] Points system
@@ -83,14 +107,8 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 ### Admin Features ✅
 - [x] Admin dashboard with statistics
 - [x] User management
-- [x] System settings (search pages, rate limits)
-- [x] Newsletter management (Resend integration)
-
-### Technical ✅
-- [x] PWA support (manifest.json, sw.js)
-- [x] Mobile responsiveness
-- [x] User data export
-- [x] Backend refactored into modular routes/services
+- [x] System settings
+- [x] Newsletter management
 
 ## Architecture
 
@@ -98,79 +116,81 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 /app/
 ├── backend/
 │   ├── server.py           # Main FastAPI app
-│   ├── routes/             # Modular API routes
-│   │   ├── auth.py         # Authentication (Google OAuth fixed)
+│   ├── routes/
+│   │   ├── auth.py         # Authentication
 │   │   ├── categories.py   # Category CRUD
 │   │   ├── search.py       # Search endpoints
-│   │   ├── social.py       # Groups, Pages, Posts
-│   │   ├── notifications.py # WebSocket + Push
-│   │   └── marketplace.py  # Protocol marketplace
-│   └── services/           # Business logic
+│   │   ├── social.py       # Groups, Pages
+│   │   ├── marketplace.py  # Protocol marketplace
+│   │   ├── bundles.py      # Protocol bundles (NEW)
+│   │   ├── chat.py         # Real-time chat (NEW)
+│   │   ├── push_notifications.py  # Web push (NEW)
+│   │   └── notifications.py # WebSocket notifications
+│   └── services/
 └── frontend/
     └── src/
         ├── pages/
-        │   ├── MarketplacePage.js  # Enhanced with map, AI search, filters
-        │   └── UltimateSearchPage.js
+        │   ├── ChatPage.js         # Real-time chat (NEW)
+        │   └── MarketplacePage.js  # Enhanced marketplace
         ├── components/
-        │   └── shared/
-        │       └── BookPromoBanner.js  # All three businesses
-        └── public/         # PWA assets
+        │   └── AdvancedAnalytics.js  # Recharts dashboard (NEW)
+        ├── i18n.js                 # Multi-language support (NEW)
+        └── public/
 ```
 
 ## API Endpoints
 
-### Authentication
-- `POST /api/auth/login` - Email/password login
-- `POST /api/auth/google` - Google OAuth (returns is_admin correctly)
-- `POST /api/auth/register` - User registration
+### Chat (NEW)
+- `GET /api/chat/rooms` - Get user's chat rooms
+- `POST /api/chat/rooms` - Create new room
+- `GET /api/chat/rooms/{id}/messages` - Get room messages
+- `GET /api/chat/online` - Get online users
+- `WS /api/chat/ws/{room_id}` - WebSocket for real-time chat
 
-### Categories
-- `GET /api/categories` - List user categories
-- `POST /api/categories` - Create category
-- `PUT /api/categories/{id}` - Update category (name, protocol, is_public)
-- `DELETE /api/categories/{id}` - Delete category
+### Protocol Bundles (NEW)
+- `GET /api/bundles` - List all bundles
+- `POST /api/bundles` - Create bundle
+- `GET /api/bundles/{id}` - Get bundle details
+- `POST /api/bundles/{id}/purchase` - Purchase bundle
 
-### Search & Collate
-- `POST /api/search` - Quick search
-- `POST /api/collate` - Collate category results
-- `GET /api/ultimate-search` - Get stored results
-- `POST /api/protocol/debug` - Debug protocol parsing
+### Push Notifications (NEW)
+- `GET /api/push/vapid-key` - Get VAPID public key
+- `POST /api/push/subscribe` - Subscribe to notifications
+- `DELETE /api/push/unsubscribe` - Unsubscribe
+- `POST /api/push/send` - Send notification (admin)
+- `GET /api/push/stats` - Get push stats (admin)
 
-### Marketplace
-- `GET /api/marketplace/protocols` - Browse protocols
-- `GET /api/marketplace/categories` - Get marketplace categories
-- `POST /api/marketplace/protocols` - List protocol for sale
-- `POST /api/marketplace/purchase` - Purchase protocol
-
-## Testing Results (Iteration 13)
-- **Backend: 20/20 tests passed (100%)**
+## Testing Results (Iteration 14)
+- **Backend: 22/22 tests passed (100%)**
 - **Frontend: All UI features working (100%)**
-- Test report: `/app/test_reports/iteration_13.json`
+- Test report: `/app/test_reports/iteration_14.json`
 
 ## Preview URL
 https://protocol-hub-5.preview.emergentagent.com
 
 ## Third-Party Integrations
-- **SerpAPI** - Web search via `google-search-results`
+- **SerpAPI** - Web search
 - **ddgs** - DuckDuckGo fallback
 - **Emergent Google Auth** - OAuth
 - **PayPal** - Marketplace payments
 - **Resend** - Newsletter emails
-- **MongoDB** - Database
+- **Recharts** - Analytics charts
+- **Leaflet** - Map integration
+- **i18next** - Multi-language
+- **pywebpush** - Push notifications
 
 ## Prioritized Backlog
 
 ### P1 (High Priority)
-- [ ] Full PDF/MS Word document indexing in search
-- [ ] Real map integration (Leaflet or Google Maps)
-- [ ] Web Push server-side notifications (VAPID)
+- [ ] Mobile app wrapper (Capacitor/React Native)
+- [ ] Voice search integration
+- [ ] Collaborative protocol editing
 
 ### P2 (Medium Priority)
-- [ ] Real-time chat
-- [ ] Advanced analytics visualizations
-- [ ] Multi-language support
+- [ ] Video tutorials
+- [ ] API rate limiting dashboard
+- [ ] Webhook integrations
 
 ### P3 (Low Priority)
-- [ ] Mobile app wrapper
-- [ ] Voice search
-- [ ] Collaborative protocol editing
+- [ ] Browser extension
+- [ ] Slack/Discord integration
