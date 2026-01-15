@@ -272,7 +272,7 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Bundle cards with discount badges
   - Purchase flow with PayPal integration
 - [x] **Tri-Weekly AI Newsletter Scheduler**
-  - Automated sends at 5:46 AM, 9:05 AM, 4:20 PM UTC
+  - Automated sends at 5:46 AM, 9:42 AM, 4:20 PM UTC
   - Extremely funny content promoting InfoPilot and Letters to Evelyn
   - Different intros for morning, mid-morning, and afternoon
   - Stats banner, feature highlights, book promos
@@ -283,6 +283,44 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Custom event listener for data changes (`infopilot-data-changed`)
   - triggerMapRefresh() utility function
 - [x] **FREE Protocols Badge** - $0.00 protocols show "🆓 FREE!" badge
+
+### Batch 5 - Session 2 Features ✅ (January 16, 2026)
+- [x] **Bundle of the Week** - Featured bundle section on Marketplace homepage
+  - `/api/bundles/featured` endpoint
+  - BundleOfTheWeek.js component with hilarious taglines
+  - Admin can set featured bundle in Control Panel
+- [x] **Cross-Sell Recommendations** - Related protocols during checkout
+  - `/api/bundles/cross-sell/{protocol_id}` endpoint
+  - Returns related protocols and bundles
+  - Funny random messages for upselling
+- [x] **Category Result Counts** - Show (n) next to category names
+  - `format_category_with_count()` returns `result_count` and `subcategory_count`
+  - CategoryList.js displays counts in parentheses
+- [x] **Admin Collation Settings** - Control search limits from Admin Panel
+  - `collation_limit` setting (default: 40)
+  - `allow_multiple_categories` toggle
+  - `max_category_levels` for hierarchy depth
+- [x] **Admin Payment Settings** - PayPal payout configuration
+  - `platform_fee_percent` (default: 15%)
+  - `min_payout_threshold` ($1.00 minimum for PayPal)
+  - Earnings accumulate until threshold reached
+- [x] **Category Hierarchy Fixes** - Improved CRUD operations
+  - Recursive level updates when moving categories
+  - Circular reference prevention
+  - Proper subcategory deletion cascade
+- [x] **100+ Funny Content Library** - `/app/frontend/src/utils/funnyContent.js`
+  - Loading messages, success/error messages
+  - Tooltips, Easter eggs, fun facts
+  - Book promos for "Letters to Evelyn"
+
+### Maps Pricing Decision
+- ✅ **FREE Maps for All Users:**
+  - Ultimate Search Page map
+  - Statistics page map
+  - Map View page (auto-refresh enabled)
+- 📝 **Future Premium Options (backlog):**
+  - Advanced analytics map export
+  - Custom map styling
 
 ## Architecture
 
