@@ -164,12 +164,14 @@ class TestMarketplaceProtocols:
         assert response.status_code == 200, f"Failed to get marketplace protocols: {response.text}"
         data = response.json()
         
-        # Get all protocol names
-        protocol_names = [p.get("name", "").lower() for p in data]
-        protocol_strings = [p.get("protocol_string", "").lower() for p in data]
+        protocols = data.get("protocols", [])
         
-        # Check for the 3 expected protocols (by name or protocol string content)
-        expected_names = ["richard j selman", "william c gamble", "george bush"]
+        # Get all protocol names
+        protocol_names = [p.get("name", "").lower() for p in protocols]
+        protocol_previews = [p.get("protocol_preview", "").lower() for p in protocols]
+        
+        # Check for the 3 expected protocols (by name or protocol preview content)
+        expected_names = ["richard", "william", "george", "gamble", "selman", "bush"]
         found_protocols = []
         
         for expected in expected_names:
@@ -180,20 +182,23 @@ class TestMarketplaceProtocols:
                     found_protocols.append(expected)
                     break
             if not found:
-                for ps in protocol_strings:
+                for ps in protocol_previews:
                     if expected in ps:
                         found = True
                         found_protocols.append(expected)
                         break
         
-        print(f"Found protocols: {found_protocols}")
-        print(f"Total marketplace protocols: {len(data)}")
+        print(f"Found protocol keywords: {found_protocols}")
+        print(f"Total marketplace protocols: {len(protocols)}")
         
         # Log all protocol names for debugging
-        for p in data:
-            print(f"  - {p.get('name')}: {p.get('protocol_string', '')[:50]}...")
+        for p in protocols:
+            print(f"  - {p.get('name')}: {p.get('protocol_preview', '')[:50]}...")
         
-        print("PASS: Marketplace protocols endpoint returns data")
+        # Verify we have at least 3 protocols
+        assert len(protocols) >= 3, f"Expected at least 3 protocols, got {len(protocols)}"
+        
+        print("PASS: Marketplace shows 3 user protocols")
     
     def test_free_badge_for_zero_price(self):
         """Test FREE badge (is_free flag) shows for $0 protocols"""
