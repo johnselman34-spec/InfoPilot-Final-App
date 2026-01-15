@@ -10,13 +10,14 @@ import {
   ActivityIndicator,
   Dimensions,
   Platform,
-  FlatList,
   Linking,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/utils/colors';
-import { api } from '../../src/services/api';
+import { searchAPI, categoryAPI } from '../../src/services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -25,24 +26,17 @@ interface SearchResult {
   title: string;
   url: string;
   snippet: string;
-  source: string;
-  category_ids: string[];
-  reactions: {
-    like: number;
-    love: number;
-    funny: number;
-    sad: number;
-    caution: number;
-    spam: number;
-    best: number;
-  };
-  classification?: string;
+  article_type?: string;
+  root_domain?: string;
   year?: number;
-  country?: string;
+  category_ids?: string[];
+  likes?: number;
+  loves?: number;
   location?: {
     latitude: number;
     longitude: number;
     city?: string;
+    country?: string;
   };
 }
 
@@ -51,159 +45,201 @@ interface Category {
   name: string;
   protocol: string;
   is_public: boolean;
-  selected?: boolean;
-  expanded?: boolean;
-  children?: Category[];
+  level?: number;
 }
 
-interface FilterState {
-  years: { from: number; to: number };
-  domains: string[];
-  countries: string[];
-  contentTypes: string[];
-}
+type CombineMode = 'or' | 'and';
 
-const CONTENT_TYPES = ['PhD', 'Blog', 'News', 'Forum', 'Academic', 'Wiki', 'Government'];
-const POPULAR_COUNTRIES = ['USA', 'UK', 'Canada', 'Australia', 'Germany', 'France', 'Japan'];
+// World locations for map visualization
+const WORLD_LOCATIONS = [
+  { city: 'New York', country: 'USA', lat: 40.7128, lng: -74.0060, emoji: '🗽' },
+  { city: 'London', country: 'UK', lat: 51.5074, lng: -0.1278, emoji: '🇬🇧' },
+  { city: 'Paris', country: 'France', lat: 48.8566, lng: 2.3522, emoji: '🗼' },
+  { city: 'Tokyo', country: 'Japan', lat: 35.6762, lng: 139.6503, emoji: '🗾' },
+  { city: 'Sydney', country: 'Australia', lat: -33.8688, lng: 151.2093, emoji: '🦘' },
+  { city: 'Berlin', country: 'Germany', lat: 52.5200, lng: 13.4050, emoji: '🇩🇪' },
+  { city: 'Moscow', country: 'Russia', lat: 55.7558, lng: 37.6173, emoji: '🇷🇺' },
+  { city: 'Dubai', country: 'UAE', lat: 25.2048, lng: 55.2708, emoji: '🏜️' },
+  { city: 'Singapore', country: 'Singapore', lat: 1.3521, lng: 103.8198, emoji: '🇸🇬' },
+  { city: 'São Paulo', country: 'Brazil', lat: -23.5505, lng: -46.6333, emoji: '🇧🇷' },
+  { city: 'Toronto', country: 'Canada', lat: 43.6532, lng: -79.3832, emoji: '🍁' },
+  { city: 'Mumbai', country: 'India', lat: 19.0760, lng: 72.8777, emoji: '🇮🇳' },
+];
+
+// Page name storage key
+const PAGE_NAME_KEY = 'ultimate_search_page_name';
+const DEFAULT_PAGE_NAME = 'Ultimate Search';
 
 export default function UltimateSearchScreen() {
+  // Page customization
+  const [pageName, setPageName] = useState(DEFAULT_PAGE_NAME);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempPageName, setTempPageName] = useState('');
+  
+  // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [loadingResults, setLoadingResults] = useState(false);
+  
+  // Category state
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<Set<string>>(new Set());
+  const [combineMode, setCombineMode] = useState<CombineMode>('or');
+  
+  // View state
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [filters, setFilters] = useState<FilterState>({
-    years: { from: 1900, to: new Date().getFullYear() },
-    domains: [],
-    countries: [],
-    contentTypes: [],
-  });
+  
+  // Map data
+  const [mapLocations, setMapLocations] = useState<typeof WORLD_LOCATIONS>([]);
 
+  // Load saved page name
   useEffect(() => {
+    loadPageName();
     loadCategories();
   }, []);
 
+  // Load results when categories change
+  useEffect(() => {
+    if (selectedCategoryIds.size > 0) {
+      loadSearchResults();
+    }
+  }, [selectedCategoryIds, combineMode]);
+
+  // Update map when results change
+  useEffect(() => {
+    updateMapLocations();
+  }, [results]);
+
+  const loadPageName = async () => {
+    try {
+      const savedName = await AsyncStorage.getItem(PAGE_NAME_KEY);
+      if (savedName) {
+        setPageName(savedName);
+      }
+    } catch (error) {
+      console.error('Error loading page name:', error);
+    }
+  };
+
+  const savePageName = async (name: string) => {
+    try {
+      await AsyncStorage.setItem(PAGE_NAME_KEY, name);
+      setPageName(name);
+      setIsEditingName(false);
+      Alert.alert('Success! 🎉', `Page renamed to "${name}"`);
+    } catch (error) {
+      console.error('Error saving page name:', error);
+    }
+  };
+
   const loadCategories = async () => {
     try {
-      const response = await api.get('/categories');
-      const cats = response.categories || [];
-      // Initialize with all selected
+      const response = await categoryAPI.getAll();
+      const cats = response.data?.categories || [];
       setCategories(cats);
-      setSelectedCategories(new Set(cats.map((c: Category) => c.id)));
+      // Select all by default
+      setSelectedCategoryIds(new Set(cats.map((c: Category) => c.id)));
     } catch (error) {
       console.error('Load categories error:', error);
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      Alert.alert('Oops! 🤔', 'Please enter something to search for!');
+  const loadSearchResults = async () => {
+    if (selectedCategoryIds.size === 0) {
+      setResults([]);
       return;
     }
 
-    setLoading(true);
     try {
-      // Get search results from Google
-      const searchResponse = await api.googleSearch(searchQuery, 100);
+      setLoadingResults(true);
+      const categoryIdsParam = Array.from(selectedCategoryIds).join(',');
       
-      // Collate results with selected categories
-      const selectedCatIds = Array.from(selectedCategories);
-      const collateResponse = await api.collateResults(
-        searchQuery,
-        searchResponse.results || [],
-        selectedCatIds.length > 0 ? selectedCatIds : undefined
-      );
+      const response = await searchAPI.getResults({
+        category_ids: categoryIdsParam,
+        page: 1,
+      });
 
-      // Add mock locations for map view (in real app, these would be geolocated)
-      const resultsWithLocations = (collateResponse.results || []).map((r: SearchResult, index: number) => ({
-        ...r,
-        location: r.location || generateMockLocation(index),
-        classification: classifyContent(r.url, r.snippet),
-        year: extractYear(r.snippet),
-      }));
-
-      setResults(resultsWithLocations);
-      
-      if (resultsWithLocations.length === 0) {
-        Alert.alert(
-          '🔍 No Results Found',
-          'Try broadening your search or adjusting your protocol filters. Remember: (word1 or word2) & (word3) gives the best results!'
-        );
+      if (response.data) {
+        // Add locations to results that don't have them
+        const resultsWithLocations = (response.data.results || []).map((r: SearchResult, index: number) => ({
+          ...r,
+          location: r.location || generateLocation(index),
+        }));
+        setResults(resultsWithLocations);
       }
     } catch (error) {
-      console.error('Search error:', error);
-      Alert.alert('Search Failed', 'Something went wrong. Our hamsters are investigating! 🐹');
+      console.error('Load search results error:', error);
+      setResults([]);
     } finally {
-      setLoading(false);
+      setLoadingResults(false);
     }
   };
 
-  const generateMockLocation = (index: number) => {
-    const locations = [
-      { latitude: 40.7128, longitude: -74.0060, city: 'New York' },
-      { latitude: 51.5074, longitude: -0.1278, city: 'London' },
-      { latitude: 48.8566, longitude: 2.3522, city: 'Paris' },
-      { latitude: 35.6762, longitude: 139.6503, city: 'Tokyo' },
-      { latitude: -33.8688, longitude: 151.2093, city: 'Sydney' },
-    ];
-    return locations[index % locations.length];
+  const generateLocation = (index: number) => {
+    const loc = WORLD_LOCATIONS[index % WORLD_LOCATIONS.length];
+    return {
+      latitude: loc.lat,
+      longitude: loc.lng,
+      city: loc.city,
+      country: loc.country,
+    };
   };
 
-  const classifyContent = (url: string, snippet: string): string => {
-    const urlLower = url.toLowerCase();
-    const snippetLower = snippet.toLowerCase();
+  const updateMapLocations = () => {
+    // Group results by location
+    const locationCounts: Record<string, { location: typeof WORLD_LOCATIONS[0]; count: number; results: SearchResult[] }> = {};
     
-    if (urlLower.includes('.edu') || snippetLower.includes('phd') || snippetLower.includes('dissertation')) return 'PhD';
-    if (urlLower.includes('blog') || urlLower.includes('medium.com')) return 'Blog';
-    if (urlLower.includes('news') || urlLower.includes('cnn') || urlLower.includes('bbc')) return 'News';
-    if (urlLower.includes('forum') || urlLower.includes('reddit') || urlLower.includes('quora')) return 'Forum';
-    if (urlLower.includes('wikipedia')) return 'Wiki';
-    if (urlLower.includes('.gov')) return 'Government';
-    if (urlLower.includes('journal') || urlLower.includes('academic') || urlLower.includes('research')) return 'Academic';
-    return 'Web';
+    results.forEach((result, index) => {
+      const loc = result.location || generateLocation(index);
+      const key = loc.city || `loc_${index}`;
+      
+      if (!locationCounts[key]) {
+        const worldLoc = WORLD_LOCATIONS.find(w => w.city === loc.city) || WORLD_LOCATIONS[index % WORLD_LOCATIONS.length];
+        locationCounts[key] = {
+          location: worldLoc,
+          count: 0,
+          results: [],
+        };
+      }
+      locationCounts[key].count++;
+      locationCounts[key].results.push(result);
+    });
+
+    setMapLocations(Object.values(locationCounts).map(lc => ({
+      ...lc.location,
+      resultCount: lc.count,
+      results: lc.results,
+    })) as any);
   };
 
-  const extractYear = (text: string): number | undefined => {
-    const match = text.match(/\b(19|20)\d{2}\b/);
-    return match ? parseInt(match[0]) : undefined;
-  };
-
-  const toggleCategory = (categoryId: string) => {
-    const newSelected = new Set(selectedCategories);
+  const toggleCategorySelection = (categoryId: string) => {
+    const newSelected = new Set(selectedCategoryIds);
     if (newSelected.has(categoryId)) {
       newSelected.delete(categoryId);
     } else {
       newSelected.add(categoryId);
     }
-    setSelectedCategories(newSelected);
+    setSelectedCategoryIds(newSelected);
   };
 
-  const toggleExpand = (categoryId: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
-    }
-    setExpandedCategories(newExpanded);
+  const selectAllCategories = () => {
+    setSelectedCategoryIds(new Set(categories.map(c => c.id)));
+  };
+
+  const clearAllSelections = () => {
+    setSelectedCategoryIds(new Set());
+    setResults([]);
   };
 
   const handleReaction = async (resultId: string, reactionType: string) => {
     try {
-      await api.post(`/search/results/${resultId}/react`, { reaction_type: reactionType });
-      // Update local state
+      await searchAPI.react(resultId, reactionType);
       setResults(prev => prev.map(r => {
         if (r.id === resultId) {
-          return {
-            ...r,
-            reactions: {
-              ...r.reactions,
-              [reactionType]: (r.reactions?.[reactionType as keyof typeof r.reactions] || 0) + 1
-            }
-          };
+          const key = reactionType + 's' as keyof SearchResult;
+          return { ...r, [key]: ((r as any)[key] || 0) + 1 };
         }
         return r;
       }));
@@ -212,102 +248,54 @@ export default function UltimateSearchScreen() {
     }
   };
 
-  const filteredResults = results.filter(r => {
-    // Filter by year
-    if (r.year && (r.year < filters.years.from || r.year > filters.years.to)) return false;
-    
-    // Filter by content type
-    if (filters.contentTypes.length > 0 && !filters.contentTypes.includes(r.classification || '')) return false;
-    
-    // Filter by country
-    if (filters.countries.length > 0 && r.location?.city) {
-      // Simple check - in real app would be more sophisticated
-      const hasMatch = filters.countries.some(c => 
-        r.location?.city?.toLowerCase().includes(c.toLowerCase())
-      );
-      if (!hasMatch) return false;
-    }
-    
-    return true;
-  });
-
-  const renderCategoryItem = (category: Category, level: number = 0) => {
-    const isSelected = selectedCategories.has(category.id);
-    const isExpanded = expandedCategories.has(category.id);
-    const hasChildren = category.children && category.children.length > 0;
-
-    return (
-      <View key={category.id} style={{ marginLeft: level * 16 }}>
-        <View style={styles.categoryRow}>
-          {hasChildren && (
-            <TouchableOpacity onPress={() => toggleExpand(category.id)} style={styles.expandButton}>
-              <Ionicons 
-                name={isExpanded ? "remove-circle" : "add-circle"} 
-                size={20} 
-                color={colors.primary} 
-              />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity 
-            style={[styles.categoryCheckbox, isSelected && styles.categoryCheckboxSelected]}
-            onPress={() => toggleCategory(category.id)}
-          >
-            {isSelected && <Ionicons name="checkmark" size={14} color={colors.white} />}
-          </TouchableOpacity>
-          <Text style={styles.categoryName} numberOfLines={1}>{category.name}</Text>
-        </View>
-        {isExpanded && hasChildren && category.children?.map(child => renderCategoryItem(child, level + 1))}
-      </View>
-    );
-  };
-
-  const renderResultCard = ({ item }: { item: SearchResult }) => (
+  // Render search result card
+  const renderResultCard = (result: SearchResult) => (
     <TouchableOpacity 
+      key={result.id}
       style={styles.resultCard}
-      onPress={() => Linking.openURL(item.url)}
+      onPress={() => Linking.openURL(result.url)}
     >
       <View style={styles.resultHeader}>
-        {item.classification && (
-          <View style={[styles.classificationBadge, getClassificationStyle(item.classification)]}>
-            <Text style={styles.classificationText}>{item.classification}</Text>
+        {result.article_type && (
+          <View style={[styles.typeBadge, getTypeBadgeStyle(result.article_type)]}>
+            <Text style={styles.typeBadgeText}>{result.article_type}</Text>
           </View>
         )}
-        {item.year && (
+        {result.year && (
           <View style={styles.yearBadge}>
             <Ionicons name="calendar" size={12} color={colors.accent} />
-            <Text style={styles.yearText}>{item.year}</Text>
+            <Text style={styles.yearText}>{result.year}</Text>
+          </View>
+        )}
+        {result.location && (
+          <View style={styles.locationBadge}>
+            <Ionicons name="location" size={12} color={colors.primary} />
+            <Text style={styles.locationText}>{result.location.city}</Text>
           </View>
         )}
       </View>
       
-      <Text style={styles.resultTitle} numberOfLines={2}>{item.title}</Text>
-      <Text style={styles.resultSnippet} numberOfLines={3}>{item.snippet}</Text>
-      <Text style={styles.resultUrl} numberOfLines={1}>{item.source || new URL(item.url).hostname}</Text>
-      
-      {item.location && (
-        <View style={styles.locationBadge}>
-          <Ionicons name="location" size={12} color={colors.accent} />
-          <Text style={styles.locationText}>{item.location.city}</Text>
-        </View>
-      )}
+      <Text style={styles.resultTitle} numberOfLines={2}>{result.title}</Text>
+      <Text style={styles.resultSnippet} numberOfLines={3}>{result.snippet}</Text>
+      <Text style={styles.resultUrl} numberOfLines={1}>🔗 {result.root_domain || result.url}</Text>
       
       {/* Reaction Buttons */}
       <View style={styles.reactionsRow}>
         {[
-          { key: 'like', icon: 'thumbs-up', color: colors.like },
-          { key: 'love', icon: 'heart', color: colors.love },
-          { key: 'funny', icon: 'happy', color: colors.funny },
-          { key: 'caution', icon: 'warning', color: colors.caution },
-          { key: 'best', icon: 'trophy', color: colors.best },
+          { key: 'likes', icon: 'thumbs-up', label: '👍' },
+          { key: 'loves', icon: 'heart', label: '❤️' },
+          { key: 'funnys', icon: 'happy', label: '😂' },
+          { key: 'cautions', icon: 'warning', label: '⚠️' },
+          { key: 'bests', icon: 'trophy', label: '🏆' },
         ].map(reaction => (
           <TouchableOpacity 
             key={reaction.key}
             style={styles.reactionButton}
-            onPress={() => handleReaction(item.id, reaction.key)}
+            onPress={() => handleReaction(result.id, reaction.key.slice(0, -1))}
           >
-            <Ionicons name={reaction.icon as any} size={16} color={reaction.color} />
+            <Text style={styles.reactionEmoji}>{reaction.label}</Text>
             <Text style={styles.reactionCount}>
-              {item.reactions?.[reaction.key as keyof typeof item.reactions] || 0}
+              {(result as any)[reaction.key] || 0}
             </Text>
           </TouchableOpacity>
         ))}
@@ -315,8 +303,8 @@ export default function UltimateSearchScreen() {
     </TouchableOpacity>
   );
 
-  const getClassificationStyle = (classification: string) => {
-    const styles: Record<string, any> = {
+  const getTypeBadgeStyle = (type: string) => {
+    const typeStyles: Record<string, any> = {
       'PhD': { backgroundColor: '#9D00FF' },
       'Academic': { backgroundColor: '#4169E1' },
       'News': { backgroundColor: '#FF6B6B' },
@@ -325,199 +313,317 @@ export default function UltimateSearchScreen() {
       'Wiki': { backgroundColor: '#A8E6CF' },
       'Government': { backgroundColor: '#6C5CE7' },
     };
-    return styles[classification] || { backgroundColor: colors.gray };
+    return typeStyles[type] || { backgroundColor: colors.gray };
   };
 
-  // World Map View
-  const renderMapView = () => (
-    <View style={styles.mapContainer}>
-      <View style={styles.mapPlaceholder}>
-        <Text style={styles.mapTitle}>🌍 Search Results Map 🌍</Text>
-        <Text style={styles.mapSubtitle}>{filteredResults.length} results found worldwide!</Text>
-        
-        {/* Region breakdown */}
-        <View style={styles.regionStats}>
-          {['Americas', 'Europe', 'Asia', 'Other'].map((region, index) => {
-            const count = Math.floor(filteredResults.length / 4) + (index < filteredResults.length % 4 ? 1 : 0);
-            return (
-              <View key={region} style={styles.regionStat}>
-                <Text style={styles.regionIcon}>
-                  {region === 'Americas' ? '🌎' : region === 'Europe' ? '🌍' : region === 'Asia' ? '🌏' : '🗺️'}
-                </Text>
-                <Text style={styles.regionName}>{region}</Text>
-                <Text style={styles.regionCount}>{count} results</Text>
-              </View>
-            );
-          })}
-        </View>
-        
-        <Text style={styles.mapHint}>
-          📱 Full interactive map with clustering available in mobile app!
-        </Text>
-      </View>
+  // Render interactive world map
+  const renderWorldMap = () => {
+    // Group results by region
+    const regions = {
+      'Americas': { emoji: '🌎', count: 0, results: [] as SearchResult[] },
+      'Europe': { emoji: '🌍', count: 0, results: [] as SearchResult[] },
+      'Asia': { emoji: '🌏', count: 0, results: [] as SearchResult[] },
+      'Oceania': { emoji: '🏝️', count: 0, results: [] as SearchResult[] },
+    };
+
+    results.forEach((result, index) => {
+      const loc = result.location || generateLocation(index);
+      const city = loc.city || '';
       
-      {/* Quick result list under map */}
-      <FlatList
-        data={filteredResults.slice(0, 5)}
-        renderItem={renderResultCard}
-        keyExtractor={(item) => item.id}
-        style={styles.mapResultsList}
-      />
-    </View>
-  );
+      // Simple region detection
+      if (['New York', 'Toronto', 'São Paulo', 'Los Angeles', 'San Francisco'].some(c => city.includes(c))) {
+        regions.Americas.count++;
+        regions.Americas.results.push(result);
+      } else if (['London', 'Paris', 'Berlin', 'Moscow'].some(c => city.includes(c))) {
+        regions.Europe.count++;
+        regions.Europe.results.push(result);
+      } else if (['Tokyo', 'Singapore', 'Mumbai', 'Dubai'].some(c => city.includes(c))) {
+        regions.Asia.count++;
+        regions.Asia.results.push(result);
+      } else {
+        regions.Oceania.count++;
+        regions.Oceania.results.push(result);
+      }
+    });
+
+    return (
+      <ScrollView style={styles.mapScrollView} contentContainerStyle={styles.mapScrollContent}>
+        {/* Map Header */}
+        <View style={styles.mapHeader}>
+          <Text style={styles.mapTitle}>🗺️ World Results Map</Text>
+          <Text style={styles.mapSubtitle}>
+            {results.length} results from {selectedCategoryIds.size} categories
+          </Text>
+          <Text style={styles.mapCombineMode}>
+            Mode: {combineMode === 'or' ? '✅ OR (Any match)' : '🔗 AND (All match)'}
+          </Text>
+        </View>
+
+        {/* Interactive Region Grid */}
+        <View style={styles.regionGrid}>
+          {Object.entries(regions).map(([name, data]) => (
+            <TouchableOpacity 
+              key={name}
+              style={[styles.regionCard, data.count > 0 && styles.regionCardActive]}
+              onPress={() => {
+                if (data.results.length > 0) {
+                  Alert.alert(
+                    `${data.emoji} ${name}`,
+                    `${data.count} results found!\n\nTop result: "${data.results[0]?.title?.slice(0, 50)}..."`,
+                    [
+                      { text: 'Close', style: 'cancel' },
+                      { 
+                        text: 'View All', 
+                        onPress: () => setViewMode('list')
+                      },
+                    ]
+                  );
+                }
+              }}
+            >
+              <Text style={styles.regionEmoji}>{data.emoji}</Text>
+              <Text style={styles.regionName}>{name}</Text>
+              <View style={[styles.regionCountBadge, data.count > 0 && styles.regionCountBadgeActive]}>
+                <Text style={styles.regionCount}>{data.count}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Location Pins */}
+        <View style={styles.locationsSection}>
+          <Text style={styles.locationsSectionTitle}>📍 Location Breakdown</Text>
+          <View style={styles.locationPins}>
+            {WORLD_LOCATIONS.map((loc, index) => {
+              const resultCount = results.filter((r, i) => {
+                const resLoc = r.location || generateLocation(i);
+                return resLoc.city === loc.city;
+              }).length;
+              
+              return (
+                <TouchableOpacity 
+                  key={loc.city}
+                  style={[styles.locationPin, resultCount > 0 && styles.locationPinActive]}
+                  onPress={() => {
+                    const locResults = results.filter((r, i) => {
+                      const resLoc = r.location || generateLocation(i);
+                      return resLoc.city === loc.city;
+                    });
+                    if (locResults.length > 0) {
+                      Alert.alert(
+                        `${loc.emoji} ${loc.city}`,
+                        `${resultCount} results from ${loc.country}`,
+                        [{ text: 'OK' }]
+                      );
+                    }
+                  }}
+                >
+                  <Text style={styles.pinEmoji}>{loc.emoji}</Text>
+                  <Text style={styles.pinCity}>{loc.city}</Text>
+                  <Text style={styles.pinCount}>{resultCount}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Recent Results Preview */}
+        {results.length > 0 && (
+          <View style={styles.recentResults}>
+            <Text style={styles.recentResultsTitle}>📋 Recent Results</Text>
+            {results.slice(0, 3).map(renderResultCard)}
+            {results.length > 3 && (
+              <TouchableOpacity 
+                style={styles.viewAllButton}
+                onPress={() => setViewMode('list')}
+              >
+                <Text style={styles.viewAllText}>
+                  View All {results.length} Results →
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+      </ScrollView>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      {/* Search Header */}
+      {/* Header with Editable Title */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🔍 Ultimate Search</Text>
+        <TouchableOpacity 
+          style={styles.titleContainer}
+          onPress={() => {
+            setTempPageName(pageName);
+            setIsEditingName(true);
+          }}
+        >
+          <Text style={styles.headerTitle}>🔍 {pageName}</Text>
+          <Ionicons name="pencil" size={16} color={colors.textMuted} />
+        </TouchableOpacity>
         <Text style={styles.headerSubtitle}>
-          "The search engine so good, Google is jealous!" 😎
+          "The search that finds what Google can't!" 🎯
         </Text>
       </View>
 
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color={colors.gray} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Enter your search query..."
-            placeholderTextColor={colors.gray}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={handleSearch}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color={colors.gray} />
+      {/* Category Selection with Checkboxes */}
+      <View style={styles.categorySection}>
+        <View style={styles.categorySectionHeader}>
+          <Text style={styles.categorySectionTitle}>
+            📁 Categories ({selectedCategoryIds.size}/{categories.length})
+          </Text>
+          <View style={styles.categoryButtons}>
+            <TouchableOpacity style={styles.selectAllBtn} onPress={selectAllCategories}>
+              <Text style={styles.selectAllText}>All</Text>
             </TouchableOpacity>
-          )}
+            <TouchableOpacity style={styles.clearBtn} onPress={clearAllSelections}>
+              <Text style={styles.clearText}>Clear</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Ionicons name="rocket" size={20} color={colors.white} />
-        </TouchableOpacity>
+
+        {/* Category Checkboxes */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+          {categories.map((category) => {
+            const isSelected = selectedCategoryIds.has(category.id);
+            return (
+              <TouchableOpacity
+                key={category.id}
+                style={[styles.categoryChip, isSelected && styles.categoryChipSelected]}
+                onPress={() => toggleCategorySelection(category.id)}
+              >
+                <Ionicons 
+                  name={isSelected ? 'checkbox' : 'square-outline'} 
+                  size={18} 
+                  color={isSelected ? colors.white : colors.primary} 
+                />
+                <Text style={[styles.categoryChipText, isSelected && styles.categoryChipTextSelected]}>
+                  {category.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* AND/OR Radio Buttons */}
+        {selectedCategoryIds.size > 1 && (
+          <View style={styles.combineModeSection}>
+            <Text style={styles.combineModeLabel}>Combine with:</Text>
+            <View style={styles.radioGroup}>
+              <TouchableOpacity
+                style={[styles.radioBtn, combineMode === 'or' && styles.radioBtnActive]}
+                onPress={() => setCombineMode('or')}
+              >
+                <View style={[styles.radioCircle, combineMode === 'or' && styles.radioCircleActive]} />
+                <Text style={[styles.radioLabel, combineMode === 'or' && styles.radioLabelActive]}>
+                  OR
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.radioBtn, combineMode === 'and' && styles.radioBtnActive]}
+                onPress={() => setCombineMode('and')}
+              >
+                <View style={[styles.radioCircle, combineMode === 'and' && styles.radioCircleActive]} />
+                <Text style={[styles.radioLabel, combineMode === 'and' && styles.radioLabelActive]}>
+                  AND
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </View>
 
-      {/* Controls Bar */}
-      <View style={styles.controlsBar}>
-        <TouchableOpacity 
-          style={[styles.controlButton, showFilters && styles.controlButtonActive]}
-          onPress={() => setShowFilters(!showFilters)}
-        >
-          <Ionicons name="filter" size={18} color={showFilters ? colors.white : colors.primary} />
-          <Text style={[styles.controlText, showFilters && styles.controlTextActive]}>Filters</Text>
-        </TouchableOpacity>
-        
+      {/* View Toggle */}
+      <View style={styles.viewControls}>
         <View style={styles.viewToggle}>
           <TouchableOpacity
-            style={[styles.toggleButton, viewMode === 'list' && styles.toggleActive]}
-            onPress={() => setViewMode('list')}
-          >
-            <Ionicons name="list" size={18} color={viewMode === 'list' ? colors.white : colors.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.toggleButton, viewMode === 'map' && styles.toggleActive]}
+            style={[styles.toggleBtn, viewMode === 'map' && styles.toggleBtnActive]}
             onPress={() => setViewMode('map')}
           >
             <Ionicons name="map" size={18} color={viewMode === 'map' ? colors.white : colors.primary} />
+            <Text style={[styles.toggleText, viewMode === 'map' && styles.toggleTextActive]}>Map</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toggleBtn, viewMode === 'list' && styles.toggleBtnActive]}
+            onPress={() => setViewMode('list')}
+          >
+            <Ionicons name="list" size={18} color={viewMode === 'list' ? colors.white : colors.primary} />
+            <Text style={[styles.toggleText, viewMode === 'list' && styles.toggleTextActive]}>List</Text>
           </TouchableOpacity>
         </View>
-        
-        <Text style={styles.resultsCount}>{filteredResults.length} results</Text>
+        <Text style={styles.resultCount}>
+          {loadingResults ? 'Loading...' : `${results.length} results`}
+        </Text>
       </View>
 
-      {/* Filters Panel */}
-      {showFilters && (
-        <ScrollView style={styles.filtersPanel} horizontal={false}>
-          {/* Category Checkboxes */}
-          <Text style={styles.filterSectionTitle}>📁 Categories</Text>
-          <View style={styles.categoriesList}>
-            {categories.map(cat => renderCategoryItem(cat))}
-          </View>
-          
-          {/* Content Type Filter */}
-          <Text style={styles.filterSectionTitle}>📋 Content Type</Text>
-          <View style={styles.filterChips}>
-            {CONTENT_TYPES.map(type => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.filterChip,
-                  filters.contentTypes.includes(type) && styles.filterChipActive
-                ]}
-                onPress={() => {
-                  const newTypes = filters.contentTypes.includes(type)
-                    ? filters.contentTypes.filter(t => t !== type)
-                    : [...filters.contentTypes, type];
-                  setFilters({ ...filters, contentTypes: newTypes });
-                }}
-              >
-                <Text style={[
-                  styles.filterChipText,
-                  filters.contentTypes.includes(type) && styles.filterChipTextActive
-                ]}>{type}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          
-          {/* Year Range */}
-          <Text style={styles.filterSectionTitle}>📅 Year Range</Text>
-          <View style={styles.yearRange}>
-            <TextInput
-              style={styles.yearInput}
-              placeholder="From"
-              placeholderTextColor={colors.gray}
-              keyboardType="numeric"
-              value={String(filters.years.from)}
-              onChangeText={(v) => setFilters({
-                ...filters,
-                years: { ...filters.years, from: parseInt(v) || 1900 }
-              })}
-            />
-            <Text style={styles.yearSeparator}>to</Text>
-            <TextInput
-              style={styles.yearInput}
-              placeholder="To"
-              placeholderTextColor={colors.gray}
-              keyboardType="numeric"
-              value={String(filters.years.to)}
-              onChangeText={(v) => setFilters({
-                ...filters,
-                years: { ...filters.years, to: parseInt(v) || new Date().getFullYear() }
-              })}
-            />
-          </View>
-        </ScrollView>
-      )}
-
-      {/* Results */}
-      {loading ? (
+      {/* Main Content */}
+      {loadingResults ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Searching the universe... 🚀</Text>
-          <Text style={styles.loadingSubtext}>This might take a few seconds. Worth the wait!</Text>
+          <Text style={styles.loadingText}>Finding amazing results... 🔍</Text>
         </View>
       ) : viewMode === 'map' ? (
-        renderMapView()
+        renderWorldMap()
       ) : (
-        <FlatList
-          data={filteredResults}
-          renderItem={renderResultCard}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.resultsList}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
+        <ScrollView style={styles.listScrollView} contentContainerStyle={styles.listContent}>
+          {results.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Ionicons name="telescope" size={60} color={colors.gray} />
               <Text style={styles.emptyText}>No results yet!</Text>
               <Text style={styles.emptySubtext}>
-                Enter a search query above and hit that rocket button! 🚀
+                Select categories above to see their search results.{'\n'}
+                Go to Search tab to collate new results!
               </Text>
             </View>
-          }
-        />
+          ) : (
+            <>
+              {results.map(renderResultCard)}
+              <View style={styles.listFooter}>
+                <Text style={styles.listFooterText}>
+                  📚 "Letters to Evelyn" - The book that inspired InfoPilot! 📚
+                </Text>
+              </View>
+            </>
+          )}
+        </ScrollView>
       )}
+
+      {/* Edit Page Name Modal */}
+      <Modal
+        visible={isEditingName}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setIsEditingName(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>✏️ Rename Page</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={tempPageName}
+              onChangeText={setTempPageName}
+              placeholder="Enter new page name"
+              placeholderTextColor={colors.gray}
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.modalCancelBtn}
+                onPress={() => setIsEditingName(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.modalSaveBtn}
+                onPress={() => savePageName(tempPageName)}
+              >
+                <Text style={styles.modalSaveText}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -533,8 +639,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.cardBorder,
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: colors.text,
     textAlign: 'center',
@@ -546,168 +658,164 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontStyle: 'italic',
   },
-  searchContainer: {
-    flexDirection: 'row',
-    padding: 12,
-    alignItems: 'center',
-  },
-  searchBar: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  searchInput: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 16,
-    marginLeft: 8,
-  },
-  searchButton: {
-    backgroundColor: colors.primary,
-    padding: 12,
-    borderRadius: 12,
-    marginLeft: 8,
-  },
-  controlsBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingBottom: 8,
-  },
-  controlButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: colors.cardBackground,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-    marginRight: 8,
-  },
-  controlButtonActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  controlText: {
-    color: colors.primary,
-    marginLeft: 4,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  controlTextActive: {
-    color: colors.white,
-  },
-  viewToggle: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  toggleButton: {
-    padding: 8,
-    backgroundColor: 'transparent',
-  },
-  toggleActive: {
-    backgroundColor: colors.primary,
-  },
-  resultsCount: {
-    color: colors.textMuted,
-    fontSize: 12,
-    marginLeft: 'auto',
-  },
-  filtersPanel: {
-    maxHeight: 250,
+  // Category Section
+  categorySection: {
     backgroundColor: colors.cardBackground,
     padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.cardBorder,
   },
-  filterSectionTitle: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  categoriesList: {
-    marginBottom: 8,
-  },
-  categoryRow: {
+  categorySectionHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 6,
+    marginBottom: 10,
   },
-  expandButton: {
-    marginRight: 8,
-  },
-  categoryCheckbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    marginRight: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryCheckboxSelected: {
-    backgroundColor: colors.primary,
-  },
-  categoryName: {
-    color: colors.text,
+  categorySectionTitle: {
     fontSize: 14,
-    flex: 1,
+    fontWeight: '600',
+    color: colors.text,
   },
-  filterChips: {
+  categoryButtons: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
   },
-  filterChip: {
+  selectAllBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  selectAllText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  clearBtn: {
+    backgroundColor: colors.gray,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  clearText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  categoryScroll: {
+    marginBottom: 10,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    gap: 6,
+  },
+  categoryChipSelected: {
+    backgroundColor: colors.primary,
+  },
+  categoryChipText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  categoryChipTextSelected: {
+    color: colors.white,
+  },
+  // Combine Mode
+  combineModeSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.cardBorder,
+  },
+  combineModeLabel: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginRight: 12,
+  },
+  radioGroup: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  radioBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: colors.background,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.cardBorder,
+    gap: 6,
   },
-  filterChipActive: {
+  radioBtnActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '20',
+  },
+  radioCircle: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: colors.gray,
+  },
+  radioCircleActive: {
+    borderColor: colors.primary,
     backgroundColor: colors.primary,
+  },
+  radioLabel: {
+    fontSize: 13,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
+  radioLabelActive: {
+    color: colors.primary,
+  },
+  // View Controls
+  viewControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
     borderColor: colors.primary,
   },
-  filterChipText: {
-    color: colors.textMuted,
-    fontSize: 12,
-  },
-  filterChipTextActive: {
-    color: colors.white,
-  },
-  yearRange: {
+  toggleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    gap: 4,
   },
-  yearInput: {
-    backgroundColor: colors.background,
-    borderRadius: 8,
-    padding: 8,
-    width: 80,
-    color: colors.text,
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+  toggleBtnActive: {
+    backgroundColor: colors.primary,
   },
-  yearSeparator: {
+  toggleText: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  toggleTextActive: {
+    color: colors.white,
+  },
+  resultCount: {
+    fontSize: 13,
     color: colors.textMuted,
-    marginHorizontal: 12,
   },
+  // Loading
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -715,17 +823,157 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     color: colors.text,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 16,
+    fontSize: 16,
+    marginTop: 12,
   },
-  loadingSubtext: {
-    color: colors.textMuted,
+  // Map View
+  mapScrollView: {
+    flex: 1,
+  },
+  mapScrollContent: {
+    padding: 12,
+    paddingBottom: 40,
+  },
+  mapHeader: {
+    backgroundColor: colors.cardBackground,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  mapTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  mapSubtitle: {
     fontSize: 14,
+    color: colors.primary,
+    marginTop: 4,
+  },
+  mapCombineMode: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  regionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  regionCard: {
+    width: (width - 40) / 2,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: colors.cardBorder,
+  },
+  regionCardActive: {
+    borderColor: colors.primary,
+  },
+  regionEmoji: {
+    fontSize: 36,
+    marginBottom: 8,
+  },
+  regionName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  regionCountBadge: {
+    backgroundColor: colors.gray,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  regionCountBadgeActive: {
+    backgroundColor: colors.primary,
+  },
+  regionCount: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.white,
+  },
+  locationsSection: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  locationsSectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  locationPins: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  locationPin: {
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 12,
+    minWidth: 70,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  locationPinActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '10',
+  },
+  pinEmoji: {
+    fontSize: 20,
+  },
+  pinCity: {
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  pinCount: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: colors.primary,
+  },
+  recentResults: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 16,
+  },
+  recentResultsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  viewAllButton: {
+    backgroundColor: colors.primary,
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
     marginTop: 8,
   },
-  resultsList: {
+  viewAllText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // List View
+  listScrollView: {
+    flex: 1,
+  },
+  listContent: {
     padding: 12,
+    paddingBottom: 40,
   },
   resultCard: {
     backgroundColor: colors.cardBackground,
@@ -740,13 +988,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
     gap: 8,
+    flexWrap: 'wrap',
   },
-  classificationBadge: {
+  typeBadge: {
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: 8,
   },
-  classificationText: {
+  typeBadgeText: {
     color: colors.white,
     fontSize: 10,
     fontWeight: 'bold',
@@ -760,9 +1009,18 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontSize: 12,
   },
+  locationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  locationText: {
+    color: colors.primary,
+    fontSize: 12,
+  },
   resultTitle: {
     color: colors.text,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     marginBottom: 6,
   },
@@ -777,27 +1035,20 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginBottom: 8,
   },
-  locationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 8,
-  },
-  locationText: {
-    color: colors.textMuted,
-    fontSize: 12,
-  },
   reactionsRow: {
     flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: colors.cardBorder,
     paddingTop: 8,
-    gap: 12,
+    gap: 16,
   },
   reactionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  reactionEmoji: {
+    fontSize: 16,
   },
   reactionCount: {
     color: colors.textMuted,
@@ -818,59 +1069,78 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 8,
     textAlign: 'center',
+    lineHeight: 20,
   },
-  mapContainer: {
-    flex: 1,
-  },
-  mapPlaceholder: {
-    backgroundColor: colors.cardBackground,
-    margin: 12,
-    borderRadius: 16,
-    padding: 20,
+  listFooter: {
+    backgroundColor: colors.secondary,
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 8,
     alignItems: 'center',
   },
-  mapTitle: {
+  listFooterText: {
+    color: colors.marketplaceGold,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 320,
+  },
+  modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 8,
-  },
-  mapSubtitle: {
-    fontSize: 14,
-    color: colors.primary,
+    textAlign: 'center',
     marginBottom: 16,
   },
-  regionStats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 16,
-    marginBottom: 16,
-  },
-  regionStat: {
-    alignItems: 'center',
-    minWidth: 70,
-  },
-  regionIcon: {
-    fontSize: 28,
-    marginBottom: 4,
-  },
-  regionName: {
+  modalInput: {
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
     color: colors.text,
-    fontSize: 12,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    marginBottom: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: colors.gray,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    color: colors.white,
+    fontSize: 14,
     fontWeight: '600',
   },
-  regionCount: {
-    color: colors.primary,
-    fontSize: 11,
-  },
-  mapHint: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontStyle: 'italic',
-  },
-  mapResultsList: {
-    maxHeight: 300,
+  modalSaveBtn: {
+    flex: 1,
     padding: 12,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+  },
+  modalSaveText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
