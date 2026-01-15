@@ -321,13 +321,14 @@ class TestHealthAndBasics:
         assert data.get("status") == "operational", f"Got status: {data.get('status')}"
         assert data.get("service") == "InfoPilot Explorer"
     
-    def test_stripe_config_endpoint(self):
-        """Test stripe config endpoint which includes book/subscription info"""
-        response = requests.get(f"{BASE_URL}/api/stripe/config")
+    def test_payments_config_endpoint(self):
+        """Test payments config endpoint which includes pricing info"""
+        response = requests.get(f"{BASE_URL}/api/payments/config")
         assert response.status_code == 200
         data = response.json()
         assert "sale_price" in data, "Should have sale_price"
         assert "regular_price" in data, "Should have regular_price"
+        assert "publishable_key" in data, "Should have Stripe publishable key"
 
 
 if __name__ == "__main__":
