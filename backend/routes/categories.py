@@ -23,6 +23,7 @@ def format_category(cat: dict) -> dict:
         "user_id": cat["user_id"],
         "parent_id": cat.get("parent_id"),
         "is_public": cat.get("is_public", False),
+        "price": cat.get("price"),
         "level": cat.get("level", 0),
         "created_at": cat.get("created_at", datetime.utcnow()).isoformat()
     }
