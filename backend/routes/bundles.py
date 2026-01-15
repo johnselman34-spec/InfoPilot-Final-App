@@ -374,11 +374,11 @@ async def get_featured_bundle():
     """Get the Bundle of the Week (featured bundle)"""
     # Check if there's a manually set bundle of the week
     setting = await db.settings.find_one({"key": "bundle_of_week_id"})
-    featured_id = setting.get("value") if setting else None
+    featured_id = setting.get("value") if setting and setting.get("value") else None
     
     bundle = None
     
-    if featured_id:
+    if featured_id and featured_id.strip():
         try:
             bundle = await db.protocol_bundles.find_one({
                 "_id": ObjectId(featured_id),
@@ -394,7 +394,7 @@ async def get_featured_bundle():
             bundle = bundles[0]
     
     if not bundle:
-        return {"featured": None, "message": "No bundles available yet!"}
+        return {"featured": None, "message": "No bundles available yet! Create one to be featured! 🏆"}
     
     # Get protocol details
     protocol_ids = [ObjectId(pid) for pid in bundle.get("protocol_ids", [])]
