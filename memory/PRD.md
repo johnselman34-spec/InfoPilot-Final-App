@@ -184,20 +184,19 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - `POST /api/push/send` - Send notification (admin)
 - `GET /api/push/stats` - Get push stats (admin)
 
-## Testing Results (Iteration 15 - January 15, 2026)
-- **Backend: 18/18 tests passed (100%)**
+## Testing Results (Iteration 16 - January 15, 2026)
+- **Backend: 36/36 tests passed (100%)**
 - **Frontend: All UI features working (100%)**
-- Test report: `/app/test_reports/iteration_15.json`
+- Test report: `/app/test_reports/iteration_16.json`
 
-### Marketplace Tests Verified:
-- Protocol listing API with category filtering and sorting
-- Categories API returning 6 categories with counts
-- Admin revenue settings (GET/PUT) with 5-30% validation
-- Admin payouts tracking showing accumulated earnings
-- User earnings API with payout history
-- Map data API returning protocol locations
-- PayPal config endpoint
-- Revenue split calculation (85% creator, 15% admin)
+### New Features Verified:
+- Statistics Page with 6 quick stats cards (Total Users, Active 7d, Protocols, Searches, Purchases, Revenue)
+- Charts: Countries pie chart, US States bar chart, Document Types pie chart, Top 10 Words bar chart
+- Top Sellers Leaderboard with Sales Count and Revenue tabs
+- Funny titles: "The Protocol Overlord 🦁", "The Protocol Billionaire 🏦", "The Silver Searcher 🥈", "The Search Tycoon 🎩"
+- Badges: 👑 (Legend), 💰 (Money bags), 🔥 (Hot), 🤑 (Making money)
+- All 11 marketplace protocols including George Bush, William C. Gamble, Richard J. Selman
+- Statistics nav item in sidebar with 📊 icon
 
 ## Preview URL
 https://explorer-hub-7.preview.emergentagent.com
