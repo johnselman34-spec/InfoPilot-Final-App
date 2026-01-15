@@ -344,15 +344,25 @@ class TestMarketplaceEndpoints:
         data = response.json()
         print(f"✅ Marketplace protocols endpoint working")
     
-    def test_marketplace_free_protocols(self, admin_token):
-        """Test marketplace free protocols endpoint"""
+    def test_marketplace_categories(self, admin_token):
+        """Test marketplace categories endpoint"""
         response = requests.get(
-            f"{BASE_URL}/api/marketplace/free",
+            f"{BASE_URL}/api/marketplace/categories",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Marketplace free protocols endpoint working")
+        print(f"✅ Marketplace categories endpoint working")
+    
+    def test_marketplace_seller_dashboard(self, admin_token):
+        """Test marketplace seller dashboard endpoint"""
+        response = requests.get(
+            f"{BASE_URL}/api/marketplace/seller/dashboard",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        print(f"✅ Marketplace seller dashboard endpoint working")
 
 
 class TestAdminPanelEndpoints:
