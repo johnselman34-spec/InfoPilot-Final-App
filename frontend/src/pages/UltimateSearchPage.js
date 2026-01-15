@@ -505,22 +505,64 @@ const UltimateSearchPage = ({ showToast }) => {
 
         {/* Aggregation Options */}
         <div style={{ display: 'flex', gap: 20, marginBottom: 20, alignItems: 'center', flexWrap: 'wrap' }}>
-          <span style={{ color: '#a1a1aa' }}>Search Aggregation:</span>
-          {['and_or', 'and', 'or'].map(agg => (
-            <label key={agg} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+          <span style={{ color: '#a1a1aa' }}>Category Logic:</span>
+          {[
+            { value: 'and_or', label: 'AND/OR', desc: 'Match any category' },
+            { value: 'and', label: 'AND', desc: 'Match ALL categories' },
+            { value: 'or', label: 'OR', desc: 'Match any category' }
+          ].map(agg => (
+            <label 
+              key={agg.value} 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 5, 
+                cursor: 'pointer',
+                padding: '6px 12px',
+                borderRadius: 8,
+                background: aggregation === agg.value ? 'rgba(124, 58, 237, 0.3)' : 'transparent',
+                border: aggregation === agg.value ? '1px solid rgba(124, 58, 237, 0.5)' : '1px solid transparent',
+                transition: 'all 0.2s'
+              }}
+              title={agg.desc}
+              data-testid={`aggregation-${agg.value}`}
+            >
               <input
                 type="radio"
                 name="aggregation"
-                checked={aggregation === agg}
-                onChange={() => setAggregation(agg)}
+                checked={aggregation === agg.value}
+                onChange={() => setAggregation(agg.value)}
+                style={{ accentColor: '#7c3aed' }}
               />
-              {agg.toUpperCase().replace('_', '/')}
+              <span style={{ color: aggregation === agg.value ? '#a78bfa' : '#9ca3af' }}>{agg.label}</span>
             </label>
           ))}
+          
+          {/* Show active filter status */}
+          {selectedCategories.length > 0 && (
+            <span style={{ 
+              padding: '4px 10px', 
+              background: 'rgba(16, 185, 129, 0.2)', 
+              color: '#10b981',
+              borderRadius: 6,
+              fontSize: '0.8rem'
+            }}>
+              🔍 Filtering by {selectedCategories.length} categor{selectedCategories.length > 1 ? 'ies' : 'y'} ({aggregation.toUpperCase().replace('_', '/')})
+            </span>
+          )}
+          
+          <button
+            className={`btn ${showMap ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => setShowMap(!showMap)}
+            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+            data-testid="toggle-map-btn"
+          >
+            🗺️ {showMap ? 'Hide' : 'Show'} Map ({mapResults.length} locations)
+          </button>
           <button
             className={`btn ${showDebugger ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setShowDebugger(!showDebugger)}
-            style={{ marginLeft: 'auto', padding: '8px 16px', fontSize: '0.85rem' }}
+            style={{ padding: '8px 16px', fontSize: '0.85rem' }}
             data-testid="toggle-debugger-btn"
           >
             🔧 {showDebugger ? 'Hide' : 'Show'} Protocol Debugger
