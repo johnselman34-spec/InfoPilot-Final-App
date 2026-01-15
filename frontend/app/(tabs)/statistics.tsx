@@ -676,6 +676,8 @@ export default function StatisticsScreen() {
         {activeChart === 'documents' && renderDocumentTypeChart()}
         {activeChart === 'geography' && renderGeographyStats()}
         {activeChart === 'leaderboard' && renderLeaderboard()}
+        {activeChart === 'clipboard' && renderClipboardLeaders()}
+        {activeChart === 'achievements' && renderAchievements()}
 
         {/* Book Promotion */}
         <View style={styles.bookPromo}>
