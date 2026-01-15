@@ -456,6 +456,9 @@ const MarketplacePage = ({ showToast }) => {
       {/* Browse Tab */}
       {activeTab === 'browse' && (
         <div>
+          {/* Bundle of the Week - Featured Section */}
+          <BundleOfTheWeek showToast={showToast} />
+          
           <AISuggestions showToast={showToast} onViewProtocol={() => {}} />
           <WorldWideMap protocols={filteredProtocols} categories={categories} selectedCategories={selectedCategories} onSelectAll={() => setSelectedCategories(categories.map(c => c.name))} onDeselectAll={() => setSelectedCategories([])} />
           
