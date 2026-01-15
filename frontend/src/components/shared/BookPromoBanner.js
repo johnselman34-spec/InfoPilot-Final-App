@@ -235,6 +235,21 @@ const InfoPilotSection = () => (
 
 const BookPromoBanner = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  // A/B Testing hooks for headline and CTA
+  const { variant: headlineVariant, trackEvent: trackHeadlineEvent } = useVariant('book_promo_headline');
+  const { variant: ctaVariant, trackEvent: trackCtaEvent } = useVariant('book_promo_cta_button');
+  
+  // Track impression on mount
+  useEffect(() => {
+    if (headlineVariant) {
+      trackHeadlineEvent('impression');
+    }
+    if (ctaVariant) {
+      trackCtaEvent('impression');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [headlineVariant?.variant_id, ctaVariant?.variant_id]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -243,7 +258,21 @@ const BookPromoBanner = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const currentTagline = FUNNY_TAGLINES[currentImageIndex];
+  // Use A/B variant content or fallback to defaults
+  const currentTagline = headlineVariant?.content 
+    ? { text: headlineVariant.content.headline, subtext: headlineVariant.content.subtext }
+    : FUNNY_TAGLINES[currentImageIndex];
+  
+  const ctaContent = ctaVariant?.content || { text: '🛒 GET IT NOW - Only $2.99!', style: 'gradient_pink_orange' };
+  const ctaStyle = CTA_STYLES[ctaContent.style] || CTA_STYLES.gradient_pink_orange;
+  
+  // Handle CTA click with A/B tracking
+  const handleCtaClick = () => {
+    if (ctaVariant) {
+      trackCtaEvent('click');
+    }
+    // Conversion is tracked when user actually purchases (external)
+  };
 
   return (
     <div data-testid="book-promo-banner" style={{
@@ -273,6 +302,22 @@ const BookPromoBanner = () => {
           background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
           animation: 'shimmer 3s infinite'
         }} />
+        
+        {/* A/B Test Indicator (only in dev) */}
+        {process.env.NODE_ENV === 'development' && headlineVariant && (
+          <div style={{
+            position: 'absolute',
+            top: 2,
+            left: 5,
+            background: 'rgba(0,0,0,0.5)',
+            padding: '2px 6px',
+            borderRadius: 4,
+            fontSize: '0.6rem',
+            color: '#10b981'
+          }}>
+            A/B: {headlineVariant.variant_id}
+          </div>
+        )}
         
         <div style={{
           position: 'absolute',
