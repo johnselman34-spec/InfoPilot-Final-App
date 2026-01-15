@@ -210,7 +210,8 @@ class TestCategoryFilteringBackend:
         # Empty category_ids should not apply filter
         assert data["filter_applied"] == False, "Empty category_ids should not apply filter"
         
-        print(f"✅ Empty category_ids: {data['count']} results, filter_applied={data['filter_applied']}")
+        count = data.get("count", data.get("total", 0))
+        print(f"✅ Empty category_ids: {count} results, filter_applied={data['filter_applied']}")
     
     def test_invalid_category_id(self):
         """Test behavior with invalid category ID"""
