@@ -3,12 +3,14 @@ InfoPilot Explorer - Protocol Bundles Router
 Allows users to create and purchase curated collections of protocols at a discount
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from typing import List, Optional
 from bson import ObjectId
 from datetime import datetime, timezone
 import logging
+
+from routes.auth import get_current_user, get_optional_user
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +33,8 @@ class BundleCreate(BaseModel):
     
 class BundlePurchase(BaseModel):
     bundle_id: str
-    transaction_id: str
+    transaction_id: Optional[str] = None
 
-# Helper to get current user from token
-async def get_current_user(token: str):
-    from backend.services.auth_service import AuthService
-    return await AuthService.get_user_from_token(token)
 
 @router.get("")
 async def list_bundles(category: str = None, sort: str = "popular"):
@@ -82,18 +80,11 @@ async def list_bundles(category: str = None, sort: str = "popular"):
     
     return {"bundles": result, "count": len(result)}
 
+
 @router.post("")
-async def create_bundle(bundle: BundleCreate, authorization: str = None):
+async def create_bundle(bundle: BundleCreate, user = Depends(get_current_user)):
     """Create a new protocol bundle (sellers only)"""
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    
-    token = authorization.replace("Bearer ", "")
-    user = await get_current_user(token)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
-    # Verify all protocols exist and belong to the user
+    # Verify all protocols exist
     protocol_ids = [ObjectId(pid) for pid in bundle.protocol_ids]
     protocols = await db.marketplace_protocols.find({
         "_id": {"$in": protocol_ids}
@@ -118,7 +109,7 @@ async def create_bundle(bundle: BundleCreate, authorization: str = None):
         "original_price": original_price,
         "bundle_price": bundle_price,
         "creator_id": str(user["_id"]),
-        "creator_name": user.get("username") or user.get("email"),
+        "creator_name": user.get("username") or user.get("callsign") or user.get("email"),
         "is_active": True,
         "total_sales": 0,
         "created_at": datetime.now(timezone.utc)
@@ -132,6 +123,7 @@ async def create_bundle(bundle: BundleCreate, authorization: str = None):
         "bundle_price": round(bundle_price, 2),
         "savings": round(original_price - bundle_price, 2)
     }
+
 
 @router.get("/{bundle_id}")
 async def get_bundle(bundle_id: str):
@@ -161,7 +153,7 @@ async def get_bundle(bundle_id: str):
             "name": p.get("name"),
             "description": p.get("description"),
             "price": p.get("price"),
-            "protocol_string": p.get("protocol_string")
+            "protocol_string": p.get("protocol")
         } for p in protocols],
         "original_price": round(original_price, 2),
         "bundle_price": round(bundle_price, 2),
@@ -171,16 +163,13 @@ async def get_bundle(bundle_id: str):
         "creator_name": bundle.get("creator_name")
     }
 
-@router.post("/{bundle_id}/purchase")
-async def purchase_bundle(bundle_id: str, purchase: BundlePurchase, authorization: str = None):
-    """Purchase a protocol bundle"""
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authentication required")
+
+@router.post("/purchase")
+async def purchase_bundle(purchase: BundlePurchase, user = Depends(get_current_user)):
+    """Initiate a protocol bundle purchase"""
+    from config import PAYPAL_PAYMENT_LINK
     
-    token = authorization.replace("Bearer ", "")
-    user = await get_current_user(token)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    bundle_id = purchase.bundle_id
     
     try:
         bundle = await db.protocol_bundles.find_one({"_id": ObjectId(bundle_id)})
@@ -190,16 +179,120 @@ async def purchase_bundle(bundle_id: str, purchase: BundlePurchase, authorizatio
     if not bundle:
         raise HTTPException(status_code=404, detail="Bundle not found")
     
+    # Check if user already owns this bundle
+    existing_purchase = await db.bundle_purchases.find_one({
+        "user_id": str(user["_id"]),
+        "bundle_id": bundle_id
+    })
+    
+    if existing_purchase:
+        raise HTTPException(status_code=400, detail="You already own this bundle")
+    
+    # Calculate price
+    protocol_ids = [ObjectId(pid) for pid in bundle.get("protocol_ids", [])]
+    protocols = await db.marketplace_protocols.find({"_id": {"$in": protocol_ids}}).to_list(100)
+    
+    original_price = sum(p.get("price", 0) for p in protocols)
+    bundle_price = original_price * (1 - bundle.get("discount_percent", 15) / 100)
+    
+    # If free bundle, complete immediately
+    if bundle_price <= 0:
+        purchase_record = {
+            "user_id": str(user["_id"]),
+            "bundle_id": bundle_id,
+            "bundle_name": bundle.get("name"),
+            "protocol_ids": bundle.get("protocol_ids"),
+            "amount_paid": 0,
+            "original_price": original_price,
+            "savings": original_price,
+            "transaction_id": f"FREE-{bundle_id}-{datetime.now().timestamp()}",
+            "is_free": True,
+            "purchased_at": datetime.now(timezone.utc)
+        }
+        
+        await db.bundle_purchases.insert_one(purchase_record)
+        
+        # Update bundle sales count
+        await db.protocol_bundles.update_one(
+            {"_id": ObjectId(bundle_id)},
+            {"$inc": {"total_sales": 1}}
+        )
+        
+        return {
+            "message": "Bundle acquired for FREE!",
+            "protocols_unlocked": len(bundle.get("protocol_ids", [])),
+            "is_free": True
+        }
+    
+    # Create pending purchase and return payment URL
+    pending = {
+        "user_id": str(user["_id"]),
+        "bundle_id": bundle_id,
+        "bundle_name": bundle.get("name"),
+        "amount": round(bundle_price, 2),
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc)
+    }
+    
+    result = await db.pending_bundle_purchases.insert_one(pending)
+    pending_id = str(result.inserted_id)
+    
+    # PayPal payment link
+    payment_url = PAYPAL_PAYMENT_LINK or f"https://www.paypal.com/paypalme/TopPilotEnterprises/{bundle_price:.2f}"
+    
+    return {
+        "success": True,
+        "pending_id": pending_id,
+        "payment_url": payment_url,
+        "amount": round(bundle_price, 2),
+        "bundle_name": bundle.get("name"),
+        "message": f"Complete payment of ${bundle_price:.2f} via PayPal, then confirm your purchase."
+    }
+
+
+@router.post("/confirm-payment")
+async def confirm_bundle_payment(data: dict, user = Depends(get_current_user)):
+    """Confirm PayPal payment for bundle purchase"""
+    bundle_id = data.get("bundle_id")
+    transaction_id = data.get("transaction_id")
+    
+    if not bundle_id or not transaction_id:
+        raise HTTPException(status_code=400, detail="Bundle ID and Transaction ID required")
+    
+    try:
+        bundle = await db.protocol_bundles.find_one({"_id": ObjectId(bundle_id)})
+    except:
+        raise HTTPException(status_code=400, detail="Invalid bundle ID")
+    
+    if not bundle:
+        raise HTTPException(status_code=404, detail="Bundle not found")
+    
+    # Check if already purchased
+    existing = await db.bundle_purchases.find_one({
+        "user_id": str(user["_id"]),
+        "bundle_id": bundle_id
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="You already own this bundle")
+    
+    # Calculate prices
+    protocol_ids = [ObjectId(pid) for pid in bundle.get("protocol_ids", [])]
+    protocols = await db.marketplace_protocols.find({"_id": {"$in": protocol_ids}}).to_list(100)
+    
+    original_price = sum(p.get("price", 0) for p in protocols)
+    bundle_price = original_price * (1 - bundle.get("discount_percent", 15) / 100)
+    
     # Record purchase
     purchase_record = {
         "user_id": str(user["_id"]),
         "bundle_id": bundle_id,
         "bundle_name": bundle.get("name"),
         "protocol_ids": bundle.get("protocol_ids"),
-        "amount_paid": bundle.get("bundle_price"),
-        "original_price": bundle.get("original_price"),
-        "savings": bundle.get("original_price", 0) - bundle.get("bundle_price", 0),
-        "transaction_id": purchase.transaction_id,
+        "amount_paid": bundle_price,
+        "original_price": original_price,
+        "savings": original_price - bundle_price,
+        "transaction_id": transaction_id,
         "purchased_at": datetime.now(timezone.utc)
     }
     
@@ -212,29 +305,27 @@ async def purchase_bundle(bundle_id: str, purchase: BundlePurchase, authorizatio
     )
     
     # Award XP
-    await db.users.update_one(
-        {"_id": user["_id"]},
-        {"$inc": {"xp": 20}}  # Bonus XP for bundle purchase
-    )
+    try:
+        await db.gamification.update_one(
+            {"user_id": str(user["_id"])},
+            {"$inc": {"xp": 20}},  # Bonus XP for bundle purchase
+            upsert=True
+        )
+    except:
+        pass
     
     return {
+        "success": True,
         "message": "Bundle purchased successfully!",
         "protocols_unlocked": len(bundle.get("protocol_ids", [])),
-        "savings": round(bundle.get("original_price", 0) - bundle.get("bundle_price", 0), 2),
+        "savings": round(original_price - bundle_price, 2),
         "xp_earned": 20
     }
 
+
 @router.get("/my/purchases")
-async def get_my_bundle_purchases(authorization: str = None):
+async def get_my_bundle_purchases(user = Depends(get_current_user)):
     """Get user's bundle purchase history"""
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authentication required")
-    
-    token = authorization.replace("Bearer ", "")
-    user = await get_current_user(token)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid token")
-    
     purchases = await db.bundle_purchases.find(
         {"user_id": str(user["_id"])}
     ).sort("purchased_at", -1).to_list(100)
@@ -249,3 +340,30 @@ async def get_my_bundle_purchases(authorization: str = None):
             "purchased_at": p.get("purchased_at").isoformat() if p.get("purchased_at") else None
         } for p in purchases]
     }
+
+
+@router.delete("/{bundle_id}")
+async def delete_bundle(bundle_id: str, user = Depends(get_current_user)):
+    """Delete a bundle (creator or admin only)"""
+    try:
+        bundle = await db.protocol_bundles.find_one({"_id": ObjectId(bundle_id)})
+    except:
+        raise HTTPException(status_code=400, detail="Invalid bundle ID")
+    
+    if not bundle:
+        raise HTTPException(status_code=404, detail="Bundle not found")
+    
+    # Check if user is creator or admin
+    is_creator = bundle.get("creator_id") == str(user["_id"])
+    is_admin = user.get("is_admin", False)
+    
+    if not is_creator and not is_admin:
+        raise HTTPException(status_code=403, detail="You don't have permission to delete this bundle")
+    
+    # Soft delete - mark as inactive
+    await db.protocol_bundles.update_one(
+        {"_id": ObjectId(bundle_id)},
+        {"$set": {"is_active": False, "deleted_at": datetime.now(timezone.utc)}}
+    )
+    
+    return {"success": True, "message": "Bundle deleted"}
