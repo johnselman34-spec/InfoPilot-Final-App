@@ -2151,6 +2151,17 @@ async def create_category(data: CategoryCreate, user: dict = Depends(require_use
     for_sale = data.for_sale if not data.is_public else False
     price = data.price if for_sale else None
     
+    # Process location data
+    location_data = None
+    if data.location:
+        location_data = {
+            "city": data.location.city,
+            "state": data.location.state,
+            "country": data.location.country,
+            "lat": data.location.lat,
+            "lng": data.location.lng
+        }
+    
     category = {
         "id": category_id,
         "user_id": user["id"],
@@ -2160,6 +2171,7 @@ async def create_category(data: CategoryCreate, user: dict = Depends(require_use
         "is_public": data.is_public,
         "for_sale": for_sale,
         "price": price,
+        "location": location_data,
         "level": level,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
