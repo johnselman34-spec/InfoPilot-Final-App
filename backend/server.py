@@ -2486,6 +2486,9 @@ async def get_protocols_for_sale(user: dict = Depends(require_user)):
         # Create protocol preview (first 50 chars)
         protocol_preview = protocol.get("protocol_string", "")[:50] + "..." if protocol.get("protocol_string") else None
         
+        # Get location data
+        location = protocol.get("location")
+        
         result.append({
             "id": protocol["id"],
             "name": protocol["name"],
@@ -2494,6 +2497,7 @@ async def get_protocols_for_sale(user: dict = Depends(require_user)):
             "price": protocol.get("price", 0.75),
             "is_purchased": purchase is not None,
             "protocol_preview": protocol_preview,
+            "location": location,
             "created_at": protocol.get("created_at")
         })
     
