@@ -198,8 +198,8 @@ async def get_marketplace_protocol(protocol_id: str, user = Depends(get_optional
 
 @router.post("/protocols", response_model=dict)
 async def create_marketplace_protocol(protocol: MarketplaceProtocolCreate, user = Depends(get_current_user)):
-    """List a new protocol for sale in the marketplace"""
-    # Validate price
+    """List a new protocol for sale in the marketplace (or FREE!)"""
+    # Validate price - allow $0.00 (FREE) up to $99.99
     if protocol.price < MARKETPLACE_MIN_PRICE or protocol.price > MARKETPLACE_MAX_PRICE:
         raise HTTPException(
             status_code=400, 
@@ -211,12 +211,15 @@ async def create_marketplace_protocol(protocol: MarketplaceProtocolCreate, user 
     if not is_valid:
         raise HTTPException(status_code=400, detail=f"Invalid protocol: {message}")
     
+    # Determine if protocol is free
+    is_free = protocol.price == 0 or protocol.price < 0.01
+    
     # Create listing
     listing = {
         "name": protocol.name,
         "description": protocol.description,
         "protocol": protocol.protocol,
-        "price": protocol.price,
+        "price": 0.0 if is_free else protocol.price,
         "category": protocol.category,
         "tags": protocol.tags,
         "creator_id": str(user["_id"]),
@@ -229,17 +232,22 @@ async def create_marketplace_protocol(protocol: MarketplaceProtocolCreate, user 
         "preview_results": protocol.preview_results,
         "status": "active",
         "is_featured": False,
+        "is_free": is_free,  # New field for FREE protocols
+        "clipboard_copies": 0,  # Track clipboard copies
         "created_at": datetime.utcnow()
     }
     
     result = await db.marketplace_protocols.insert_one(listing)
     listing["_id"] = result.inserted_id
     
+    free_message = " 🎉 Your protocol is FREE for everyone to copy!" if is_free else ""
+    
     return {
         "id": str(listing["_id"]),
-        "message": "Protocol listed successfully!",
+        "message": f"Protocol listed successfully!{free_message}",
         "name": listing["name"],
-        "price": listing["price"]
+        "price": listing["price"],
+        "is_free": is_free
     }
 
 
