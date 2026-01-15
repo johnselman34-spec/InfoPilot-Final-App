@@ -1,6 +1,11 @@
 """
 InfoPilot Explorer - Protocol Parser Service
 Handles parsing and matching of search protocols
+Enhanced to handle:
+- Abbreviated names: "William C. Gamble", "John F. Kennedy", "John J S"
+- Location abbreviations: "Heidelberg, GER", "Albuquerque, NM", "Nm", "Baden Wuerttemberg"
+- Common abbreviations: "etc.", "U.S.", "Dr.", "Mr.", "Jr.", "Sr."
+- Case-insensitive OR operators
 """
 import re
 from typing import List, Dict, Any, Tuple
@@ -17,8 +22,11 @@ class ProtocolParser:
     - + - Boost indicator (higher relevance)
     
     Supports:
-    - Abbreviated names: "William C. Gamble", "John F. Kennedy"
+    - Abbreviated names: "William C. Gamble", "John F. Kennedy", "John J S", "John S."
+    - Location abbreviations: "Heidelberg, GER", "Albuquerque, NM", "Brunswick, ME"
+    - German/European locations: "Baden Wuerttemberg, GER", "München, DEU"
     - Common abbreviations: "etc.", "U.S.", "Dr.", "Mr.", "Jr.", "Sr."
+    - Case-insensitive OR: "or", "Or", "OR" all work
     - Quoted phrases: "exact phrase match"
     """
     
@@ -32,6 +40,22 @@ class ProtocolParser:
         'ft.', 'in.', 'lb.', 'oz.', 'qt.', 'pt.', 'gal.', 'mi.', 'yd.',
         'Jan.', 'Feb.', 'Mar.', 'Apr.', 'Jun.', 'Jul.', 'Aug.', 'Sep.', 'Sept.',
         'Oct.', 'Nov.', 'Dec.', 'Mon.', 'Tue.', 'Wed.', 'Thu.', 'Fri.', 'Sat.', 'Sun.'
+    ]
+    
+    # US State abbreviations (both upper and mixed case)
+    US_STATE_ABBREVIATIONS = [
+        'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID',
+        'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS',
+        'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK',
+        'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV',
+        'WI', 'WY', 'DC', 'PR', 'VI', 'GU', 'AS', 'MP'
+    ]
+    
+    # Country abbreviations
+    COUNTRY_ABBREVIATIONS = [
+        'USA', 'US', 'UK', 'GB', 'GBR', 'GER', 'DEU', 'FRA', 'ESP', 'ITA', 'CAN',
+        'AUS', 'NZL', 'JPN', 'CHN', 'KOR', 'IND', 'BRA', 'MEX', 'ARG', 'RUS',
+        'NLD', 'BEL', 'CHE', 'AUT', 'POL', 'SWE', 'NOR', 'DNK', 'FIN', 'PRT'
     ]
     
     @staticmethod
@@ -53,9 +77,9 @@ class ProtocolParser:
         if '(' not in protocol or ')' not in protocol:
             return False, "Protocol must contain at least one group: (word1 or word2)"
         
-        # Check for operators
+        # Check for operators (case-insensitive OR)
         has_and = '&' in protocol
-        has_or = ' or ' in protocol.lower()
+        has_or = bool(re.search(r'\bor\b', protocol, re.IGNORECASE))
         
         if not has_or:
             return False, "Protocol must contain 'or' operators within groups"
@@ -75,10 +99,42 @@ class ProtocolParser:
         return term
     
     @staticmethod
+    def _is_abbreviation_or_location(term: str) -> bool:
+        """
+        Check if a term is an abbreviation or location format
+        Examples: "William C. Gamble", "John J S", "Heidelberg, GER", "NM"
+        """
+        # Check for single/double letter with period (C. G. J.)
+        if re.match(r'^[A-Za-z]\.$', term):
+            return True
+        
+        # Check for initials without periods (J S, J J S)
+        if re.match(r'^[A-Za-z](\s+[A-Za-z])*$', term):
+            return True
+        
+        # Check for US state abbreviation
+        if term.upper() in ProtocolParser.US_STATE_ABBREVIATIONS:
+            return True
+        
+        # Check for country abbreviation
+        if term.upper() in ProtocolParser.COUNTRY_ABBREVIATIONS:
+            return True
+        
+        # Check for location format (City, STATE/COUNTRY)
+        if re.match(r'^[A-Za-z\s]+,\s*[A-Za-z]{2,3}$', term):
+            return True
+        
+        return False
+    
+    @staticmethod
     def _split_terms_by_or(terms_str: str) -> List[str]:
         """
-        Split terms by 'or' while preserving quoted phrases and abbreviations
-        Handles: "William C. Gamble or John F. Kennedy or etc."
+        Split terms by 'or' (case-insensitive) while preserving quoted phrases and abbreviations
+        Handles: 
+        - "William C. Gamble or John F. Kennedy or etc."
+        - "Heidelberg, GER or Albuquerque, NM"
+        - "John J S or John S."
+        - Case variations: "or", "Or", "OR"
         """
         terms = []
         current_term = ""
@@ -106,8 +162,9 @@ class ProtocolParser:
             
             # Check for ' or ' (case insensitive) when not in quotes
             if not in_quotes and i + 4 <= len(terms_str):
-                potential_or = terms_str[i:i+4].lower()
-                if potential_or == ' or ':
+                potential_or = terms_str[i:i+4]
+                # Case-insensitive check for " or "
+                if potential_or.lower() == ' or ':
                     # Save current term if not empty
                     if current_term.strip():
                         terms.append(ProtocolParser._normalize_term(current_term))
