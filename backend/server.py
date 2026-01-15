@@ -978,7 +978,14 @@ class InfoPilot2Parser:
     
     @staticmethod
     def parse_protocol(protocol_string: str) -> Dict[str, Any]:
-        """Parse InfoPilot 2.0 protocol string into structured format"""
+        """Parse InfoPilot 2.0 protocol string into structured format.
+        
+        Handles:
+        - Multi-word phrases like "William C. Gamble"
+        - Abbreviations with periods like "Ph.D.", "etc.", "U.S."
+        - Personal pronouns like "C." in names
+        - Case-insensitive 'or' separators within parentheses
+        """
         result = {
             "groups": [],
             "valid": True,
@@ -986,6 +993,7 @@ class InfoPilot2Parser:
         }
         
         try:
+            # Split by & (AND operator) - be careful not to split within phrases
             groups = re.split(r'\s*&\s*', protocol_string.strip())
             
             for group in groups:
@@ -996,6 +1004,7 @@ class InfoPilot2Parser:
                 include_all = False
                 exclude_all = False
                 
+                # Check for modifiers (+ for include all, ^ for exclude all)
                 if group.startswith('+') or group.endswith('+'):
                     include_all = True
                     group = group.strip('+').strip()
@@ -1003,10 +1012,15 @@ class InfoPilot2Parser:
                     exclude_all = True
                     group = group.strip('^').strip()
                 
+                # Extract content within parentheses
                 match = re.match(r'\(([^)]+)\)', group)
                 if match:
                     words_str = match.group(1)
-                    words = [w.strip() for w in re.split(r'\s+or\s+', words_str, flags=re.IGNORECASE)]
+                    
+                    # Split by 'or' but preserve abbreviations and multi-word phrases
+                    # Use a smarter split that respects abbreviations like "William C. Gamble"
+                    # The 'or' must be surrounded by whitespace to be a separator
+                    words = InfoPilot2Parser._split_by_or(words_str)
                     
                     result["groups"].append({
                         "words": words,
@@ -1029,6 +1043,29 @@ class InfoPilot2Parser:
         except Exception as e:
             result["valid"] = False
             result["error"] = str(e)
+        
+        return result
+    
+    @staticmethod
+    def _split_by_or(text: str) -> List[str]:
+        """Split text by ' or ' while preserving abbreviations and multi-word phrases.
+        
+        Handles cases like:
+        - "William C. Gamble or George Bush" -> ["William C. Gamble", "George Bush"]
+        - "Ph.D. or Dr. or M.D." -> ["Ph.D.", "Dr.", "M.D."]
+        - "U.S. Civil War or American Revolution" -> ["U.S. Civil War", "American Revolution"]
+        - "etc. or example" -> ["etc.", "example"]
+        """
+        # Use regex to split by ' or ' (case insensitive) but only when surrounded by spaces
+        # This preserves abbreviations like "C." within names
+        parts = re.split(r'\s+[oO][rR]\s+', text)
+        
+        # Clean up each part
+        result = []
+        for part in parts:
+            cleaned = part.strip()
+            if cleaned:
+                result.append(cleaned)
         
         return result
     
