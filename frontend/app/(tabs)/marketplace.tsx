@@ -442,32 +442,22 @@ export default function MarketplaceScreen() {
         ))}
       </View>
 
-      {/* Main Content - FlatList with flex: 1 for proper scrolling */}
+      {/* Main Content - ScrollView for reliable cross-platform scrolling */}
       {viewMode === 'map' ? (
-        <ScrollView style={styles.mapScrollView} contentContainerStyle={styles.mapScrollContent}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
           {renderWorldMap()}
         </ScrollView>
       ) : (
-        <FlatList
-          data={filteredProtocols}
-          renderItem={renderProtocolCard}
-          keyExtractor={(item) => item.id}
-          style={styles.flatList}
-          contentContainerStyle={styles.listContainer}
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={true}
-          ListHeaderComponent={
-            <Text style={styles.protocolCount}>
-              🎉 {filteredProtocols.length} AMAZING protocols available!
-            </Text>
-          }
-          ListFooterComponent={
-            <View style={styles.listFooter}>
-              <Text style={styles.listFooterText}>
-                📚 Check out "Letters to Evelyn" - The book that started it all! 📚
-              </Text>
-            </View>
-          }
-          ListEmptyComponent={
+        >
+          <Text style={styles.protocolCount}>
+            🎉 {filteredProtocols.length} AMAZING protocols available!
+          </Text>
+          
+          {filteredProtocols.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Ionicons name="sad-outline" size={60} color={colors.gray} />
               <Text style={styles.emptyText}>No protocols found!</Text>
@@ -475,8 +465,22 @@ export default function MarketplaceScreen() {
                 Be the FIRST to list one and become a legend! 🏆
               </Text>
             </View>
-          }
-        />
+          ) : (
+            <View style={styles.listContainer}>
+              {filteredProtocols.map((protocol) => (
+                <View key={protocol.id}>
+                  {renderProtocolCard({ item: protocol })}
+                </View>
+              ))}
+            </View>
+          )}
+          
+          <View style={styles.listFooter}>
+            <Text style={styles.listFooterText}>
+              📚 Check out "Letters to Evelyn" - The book that started it all! 📚
+            </Text>
+          </View>
+        </ScrollView>
       )}
 
       {/* Selected Protocol Modal */}
