@@ -78,6 +78,32 @@ app = FastAPI(title="InfoPilot API", version="2.0.0")
 # Create a router with the /api prefix for endpoints not in modular files
 api_router = APIRouter(prefix="/api")
 
+# Static file serving for uploads
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+# Create upload directories
+PHOTO_UPLOAD_DIR = "/app/backend/uploads/photos"
+MESSAGE_UPLOAD_DIR = "/app/backend/uploads/messages"
+os.makedirs(PHOTO_UPLOAD_DIR, exist_ok=True)
+os.makedirs(MESSAGE_UPLOAD_DIR, exist_ok=True)
+
+@app.get("/api/uploads/photos/{filename}")
+async def serve_photo(filename: str):
+    """Serve uploaded photos"""
+    filepath = os.path.join(PHOTO_UPLOAD_DIR, filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(filepath)
+
+@app.get("/api/uploads/messages/{filename}")
+async def serve_message_image(filename: str):
+    """Serve message images"""
+    filepath = os.path.join(MESSAGE_UPLOAD_DIR, filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(filepath)
+
 # Security
 security = HTTPBearer(auto_error=False)
 
