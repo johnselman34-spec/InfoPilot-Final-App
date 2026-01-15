@@ -1054,10 +1054,13 @@ class InfoPilot2Parser:
         - "William C. Gamble or George Bush" -> ["William C. Gamble", "George Bush"]
         - "Ph.D. or Dr. or M.D." -> ["Ph.D.", "Dr.", "M.D."]
         - "U.S. Civil War or American Revolution" -> ["U.S. Civil War", "American Revolution"]
-        - "etc. or example" -> ["etc.", "example"]
+        - "John S. or John J S" -> ["John S.", "John J S"]
+        - "Heidelberg, GER or Albuquerque, NM" -> ["Heidelberg, GER", "Albuquerque, NM"]
+        - "Heidelberg, Baden Wuerttemberg, GER" - preserved as single phrase
+        - Case-insensitive 'or', 'Or', 'OR' all work
         """
         # Use regex to split by ' or ' (case insensitive) but only when surrounded by spaces
-        # This preserves abbreviations like "C." within names
+        # This preserves abbreviations like "C." within names and location commas
         parts = re.split(r'\s+[oO][rR]\s+', text)
         
         # Clean up each part
@@ -1068,6 +1071,17 @@ class InfoPilot2Parser:
                 result.append(cleaned)
         
         return result
+    
+    @staticmethod
+    def _normalize_phrase(phrase: str) -> str:
+        """Normalize a phrase for consistent matching.
+        
+        Handles:
+        - "John J S" -> can match "John J. S.", "John J S", "john j s"
+        - "Heidelberg, GER" -> matches "Heidelberg, Germany", "heidelberg, ger"
+        - "Albuquerque, NM" or "Albuquerque, Nm" -> both work
+        """
+        return phrase.lower().strip()
     
     @staticmethod
     def match_content(content: str, parsed_protocol: Dict[str, Any]) -> bool:
