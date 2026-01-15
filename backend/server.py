@@ -1718,6 +1718,274 @@ async def send_message(data: MessageSend, authorization: Optional[str] = Header(
         logger.error(f"Send message error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ==================== STATISTICS & LEADERBOARD ROUTES ====================
+
+@api_router.get("/statistics")
+async def get_statistics():
+    """Get app-wide statistics - THE NUMBERS DON'T LIE! 📊"""
+    try:
+        # Count totals
+        total_users = await db.users.count_documents({})
+        total_categories = await db.categories.count_documents({})
+        total_searches = await db.search_results.count_documents({})
+        total_sales = await db.transactions.count_documents({"status": "completed"})
+        
+        # Calculate total revenue
+        transactions = await db.transactions.find({"status": "completed"}).to_list(10000)
+        total_revenue = sum(t.get("amount", 0) for t in transactions)
+        
+        # Get country breakdown from search results
+        search_results = await db.search_results.find({}).limit(1000).to_list(1000)
+        country_counts = {}
+        content_type_counts = {}
+        
+        for result in search_results:
+            country = result.get("country", "Unknown")
+            country_counts[country] = country_counts.get(country, 0) + 1
+            
+            content_type = result.get("content_type", "Web")
+            content_type_counts[content_type] = content_type_counts.get(content_type, 0) + 1
+        
+        # Top 10 most used protocol words
+        categories = await db.categories.find({}).to_list(500)
+        word_counts = {}
+        for cat in categories:
+            protocol = cat.get("protocol", "")
+            words = protocol.lower().replace("(", " ").replace(")", " ").replace("&", " ").split()
+            for word in words:
+                if word not in ["or", "and"] and len(word) > 2:
+                    word_counts[word] = word_counts.get(word, 0) + 1
+        
+        top_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        
+        return {
+            "overview": {
+                "total_users": total_users,
+                "total_protocols": total_categories,
+                "total_searches": total_searches,
+                "total_sales": total_sales,
+                "total_revenue": round(total_revenue, 2)
+            },
+            "country_breakdown": dict(sorted(country_counts.items(), key=lambda x: x[1], reverse=True)[:10]),
+            "content_type_breakdown": content_type_counts,
+            "top_protocol_words": [{"word": w, "count": c} for w, c in top_words],
+            "funny_message": "📈 These numbers are climbing faster than a cat up a curtain! 🐱"
+        }
+    except Exception as e:
+        logger.error(f"Statistics error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/leaderboard/sellers")
+async def get_top_sellers(tab: str = Query("both", regex="^(sales|revenue|both)$")):
+    """Get top sellers leaderboard - WHO'S THE KING/QUEEN OF PROTOCOLS? 👑"""
+    try:
+        # Aggregate sales by seller
+        pipeline = [
+            {"$match": {"status": "completed"}},
+            {"$group": {
+                "_id": "$seller_id",
+                "sales_count": {"$sum": 1},
+                "total_revenue": {"$sum": "$seller_amount"}
+            }},
+            {"$sort": {"total_revenue": -1}},
+            {"$limit": 50}
+        ]
+        
+        seller_stats = await db.transactions.aggregate(pipeline).to_list(50)
+        
+        leaderboard = []
+        for i, stat in enumerate(seller_stats):
+            user = await db.users.find_one({"id": stat["_id"]}, {"password_hash": 0})
+            if user:
+                leaderboard.append({
+                    "rank": i + 1,
+                    "user_id": stat["_id"],
+                    "username": user["username"],
+                    "profile_photo": user.get("profile_photo"),
+                    "sales_count": stat["sales_count"],
+                    "revenue": round(stat["total_revenue"], 2),
+                    "title": get_seller_title(stat["sales_count"], stat["total_revenue"])
+                })
+        
+        # Sort based on tab
+        if tab == "sales":
+            leaderboard.sort(key=lambda x: x["sales_count"], reverse=True)
+        elif tab == "revenue":
+            leaderboard.sort(key=lambda x: x["revenue"], reverse=True)
+        # both = already sorted by revenue
+        
+        # Re-rank after sorting
+        for i, entry in enumerate(leaderboard):
+            entry["rank"] = i + 1
+        
+        return {
+            "leaderboard": leaderboard[:20],
+            "tab": tab,
+            "funny_message": get_leaderboard_message(tab)
+        }
+    except Exception as e:
+        logger.error(f"Leaderboard error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+def get_seller_title(sales: int, revenue: float) -> str:
+    """Get funny title based on sales performance"""
+    if revenue >= 1000:
+        return "🏆 Protocol Tycoon"
+    elif revenue >= 500:
+        return "💎 Diamond Seller"
+    elif revenue >= 100:
+        return "⭐ Star Seller"
+    elif sales >= 50:
+        return "🔥 Hot Seller"
+    elif sales >= 20:
+        return "📈 Rising Star"
+    elif sales >= 10:
+        return "🌟 Getting There"
+    elif sales >= 1:
+        return "🎯 First Blood"
+    return "🌱 Newbie"
+
+def get_leaderboard_message(tab: str) -> str:
+    """Get funny message for leaderboard"""
+    messages = {
+        "sales": "💰 These folks are selling protocols like hotcakes! (Actually, better than hotcakes. Have you tried selling hotcakes lately?)",
+        "revenue": "🤑 Show me the money! These protocol moguls are swimming in... well, reasonable amounts of cash!",
+        "both": "👑 The complete picture! Sales AND revenue - because we believe in transparency (and showing off)!"
+    }
+    return messages.get(tab, messages["both"])
+
+# Gamification - Badges
+BADGES = [
+    {"id": "first_protocol", "name": "Protocol Pioneer", "description": "Created your first protocol", "icon": "🎯", "category": "milestone", "requirement": 1, "rarity": "common"},
+    {"id": "protocol_master", "name": "Protocol Master", "description": "Created 10 protocols", "icon": "🏅", "category": "milestone", "requirement": 10, "rarity": "rare"},
+    {"id": "first_sale", "name": "Money Maker", "description": "Made your first sale", "icon": "💰", "category": "sales", "requirement": 1, "rarity": "common"},
+    {"id": "hot_seller", "name": "Hot Seller", "description": "Sold 10 protocols", "icon": "🔥", "category": "sales", "requirement": 10, "rarity": "rare"},
+    {"id": "tycoon", "name": "Protocol Tycoon", "description": "Sold 50 protocols", "icon": "🏆", "category": "sales", "requirement": 50, "rarity": "epic"},
+    {"id": "social_butterfly", "name": "Social Butterfly", "description": "Made 10 friends", "icon": "🦋", "category": "social", "requirement": 10, "rarity": "common"},
+    {"id": "group_leader", "name": "Group Leader", "description": "Created a group with 10+ members", "icon": "👥", "category": "social", "requirement": 10, "rarity": "rare"},
+    {"id": "search_master", "name": "Search Master", "description": "Ran 100 searches", "icon": "🔍", "category": "searches", "requirement": 100, "rarity": "rare"},
+    {"id": "evelyn_fan", "name": "Letters to Evelyn Fan", "description": "Shared the book with a friend", "icon": "📚", "category": "milestone", "requirement": 1, "rarity": "legendary"},
+]
+
+@api_router.get("/gamification/badges")
+async def get_all_badges():
+    """Get all available badges - GOTTA CATCH 'EM ALL! 🎮"""
+    return {
+        "badges": BADGES,
+        "total": len(BADGES),
+        "funny_message": "These badges are rarer than a unicorn at a horse show! 🦄"
+    }
+
+@api_router.get("/gamification/user-badges")
+async def get_user_badges(authorization: Optional[str] = Header(None)):
+    """Get badges earned by the current user"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        # Check badge eligibility
+        earned_badges = []
+        
+        # Count user's stats
+        protocol_count = await db.categories.count_documents({"user_id": user["id"]})
+        sales_count = await db.transactions.count_documents({"seller_id": user["id"], "status": "completed"})
+        friends_count = await db.friendships.count_documents({
+            "$or": [
+                {"user_id": user["id"], "status": "accepted"},
+                {"friend_id": user["id"], "status": "accepted"}
+            ]
+        })
+        
+        # Check each badge
+        for badge in BADGES:
+            earned = False
+            if badge["category"] == "milestone" and badge["id"] == "first_protocol" and protocol_count >= 1:
+                earned = True
+            elif badge["category"] == "milestone" and badge["id"] == "protocol_master" and protocol_count >= 10:
+                earned = True
+            elif badge["category"] == "sales" and badge["id"] == "first_sale" and sales_count >= 1:
+                earned = True
+            elif badge["category"] == "sales" and badge["id"] == "hot_seller" and sales_count >= 10:
+                earned = True
+            elif badge["category"] == "sales" and badge["id"] == "tycoon" and sales_count >= 50:
+                earned = True
+            elif badge["category"] == "social" and badge["id"] == "social_butterfly" and friends_count >= 10:
+                earned = True
+            
+            if earned:
+                earned_badges.append({**badge, "earned": True})
+            else:
+                # Show locked badges
+                earned_badges.append({**badge, "earned": False, "locked": True})
+        
+        return {
+            "badges": earned_badges,
+            "total_earned": len([b for b in earned_badges if b.get("earned")]),
+            "total_available": len(BADGES),
+            "funny_message": f"You've collected {len([b for b in earned_badges if b.get('earned')])} badges! Keep going, collector! 🏆"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"User badges error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Newsletter Generation
+@api_router.get("/newsletter/generate")
+async def generate_newsletter():
+    """Generate a witty weekly newsletter - PREPARE TO BE ENTERTAINED! 📰"""
+    try:
+        # Get stats for newsletter content
+        stats = await get_statistics()
+        top_sellers = await get_top_sellers(tab="revenue")
+        
+        newsletter = {
+            "subject": "🚀 InfoPilot Weekly: Where Protocols Meet Glory (and Occasionally Coffee) ☕",
+            "greeting": "Dear Protocol Enthusiast,\n\nWelcome to another week of InfoPilot chaos! If you're reading this, you're already ahead of 99% of the internet who are still using *regular* search engines like PEASANTS. 👑",
+            "highlights": [
+                f"📊 This week, {stats['overview']['total_searches']} searches were conducted. That's more searches than a detective convention!",
+                f"💰 Our top sellers have earned ${round(sum(s['revenue'] for s in top_sellers['leaderboard'][:5]), 2)} combined. Jeff Bezos is quaking!",
+                f"🎯 {stats['overview']['total_protocols']} protocols are now live. Each one more magnificent than the last (we may be biased).",
+            ],
+            "featured_book_ad": {
+                "title": "📚 HAVE YOU READ 'LETTERS TO EVELYN' YET?",
+                "content": "By John Selman - The supernatural thriller comedy that will make you laugh, cry, and question your search habits!\n\n" +
+                          "What readers are saying:\n" +
+                          "⭐⭐⭐⭐⭐ 'I couldn't put it down!' - Everyone\n" +
+                          "⭐⭐⭐⭐⭐ 'Better than my therapist!' - Someone\n" +
+                          "⭐⭐⭐⭐⭐ 'My cat even loved it!' - A Cat Owner\n\n" +
+                          "Available on Amazon NOW! (Your future self will thank you... or haunt you. Either way, exciting!)",
+                "cta": "👉 BUY NOW ON AMAZON 👈"
+            },
+            "marketplace_promo": {
+                "title": "🎪 THE WORLD WIDE MARKETPLACE IS OPEN!",
+                "content": "Did you know you can SELL your protocols for cold, hard cash? Well, digital cash. PayPal cash. It's still cash!\n\n" +
+                          "💵 List protocols from $1.00 to $99.00\n" +
+                          "💵 YOU keep 90% of every sale\n" +
+                          "💵 We keep 10% (we need coffee to run these servers)\n\n" +
+                          "Some people sell lemonade. LEGENDS sell protocols. Which are you? 🍋👑"
+            },
+            "pay_what_you_want_promo": {
+                "title": "🎁 PAY WHAT YOU WANT - Because We're Just That Cool",
+                "content": "Can't afford a protocol? Name YOUR price!\n\n" +
+                          "We believe in the honor system. You pay what you think it's worth. Even $0.01 makes you a hero in our eyes. " +
+                          "(Though let's be real, these protocols are worth AT LEAST $0.02. We're not running a charity here... okay, maybe we kind of are. 😅)"
+            },
+            "closing": "Until next week, keep searching, keep selling, and for the love of all things holy, KEEP BEING AWESOME!\n\n" +
+                      "Yours in Protocol Excellence,\n" +
+                      "The InfoPilot Team 🚀\n\n" +
+                      "P.S. If you haven't bought 'Letters to Evelyn' yet, what are you even doing with your life? 📚",
+            "footer": "Top Pilot Enterprises, Inc. | Making search great again, one protocol at a time | © 2025"
+        }
+        
+        return {
+            "newsletter": newsletter,
+            "generated_at": datetime.utcnow().isoformat(),
+            "funny_message": "This newsletter is so good, your spam folder is jealous! 📬"
+        }
+    except Exception as e:
+        logger.error(f"Newsletter generation error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/health")
