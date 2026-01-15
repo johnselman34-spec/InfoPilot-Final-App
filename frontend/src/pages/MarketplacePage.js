@@ -853,7 +853,7 @@ const MarketplacePage = ({ showToast }) => {
                   <div style={{ fontSize: '3rem', marginBottom: 15 }}>🔍</div>
                   <p style={{ color: '#a1a1aa', marginBottom: 15 }}>No protocols found. Be the first to sell!</p>
                   <button className="btn btn-primary" onClick={() => setActiveTab('sell')}>
-                    List Your Protocol - It's FREE!
+                    List Your Protocol - It&apos;s FREE!
                   </button>
                 </div>
               ) : (
@@ -1015,7 +1015,7 @@ const MarketplacePage = ({ showToast }) => {
               border: '1px solid rgba(251, 191, 36, 0.3)'
             }}>
               <p style={{ color: '#fbbf24', fontSize: '0.9rem', margin: 0 }}>
-                💵 You'll earn: <strong>${((newProtocol.price || 0.99) * (100 - adminPercent) / 100).toFixed(2)}</strong> per sale
+                💵 You&apos;ll earn: <strong>${((newProtocol.price || 0.99) * (100 - adminPercent) / 100).toFixed(2)}</strong> per sale
               </p>
             </div>
             
@@ -1111,8 +1111,8 @@ const MarketplacePage = ({ showToast }) => {
             border: '1px solid rgba(251, 191, 36, 0.3)'
           }}>
             <p style={{ color: '#fbbf24', margin: 0, fontSize: '0.9rem' }}>
-              💡 <strong>Pro Tip:</strong> Earnings under $1.00 are accumulated until they reach PayPal's minimum payout threshold.
-              Your money is safe and tracked - it'll be paid out as soon as you hit $1.00!
+              💡 <strong>Pro Tip:</strong> Earnings under $1.00 are accumulated until they reach PayPal&apos;s minimum payout threshold.
+              Your money is safe and tracked - it&apos;ll be paid out as soon as you hit $1.00!
             </p>
           </div>
         </div>
@@ -1258,7 +1258,7 @@ const MarketplacePage = ({ showToast }) => {
               <ol style={{ color: '#a1a1aa', paddingLeft: 20, marginBottom: 20 }}>
                 <li style={{ marginBottom: 10 }}>Complete payment in PayPal</li>
                 <li style={{ marginBottom: 10 }}>Copy your Transaction ID</li>
-                <li>Click "Confirm Purchase"</li>
+                <li>Click &quot;Confirm Purchase&quot;</li>
               </ol>
               
               <div style={{ display: 'flex', gap: 10 }}>
