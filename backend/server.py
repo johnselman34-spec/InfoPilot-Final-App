@@ -139,6 +139,126 @@ async def login(credentials: UserLogin):
         logger.error(f"Login error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Admin email addresses - these get automatic admin privileges
+ADMIN_EMAILS = [
+    "jjspilot24@gmail.com",
+    "johnselman34@gmail.com", 
+    "john.1976.selman@gmail.com",
+    "john@infojet.com"
+]
+
+def is_admin_email(email: str) -> bool:
+    """Check if email is an admin email (case-insensitive)"""
+    if not email:
+        return False
+    return email.lower() in [e.lower() for e in ADMIN_EMAILS]
+
+# Google OAuth Authentication
+from pydantic import BaseModel
+
+class GoogleAuthData(BaseModel):
+    email: str
+    google_id: str
+    name: str
+    picture: Optional[str] = None
+
+@api_router.post("/auth/google")
+async def google_auth(auth_data: GoogleAuthData):
+    """Authenticate with Google OAuth - auto-creates admin accounts for specified emails"""
+    try:
+        # Check if user exists by email
+        user = await db.users.find_one({"email": {"$regex": f"^{auth_data.email}$", "$options": "i"}})
+        
+        # Determine admin status
+        admin_status = is_admin_email(auth_data.email)
+        
+        if user:
+            # Update Google ID if not set, and update admin status
+            update_data = {
+                "google_id": auth_data.google_id,
+                "is_admin": admin_status
+            }
+            if auth_data.picture:
+                update_data["profile_photo"] = auth_data.picture
+                
+            await db.users.update_one(
+                {"id": user["id"]},
+                {"$set": update_data}
+            )
+            user["is_admin"] = admin_status
+        else:
+            # Create new user from Google account
+            username = auth_data.name.replace(" ", "_").lower()
+            # Make username unique
+            base_username = username
+            counter = 1
+            while await db.users.find_one({"username": username}):
+                username = f"{base_username}_{counter}"
+                counter += 1
+            
+            user = User(
+                username=username,
+                email=auth_data.email,
+                password_hash="GOOGLE_OAUTH_USER",  # No password for Google users
+                profile_photo=auth_data.picture
+            )
+            user_dict = user.dict()
+            user_dict["google_id"] = auth_data.google_id
+            user_dict["is_admin"] = admin_status
+            
+            await db.users.insert_one(user_dict)
+            user = user_dict
+        
+        # Create access token
+        token = create_access_token({"user_id": user["id"], "username": user["username"]})
+        
+        logger.info(f"Google auth successful for {auth_data.email}, admin={admin_status}")
+        
+        return {
+            "success": True,
+            "token": token,
+            "user": {
+                "id": user["id"],
+                "username": user["username"],
+                "email": auth_data.email,
+                "subscription_status": user.get("subscription_status", "free"),
+                "profile_photo": auth_data.picture or user.get("profile_photo"),
+                "is_admin": admin_status
+            }
+        }
+    except Exception as e:
+        logger.error(f"Google auth error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Password Reset
+class PasswordResetRequest(BaseModel):
+    email: str
+    new_password: str
+
+@api_router.post("/auth/reset-password")
+async def reset_password(request: PasswordResetRequest):
+    """Reset user password by email"""
+    try:
+        user = await db.users.find_one({"email": {"$regex": f"^{request.email}$", "$options": "i"}})
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Hash new password
+        hashed = hash_password(request.new_password)
+        
+        await db.users.update_one(
+            {"id": user["id"]},
+            {"$set": {"password_hash": hashed}}
+        )
+        
+        return {"success": True, "message": "Password reset successfully! 🎉"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Password reset error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.get("/auth/me")
 async def get_current_user(authorization: Optional[str] = Header(None)):
     """Get current user from token"""
@@ -157,13 +277,17 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
+        # Check admin status by email
+        is_admin = user.get("is_admin", False) or is_admin_email(user.get("email", ""))
+        
         return {
             "id": user["id"],
             "username": user["username"],
             "email": user.get("email"),
             "subscription_status": user.get("subscription_status", "free"),
             "profile_photo": user.get("profile_photo"),
-            "is_public": user.get("is_public", False)
+            "is_public": user.get("is_public", False),
+            "is_admin": is_admin
         }
     except HTTPException as he:
         raise he
