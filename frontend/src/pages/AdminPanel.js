@@ -854,4 +854,442 @@ const PollsAdminTab = ({ token, showToast }) => {
   );
 };
 
+// Email Reports Admin Tab
+const EmailReportsTab = ({ token, showToast }) => {
+  const [status, setStatus] = useState(null);
+  const [config, setConfig] = useState({
+    enabled: false,
+    frequency: 'weekly',
+    recipients: ['jjspilot24@gmail.com'],
+    day_of_week: 1,
+    hour: 9
+  });
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [testRecipient, setTestRecipient] = useState('jjspilot24@gmail.com');
+
+  const fetchStatus = async () => {
+    try {
+      const res = await fetch(`${API}/email-reports/status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStatus(data);
+        if (data.frequency) {
+          setConfig(prev => ({
+            ...prev,
+            enabled: data.reports_enabled,
+            frequency: data.frequency,
+            recipients: data.recipients || ['jjspilot24@gmail.com']
+          }));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch email status:', e);
+    }
+  };
+
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch(`${API}/email-reports/history`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setHistory(data.logs || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch email history:', e);
+    }
+  };
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchStatus(), fetchHistory()]);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
+
+  const saveConfig = async () => {
+    try {
+      const res = await fetch(`${API}/email-reports/config`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(config)
+      });
+      if (res.ok) {
+        showToast('Email report configuration saved!', 'success');
+        fetchStatus();
+      } else {
+        const err = await res.json();
+        showToast(err.detail || 'Failed to save config', 'error');
+      }
+    } catch (e) {
+      showToast('Error saving configuration', 'error');
+    }
+  };
+
+  const sendTestEmail = async () => {
+    setSending(true);
+    try {
+      const res = await fetch(`${API}/email-reports/send-test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ recipient: testRecipient })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Test email sent to ${testRecipient}!`, 'success');
+        fetchHistory();
+      } else {
+        showToast(data.error || 'Failed to send test email', 'error');
+      }
+    } catch (e) {
+      showToast('Error sending test email', 'error');
+    }
+    setSending(false);
+  };
+
+  const sendNow = async () => {
+    if (!window.confirm('Send A/B test report to all configured recipients now?')) return;
+    setSending(true);
+    try {
+      const res = await fetch(`${API}/email-reports/send-now`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Report sent to ${data.sent_count} recipients!`, 'success');
+        fetchHistory();
+      } else {
+        showToast(data.error || 'Failed to send report', 'error');
+      }
+    } catch (e) {
+      showToast('Error sending report', 'error');
+    }
+    setSending(false);
+  };
+
+  const loadPreview = async () => {
+    try {
+      const res = await fetch(`${API}/email-reports/preview?days=7`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPreview(data);
+      }
+    } catch (e) {
+      showToast('Error loading preview', 'error');
+    }
+  };
+
+  if (loading) {
+    return <div style={{ textAlign: 'center', padding: 40, color: '#a1a1aa' }}>Loading email settings...</div>;
+  }
+
+  return (
+    <div>
+      <h3 style={{ marginBottom: 20, color: '#f472b6' }}>📧 A/B Test Email Reports</h3>
+      <p style={{ color: '#a1a1aa', marginBottom: 25 }}>
+        Automatically send A/B testing performance summaries to your email.
+      </p>
+
+      {/* Configuration Status */}
+      <div style={{
+        background: status?.email_configured ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+        border: `1px solid ${status?.email_configured ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+        borderRadius: 12,
+        padding: 20,
+        marginBottom: 25
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <span style={{ fontSize: '1.5rem' }}>{status?.email_configured ? '✅' : '⚠️'}</span>
+          <span style={{ 
+            color: status?.email_configured ? '#10b981' : '#ef4444',
+            fontWeight: 600,
+            fontSize: '1.1rem'
+          }}>
+            {status?.email_configured ? 'Email Configured' : 'Email Not Configured'}
+          </span>
+        </div>
+        {status?.gmail_address && (
+          <p style={{ color: '#a1a1aa', fontSize: '0.9rem', margin: 0 }}>
+            Sending from: {status.gmail_address}
+          </p>
+        )}
+        {!status?.email_configured && (
+          <div style={{ marginTop: 15, padding: 15, background: 'rgba(251, 191, 36, 0.1)', borderRadius: 8 }}>
+            <p style={{ color: '#fbbf24', fontWeight: 600, margin: '0 0 10px 0' }}>⚠️ Gmail App Password Required</p>
+            <p style={{ color: '#a1a1aa', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
+              To send emails via Gmail, you need an <strong>App Password</strong> (not your regular Gmail password):<br/>
+              1. Go to <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" style={{ color: '#3b82f6' }}>myaccount.google.com/security</a><br/>
+              2. Enable 2-Step Verification if not already enabled<br/>
+              3. Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" style={{ color: '#3b82f6' }}>App Passwords</a><br/>
+              4. Create a new app password for "Mail" → "Other (InfoPilot)"<br/>
+              5. Copy the 16-character password and update the backend .env file
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Report Configuration */}
+      <div style={{
+        background: 'rgba(139, 92, 246, 0.1)',
+        border: '1px solid rgba(139, 92, 246, 0.3)',
+        borderRadius: 12,
+        padding: 20,
+        marginBottom: 25
+      }}>
+        <h4 style={{ color: '#a78bfa', marginBottom: 15 }}>⚙️ Report Settings</h4>
+        
+        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center', marginBottom: 15 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={config.enabled}
+              onChange={(e) => setConfig({ ...config, enabled: e.target.checked })}
+              style={{ width: 20, height: 20, accentColor: '#8b5cf6' }}
+            />
+            <span style={{ color: config.enabled ? '#10b981' : '#a1a1aa', fontWeight: 600 }}>
+              {config.enabled ? '✅ Reports Enabled' : '⏸️ Reports Disabled'}
+            </span>
+          </label>
+        </div>
+
+        <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap', alignItems: 'center', marginBottom: 15 }}>
+          <div>
+            <label style={{ color: '#a1a1aa', fontSize: '0.85rem', display: 'block', marginBottom: 5 }}>Frequency</label>
+            <select
+              value={config.frequency}
+              onChange={(e) => setConfig({ ...config, frequency: e.target.value })}
+              style={{
+                background: 'rgba(30, 20, 50, 0.8)',
+                border: '1px solid rgba(139, 92, 246, 0.5)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                color: '#fff'
+              }}
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ color: '#a1a1aa', fontSize: '0.85rem', display: 'block', marginBottom: 5 }}>Day of Week</label>
+            <select
+              value={config.day_of_week}
+              onChange={(e) => setConfig({ ...config, day_of_week: parseInt(e.target.value) })}
+              style={{
+                background: 'rgba(30, 20, 50, 0.8)',
+                border: '1px solid rgba(139, 92, 246, 0.5)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                color: '#fff'
+              }}
+            >
+              <option value={1}>Monday</option>
+              <option value={2}>Tuesday</option>
+              <option value={3}>Wednesday</option>
+              <option value={4}>Thursday</option>
+              <option value={5}>Friday</option>
+              <option value={6}>Saturday</option>
+              <option value={0}>Sunday</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ color: '#a1a1aa', fontSize: '0.85rem', display: 'block', marginBottom: 5 }}>Time (UTC)</label>
+            <select
+              value={config.hour}
+              onChange={(e) => setConfig({ ...config, hour: parseInt(e.target.value) })}
+              style={{
+                background: 'rgba(30, 20, 50, 0.8)',
+                border: '1px solid rgba(139, 92, 246, 0.5)',
+                borderRadius: 8,
+                padding: '8px 12px',
+                color: '#fff'
+              }}
+            >
+              {[...Array(24)].map((_, i) => (
+                <option key={i} value={i}>{i.toString().padStart(2, '0')}:00</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 15 }}>
+          <label style={{ color: '#a1a1aa', fontSize: '0.85rem', display: 'block', marginBottom: 5 }}>Recipients (comma-separated)</label>
+          <input
+            type="text"
+            value={config.recipients.join(', ')}
+            onChange={(e) => setConfig({ ...config, recipients: e.target.value.split(',').map(r => r.trim()).filter(r => r) })}
+            placeholder="email@example.com, another@example.com"
+            style={{
+              width: '100%',
+              maxWidth: 400,
+              background: 'rgba(30, 20, 50, 0.8)',
+              border: '1px solid rgba(139, 92, 246, 0.5)',
+              borderRadius: 8,
+              padding: '10px 12px',
+              color: '#fff'
+            }}
+          />
+        </div>
+
+        <button
+          className="btn btn-primary"
+          onClick={saveConfig}
+          style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}
+        >
+          💾 Save Configuration
+        </button>
+      </div>
+
+      {/* Send Controls */}
+      <div style={{
+        background: 'rgba(59, 130, 246, 0.1)',
+        border: '1px solid rgba(59, 130, 246, 0.3)',
+        borderRadius: 12,
+        padding: 20,
+        marginBottom: 25
+      }}>
+        <h4 style={{ color: '#60a5fa', marginBottom: 15 }}>📤 Send Reports</h4>
+        
+        <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 15 }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <label style={{ color: '#a1a1aa', fontSize: '0.85rem', display: 'block', marginBottom: 5 }}>Test Recipient</label>
+            <input
+              type="email"
+              value={testRecipient}
+              onChange={(e) => setTestRecipient(e.target.value)}
+              placeholder="test@email.com"
+              style={{
+                width: '100%',
+                background: 'rgba(30, 20, 50, 0.8)',
+                border: '1px solid rgba(59, 130, 246, 0.5)',
+                borderRadius: 8,
+                padding: '10px 12px',
+                color: '#fff'
+              }}
+            />
+          </div>
+          <button
+            className="btn btn-secondary"
+            onClick={sendTestEmail}
+            disabled={sending || !status?.email_configured}
+            style={{ padding: '10px 20px' }}
+          >
+            {sending ? '📧 Sending...' : '🧪 Send Test'}
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap' }}>
+          <button
+            className="btn btn-success"
+            onClick={sendNow}
+            disabled={sending || !status?.email_configured}
+          >
+            {sending ? '📧 Sending...' : '📤 Send Report Now'}
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={loadPreview}
+          >
+            👁️ Preview Report
+          </button>
+        </div>
+      </div>
+
+      {/* Preview */}
+      {preview && (
+        <div style={{ marginBottom: 25 }}>
+          <h4 style={{ color: '#f472b6', marginBottom: 10 }}>📋 Report Preview</h4>
+          <div style={{
+            background: '#fff',
+            borderRadius: 12,
+            padding: 0,
+            maxHeight: 500,
+            overflow: 'auto',
+            border: '2px solid rgba(236, 72, 153, 0.3)'
+          }}>
+            <div dangerouslySetInnerHTML={{ __html: preview.html_preview }} />
+          </div>
+          <div style={{ marginTop: 10, padding: 10, background: 'rgba(30, 20, 50, 0.5)', borderRadius: 8 }}>
+            <p style={{ color: '#a1a1aa', fontSize: '0.85rem', margin: 0 }}>
+              <strong>Subject:</strong> {preview.subject}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* History */}
+      <div>
+        <h4 style={{ color: '#f472b6', marginBottom: 15 }}>📜 Send History</h4>
+        {history.length === 0 ? (
+          <p style={{ color: '#a1a1aa' }}>No emails sent yet.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {history.map((log) => (
+              <div key={log.id} style={{
+                padding: 15,
+                background: 'rgba(30, 20, 50, 0.5)',
+                borderRadius: 10,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 10,
+                border: `1px solid ${log.success ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+              }}>
+                <div>
+                  <span style={{ color: log.success ? '#10b981' : '#ef4444', marginRight: 10 }}>
+                    {log.success ? '✅' : '❌'}
+                  </span>
+                  <span style={{ color: '#fff' }}>{log.recipient}</span>
+                </div>
+                <div style={{ display: 'flex', gap: 15, color: '#a1a1aa', fontSize: '0.85rem' }}>
+                  <span>{log.period_days} days data</span>
+                  <span>{new Date(log.sent_at).toLocaleString()}</span>
+                </div>
+                {log.error && (
+                  <div style={{ width: '100%', color: '#ef4444', fontSize: '0.85rem' }}>
+                    Error: {log.error}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Info Box */}
+      <div style={{ marginTop: 25, padding: 15, background: 'rgba(236, 72, 153, 0.1)', borderRadius: 10, border: '1px solid rgba(236, 72, 153, 0.3)' }}>
+        <p style={{ fontSize: '0.85rem', color: '#f472b6', margin: 0 }}>
+          💡 <strong>A/B Test Reports Include:</strong><br/>
+          • Summary of all active tests with variant performance<br/>
+          • Conversion rates and impression counts<br/>
+          • Leading variants for each test<br/>
+          • Recommendations for optimizing marketing copy<br/>
+          • Direct link to your admin dashboard
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export default AdminPanel;
