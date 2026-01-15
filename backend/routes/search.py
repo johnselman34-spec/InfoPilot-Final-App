@@ -175,7 +175,7 @@ async def get_search_results(
         for cat_id in r.get("category_ids", []):
             try:
                 all_category_ids.add(ObjectId(cat_id))
-            except:
+            except Exception:
                 pass
     
     # Bulk fetch all categories at once
