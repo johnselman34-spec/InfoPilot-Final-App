@@ -18,6 +18,7 @@ const StatisticsPage = ({ showToast }) => {
   const { token, user } = useAuth();
   const [stats, setStats] = useState(null);
   const [leaderboard, setLeaderboard] = useState({ sales: [], revenue: [] });
+  const [mostCopied, setMostCopied] = useState({ leaderboard: [], stats: {} });
   const [leaderboardTab, setLeaderboardTab] = useState('sales');
   const [loading, setLoading] = useState(true);
   const [funnyMessage] = useState(() => FUNNY_STATS_MESSAGES[Math.floor(Math.random() * FUNNY_STATS_MESSAGES.length)]);
@@ -25,7 +26,20 @@ const StatisticsPage = ({ showToast }) => {
   useEffect(() => {
     fetchStatistics();
     fetchLeaderboards();
+    fetchMostCopied();
   }, []);
+
+  const fetchMostCopied = async () => {
+    try {
+      const res = await fetch(`${API}/statistics/most-copied`);
+      if (res.ok) {
+        const data = await res.json();
+        setMostCopied(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch most copied:', error);
+    }
+  };
 
   const fetchStatistics = async () => {
     try {
