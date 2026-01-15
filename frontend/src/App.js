@@ -2269,6 +2269,30 @@ const CategoriesPage = () => {
                         </div>
                         <p className="text-xs text-purple-400/60 mt-1 font-mono">Price range: $0.75 - $2.99</p>
                       </div>
+                      
+                      {/* Location for Map */}
+                      <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                        <label className="block text-xs font-mono text-blue-400 mb-2 flex items-center gap-2">
+                          <MapPin className="w-4 h-4" /> MARKETPLACE LOCATION (Optional)
+                        </label>
+                        <p className="text-purple-400/60 text-xs font-mono mb-3">Add your location to appear on the marketplace map!</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <input 
+                            type="text" 
+                            placeholder="City" 
+                            value={newCategory.location.city}
+                            onChange={(e) => setNewCategory({ ...newCategory, location: { ...newCategory.location, city: e.target.value }})}
+                            className="px-3 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono text-sm"
+                          />
+                          <input 
+                            type="text" 
+                            placeholder="State" 
+                            value={newCategory.location.state}
+                            onChange={(e) => setNewCategory({ ...newCategory, location: { ...newCategory.location, state: e.target.value }})}
+                            className="px-3 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono text-sm"
+                          />
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
