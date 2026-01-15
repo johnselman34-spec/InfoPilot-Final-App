@@ -1,12 +1,14 @@
 """
-InfoPilot Explorer - Scheduled Email Reports with EXTREME HUMOR
+InfoPilot Explorer - Scheduled Email Reports with EXTREME HUMOR + AI INSIGHTS
 Because data without laughter is just... sad numbers.
+Now with GPT-5.2 powered recommendations!
 """
 import os
 import asyncio
 import logging
+import random
 from datetime import datetime, timezone, timedelta
-from typing import Optional
+from typing import Optional, List, Dict
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -27,6 +29,8 @@ FUNNY_SUBJECT_LINES = [
     "💎 Diamond-Tier Stats: You're Basically Warren Buffett Now",
     "🔥 These Numbers Are So Hot, They Need Sunscreen",
     "🎭 Plot Twist: Your A/B Tests Actually Worked!",
+    "🤖 AI Says: Your Data Looks AMAZING (And AI Never Lies... Right?)",
+    "📬 Your Weekly Dose of Revenue Dopamine Has Arrived!",
 ]
 
 # Hilarious intro paragraphs
