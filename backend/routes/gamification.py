@@ -267,7 +267,7 @@ async def record_laugh(data: dict, user = Depends(get_current_user)):
     source = data.get("source", "general")
     
     # Update stats
-    result = await db.laugh_stats.update_one(
+    await db.laugh_stats.update_one(
         {"user_id": user_id},
         {
             "$inc": {
