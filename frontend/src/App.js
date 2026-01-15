@@ -2181,7 +2181,7 @@ const CategoriesPage = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [newCategory, setNewCategory] = useState({ name: "", protocol: "", parentId: null, isPublic: true, forSale: false, price: 0.75, location: { city: "", state: "", country: "USA", lat: null, lng: null } });
+  const [newCategory, setNewCategory] = useState({ name: "", protocol: "", parentId: null, isPublic: true, forSale: false, price: 0.00, location: { city: "", state: "", country: "USA", lat: null, lng: null } });
   const [creating, setCreating] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [viewRecsCategory, setViewRecsCategory] = useState(null);
@@ -2247,7 +2247,7 @@ const CategoriesPage = () => {
       await axios.post(`${API}/categories`, payload);
       toast.success("CATEGORY CREATED");
       setShowCreate(false);
-      setNewCategory({ name: "", protocol: "", parentId: null, isPublic: true, forSale: false, price: 0.75, location: { city: "", state: "", country: "USA", lat: null, lng: null } });
+      setNewCategory({ name: "", protocol: "", parentId: null, isPublic: true, forSale: false, price: 0.00, location: { city: "", state: "", country: "USA", lat: null, lng: null } });
       fetchCategories();
     } catch (error) { toast.error(error.response?.data?.detail || "CREATION FAILED"); }
     finally { setCreating(false); }
@@ -2260,7 +2260,7 @@ const CategoriesPage = () => {
       protocol_string: cat.protocol_string, 
       is_public: cat.is_public,
       for_sale: cat.for_sale || false,
-      price: cat.price || 0.75,
+      price: cat.price || 0.00,
       location: cat.location || { city: '', state: '', lat: null, lng: null }
     }); 
     setShowEdit(true); 
@@ -2290,7 +2290,7 @@ const CategoriesPage = () => {
   const handleToggleSale = async (cat) => {
     try {
       const newForSale = !cat.for_sale;
-      await axios.put(`${API}/categories/${cat.id}/sale-settings?for_sale=${newForSale}&price=${cat.price || 0.75}`);
+      await axios.put(`${API}/categories/${cat.id}/sale-settings?for_sale=${newForSale}&price=${cat.price || 0.00}`);
       toast.success(newForSale ? "Protocol listed for sale!" : "Protocol removed from sale");
       fetchCategories();
     } catch (error) {
