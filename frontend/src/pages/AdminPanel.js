@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import ABTestDashboard from '../components/ABTesting/ABTestDashboard';
+import YouTubeTutorialAdmin from '../components/Admin/YouTubeTutorialAdmin';
 
 const AdminPanel = ({ showToast }) => {
   const { token } = useAuth();
