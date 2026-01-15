@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   Alert,
@@ -16,18 +15,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/utils/colors';
 import { marketplaceAPI } from '../../src/services/api';
-
-// Conditionally import MapView only for native platforms
-let MapView: any = null;
-let Marker: any = null;
-let Callout: any = null;
-
-if (Platform.OS !== 'web') {
-  const Maps = require('react-native-maps');
-  MapView = Maps.default;
-  Marker = Maps.Marker;
-  Callout = Maps.Callout;
-}
 
 const { width } = Dimensions.get('window');
 
@@ -48,14 +35,6 @@ interface Protocol {
     city?: string;
     country?: string;
   };
-}
-
-interface CategoryFilter {
-  id: string;
-  name: string;
-  expanded: boolean;
-  selected: boolean;
-  children: CategoryFilter[];
 }
 
 // Funny marketing messages
@@ -80,13 +59,11 @@ export default function MarketplaceScreen() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [priceRange, setPriceRange] = useState({ min: 1.01, max: 2.99 });
+  const [priceRange] = useState({ min: 1.01, max: 2.99 });
   const [sortBy, setSortBy] = useState<'price' | 'popularity' | 'recent'>('popularity');
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
   const [selectedProtocol, setSelectedProtocol] = useState<Protocol | null>(null);
   const [funnyMessage, setFunnyMessage] = useState(FUNNY_MESSAGES[0]);
-  const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
     loadMarketplace();
@@ -127,7 +104,6 @@ export default function MarketplaceScreen() {
   };
 
   const generateMockLocation = (index: number) => {
-    // Generate random locations around the world for demo
     const locations = [
       { latitude: 40.7128, longitude: -74.0060, city: 'New York', country: 'USA' },
       { latitude: 51.5074, longitude: -0.1278, city: 'London', country: 'UK' },
@@ -226,26 +202,6 @@ export default function MarketplaceScreen() {
     );
   };
 
-  const toggleCategory = (categoryId: string) => {
-    const newSelected = new Set(selectedCategories);
-    if (newSelected.has(categoryId)) {
-      newSelected.delete(categoryId);
-    } else {
-      newSelected.add(categoryId);
-    }
-    setSelectedCategories(newSelected);
-  };
-
-  const toggleExpand = (categoryId: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
-    }
-    setExpandedCategories(newExpanded);
-  };
-
   const filteredProtocols = protocols.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          p.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -300,36 +256,44 @@ export default function MarketplaceScreen() {
     </TouchableOpacity>
   );
 
-  const renderMapMarker = (protocol: Protocol) => {
-    if (!protocol.location) return null;
-    
-    return (
-      <Marker
-        key={protocol.id}
-        coordinate={{
-          latitude: protocol.location.latitude,
-          longitude: protocol.location.longitude,
-        }}
-        pinColor={colors.primary}
-        onPress={() => setSelectedProtocol(protocol)}
-      >
-        <View style={styles.markerContainer}>
-          <View style={styles.markerBubble}>
-            <Text style={styles.markerPrice}>${protocol.price}</Text>
-          </View>
-          <View style={styles.markerArrow} />
+  // World Map Component (Web-compatible using emoji markers)
+  const renderWorldMap = () => (
+    <View style={styles.mapContainer}>
+      <View style={styles.mapPlaceholder}>
+        <Text style={styles.mapTitle}>🌍 World Protocol Map 🌍</Text>
+        <Text style={styles.mapSubtitle}>Protocols from around the globe!</Text>
+        
+        {/* Simple visual representation of protocols by region */}
+        <View style={styles.regionGrid}>
+          {['🇺🇸 Americas', '🇬🇧 Europe', '🇯🇵 Asia', '🇦🇺 Oceania'].map((region, index) => {
+            const regionProtocols = filteredProtocols.slice(index * 2, (index * 2) + 2);
+            return (
+              <TouchableOpacity 
+                key={region} 
+                style={styles.regionCard}
+                onPress={() => regionProtocols[0] && setSelectedProtocol(regionProtocols[0])}
+              >
+                <Text style={styles.regionEmoji}>{region.split(' ')[0]}</Text>
+                <Text style={styles.regionName}>{region.split(' ')[1]}</Text>
+                <Text style={styles.regionCount}>{regionProtocols.length} protocols</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
-        <Callout onPress={() => handlePurchase(protocol)}>
-          <View style={styles.calloutContainer}>
-            <Text style={styles.calloutTitle}>{protocol.name}</Text>
-            <Text style={styles.calloutCreator}>by @{protocol.username}</Text>
-            <Text style={styles.calloutPrice}>${protocol.price.toFixed(2)}</Text>
-            <Text style={styles.calloutCTA}>Tap to buy!</Text>
-          </View>
-        </Callout>
-      </Marker>
-    );
-  };
+        
+        <Text style={styles.mapHint}>
+          📱 Use the mobile app for full interactive map with clustering!
+        </Text>
+      </View>
+      
+      {/* Floating Protocol Count */}
+      <View style={styles.floatingCount}>
+        <Text style={styles.floatingCountText}>
+          {filteredProtocols.length} Protocols Worldwide! 🌍
+        </Text>
+      </View>
+    </View>
+  );
 
   if (loading) {
     return (
@@ -415,30 +379,7 @@ export default function MarketplaceScreen() {
 
       {/* Main Content */}
       {viewMode === 'map' ? (
-        <View style={styles.mapContainer}>
-          <MapView
-            ref={mapRef}
-            style={styles.map}
-            provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-            initialRegion={{
-              latitude: 20,
-              longitude: 0,
-              latitudeDelta: 100,
-              longitudeDelta: 100,
-            }}
-            showsUserLocation
-            showsMyLocationButton
-          >
-            {filteredProtocols.map(renderMapMarker)}
-          </MapView>
-          
-          {/* Floating Protocol Count */}
-          <View style={styles.floatingCount}>
-            <Text style={styles.floatingCountText}>
-              {filteredProtocols.length} Protocols Worldwide! 🌍
-            </Text>
-          </View>
-        </View>
+        renderWorldMap()
       ) : (
         <FlatList
           data={filteredProtocols}
@@ -662,80 +603,77 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
   },
-  map: {
+  mapPlaceholder: {
     flex: 1,
+    backgroundColor: colors.cardBackground,
+    margin: 12,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  mapSubtitle: {
+    fontSize: 14,
+    color: colors.textMuted,
+    marginBottom: 24,
+  },
+  regionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 24,
+  },
+  regionCard: {
+    backgroundColor: colors.background,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    minWidth: 120,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+  },
+  regionEmoji: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  regionName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  regionCount: {
+    fontSize: 12,
+    color: colors.primary,
+    marginTop: 4,
+  },
+  mapHint: {
+    fontSize: 12,
+    color: colors.textMuted,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
   floatingCount: {
     position: 'absolute',
-    top: 12,
-    left: 12,
-    right: 12,
+    top: 24,
+    left: 24,
+    right: 24,
     backgroundColor: colors.cardBackground,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 20,
     alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
   },
   floatingCountText: {
     color: colors.text,
     fontSize: 14,
     fontWeight: 'bold',
-  },
-  markerContainer: {
-    alignItems: 'center',
-  },
-  markerBubble: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  markerPrice: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  markerArrow: {
-    width: 0,
-    height: 0,
-    backgroundColor: 'transparent',
-    borderStyle: 'solid',
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: colors.primary,
-  },
-  calloutContainer: {
-    padding: 8,
-    minWidth: 150,
-  },
-  calloutTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.textDark,
-  },
-  calloutCreator: {
-    fontSize: 12,
-    color: colors.gray,
-  },
-  calloutPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.primary,
-    marginTop: 4,
-  },
-  calloutCTA: {
-    fontSize: 12,
-    color: colors.accent,
-    fontWeight: '600',
-    marginTop: 4,
   },
   listContainer: {
     padding: 12,
