@@ -68,11 +68,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="messages"
+        name="statistics"
         options={{
-          title: 'Chat',
+          title: 'Stats',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubbles" size={size - 2} color={color} />
+            <Ionicons name="stats-chart" size={size - 2} color={color} />
           ),
         }}
       />
@@ -98,6 +98,13 @@ export default function TabLayout() {
         options={{
           href: null, // Hide from tab bar
           title: 'Categories',
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          href: null, // Hide from tab bar - accessible from Social
+          title: 'Messages',
         }}
       />
     </Tabs>
