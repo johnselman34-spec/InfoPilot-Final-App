@@ -454,6 +454,30 @@ const UltimateSearchPage = ({ showToast }) => {
                 </span>
               </div>
               <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                {/* Copy Title Button - Always available */}
+                <CopyButton
+                  text={cat.name}
+                  label=""
+                  successLabel="✓"
+                  size="sm"
+                  variant="icon"
+                  showToast={showToast}
+                  data-testid={`copy-title-${cat.id}`}
+                  style={{ fontSize: '0.7rem' }}
+                />
+                {/* Copy Protocol Button - Only if user owns this category */}
+                {cat.protocol && (
+                  <CopyButton
+                    text={cat.protocol}
+                    label=""
+                    successLabel="✓"
+                    size="sm"
+                    variant="icon"
+                    showToast={showToast}
+                    data-testid={`copy-protocol-${cat.id}`}
+                    style={{ fontSize: '0.7rem', color: '#a78bfa' }}
+                  />
+                )}
                 {cat.is_public && <span style={{ fontSize: '0.65rem', color: '#10b981', padding: '2px 6px', background: 'rgba(16,185,129,0.2)', borderRadius: 4 }}>Public</span>}
                 <button 
                   onClick={(e) => handleEditCategory(cat, e)}
