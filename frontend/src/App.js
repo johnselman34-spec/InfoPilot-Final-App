@@ -1922,11 +1922,47 @@ const LoginPage = () => {
 const HomePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [currentTagline, setCurrentTagline] = useState(0);
+  
+  // Rotating funny taglines from book
+  const funnyTaglines = [
+    "The Navy Taught Me to Fly Jets. The Universe Taught Me Everything Else. 🛩️",
+    "Get yourself giggling in disoriented, stupefying hee-haw laughter! 😂",
+    "Hurricane-force winds of laughter from the most skeptical of minds! 🌀",
+    "50+ zingers in succession. Bat-sh*t insane? Maybe. Unforgettable? DEFINITELY! 🚀",
+    "Written by a U.S. Naval Officer who graduated FIRST in his class! 🎖️",
+    "WARNING: May cause uncontrollable laughter and existential enlightenment! ⚠️"
+  ];
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTagline((prev) => (prev + 1) % funnyTaglines.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [funnyTaglines.length]);
 
   return (
     <Layout>
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* Welcome Sale Promo - TOP PRIORITY */}
+        
+        {/* 🆓 FREE APP BANNER - Eye-catching! */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-green-900/50 via-emerald-900/50 to-teal-900/50 border-2 border-green-500 rounded-xl p-6">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/20 rounded-full blur-3xl"></div>
+          <div className="relative z-10 text-center">
+            <div className="inline-block px-4 py-1 bg-green-500 text-white font-bold rounded-full mb-3 animate-bounce">
+              🆓 100% FREE TO USE!
+            </div>
+            <h2 className="text-2xl font-bold text-green-400 font-mono mb-2">InfoPilot Explorer is COMPLETELY FREE!</h2>
+            <p className="text-green-300/80 font-mono text-sm mb-3">
+              No subscriptions. No hidden fees. Just pure research power! 🔬
+            </p>
+            <p className="text-emerald-400/70 font-mono text-xs">
+              💡 Want to support us? Buy the book below or list your protocols on the Marketplace!
+            </p>
+          </div>
+        </div>
+
+        {/* Welcome Sale Promo - Book focused */}
         <WelcomeSaleBanner onUpgrade={() => navigate("/subscribe")} />
 
         {/* Welcome */}
@@ -1935,23 +1971,60 @@ const HomePage = () => {
             <img src={IMAGES.globe} alt="InfoPilot Explorer Global Network" className="w-32 h-32 rounded-lg border border-purple-500/50 object-cover shadow-lg shadow-purple-500/30" />
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono tracking-wider mb-2">WELCOME, {user?.username?.toUpperCase()}</h1>
-              <p className="text-purple-300/80 mb-4 font-mono text-sm">Your tactical gateway to the World Wide Web Information Exchange.</p>
+              <p className="text-purple-300/80 mb-2 font-mono text-sm">Your tactical gateway to the World Wide Web Information Exchange.</p>
+              <p className="text-pink-400/80 font-mono text-xs italic mb-4">A Top Pilot Enterprises, Inc. Production 🛩️</p>
               <div className="flex flex-wrap gap-3">
                 <button onClick={() => navigate("/infopilot")} className="px-6 py-3 bg-purple-500/20 border border-purple-500 text-purple-300 font-mono tracking-wider rounded hover:bg-purple-500/30 transition-all flex items-center gap-2" data-testid="start-searching-btn">
                   <Radar className="w-5 h-5" /> BEGIN SEARCH
                 </button>
-                {!user?.is_paid && (
-                  <button onClick={() => navigate("/subscribe")} className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono tracking-wider rounded hover:scale-105 transition-transform flex items-center gap-2 animate-pulse">
-                    <Crown className="w-5 h-5" /> SALE: $0.75
-                  </button>
-                )}
+                <button onClick={() => navigate("/marketplace")} className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white font-mono tracking-wider rounded hover:scale-105 transition-transform flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5" /> MARKETPLACE 💰
+                </button>
               </div>
             </div>
           </div>
         </FuturisticFrame>
 
-        {/* Book Promo - FULL */}
-        <BookSalesBanner variant="full" />
+        {/* FUNNY Book Promo - FULL with rotating taglines */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-purple-900/50 via-pink-900/50 to-blue-900/50 border-2 border-pink-500 rounded-xl p-6">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-pink-500/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="relative z-10">
+            <div className="text-center mb-4">
+              <span className="inline-block px-4 py-1 bg-yellow-500 text-black font-bold rounded-full text-sm mb-3">
+                🎬 OPTIONED FOR FILM • 19 FIVE-STAR REVIEWS
+              </span>
+              <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono mb-2">
+                LETTERS TO EVELYN
+              </h2>
+              <p className="text-pink-300 font-mono text-lg min-h-[50px] transition-all">
+                "{funnyTaglines[currentTagline]}"
+              </p>
+            </div>
+            <BookSalesBanner variant="compact" />
+          </div>
+        </div>
+
+        {/* Marketplace Promo - Make Money! */}
+        <div className="bg-gradient-to-r from-yellow-900/40 via-orange-900/40 to-red-900/40 border border-yellow-500/50 rounded-xl p-6">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="text-6xl">💰</div>
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="text-2xl font-bold text-yellow-400 font-mono mb-2">WORLD WIDE MARKETPLACE</h3>
+              <p className="text-orange-300/80 font-mono text-sm mb-2">
+                Turn your research protocols into REAL MONEY! 🤑
+              </p>
+              <p className="text-yellow-400/60 font-mono text-xs">
+                You keep 90% of every sale. We keep 10% to pay the server hamsters. 🐹
+              </p>
+            </div>
+            <button 
+              onClick={() => navigate("/marketplace")} 
+              className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold font-mono rounded-lg hover:scale-105 transition-transform"
+            >
+              START SELLING! 💸
+            </button>
+          </div>
+        </div>
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-3 gap-4">
@@ -1960,12 +2033,15 @@ const HomePage = () => {
           <QuickActionCard title="VIEW INTEL" icon={BarChart3} onClick={() => navigate("/statistics")} color="blue" />
         </div>
 
-        {/* Book CTA - Replaced subscription CTA */}
+        {/* Pay What You Want Section */}
         <div className="text-center p-6 bg-gradient-to-r from-pink-900/30 to-purple-900/30 rounded-lg border border-pink-500/30">
-          <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-2">📚 Support the Developer!</h3>
-          <p className="text-purple-300 font-mono mb-4">Love InfoPilot Explorer? Check out my book "Letters to Evelyn" - A supernatural thriller comedy!</p>
+          <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-mono mb-2">💜 Support the Developer!</h3>
+          <p className="text-purple-300 font-mono mb-2">Love InfoPilot Explorer? The app is FREE forever!</p>
+          <p className="text-pink-400/80 font-mono text-sm mb-4">
+            But if you want to support us, grab a copy of "Letters to Evelyn" - it's only $2.99 and it's HILARIOUS! 😂
+          </p>
           <button onClick={() => navigate("/book")} className="px-8 py-4 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 text-white font-bold font-mono tracking-wider rounded-lg hover:scale-105 transition-transform flex items-center justify-center gap-2 mx-auto">
-            <Book className="w-5 h-5" /> VIEW BOOK - $2.99
+            <Book className="w-5 h-5" /> GET THE BOOK - $2.99
           </button>
         </div>
       </div>
