@@ -1,447 +1,174 @@
 # InfoPilot Explorer - Product Requirements Document
 
 ## Original Problem Statement
-Build a comprehensive information exchange social network application ("InfoPilot Explorer") with:
-- Specialized search engine with Boolean protocol parsing (InfoJet 2.0)
-- Social features (Groups, Pages, reactions, comments)
-- Interactive map for geolocated search results
-- "Pay What You Want" PayPal subscription model
-- Admin control panel
-- AI-powered weekly email newsletter to promote:
-  - The app subscription
-  - The book "Letters to Evelyn" by John Selman ($2.99)
+Build a comprehensive web application called "InfoPilot Explorer" featuring:
+- **InfoJet 2.0™** - A proprietary search and categorization language
+- **Protocol Marketplace** - Buy/sell search protocols (90/10 revenue split)
+- **Social Features** - Groups, Pages, Feeds, Notifications
+- **Interactive Map** - Geolocated search results
+- **Gamification** - Points, levels, badges, leaderboards
+- **Promotional Content** - Letters to Evelyn book, InfoPilot, Maestro Bistro
 
-## Tech Stack
-- **Frontend:** React, TailwindCSS (custom theme: purple/pink/blue)
-- **Backend:** FastAPI, MongoDB (motor), Pydantic - **REFACTORED Jan 11, 2026**
-- **Authentication:** JWT + Google OAuth (via Emergent Auth)
-- **Email:** Resend API ✅ WORKING
-- **AI:** OpenAI GPT-4o (via Emergent LLM Key)
-- **Payments:** PayPal "Pay What You Want"
-- **PWA:** Service Worker + Web App Manifest ✅ **NEW Jan 11, 2026**
+## Parent Company
+**Top Pilot Enterprises, Inc.**
+- "Three ventures. One mission. Zero turbulence."
 
-## Code Architecture (Updated Jan 11, 2026)
+## Three Business Ventures
+1. **Letters to Evelyn** by John Selman - Supernatural Thriller Comedy Memoir (Amazon)
+2. **InfoPilot Explorer** - World Wide Information Exchange Platform
+3. **Maestro Bistro** - Brunswick, Maine (Beef, Vegetable, Fish Chowder)
 
-### Backend Structure
+## User Accounts
+### Admin Accounts
+- **jjspilot24@gmail.com** - Primary Admin (Password: InfoPilot2024!)
+- **JohnSelman34@gmail.com** - Admin (Password: InfoPilot2024!)
+- **john.1976.selman@gmail.com** - Admin (Password: InfoPilot2024!)
+
+### Test Account
+- **test@infojet.com** / testpass123
+
+## What's Been Implemented (January 2026)
+
+### Core Features ✅
+- [x] User authentication (Google OAuth + Email/Password)
+- [x] Admin badge display in sidebar
+- [x] Ultimate Search with InfoJet 2.0 protocol language
+- [x] Category creation, editing (name, protocol, visibility)
+- [x] Protocol parsing with abbreviation support (William C. Gamble, etc.)
+- [x] Collate button for batch search execution
+- [x] Interactive Map for geolocated results
+- [x] Statistics/Analytics page
+
+### Marketplace ✅
+- [x] Browse protocols with filtering/sorting
+- [x] Sell protocols ($0.99-$99.99, 90% to creator)
+- [x] PayPal integration for payments
+- [x] Seller dashboard with earnings
+- [x] Purchase history
+
+### Social Features ✅
+- [x] Groups (create, join, post)
+- [x] Pages (create, follow)
+- [x] Friends system
+- [x] Real-time notifications (WebSockets)
+- [x] Web Push notification infrastructure
+
+### Gamification ✅
+- [x] Points system
+- [x] Badges (First Search, Power User, etc.)
+- [x] Leaderboard
+- [x] User profiles with stats
+
+### Promotional Content ✅
+- [x] Top Pilot Enterprises banner
+- [x] Letters to Evelyn book promotion (images, reviews, buy links)
+- [x] InfoPilot Explorer features section
+- [x] Maestro Bistro menu section
+- [x] Rotating taglines and quotes
+
+### Admin Features ✅
+- [x] Admin dashboard with statistics
+- [x] User management
+- [x] System settings (search pages, rate limits)
+- [x] Newsletter management (Resend integration)
+
+### Technical ✅
+- [x] PWA support (manifest.json, sw.js)
+- [x] Mobile responsiveness
+- [x] User data export
+- [x] Backend refactored into modular routes/services
+
+## Architecture
+
 ```
-/app/backend/
-├── server.py          # Main FastAPI app (2303 lines - reduced from 5219)
-├── config.py          # Central configuration & DB connection
-├── routes/            # Modular API routers
-│   ├── auth.py        # Authentication endpoints (Google OAuth fixed)
-│   ├── admin.py       # Admin panel endpoints
-│   ├── categories.py  # Category CRUD
-│   ├── marketplace.py # Protocol marketplace
-│   ├── search.py      # Search & collation
-│   ├── social.py      # Groups, Pages, Posts
-│   ├── notifications.py  # Real-time WebSocket + Push notifications
-│   └── export.py         # User data export (JSON/CSV)
-├── services/          # Business logic services
-│   ├── auth_service.py
-│   ├── email_service.py
-│   ├── protocol_service.py
-│   └── search_service.py
-└── models/
-    └── schemas.py     # Pydantic models
+/app/
+├── backend/
+│   ├── server.py           # Main FastAPI app (2.2k lines)
+│   ├── routes/             # Modular API routes
+│   │   ├── auth.py         # Authentication
+│   │   ├── categories.py   # Category CRUD
+│   │   ├── search.py       # Search endpoints
+│   │   ├── social.py       # Groups, Pages, Posts
+│   │   ├── notifications.py # WebSocket + Push
+│   │   └── marketplace.py  # Protocol marketplace
+│   └── services/           # Business logic
+│       ├── protocol_service.py
+│       └── search_service.py
+└── frontend/
+    └── src/
+        ├── pages/          # React pages
+        ├── components/     # Shared components
+        ├── contexts/       # Auth, Theme contexts
+        └── public/         # PWA assets
 ```
-
-### Frontend Structure
-```
-/app/frontend/src/
-├── App.js             # Router (126 lines - reduced from 3000+)
-├── pages/             # All page components
-├── components/        # Reusable UI components
-│   └── shared/
-│       ├── NotificationBell.js   # Real-time notification UI
-│       ├── DataExport.js         # Data export panel
-│       └── PushNotifications.js  # **NEW** Push notification settings
-├── contexts/          # React contexts
-└── utils/             # Utilities
-/app/frontend/public/
-├── manifest.json      # PWA Web App Manifest
-└── sw.js              # Service Worker (v2 with push support)
-```
-
-## Key Features Implemented
-
-### 1. Authentication System ✅
-- Email/password registration and login
-- Google OAuth via Emergent Auth
-- JWT session management
-- **Case-insensitive email matching** (Fixed Jan 11, 2026)
-
-### 2. Protocol Search Engine (InfoJet 2.0) ✅
-- Multi-word phrase matching ("civil war")
-- Abbreviation handling (U.S., Ph.D.)
-- Boolean operators: AND (&), OR, INCLUDE ALL (+), EXCLUDE ALL (^)
-- Web search via DuckDuckGo + Google scraping
-- Protocol debugging endpoint
-
-### 3. Category & Collation System ✅
-- Hierarchical categories (up to 100 levels)
-- Public/private protocols
-- Automatic article classification (News, Blog, Forum, Ph.D., etc.)
-- Daily collate limits
-
-### 4. Book Promotion ✅
-- Rotating image banner with user's 4 advertisement images
-- Divine Zape review quote: "This memoir is a profound and unforgettable literary piece."
-- 19 Five-Star Reviews badge from Readers' Favorite
-- $2.99 price prominent CTA
-- Sidebar promotion widget
-
-### 5. Newsletter System ✅
-- AI-powered content generation (Emergent LLM Key)
-- Resend email integration (WORKING)
-- Test email functionality
-- Newsletter history tracking
-
-### 6. Admin Panel ✅
-- General settings (collate limits, category levels)
-- Search settings (results per page, unpaid limits)
-- Pricing settings (PayPal email, subscription price)
-- Newsletter management (generate, preview, send)
-- User management (ban users)
-- Content moderation (blocked words)
-
-### 7. Social Features (Partial)
-- Friend requests/acceptance/rejection
-- Private messaging
-- User profiles
-- Basic post structure (placeholder)
-
-### 8. Subscription System ✅
-- Pay What You Want pricing ($0.75 - $5.00 + custom)
-- PayPal payment URL generation
-- Manual subscription activation
 
 ## API Endpoints
 
 ### Authentication
-- POST `/api/auth/register` - Register new user
-- POST `/api/auth/login` - Login
-- POST `/api/auth/google` - Google OAuth
-- GET `/api/auth/google/session-data` - Google OAuth proxy
-- GET `/api/auth/me` - Get current user
-- POST `/api/auth/logout` - Logout
+- `POST /api/auth/login` - Email/password login
+- `POST /api/auth/register` - User registration
+- `GET /api/auth/google` - Google OAuth initiation
+- `GET /api/auth/google/callback` - OAuth callback
 
-### Search & Categories
-- POST `/api/search` - Web search
-- POST `/api/collate` - Collate results to categories
-- GET `/api/categories` - List user categories
-- POST `/api/categories` - Create category
-- PUT `/api/categories/{id}` - Update category
-- DELETE `/api/categories/{id}` - Delete category
+### Categories
+- `GET /api/categories` - List user categories
+- `POST /api/categories` - Create category
+- `PUT /api/categories/{id}` - Update category (name, protocol, is_public)
+- `DELETE /api/categories/{id}` - Delete category
 
-### Protocol Debugging
-- POST `/api/protocol/debug` - Debug protocol matching
-- POST `/api/protocol/validate` - Validate protocol format
+### Search
+- `POST /api/search` - Quick search
+- `POST /api/collate` - Collate category results
+- `GET /api/ultimate-search` - Get stored results
+- `POST /api/protocol/debug` - Debug protocol parsing
 
-### Newsletter
-- POST `/api/newsletter/generate` - Generate AI newsletter (Admin)
-- GET `/api/newsletter/preview` - Preview latest newsletter (Admin)
-- POST `/api/newsletter/send` - Send newsletter via Resend (Admin)
-- POST `/api/newsletter/test-email` - Send test email (Admin)
-- GET `/api/newsletter/history` - Newsletter history (Admin)
+### Marketplace
+- `GET /api/marketplace/protocols` - Browse protocols
+- `POST /api/marketplace/protocols` - List protocol for sale
+- `POST /api/marketplace/purchase` - Purchase protocol
 
-### Book Promotion
-- GET `/api/book-promo` - Get book promotion data
+### Social
+- `GET /api/groups` - List groups
+- `POST /api/groups` - Create group
+- `GET /api/pages` - List pages
+- `WS /api/ws/{user_id}` - Real-time notifications
 
-### User Settings
-- PUT `/api/users/settings` - Update user settings
-- POST `/api/users/change-password` - Change password
-- GET `/api/users/has-password` - Check if user has password set
+## Prioritized Backlog
 
-### Protocol Marketplace
-- GET `/api/marketplace/protocols` - List marketplace protocols
-- POST `/api/marketplace/protocols` - Create new listing
-- POST `/api/marketplace/purchase` - Purchase a protocol
-- GET `/api/marketplace/purchases` - Get user's purchases
-- GET `/api/marketplace/seller/dashboard` - Seller stats & earnings
-- GET `/api/marketplace/categories` - Marketplace categories
+### P0 (Critical)
+- [x] Admin badge display - DONE
+- [x] Category name editing - DONE
+- [x] Search collation - DONE
 
-## Database Collections
-- `users` - User accounts
-- `sessions` - Auth sessions
-- `categories` - Search protocols
-- `search_results` - Collated results
-- `newsletters` - Newsletter history
-- `settings` - Admin settings
-- `messages` - Private messages
+### P1 (High Priority)
+- [ ] Document type filters (webpage, news, PDF, MS Word)
+- [ ] AI-powered search integration
+- [ ] Map integration with category checkboxes
+- [ ] Enhanced statistics on Marketplace
 
-## Credentials
-- **Admin:** john@infojet.com / password123
-- **Test User:** test@gmail.com
+### P2 (Medium Priority)
+- [ ] Web Push server-side notifications (VAPID)
+- [ ] Real-time chat
+- [ ] Advanced analytics visualizations
+- [ ] Multi-language support
 
-## Environment Variables
-- `MONGO_URL` - MongoDB connection
-- `DB_NAME` - Database name (infopilot_db)
-- `EMERGENT_LLM_KEY` - AI generation
-- `RESEND_API_KEY` - Email sending ✅ CONFIGURED
-- `SENDER_EMAIL` - Sender email address
+### P3 (Low Priority)
+- [ ] Mobile app wrapper
+- [ ] Voice search
+- [ ] Collaborative protocol editing
 
-## Date: January 11, 2026
+## Third-Party Integrations
+- **SerpAPI** - Web search
+- **ddgs** - DuckDuckGo fallback
+- **Emergent Google Auth** - OAuth
+- **PayPal** - Marketplace payments
+- **Resend** - Newsletter emails
+- **MongoDB** - Database
 
-## Latest Session Update (Jan 11, 2026 - Full Refactoring & Enhancements)
+## Testing
+- Backend tests: `/app/tests/`
+- Test reports: `/app/test_reports/iteration_*.json`
+- Latest: iteration_12.json (21/21 tests passed)
 
-### Newsletter Enhancement Phase 2 - Full Manuscript Integration ✅
-**Analyzed complete "Letters to Evelyn" manuscript and integrated content for "extremely funny" newsletters:**
-
-1. ✅ **MANUSCRIPT_CONTENT Data Structure Created:**
-   - Book metadata (title, author, genre, dedication, copyright warning)
-   - 7 key characters with descriptions (John Selman, Evelyn, Durham, The Captain, etc.)
-   - 20 wild plot elements from the manuscript
-   - 15 hilarious quotes with context
-   - 9 chapter teasers
-   - 12 dad jokes
-   - 11 marketing hooks
-   - 6 newsletter themes
-   - 10 email subject lines
-
-2. ✅ **AI Newsletter Generation Enhanced:**
-   - Uses random selections from manuscript content
-   - Features character spotlights, chapter teasers, dad jokes
-   - Incorporates copyright warning as marketing gold
-   - Douglas Adams/Terry Pratchett-style cosmic humor
-
-### Code Refactoring - Frontend ✅
-**Reduced App.js from 4928 → 3310 lines (33% reduction!)**
-
-1. ✅ **New Directory Structure Created:**
-   ```
-   /app/frontend/src/
-   ├── contexts/
-   │   └── AuthContext.js (125 lines)
-   ├── utils/
-   │   ├── api.js (5 lines)
-   │   └── hashtags.js (40 lines)
-   ├── components/shared/
-   │   ├── Toast.js (17 lines)
-   │   ├── Icons.js (27 lines)
-   │   ├── HashtagDisplay.js (40 lines)
-   │   ├── Sidebar.js (101 lines)
-   │   ├── QuoteOfTheDay.js (179 lines) ← NEW!
-   │   └── index.js (5 lines)
-   ├── pages/
-   │   ├── LoginPage.js (73 lines)
-   │   ├── RegisterPage.js (83 lines)
-   │   ├── AuthCallback.js (109 lines)
-   │   ├── AdminPanel.js (592 lines)
-   │   ├── SettingsPage.js (228 lines)
-   │   ├── SubscribePage.js (250 lines)
-   │   └── index.js (6 lines)
-   └── App.js (3310 lines - reduced from 4928)
-   ```
-
-2. ✅ **Total Lines Extracted: 1880 lines** into reusable modules
-
-### Quote of the Day Widget ✅
-**New feature: Rotating quotes from "Letters to Evelyn" manuscript**
-- 15 hilarious quotes with chapter references and context
-- Rotates daily based on day of year
-- Links to Amazon purchase page
-- Purple/pink gradient design matching app theme
-- Appears on main dashboard below Book Promotion Banner
-
-### PayPal Webhook Testing ✅
-- Webhook endpoint functional at `/api/paypal/webhook`
-- Successfully receives and logs webhook events
-- Handles PAYMENT.CAPTURE.COMPLETED events
-- Note: Sample protocol data has invalid creator_ids - webhook logic works correctly
-
-### Test Results (Updated Jan 11, 2026 - All Features Complete)
-- **All New Features:** ✅ **100% PASS** (15/15 tests passed)
-- **Quote Gallery:** ✅ 75 quotes, 6 categories, share functionality
-- **Protocol Debugger:** ✅ Parses protocols, tests text matching
-- **Weekly/Monthly Leaderboards:** ✅ API and UI working
-- **Share Badge:** ✅ Twitter/Facebook/Copy options
-- **Analytics Dashboard:** ✅ Admin-only metrics and charts
-- **Mobile Responsiveness:** ✅ Enhanced CSS for all screen sizes
-- **Frontend Refactoring:** ✅ App.js reduced from 3055 to 126 lines
-- **SerpAPI Integration:** ✅ 66 results from SerpAPI + backup from DDGS
-- **Search Speed:** 16.6s (target: 19-22s) ✅
-- **App Mode:** **FREE FOR EVERYONE**
-
-### Previous Session Updates (Jan 11, 2026 - Newsletter Enhancement)
-1. ✅ **4 NEW Promotional Images** from user's advertisements integrated:
-   - Image 1: "WROTE A BOOK - UNIVERSE FACT-CHECKED IT - IT PASSED!" (cosmic_approval theme)
-   - Image 2: "THERAPIST: THIS IS A LOT TO UNPACK - BRING SNACKS" (therapy_humor theme)  
-   - Image 3: "I FLEW JETS THEN REALITY BROKE" (pilot_story theme)
-   - Image 4: "TERROR OF THE COSMICGULPER - WE'RE ALL GONNA DIE!" (galactic_comedy theme)
-
-2. ✅ **Rich Review Data Integrated:**
-   - Amazon: 57 reviews, 5.0 out of 5 stars
-   - Readers' Favorite: 9 professional reviewers (Divine Zape, Luwi Nyakansaila, Paul Zeitsman, etc.)
-   - Real quotes scraped from Amazon and ReadersFavorite.com
-
-3. ✅ **Author Highlights Added:**
-   - World record: Steepest Sarajevo Approach (83° nose dive)
-   - Navy pilot credentials
-   - 50+ jokes promise
-   - "Funnier than Dave Chappelle" claim
-
-4. ✅ **Humor Features:**
-   - Dad Joke of the Week (7 rotating jokes)
-   - Douglas Adams/Terry Pratchett-style cosmic humor
-   - Self-aware meta-marketing humor
-   - Rotating taglines from advertisements
-
-5. ✅ **Technical Implementation:**
-   - BOOK_PROMO_IMAGES array with URLs, taglines, themes, subtitles
-   - BOOK_REVIEWS dictionary with Readers' Favorite and Amazon reviews
-   - AUTHOR_HIGHLIGHTS dictionary with credentials
-   - Enhanced AI prompt for GPT-4o generation
-
-## Test Results (Updated Jan 11, 2026 - Latest Session)
-- Newsletter Phase 2 Testing: **93% PASS** (14/15 tests - 1 search timeout expected)
-- Frontend Refactoring: **100% PASS** (All refactored components verified)
-- Manuscript Integration: **VERIFIED** - AI generates newsletters with book content
-- Backend: 100% (56/56 tests passed - auth, category creation, API endpoints)
-- Frontend: 100% (all critical features working)
-- App Mode: **FREE FOR EVERYONE**
-
-## What's Been Completed This Session (Latest - Newsletter Phase 2 & Refactoring)
-1. ✅ Resend email integration for newsletters (API key configured, WORKING)
-2. ✅ Improved Protocol Parser (multi-word phrases, abbreviations, word boundaries)
-3. ✅ Enhanced web search (DuckDuckGo + Google scraping)
-4. ✅ **APP NOW 100% FREE** - No PayPal subscription required
-5. ✅ **NEW FUNNY BOOK IMAGES** with rotating taglines:
-   - "WROTE A BOOK. UNIVERSE FACT-CHECKED IT. IT PASSED."
-   - "THERAPIST: THIS IS A LOT TO UNPACK. Bring snacks. Possibly a helmet."
-   - "I FLEW JETS. THEN REALITY BROKE."
-   - "TERROR OF THE COSMIC GULPER - A comedy of galactic proportions!"
-6. ✅ **OPTIONED FOR FILM!** badge prominently displayed
-7. ✅ Book promotion in multiple strategic locations:
-   - Main page hero banner with rotating images & taglines
-   - Sidebar with "GET IT - Only $2.99!" CTA
-   - Subscription page (now shows FREE announcement + book promo)
-8. ✅ **Three action buttons**: BUY NOW, OFFICIAL SITE, READ REVIEWS
-9. ✅ Clickable thumbnail gallery for all 4 funny images
-10. ✅ Crawled letters-to-evelyn.sintra.site for official content
-11. ✅ PayPal email updated to JJSpilot24@gmail.com (for future use)
-
-## What's Been Completed This Session (Jan 11, 2026 - Continued)
-1. ✅ Password Change Feature - Settings page now has password change for all users
-2. ✅ Protocol Marketplace - Full marketplace with buy/sell, 90/10 revenue split
-3. ✅ 8 Sample Protocols added (Climate Research, Tech News, Medical Papers, etc.)
-4. ✅ **GAMIFICATION SYSTEM:**
-   - 13 badges (Pioneer, Explorer, Power Searcher, Protocol Creator, etc.)
-   - XP system with levels
-   - Leaderboard
-   - Login streak tracking
-   - Auto badge awarding
-5. ✅ **PAYPAL WEBHOOK INTEGRATION:**
-   - Webhook endpoint for automatic payment confirmation
-   - Pending purchase tracking
-   - Manual payment confirmation option
-   - Seller sales history
-6. ✅ Admin access granted to JJSPilot24@gmail.com
-7. ✅ **SOCIAL FEATURES COMPLETE:**
-   - Feed: Create posts, view posts from groups
-   - Groups: Create, join, leave, post to groups, like posts
-   - Pages: Create, follow, like, post updates (page owners)
-   - Friends list view
-8. ✅ **SEARCH IMPROVEMENTS:**
-   - Protocol hint text updated to "keyphrase1 or keyphrase2"
-   - Category protocol editing via ✏️ button
-   - DDGS library integration for better search results
-   - More lenient protocol matching (50%+ groups OR 3+ keywords)
-9. ✅ **CODE REFACTORING (Partial):**
-   - Created /backend/utils/ module
-   - database.py - DB connection utilities
-   - auth.py - Authentication utilities
-   - Main server.py still in use (supervisor read-only)
-
-## Pending/Backlog
-
-### P0 - Critical
-- ✅ **COMPLETE: Newsletter Enhancement Phase 2** - Full manuscript integration
-- ✅ **COMPLETE: Code Refactoring Phase 1** - Frontend modules extracted (35% reduction)
-- ✅ **COMPLETE: Search Speed Optimization** - 12-20s (target was 19-22s)
-- ✅ **COMPLETE: Batch Deletion Feature** - Delete search sessions
-- ✅ **COMPLETE: Frontend Refactoring - FINAL PHASE** (Jan 11, 2026)
-  - App.js reduced from **3055 to 126 lines** (96% reduction!)
-  - 12 page components extracted to `/src/pages/`
-  - 2 social components extracted to `/src/components/social/`
-  - All shared components in `/src/components/shared/`
-  - All features verified working via testing agent (100% pass rate)
-- ✅ Interactive map with Leaflet (✅ WORKING)
-- ✅ Full social features (Groups, Pages, comments, reactions) (✅ WORKING)
-- ✅ **COMPLETE: Quote Gallery Page** (Jan 11, 2026)
-  - 75 quotes from "Letters to Evelyn" manuscript
-  - 6 categories: Hilarious, Profound, Dad Jokes, Chapter Teasers, Wild Elements, Marketing
-  - Share functionality (Twitter, Facebook, Copy)
-- ✅ **COMPLETE: Protocol Debugger Tool** (Jan 11, 2026)
-  - Toggle button on Search page
-  - Parses and analyzes protocol strings
-  - Tests text against protocols with match details
-- ✅ **COMPLETE: Gamification Enhancements** (Jan 11, 2026)
-  - Weekly Leaderboard (resets every Monday)
-  - Monthly Leaderboard (resets 1st of month)
-  - Share Badge functionality (Twitter, Facebook, Copy)
-- ✅ **COMPLETE: Analytics Dashboard** (Jan 11, 2026) - Admin only
-  - User/Search/Protocol/Marketplace metrics
-  - Search trends chart (7d/14d/30d)
-  - Popular search terms
-  - Platform health indicators
-- ✅ **COMPLETE: Mobile Responsiveness** (Jan 11, 2026)
-  - Enhanced CSS for tablet/mobile views
-  - Collapsible sidebar on mobile
-  - Responsive grids and cards
-
-### P1 - High Priority
-- ⏳ Backend refactoring - Move endpoints from server.py to /routes/ (route files ready, integration pending)
-- PayPal Webhook testing with sandbox events
-
-### P2 - Medium Priority
-- ~~Gamification enhancements (weekly leaderboards)~~ ✅ DONE
-- ~~Quote Gallery page~~ ✅ DONE
-- ~~Mobile responsiveness improvements~~ ✅ DONE
-
-### P3 - Nice to Have
-- ~~Advanced analytics~~ ✅ DONE
-- Export functionality
-- Mobile app wrapper
-
-## Frontend Architecture (After Refactoring - Jan 11, 2026)
-
-### `/app/frontend/src/App.js` (126 lines)
-- Main router/layout component
-- Imports all page components
-- Handles authentication state
-- Renders sidebar + main content
-
-### `/app/frontend/src/pages/` (12 components)
-- `UltimateSearchPage.js` - Search & collate functionality (714 lines)
-- `SocialPage.js` - Feed, Friends, Groups, Pages tabs (259 lines)
-- `MarketplacePage.js` - Protocol buy/sell marketplace (602 lines)
-- `MapPage.js` - Interactive Leaflet map (317 lines)
-- `AchievementsPage.js` - Gamification & leaderboard (340 lines)
-- `AdminPanel.js` - Admin settings management (592 lines)
-- `SettingsPage.js` - User settings (228 lines)
-- `MessagesPage.js` - Private messaging (131 lines)
-- `SubscribePage.js` - Subscription info (250 lines)
-- `LoginPage.js` - Login form (73 lines)
-- `RegisterPage.js` - Registration form (83 lines)
-- `AuthCallback.js` - Google OAuth callback (109 lines)
-
-### `/app/frontend/src/components/social/` (2 components)
-- `GroupsSection.js` - Groups management (379 lines)
-- `PagesSection.js` - Pages management (356 lines)
-
-### `/app/frontend/src/components/shared/` (6 components)
-- `Toast.js` - Notification toasts
-- `Icons.js` - Icon components
-- `Sidebar.js` - Navigation sidebar
-- `HashtagDisplay.js` - Hashtag rendering
-- `QuoteOfTheDay.js` - Manuscript quote widget
-- `BookPromoBanner.js` - Book promotion hero
-
-## Search API Options (Bing API Retired)
-Since Bing Search API has been retired in 2024/2025, here are alternatives:
-1. **SearchAPI.io** - Multi-engine (Google, Bing, Baidu)
-2. **DataForSEO** - $0.0006/request, very cost-effective
-3. **Serper.dev** - Google-only, fast and cheap
-4. **Bright Data SERP API** - Enterprise-grade
-
-All require API keys from their respective providers.
+## Preview URL
+https://protocol-hub-5.preview.emergentagent.com
