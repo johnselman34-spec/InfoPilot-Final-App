@@ -43,9 +43,10 @@ class TestAuthentication:
         assert response.status_code == 200
         data = response.json()
         assert "token" in data
-        assert data.get("is_admin") == True
-        print(f"✓ Admin login successful, is_admin: {data.get('is_admin')}")
-        return data["token"]
+        # is_admin is in the user object
+        user_data = data.get("user", {})
+        assert user_data.get("is_admin") == True
+        print(f"✓ Admin login successful, is_admin: {user_data.get('is_admin')}")
 
 
 class TestChatAPI:
