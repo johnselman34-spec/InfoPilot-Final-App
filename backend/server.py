@@ -568,6 +568,14 @@ class ProtocolCreate(BaseModel):
     """InfoPilot 2.0 Protocol - Boolean search syntax"""
     protocol_string: str  # e.g., "(word1 or word2) & (word3)+ & (word4)^"
 
+# Location model for protocols
+class ProtocolLocation(BaseModel):
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: str = "USA"
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+
 class CategoryCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     protocol: ProtocolCreate
@@ -575,6 +583,7 @@ class CategoryCreate(BaseModel):
     is_public: bool = True
     for_sale: bool = False  # Whether protocol can be purchased
     price: Optional[float] = Field(None, ge=0.75, le=2.99)  # Price range $0.75-$2.99
+    location: Optional[ProtocolLocation] = None  # Location data for marketplace map
 
 class CategoryUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=200)
@@ -582,6 +591,7 @@ class CategoryUpdate(BaseModel):
     is_public: Optional[bool] = None
     for_sale: Optional[bool] = None
     price: Optional[float] = Field(None, ge=0.75, le=2.99)
+    location: Optional[ProtocolLocation] = None  # Location data for marketplace map
 
 class CategoryResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -596,6 +606,7 @@ class CategoryResponse(BaseModel):
     owner_username: Optional[str] = None
     copy_count: int = 0
     level: int = 0
+    location: Optional[dict] = None  # Location data
     created_at: datetime
 
 # Protocol Purchase Models
