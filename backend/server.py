@@ -6348,7 +6348,9 @@ async def track_protocol_copy(category_id: str, user: dict = Depends(require_use
 # API ROUTES - BADGES & ACHIEVEMENTS
 # ============================================
 
-def calculate_badges(copy_count: int = 0, protocols_created: int = 0, sales_count: int = 0, purchases_count: int = 0) -> list:
+def calculate_badges(copy_count: int = 0, protocols_created: int = 0, sales_count: int = 0, purchases_count: int = 0, 
+                     friends_count: int = 0, groups_created: int = 0, pages_created: int = 0, messages_sent: int = 0,
+                     search_results: int = 0, reactions_count: int = 0, comments_count: int = 0) -> list:
     """Calculate earned badges based on metrics"""
     badges = []
     
@@ -6364,7 +6366,7 @@ def calculate_badges(copy_count: int = 0, protocols_created: int = 0, sales_coun
             badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": False, "progress": (copy_count / threshold) * 100})
     
     # Creator badges
-    creator_badges = [("creator_novice", 1), ("creator_prolific", 10), ("creator_master", 25)]
+    creator_badges = [("creator_novice", 1), ("creator_prolific", 10), ("creator_master", 25), ("creator_legend", 50)]
     for badge_id, threshold in creator_badges:
         if protocols_created >= threshold:
             badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": True, "progress": 100})
@@ -6372,7 +6374,7 @@ def calculate_badges(copy_count: int = 0, protocols_created: int = 0, sales_coun
             badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": False, "progress": (protocols_created / threshold) * 100})
     
     # Sales badges
-    sales_badges = [("first_sale", 1), ("seller_bronze", 5), ("seller_silver", 10), ("seller_gold", 25)]
+    sales_badges = [("first_sale", 1), ("seller_bronze", 5), ("seller_silver", 10), ("seller_gold", 25), ("seller_platinum", 50)]
     for badge_id, threshold in sales_badges:
         if sales_count >= threshold:
             badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": True, "progress": 100})
@@ -6380,12 +6382,52 @@ def calculate_badges(copy_count: int = 0, protocols_created: int = 0, sales_coun
             badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": False, "progress": (sales_count / threshold) * 100})
     
     # Purchases badges
-    purchase_badges = [("collector_novice", 1), ("collector_avid", 10)]
+    purchase_badges = [("collector_novice", 1), ("collector_avid", 10), ("collector_master", 25)]
     for badge_id, threshold in purchase_badges:
         if purchases_count >= threshold:
             badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": True, "progress": 100})
         else:
             badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": False, "progress": (purchases_count / threshold) * 100})
+    
+    # Social badges
+    if friends_count >= 10:
+        badges.append({**BADGE_DEFINITIONS["social_butterfly"], "id": "social_butterfly", "earned": True, "progress": 100})
+    else:
+        badges.append({**BADGE_DEFINITIONS["social_butterfly"], "id": "social_butterfly", "earned": False, "progress": (friends_count / 10) * 100})
+    
+    if groups_created >= 1:
+        badges.append({**BADGE_DEFINITIONS["group_leader"], "id": "group_leader", "earned": True, "progress": 100})
+    else:
+        badges.append({**BADGE_DEFINITIONS["group_leader"], "id": "group_leader", "earned": False, "progress": 0})
+    
+    if pages_created >= 1:
+        badges.append({**BADGE_DEFINITIONS["influencer"], "id": "influencer", "earned": True, "progress": 100})
+    else:
+        badges.append({**BADGE_DEFINITIONS["influencer"], "id": "influencer", "earned": False, "progress": 0})
+    
+    if messages_sent >= 50:
+        badges.append({**BADGE_DEFINITIONS["messenger"], "id": "messenger", "earned": True, "progress": 100})
+    else:
+        badges.append({**BADGE_DEFINITIONS["messenger"], "id": "messenger", "earned": False, "progress": (messages_sent / 50) * 100})
+    
+    # Search badges
+    search_badges = [("researcher", 100), ("data_miner", 500), ("intel_master", 1000)]
+    for badge_id, threshold in search_badges:
+        if search_results >= threshold:
+            badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": True, "progress": 100})
+        else:
+            badges.append({**BADGE_DEFINITIONS[badge_id], "id": badge_id, "earned": False, "progress": (search_results / threshold) * 100})
+    
+    # Engagement badges
+    if reactions_count >= 50:
+        badges.append({**BADGE_DEFINITIONS["reactor"], "id": "reactor", "earned": True, "progress": 100})
+    else:
+        badges.append({**BADGE_DEFINITIONS["reactor"], "id": "reactor", "earned": False, "progress": (reactions_count / 50) * 100})
+    
+    if comments_count >= 25:
+        badges.append({**BADGE_DEFINITIONS["commentator"], "id": "commentator", "earned": True, "progress": 100})
+    else:
+        badges.append({**BADGE_DEFINITIONS["commentator"], "id": "commentator", "earned": False, "progress": (comments_count / 25) * 100})
     
     return badges
 
