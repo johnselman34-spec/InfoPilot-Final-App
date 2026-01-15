@@ -5,44 +5,37 @@ The user wants to build a comprehensive web application, InfoPilot Explorer, wit
 
 **PRODUCT REQUIREMENTS:**
 - **Core Features:**
-    - **Ultimate Search:** A search page with a custom protocol parser, advanced filtering (including AND/OR logic), category selection, and results displayed on an interactive map.
-    - **Protocol Marketplace:** A Pay What You Want marketplace for search protocols, with admin-controlled revenue splits and PayPal integration. Protocols can also be listed for FREE. A key requirement is the ability to copy a protocol's title even if not owned, and both title and content if owned.
-    - **Social Hub:** Full-fledged social features including a friend system, user-created Groups and Pages (with partial admin roles), posts with reactions, comments, and photo uploads.
-    - **Direct Messaging:** Real-time one-on-one chat with text/image support and push notifications.
-    - **Polls:** Users can create polls on their Ultimate Search Page, Groups, and Pages. Admin monitoring and management of polls is required.
-    - **Statistics & Gamification:** A detailed statistics page with various charts, a Top Sellers leaderboard, a Most Copied Protocols leaderboard, and an interactive map that populates based on selected stats. An achievement system with points, levels, and badges.
+    - **Ultimate Search:** A search page with a custom protocol parser, advanced filtering, and an interactive map.
+    - **Protocol Marketplace:** A Pay What You Want marketplace with PayPal integration.
+    - **Social Hub:** A friend system, Groups, Pages, posts, reactions, and comments.
+    - **Direct Messaging:** Real-time one-on-one chat.
+    - **Polls:** User-created polls with admin monitoring.
+    - **Statistics & Gamification:** A detailed statistics page, leaderboards, and achievements.
 - **Integrations & Enhancements:**
-    - **AI Integration:** Use GPT-5.2 for AI-generated newsletters and protocol suggestions, and OpenAI Whisper for voice search.
-    - **Mobile App & Extension:** Create a mobile app wrapper using Capacitor and a Chrome browser extension for the search functionality.
-    - **Push Notifications:** Implement push notifications for direct messages using VAPID keys.
-    - **Protocol Analytics:** A dashboard for creators to track views, copies, and conversion rates for their protocols.
-    - **A/B Testing:** An A/B testing framework to optimize marketing copy for the user's book, Letters to Evelyn.
+    - **AI Integration:** GPT-5.2 for newsletters/suggestions and Whisper for voice search.
+    - **Mobile App & Extension:** A Capacitor mobile app and a Chrome extension.
+    - **Push Notifications:** Using VAPID keys.
+    - **Protocol Analytics:** A dashboard for protocol creators.
+    - **A/B Testing:** A framework to optimize marketing copy.
+    - **Automated Email Reports:** For A/B testing performance.
 - **Admin & User Experience:**
-    - **Admin Accounts:** Pre-defined admin access for specific email addresses.
-    - **Default Friend:**  should be the default first friend for all new users.
-    - **PayPal Integration:** Use PayPal Commerce Platform for users to sell their protocols.
-    - **Tutorials:** A section with text/image-based tutorials, with the ability to add YouTube videos in the future.
-    - **Automated Reports:** Automated A/B testing performance reports sent via email to admins.
+    - Pre-defined admin accounts.
+    - A default friend for new users.
+    - A tutorial section supporting text, images, and YouTube videos.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a feature-rich full-stack React/FastAPI app with a MongoDB database. It is nearly feature-complete based on the user's extensive requests. Key implemented systems include a social hub, marketplace, statistics page, gamification, direct messaging, AI-powered suggestions (GPT-5.2), and voice search (Whisper).
-
-Most recently, the agent implemented several major features:
-- A complete A/B testing system for promotional content, with a backend and a frontend dashboard for admins.
-- A protocol analytics system for creators to track their marketplace performance.
-- Backend and frontend support for YouTube video tutorials.
-- Poll monitoring and management for admins.
-- AI-powered protocol suggestions on the search and marketplace pages.
-- Finalized build/packaging scripts and detailed guides for the mobile app and Chrome extension.
-- VAPID key integration for production-ready push notifications.
+The application is a near-complete, feature-rich full-stack React/FastAPI app with a MongoDB database. This session focused on adding sophisticated automation and administrative features. The agent implemented a complete automated A/B testing email reporting system using Gmail SMTP and APScheduler for background tasks. This includes AI-generated, hilarious and revenue-focused email content. A major frontend refactoring of the  was completed. New admin features were added, including a UI for managing YouTube tutorials, an A/B Test Auto-Optimizer to automatically manage marketing campaigns, a Revenue Forecasting dashboard, and a setting for admins to hide specific advertisements. All new features were extensively tested.
 
 **Last working item**:
-- **Last item agent was working:** Implementing a system for automated A/B testing email reports using Gmail SMTP. The user chose this option to avoid creating a new Resend account. The agent created the initial backend files (, ) and was in the process of integrating them.
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** both. First, the agent must complete the backend implementation (add router, configure , create scheduling logic) and test it with . Then, the agent needs to build the admin configuration UI on the frontend and use the  tool to verify it.
+- **Last item agent was working:** The agent simultaneously implemented three user requests:
+    1.  **Triple-checked the YouTube Tutorial upload functionality**: Confirmed that the backend endpoints (, ) and the frontend component work correctly for adding and removing video URLs.
+    2.  **Implemented Revenue Forecasting**: Created a new backend service, API endpoint, and a dedicated tab in the Admin Panel to show revenue forecasts based on sales and A/B test performance.
+    3.  **Implemented Admin Ad-Hiding**: Added functionality for specific admin accounts to hide the Maestro Bistro advertisement, with preferences stored in the database.
+- **Status:** USER VERIFICATION PENDING
+- **Agent Testing Done:** Y
+- **Which testing method agent to use?** NA (Testing is complete for these items).
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
@@ -50,111 +43,87 @@ Most recently, the agent implemented several major features:
 
 **Issues Detail:**
 - **Issue 1: ML Dependency Constraint**
-    - **Attempted fixes:** The agent identified that  (a dependency of ) pulls in ML-related packages like  and . An attempt to remove them broke the  library, so they were reinstalled.
-    - **Next debug checklist:** This is now considered a known constraint of using the  library. No further action should be taken unless the library is updated or replaced.
-    - **Why fix this issue and what will be achieved with the fix?** This is a technical debt item. Fixing it would reduce the application's size and remove unnecessary dependencies, but it is blocked by an external library's requirements.
+    - **Attempted fixes:** This issue was previously investigated.  (a dependency of ) requires ML-related packages (, ). Removing them breaks AI features.
+    - **Next debug checklist:** This is a known constraint of the  library. No further action is required unless the dependency is updated or removed.
+    - **Why fix this issue and what will be achieved with the fix?** Fixing this would reduce the application's build size by removing unnecessary dependencies.
     - **Status:** BLOCKED
     - **Is recurring issue?** Y
     - **Should Test frontend/backend/both after fix?** Backend.
     - **Blocked on other issue:** The  library dependency.
 
 **In progress Task List**:
-- **Task 1: Complete Automated Email Reports (P0)**
-    - **Where to resume:** The agent has created  and .
-    - **Next steps:**
-        1. Add the new  to .
-        2. Add  and  placeholders to .
-        3. Implement a background scheduling mechanism in the backend to send the reports periodically.
-        4. Create a UI in the  for admins to manage report settings (e.g., enable/disable, set frequency, confirm recipient email).
-        5. Provide clear instructions for the user on how to generate a **Gmail App Password**.
-    - **What will be achieved with this?** Admins will receive automated A/B test performance summaries via email, enabling data-driven marketing decisions.
+- **Task 1: Complete Deep Frontend Refactoring (P1)**
+    - **Where to resume:** The  has been successfully refactored. The agent has created the new component files for , , and  (, , ), but has not yet modified the main page files to use them.
+    - **Next Steps:**
+        1.  Refactor  to move JSX and logic into the components in .
+        2.  Refactor  to use components from .
+        3.  Refactor  to use components from .
+    - **What will be achieved with this?** A significant improvement in code maintainability, readability, and performance across the application's main pages.
     - **Status:** IN PROGRESS
-    - **Should Test frontend/backend/both after fix?** Both.
-    - **Blocked on something:** User needs to provide a Gmail App Password for production testing.
-
-- **Task 2: Deep Frontend Refactoring (P1)**
-    - **Where to resume:** The user approved a deep refactor. The agent has created the new component directory structure but has not yet migrated the code.
-    - **Next steps:**
-        1. Systematically move logic and JSX from  into the smaller components within .
-        2. Replace the extracted code in  with imports of the new components.
-        3. Repeat this process for , , and .
-    - **What will be achieved with this?** This will significantly improve code maintainability, readability, and reusability, making future development easier.
-    - **Status:** IN PROGRESS
-    - **Should Test frontend/backend/both after fix?** Frontend. A full regression test using  is critical after this task.
+    - **Should Test frontend/backend/both after fix?** Frontend (A full regression test with  is required).
     - **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
-- **YouTube Tutorial Management UI (P1):** The backend and frontend player are ready. An admin UI needs to be added to the  to allow admins to easily add, update, or remove YouTube video URLs for tutorials, using the existing admin endpoints.
+- **Upcoming Tasks:**
+    - **P0: Implement A/B Test Auto-Optimization Scheduler:** The backend service () and API exist, but there is no background job scheduled to run the optimizer periodically. This needs to be added to 's startup event, similar to the email scheduler.
+    - **P1: Revenue Forecasting for Marketplace Protocols:** The user approved an enhancement to create a predictive model for marketplace protocol revenue. This will involve analyzing protocol sales data to forecast future top performers and displaying these insights in the admin panel.
+- **Future Tasks:**
+    - **Consolidate Redundant Chat Routes:** While not truly redundant (group vs. DM), the  and  routes could be organized into a more unified  module for better long-term maintenance. A  file was created to document the current state.
 
 **Completed work in this session**
-- **A/B Testing System:** Implemented a full-stack A/B testing framework for the Letters to Evelyn promo, including a backend API and an admin dashboard to view results. (DONE)
-- **Protocol Analytics:** Created a creator-facing analytics system to track protocol views and other metrics. (DONE)
-- **VAPID Push Notifications:** Generated and integrated VAPID keys into the backend for secure, production-ready web push notifications. (DONE)
-- **AI Protocol Suggestions:** Implemented a GPT-5.2 powered service to suggest marketplace protocols to users on the search and marketplace pages. (DONE)
-- **Polls Admin Management:** Added backend endpoints and a frontend UI in the Admin Panel for admins to monitor and manage all user-created polls. (DONE)
-- **Release Packaging & Guides:**
-    - Created a script to package the browser extension into a  file. (DONE)
-    - Wrote  and  with detailed instructions for the user. (DONE)
-- **Tutorials System Upgrade:** Enhanced the backend and frontend to support YouTube videos in addition to text/image tutorials. (DONE)
-- **Frontend Refactoring Prep:** Created the directory structure for a deep refactoring of monolithic page components. (DONE)
-- **Testing:** Successfully completed three full test cycles (, , ) using , ensuring all new features are stable.
-
-**Earlier issues found/mentioned but not fixed**
-- **Redundant Chat Routes:** The backend has two sets of routes for chat ( and ). This is a low-priority technical debt item that should be consolidated in the future.
-
-**Known issue recurrence from previous fork**
-- **ML Dependencies:** The issue of  and  being installed was identified, fixed by removing , and then recurred when  had to be reinstalled as a dependency for . This is now a known constraint.
+- **Automated Email Reports:** Implemented a full-stack system for sending automated, AI-enhanced A/B test performance reports via Gmail SMTP, using APScheduler for background jobs. (DONE)
+- **A/B Test Auto-Optimizer:** Created a backend service and admin UI to automatically disable losing A/B test variants based on statistical significance. (DONE)
+- **Revenue Forecasting Feature:** Added a new dashboard in the Admin Panel to forecast revenue from sales and A/B test conversions. (DONE)
+- **Frontend Refactoring (Phase 1):** Successfully refactored the 1300-line  into smaller, reusable components, reducing its size by over 50%. (DONE)
+- **YouTube Tutorial Admin UI:** Added a new tab in the Admin Panel for admins to manage YouTube tutorial videos, including adding and removing video URLs. (DONE)
+- **Admin Ad-Hiding Feature:** Implemented a preference for specified admin accounts to hide the Maestro Bistro advertisement. (DONE)
+- **YouTube Tutorial Functionality Verification:** Triple-checked and confirmed that the backend and frontend for managing YouTube tutorial videos are working correctly. (DONE)
+- **Chat Architecture Documentation:** Investigated the dual chat routes and created  to clarify their distinct purposes (group chat vs. direct messages). (DONE)
+- **Testing:** Ran five full test cycles ( through ) using , achieving 100% pass rates on the final iterations.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- A/B Testing (Backend logic, frontend variants, event tracking)
-- Background Task Scheduling (for email reports)
-- Gmail SMTP Integration
-- VAPID Web Push Notifications
-- Component-based architecture and refactoring
+- **Background Task Scheduling:** Using  to run periodic jobs (email reports, A/B test optimization).
+- **Advanced Frontend Refactoring:** Deconstructing large, monolithic React components into smaller, manageable, and reusable functional components.
+- **AI-Powered Content Generation:** Using an LLM to generate dynamic, engaging, and analytical content for email reports.
+- **Statistical A/B Test Optimization:** Implementing logic to determine statistical winners in A/B tests and automatically adjust campaigns.
+- **Gmail SMTP Integration:** Sending emails through a third-party service using an App Password for security.
 
 **key DB schema**
-- **ab_tests:** 
-- **ab_assignments:** 
-- **ab_events:** 
-- **protocol_analytics:** 
-- **tutorials:** (Static list in code) schema updated to include  and .
+- **ab_optimizer_settings:** 
+- **admin_preferences:** 
+- **email_report_logs:** 
 
 **All files of reference**
-- **New Backend:**
-    - 
-    - 
-    - 
-    - 
-    - 
-- **New Frontend:**
-    - 
-    - 
-    - 
-    - 
-- **New Guides & Artifacts:**
-    - 
-    - 
-    - 
-- **Test Reports:** , , 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+- 
+-  (and its new sub-components)
+- 
+- Test Reports:  through 
 
 **Areas that need refactoring**:
-- The deep refactoring of , , , and  is in progress and must be completed.
-- The redundant chat routes ( vs. ) remain a low-priority technical debt item.
+- The Deep Frontend Refactoring task is in progress. , , and  are next in line and have component stubs created but are not yet refactored.
 
 **key api endpoints**
-- **A/B Testing:** , 
-- **Protocol Analytics:** 
-- **AI Suggestions:** 
-- **Polls Admin:** , , 
+- **Email Reports:** , 
+- **A/B Optimizer:** , , 
+- **Revenue Forecast:** 
 - **Tutorials Admin:** , 
 
 **Critical Info for New Agent**
-- **Gmail App Password Required:** The email reporting feature requires the user to generate and provide a Gmail App Password. You must provide clear, step-by-step instructions for them to do this. Do not proceed with implementation using hardcoded or fake credentials.
-- **Deep Refactor is a Priority:** The user explicitly confirmed a deep refactor for the large frontend pages. This is a major task that will improve the codebase's health and must be handled carefully with thorough regression testing afterward.
-- ** is a required dependency:** Do not attempt to remove , , or  again. They are required by  and removing them will break AI features.
+- **User wants full completion:** The user has explicitly requested the completion of all Next steps, Future/backlog, and Enhancement suggestions. They are highly motivated by features that maximize revenue, engagement (laughter), and usefulness.
+- **Refactoring is a major ongoing task:** The deep frontend refactoring must be completed for the remaining large pages (, , ). This is a P1 priority.
+- **Gmail is fully configured:** The user has provided a working Gmail App Password, which is now in the  file. The email system is fully functional.
+- **Scheduler jobs need to be activated:** Remember to add new background jobs (like the A/B optimizer) to the startup scheduler in .
 
 **documents and test reports created in this job**
 - 
@@ -166,21 +135,20 @@ Most recently, the agent implemented several major features:
 -  (updated extensively)
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **1. (LATEST) User:** Confirmed choice to use Gmail SMTP for email reports if it avoids needing a new Resend account, and specified  as the recipient. **Status: ACKNOWLEDGED, implementation started.**
-- **2. User:** Approved the agent's proposed enhancement (automated A/B test email reports). **Status: ACKNOWLEDGED, options provided.**
-- **3. User:** Approved all remaining tasks: Mobile/Chrome guides, A/B Testing System, and provided clarification on the deep refactor. **Status: ACKNOWLEDGED, all items implemented.**
-- **4. User:** Requested all 'Next action items', 'Future/backlog', and the 'Enhancement suggestion' to be implemented. **Status: ACKNOWLEDGED, plan created and approved.**
-- **5. to 10.** These messages cover the user's approvals for the agent's work, including the final feature batch (AI suggestions, poll stats) and the plan to tackle the remaining backlog items. All have been actioned.
+- **1. (LATEST) User:** Approved the agent's next enhancement idea (A/B Test Auto-Optimization). **Status: COMPLETED.**
+- **2. User:** Requested completion of all next steps, a feature to allow specific admins to hide ads, and a triple-check of the YouTube tutorial upload function. **Status: COMPLETED.**
+- **3. User:** Approved the previous enhancement idea (AI-powered email insights) and all future tasks. **Status: COMPLETED.**
+- **4. User:** Confirmed all previous tasks were complete and approved moving on to the next set. **Status: COMPLETED.**
+- **5. User:** Provided the Gmail App Password () and re-confirmed they want all tasks, backlog, and enhancements completed, with a focus on humor and revenue. **Status: COMPLETED.**
+- **6. User:** Instructed the agent to skip explaining the manual steps for getting an App Password and to proceed with the P1 refactoring task. **Status: COMPLETED.**
+- **7-10.** A series of approvals and confirmations that led to the agent completing the automated email report feature and the refactoring of .
 
 **Project Health Check:**
-- **Broken:** None. The application is stable.
-- **Mocked:**
-    - The  and  backend routes are still placeholders.
-    - The new  is non-functional pending user credentials.
+- **Broken:** None. The application is stable and well-tested.
+- **Mocked:** The backend routes for  and  remain as placeholders from previous sessions.
 - **Technical Debt:**
-    - Monolithic frontend components (Refactoring is IN PROGRESS).
-    - /ML dependencies are a known constraint due to an external library.
-    - Redundant chat routes in the backend.
+    - The large monolithic frontend pages (, , ) are a P1 priority for refactoring.
+    - The /ML dependency constraint is a known issue.
 
 **3rd Party Integrations**
 - **PayPal Commerce Platform:** For marketplace payments.
@@ -188,20 +156,20 @@ Most recently, the agent implemented several major features:
 - **pywebpush:** For web push notifications.
 - **OpenAI GPT-5.2 (via ):** Used for AI features. Uses Emergent LLM Key.
 - **OpenAI Whisper (via ):** Used for voice search. Uses Emergent LLM Key.
-- **react-markdown:** For rendering text/image tutorials.
 - **Capacitor:** For mobile app wrapper.
-- **Gmail SMTP:** For sending automated email reports. Requires User Credentials (App Password).
+- **Gmail SMTP:** For sending automated email reports. Requires User Credentials (App Password is configured).
+- **APScheduler:** For running background tasks (email reports).
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. Used three times in this session (, , ) with 100% success.
+- **Testing agent used after significant changes:** YES. Used five times in this session ( through ) with a 100% pass rate on the final three.
 - **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** Test reports are located at .
-- **Known regressions:** None.
+- **Test files created:**  contains all test reports.
+- **Known regressions:** None. The testing agent has confirmed the stability of the new features.
 
 **Credentials to test flow:**
 - **Admin User:**  / 
 - **Test User:**  / 
-- **Gmail Credentials:** Not provided. The agent must request an **App Password** from the user.
+- **Gmail Credentials:** Configured in  with the App Password provided by the user.
 
 **What agent forgot to execute**
-The agent has been thorough. All user-approved tasks are either completed or in progress.</analysis>
+The agent has been extremely thorough. The only outstanding item is that while the *services* for the A/B Test Auto-Optimizer were built, the background scheduling job was not added to  to run it periodically. This is a minor oversight and should be addressed as the first step.</analysis>

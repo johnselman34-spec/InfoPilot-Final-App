@@ -8,7 +8,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = "https://infoexplore.preview.emergentagent.com"
+BASE_URL = "https://info-navigator-1.preview.emergentagent.com"
 
 # Test credentials
 ADMIN_EMAIL = "john@infojet.com"

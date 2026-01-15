@@ -424,7 +424,7 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - Shareable badges
 
 ## Preview URL
-https://infoexplore.preview.emergentagent.com
+https://info-navigator-1.preview.emergentagent.com
 
 ## Third-Party Integrations
 - **OpenAI GPT-5.2** - Newsletter generation (via Emergent LLM Key)
