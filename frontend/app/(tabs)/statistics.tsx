@@ -42,8 +42,28 @@ interface LeaderboardEntry {
   revenue: number;
 }
 
-type ChartType = 'overview' | 'categories' | 'words' | 'documents' | 'geography' | 'leaderboard';
+type ChartType = 'overview' | 'categories' | 'words' | 'documents' | 'geography' | 'leaderboard' | 'clipboard' | 'achievements';
 type LeaderboardTab = 'sales' | 'revenue';
+
+interface ClipboardLeader {
+  protocol_id: string;
+  protocol_name: string;
+  creator: string;
+  copy_count: number;
+  price: number;
+}
+
+interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  funny_tagline: string;
+  icon: string;
+  category: string;
+  rarity: string;
+  earned: boolean;
+  progress: number;
+}
 
 export default function StatisticsScreen() {
   const [loading, setLoading] = useState(true);
