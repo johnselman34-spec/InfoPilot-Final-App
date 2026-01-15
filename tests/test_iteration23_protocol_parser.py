@@ -370,17 +370,22 @@ class TestTopSellersLeaderboard:
         assert response.status_code == 200, f"Top sellers (sales) failed: {response.text}"
         data = response.json()
         
-        # Should return a list
-        assert isinstance(data, list), "Top sellers should return a list"
+        # Response is {"tab": "sales", "leaderboard": [...], "total_sellers": N}
+        assert "leaderboard" in data, "Response should have 'leaderboard' key"
+        assert "tab" in data, "Response should have 'tab' key"
+        assert data["tab"] == "sales", "Tab should be 'sales'"
+        
+        leaderboard = data["leaderboard"]
+        assert isinstance(leaderboard, list), "Leaderboard should be a list"
         
         # Check structure if there are sellers
-        if len(data) > 0:
-            seller = data[0]
+        if len(leaderboard) > 0:
+            seller = leaderboard[0]
             expected_fields = ["user_id", "username", "sales_count", "total_revenue"]
             for field in expected_fields:
                 assert field in seller, f"Seller missing field: {field}"
         
-        print(f"Top sellers (by sales): {len(data)} sellers")
+        print(f"Top sellers (by sales): {len(leaderboard)} sellers, total_sellers: {data.get('total_sellers', 0)}")
         print("PASS: Top Sellers BY SALES COUNT tab works")
     
     def test_top_sellers_revenue_tab(self):
