@@ -1026,4 +1026,45 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 8,
   },
+  // New styles for scrolling fix and enhancements
+  flatList: {
+    flex: 1,
+  },
+  mapScrollView: {
+    flex: 1,
+  },
+  mapScrollContent: {
+    flexGrow: 1,
+  },
+  protocolCount: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  listFooter: {
+    backgroundColor: colors.secondary,
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 12,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  listFooterText: {
+    color: colors.marketplaceGold,
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalCopyButton: {
+    flexDirection: 'row',
+    backgroundColor: colors.success,
+    paddingVertical: 16,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
 });
