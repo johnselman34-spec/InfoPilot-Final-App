@@ -48,6 +48,7 @@ const UltimateSearchPage = ({ showToast }) => {
   const [editProtocol, setEditProtocol] = useState('');
   const [editCategoryName, setEditCategoryName] = useState('');
   const [editIsPublic, setEditIsPublic] = useState(false);
+  const [editPrice, setEditPrice] = useState('');
   const [showDebugger, setShowDebugger] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [collateLoading, setCollateLoading] = useState(false);
