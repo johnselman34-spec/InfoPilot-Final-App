@@ -80,6 +80,7 @@ const StatisticsPage = ({ showToast }) => {
     fetchLeaderboards();
     fetchMostCopied();
     fetchPollStatistics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPollStatistics = async () => {
