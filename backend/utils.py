@@ -41,14 +41,20 @@ def verify_token(token: str) -> dict:
     except JWTError:
         return None
 
-# InfoJet 2.0 Protocol Parser
+# InfoJet 2.0 Protocol Parser - FIXED for abbreviations with periods
 def parse_protocol(protocol: str) -> Tuple[bool, str, List[str]]:
     """
     Parse InfoJet 2.0 protocol and return validity, error message, and search terms.
     Format: (word1 or word2) & (word3 or word4) & (word5)+ & (word6)^
+    
+    IMPORTANT FIXES:
+    - Handles abbreviations with periods (e.g., "William C. Gamble", "U.S.", "etc.")
+    - Handles multi-word phrases correctly
+    - Case-insensitive matching
+    - Properly splits on " or " not on partial matches
     """
     try:
-        # Remove extra whitespace
+        # Remove extra whitespace but preserve spaces within phrases
         protocol = ' '.join(protocol.split())
         
         # Check for balanced parentheses
@@ -56,6 +62,7 @@ def parse_protocol(protocol: str) -> Tuple[bool, str, List[str]]:
             return False, "Unbalanced parentheses in protocol", []
         
         # Find all groups: (words) with optional + or ^ modifiers
+        # This regex handles content with periods, commas, apostrophes inside parentheses
         pattern = r'\(([^)]+)\)\s*([+^]?)'
         matches = re.findall(pattern, protocol)
         
@@ -65,12 +72,21 @@ def parse_protocol(protocol: str) -> Tuple[bool, str, List[str]]:
         # Extract search terms
         search_terms = []
         for group_content, modifier in matches:
-            # Split by 'or' and clean up
-            terms = [term.strip() for term in group_content.split(' or ')]
-            search_terms.append({
-                'terms': terms,
-                'modifier': modifier if modifier else 'normal'  # +, ^, or normal
-            })
+            # CRITICAL FIX: Split by ' or ' (with spaces) to avoid splitting words like "for" or "history"
+            # Use case-insensitive split
+            terms = re.split(r'\s+or\s+', group_content, flags=re.IGNORECASE)
+            # Clean up each term, preserving internal punctuation (periods, apostrophes)
+            cleaned_terms = []
+            for term in terms:
+                cleaned = term.strip()
+                if cleaned:
+                    cleaned_terms.append(cleaned)
+            
+            if cleaned_terms:
+                search_terms.append({
+                    'terms': cleaned_terms,
+                    'modifier': modifier if modifier else 'normal'  # +, ^, or normal
+                })
         
         # Check if groups are separated by &
         groups_text = re.sub(r'\([^)]+\)\s*[+^]?', 'GROUP', protocol)
