@@ -395,25 +395,6 @@ async def confirm_bundle_payment(data: dict, user = Depends(get_current_user)):
     }
 
 
-@router.get("/my/purchases")
-async def get_my_bundle_purchases(user = Depends(get_current_user)):
-    """Get user's bundle purchase history"""
-    purchases = await db.bundle_purchases.find(
-        {"user_id": str(user["_id"])}
-    ).sort("purchased_at", -1).to_list(100)
-    
-    return {
-        "purchases": [{
-            "id": str(p["_id"]),
-            "bundle_name": p.get("bundle_name"),
-            "protocols_count": len(p.get("protocol_ids", [])),
-            "amount_paid": p.get("amount_paid"),
-            "savings": p.get("savings"),
-            "purchased_at": p.get("purchased_at").isoformat() if p.get("purchased_at") else None
-        } for p in purchases]
-    }
-
-
 @router.delete("/{bundle_id}")
 async def delete_bundle(bundle_id: str, user = Depends(get_current_user)):
     """Delete a bundle (creator or admin only)"""
