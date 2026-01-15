@@ -854,9 +854,9 @@ async def get_admin_settings():
 
 # ==================== MARKETPLACE ROUTES ====================
 
-# PayPal credentials from user's document
-PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', 'BAABmhMWqe1WrfJkqJ7RRzEZwoAfxSF2bclm8_HY2BuU9C-7pnakTdjFVCvSJyWh63-wUWmKN1cT1hdMIY')
-PAYPAL_HOSTED_BUTTON_ID = '765S46VPPEP5C'
+# PayPal credentials - loaded from environment variables
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', '')
+PAYPAL_HOSTED_BUTTON_ID = os.environ.get('PAYPAL_HOSTED_BUTTON_ID', '')
 MARKETPLACE_PLATFORM_FEE = 0.10  # 10% to platform
 MARKETPLACE_SELLER_SHARE = 0.90  # 90% to seller
 MIN_PAYOUT_THRESHOLD = 1.00  # PayPal minimum
