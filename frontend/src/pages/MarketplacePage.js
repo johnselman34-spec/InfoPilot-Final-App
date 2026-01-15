@@ -4,14 +4,20 @@ import { API } from '../utils/api';
 import { Icons, ProtocolCopyButtons, AISuggestions } from '../components/shared';
 import ProtocolAnalyticsDashboard from '../components/Admin/ProtocolAnalyticsDashboard';
 import ProtocolBundlesSection from '../components/Marketplace/ProtocolBundlesSection';
+import BundleOfTheWeek from '../components/Marketplace/BundleOfTheWeek';
 
-// Constants
+// Constants - HILARIOUS FREE MESSAGES 🎉
 const FREE_MESSAGES = [
   "💸 100% FREE - Your wallet just did a happy dance!",
   "🎉 ABSOLUTELY FREE - Even your piggy bank is celebrating!",
   "🚀 FREE AS A BIRD - Fly high without spending a dime!",
   "💰 ZERO DOLLARS - Math doesn't get easier than this!",
   "🎁 FREE FOREVER - Like a gift that keeps on giving!",
+  "🤑 SO FREE it should be illegal (but it's not, we checked)!",
+  "🎪 FREE! FREE! FREE! - Now say it three times fast!",
+  "💎 FREE - Worth its weight in gold (gold weighs a lot)!",
+  "🌈 FREE at the end of every rainbow!",
+  "🎯 FREE - Hitting your budget where it counts!",
 ];
 
 const CATEGORY_COLORS = {
