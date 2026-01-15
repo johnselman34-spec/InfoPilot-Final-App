@@ -275,7 +275,7 @@ class TestAdminPanelTabs:
     def test_ab_testing_endpoint(self, admin_token):
         """Test A/B testing endpoint works"""
         response = requests.get(
-            f"{BASE_URL}/api/ab-tests",
+            f"{BASE_URL}/api/ab-testing/tests",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
