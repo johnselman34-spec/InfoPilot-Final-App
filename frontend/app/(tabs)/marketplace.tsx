@@ -371,7 +371,7 @@ export default function MarketplaceScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       {/* Header with rotating funny message */}
       <View style={styles.header}>
         <Text style={styles.funnyBanner}>{funnyMessage}</Text>
@@ -442,16 +442,31 @@ export default function MarketplaceScreen() {
         ))}
       </View>
 
-      {/* Main Content */}
+      {/* Main Content - FlatList with flex: 1 for proper scrolling */}
       {viewMode === 'map' ? (
-        renderWorldMap()
+        <ScrollView style={styles.mapScrollView} contentContainerStyle={styles.mapScrollContent}>
+          {renderWorldMap()}
+        </ScrollView>
       ) : (
         <FlatList
           data={filteredProtocols}
           renderItem={renderProtocolCard}
           keyExtractor={(item) => item.id}
+          style={styles.flatList}
           contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
+          ListHeaderComponent={
+            <Text style={styles.protocolCount}>
+              🎉 {filteredProtocols.length} AMAZING protocols available!
+            </Text>
+          }
+          ListFooterComponent={
+            <View style={styles.listFooter}>
+              <Text style={styles.listFooterText}>
+                📚 Check out "Letters to Evelyn" - The book that started it all! 📚
+              </Text>
+            </View>
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="sad-outline" size={60} color={colors.gray} />
