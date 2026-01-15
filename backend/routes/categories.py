@@ -97,6 +97,11 @@ async def update_category(category_id: str, update: CategoryUpdate, user = Depen
         update_data["protocol"] = update.protocol
     if update.is_public is not None:
         update_data["is_public"] = update.is_public
+    if update.price is not None:
+        # Validate price range ($0-$99)
+        if update.price < 0 or update.price > 99:
+            raise HTTPException(status_code=400, detail="Price must be between $0 and $99")
+        update_data["price"] = update.price
     
     if update_data:
         await db.categories.update_one(
