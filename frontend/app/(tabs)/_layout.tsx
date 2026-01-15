@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Platform, View, Text } from 'react-native';
 import { colors } from '../../src/utils/colors';
 
 export default function TabLayout() {
@@ -10,15 +11,23 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.gray,
         tabBarStyle: {
-          backgroundColor: colors.white,
+          backgroundColor: colors.backgroundAlt,
           borderTopColor: colors.border,
+          height: Platform.OS === 'ios' ? 85 : 65,
+          paddingBottom: Platform.OS === 'ios' ? 25 : 10,
+          paddingTop: 10,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '600',
         },
         headerStyle: {
-          backgroundColor: colors.primary,
+          backgroundColor: colors.secondary,
         },
         headerTintColor: colors.white,
         headerTitleStyle: {
           fontWeight: 'bold',
+          fontSize: 18,
         },
       }}
     >
@@ -41,11 +50,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="marketplace"
+        options={{
+          title: 'Market',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="storefront" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="categories"
         options={{
           title: 'Categories',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="folder-open" size={size} color={color} />
+            <Ionicons name="folder" size={size} color={color} />
           ),
         }}
       />
