@@ -291,14 +291,14 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Admin can set featured bundle in Control Panel
 - [x] **Cross-Sell Recommendations** - Related protocols during checkout
   - `/api/bundles/cross-sell/{protocol_id}` endpoint
+  - CrossSellSection.js component with funny upsell messages
   - Returns related protocols and bundles
-  - Funny random messages for upselling
 - [x] **Category Result Counts** - Show (n) next to category names
   - `format_category_with_count()` returns `result_count` and `subcategory_count`
   - CategoryList.js displays counts in parentheses
 - [x] **Admin Collation Settings** - Control search limits from Admin Panel
   - `collation_limit` setting (default: 40)
-  - `allow_multiple_categories` toggle
+  - `allow_multiple_categories` toggle (enabled)
   - `max_category_levels` for hierarchy depth
 - [x] **Admin Payment Settings** - PayPal payout configuration
   - `platform_fee_percent` (default: 15%)
@@ -312,6 +312,26 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Loading messages, success/error messages
   - Tooltips, Easter eggs, fun facts
   - Book promos for "Letters to Evelyn"
+
+### Batch 6 - Laugh-O-Meter & Enhanced Promos ✅ (January 16, 2026)
+- [x] **Laugh-O-Meter Gamification System** - Track funny message encounters
+  - `/api/gamification/laugh-stats` - Get user's laugh statistics
+  - `/api/gamification/record-laugh` - Record a laugh/funny moment
+  - `/api/gamification/record-easter-egg` - Record Easter egg discovery
+  - `/api/gamification/laugh-leaderboard` - Global leaderboard
+  - LaughOMeter.js component with badges, XP, levels
+  - 6 laugh badges + 8 rare Easter egg badges
+  - Konami code Easter egg (legendary badge!)
+  - Night Owl and Early Bird time-based badges
+- [x] **Enhanced Letters to Evelyn Promos** - Maximum marketing impact
+  - LettersToEvelyn.js with rotating reviews
+  - Multiple variants (compact, banner, newsletter)
+  - Links to Amazon, Barnes & Noble, Free excerpt
+  - "OPTIONED FOR FILM!" badge featured prominently
+- [x] **Cross-Sell UI Component** - Visual upsell during checkout
+  - CrossSellSection.js with funny upsell messages
+  - Shows related protocols and bundles
+  - Discount badges and "SAVE MORE!" messaging
 
 ### Maps Pricing Decision
 - ✅ **FREE Maps for All Users:**
