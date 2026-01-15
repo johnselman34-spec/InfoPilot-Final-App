@@ -244,15 +244,15 @@ class TestStatisticsEndpoints:
         data = response.json()
         print(f"✅ Statistics overview returned data")
     
-    def test_statistics_leaderboard(self, admin_token):
-        """Test statistics leaderboard endpoint"""
+    def test_statistics_dashboard(self, admin_token):
+        """Test statistics dashboard endpoint"""
         response = requests.get(
-            f"{BASE_URL}/api/statistics/leaderboard",
+            f"{BASE_URL}/api/statistics/dashboard",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
         data = response.json()
-        print(f"✅ Statistics leaderboard returned data")
+        print(f"✅ Statistics dashboard returned data")
     
     def test_statistics_most_copied(self, admin_token):
         """Test most copied protocols endpoint"""
@@ -263,6 +263,16 @@ class TestStatisticsEndpoints:
         assert response.status_code == 200
         data = response.json()
         print(f"✅ Most copied protocols endpoint working")
+    
+    def test_statistics_countries(self, admin_token):
+        """Test statistics countries endpoint"""
+        response = requests.get(
+            f"{BASE_URL}/api/statistics/countries",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        print(f"✅ Statistics countries endpoint working")
 
 
 class TestSocialEndpoints:
