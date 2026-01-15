@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
-import { Icons, ProtocolCopyButtons } from '../components/shared';
+import { Icons, ProtocolCopyButtons, AISuggestions } from '../components/shared';
 
 // Funny FREE messaging constants
 const FREE_MESSAGES = [
