@@ -456,6 +456,35 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
      - Admin login with is_admin=true
      - All frontend UI features verified
 
+  36. **Enhanced Protocol Parser for Abbreviations & Locations** (Jan 15, 2026)
+     - Handles abbreviated names: "William C. Gamble", "John J S", "Richard J Selman"
+     - Handles locations with commas: "Heidelberg, GER", "Albuquerque, NM", "Denver, CO"
+     - Handles multi-part locations: "Heidelberg, Baden Wuerttemberg, GER"
+     - Case-insensitive 'or' separator: or, Or, OR all work
+     - Flexible period/comma handling in phrase matching
+     
+  37. **User Protocols Listed in Marketplace** (Jan 15, 2026)
+     - Richard J Selman protocol - $2.99
+     - William C Gamble protocol - $2.99
+     - George Bush protocol - $0.75
+     - Total: 3 protocols, $2.24 avg price
+     
+  38. **Global Marketplace Map Endpoint** (Jan 15, 2026)
+     - `/api/marketplace/global-map` aggregates ALL users' search result locations
+     - Returns: markers, unique_locations, total_results, hot_spots
+     - Updates automatically with every Search & Collate operation
+     - Shows top 50 researched locations and top 10 hot spots
+     
+  39. **Iteration 23 Testing** - 100% pass rate (12/12 tests)
+     - Protocol parser abbreviated names: PASS
+     - Protocol parser locations with commas: PASS
+     - Protocol parser any 'or' capitalization: PASS
+     - All 3 user protocols in marketplace: PASS
+     - Global marketplace map endpoint: PASS
+     - Top Sellers Leaderboard tabs: PASS
+     - FREE badge (is_free flag): PASS
+     - Price range $0.00-$99.00: PASS
+
 ---
 
 ## Future Enhancements (Phase 4)
