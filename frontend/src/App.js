@@ -3174,33 +3174,48 @@ const MarketplacePage = () => {
             {/* Sales Tab */}
             {activeTab === "sales" && (
               <div className="space-y-4">
-                {sales.length === 0 ? (
-                  <FuturisticFrame title="NO SALES" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg text-center py-12">
+                {/* Sales Statistics */}
+                {sales && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-4 rounded-lg border border-green-500/30 text-center">
+                      <p className="text-green-400/60 font-mono text-xs">TOTAL REVENUE</p>
+                      <p className="text-2xl font-bold text-green-400 font-mono">${(sales.total_revenue || 0).toFixed(2)}</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 p-4 rounded-lg border border-yellow-500/30 text-center">
+                      <p className="text-yellow-400/60 font-mono text-xs">YOUR EARNINGS (90%)</p>
+                      <p className="text-2xl font-bold text-yellow-400 font-mono">${(sales.earnings_after_split || 0).toFixed(2)}</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 p-4 rounded-lg border border-blue-500/30 text-center">
+                      <p className="text-blue-400/60 font-mono text-xs">TOTAL SALES</p>
+                      <p className="text-2xl font-bold text-blue-400 font-mono">{sales.total_sales || 0}</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 p-4 rounded-lg border border-purple-500/30 text-center">
+                      <p className="text-purple-400/60 font-mono text-xs">UNIQUE BUYERS</p>
+                      <p className="text-2xl font-bold text-purple-400 font-mono">{sales.unique_buyers || 0}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {(sales.total_sales || 0) === 0 ? (
+                  <FuturisticFrame title="NO SALES YET" color="blue" className="bg-slate-900/80 border border-blue-500/30 rounded-lg text-center py-12">
                     <DollarSign className="w-16 h-16 text-blue-500/30 mx-auto mb-4" />
-                    <p className="text-purple-300 font-mono mb-4">You haven't made any sales yet</p>
+                    <p className="text-purple-300 font-mono mb-2">You haven't made any sales yet</p>
+                    <p className="text-purple-400/60 font-mono text-sm mb-4">
+                      But don't worry! Every protocol millionaire started with zero! 🚀
+                    </p>
                     <button onClick={() => navigate("/categories")} className="px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono rounded hover:scale-[1.02]">
                       LIST A PROTOCOL FOR SALE
                     </button>
                   </FuturisticFrame>
                 ) : (
-                  <>
-                    <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-4 rounded-lg border border-green-500/30">
-                      <p className="text-green-400 font-mono text-sm">TOTAL REVENUE</p>
-                      <p className="text-3xl font-bold text-green-400 font-mono">${sales.reduce((sum, s) => sum + (s.amount || 0), 0).toFixed(2)}</p>
-                    </div>
-                    <div className="space-y-3">
-                      {sales.map((sale) => (
-                        <div key={sale.id} className="bg-slate-900/80 p-4 rounded-lg border border-green-500/20 flex items-center justify-between">
-                          <div>
-                            <h3 className="text-purple-300 font-mono font-bold">{sale.category_name}</h3>
-                            <p className="text-purple-400/60 font-mono text-xs">Buyer: {sale.buyer_username}</p>
-                            <p className="text-purple-400/40 font-mono text-xs">{new Date(sale.sold_at).toLocaleDateString()}</p>
-                          </div>
-                          <span className="text-xl font-bold text-green-400 font-mono">+${sale.amount?.toFixed(2)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
+                  <FuturisticFrame title="💰 SALES SUMMARY" color="green" className="bg-slate-900/80 border border-green-500/30 rounded-lg">
+                    <p className="text-purple-300 font-mono text-center py-4">
+                      🎉 You're making money! Keep those protocols flowing! 
+                    </p>
+                    <p className="text-purple-400/60 font-mono text-xs text-center">
+                      Platform fee: {sales.platform_fee_percentage || 10}% • You keep {100 - (sales.platform_fee_percentage || 10)}%
+                    </p>
+                  </FuturisticFrame>
                 )}
               </div>
             )}
