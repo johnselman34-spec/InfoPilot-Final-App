@@ -401,15 +401,18 @@ async def get_public_categories(username: str):
 
 @api_router.put("/categories/{category_id}")
 async def update_category(category_id: str, category_data: CategoryUpdate, authorization: Optional[str] = Header(None)):
-    """Update a category"""
+    """Update a category - FIXED to properly save changes"""
     try:
         user = await get_user_from_token(authorization)
         
         category = await db.categories.find_one({"id": category_id, "user_id": user["id"]})
         if not category:
+            logger.error(f"Category not found: {category_id} for user {user['id']}")
             raise HTTPException(status_code=404, detail="Category not found")
         
         update_data = {k: v for k, v in category_data.dict().items() if v is not None}
+        
+        logger.info(f"Updating category {category_id} with data: {update_data}")
         
         # Validate protocol if being updated
         if "protocol" in update_data:
@@ -418,6 +421,87 @@ async def update_category(category_id: str, category_data: CategoryUpdate, autho
                 raise HTTPException(status_code=400, detail=f"Invalid protocol: {error}")
         
         if update_data:
+            # Add timestamp
+            update_data["updated_at"] = datetime.utcnow()
+            
+            result = await db.categories.update_one(
+                {"id": category_id, "user_id": user["id"]},
+                {"$set": update_data}
+            )
+            
+            logger.info(f"Update result: matched={result.matched_count}, modified={result.modified_count}")
+            
+            if result.matched_count == 0:
+                raise HTTPException(status_code=404, detail="Category not found during update")
+        
+        # Fetch updated category to return
+        updated_category = await db.categories.find_one(
+            {"id": category_id},
+            {"_id": 0}
+        )
+        
+        return {"success": True, "category": updated_category, "message": "Category updated successfully! 🎉"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Update category error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Protocol Debug Endpoint - Test protocols without creating categories
+class ProtocolDebugRequest(BaseModel):
+    protocol: str
+    test_text: Optional[str] = None
+
+@api_router.post("/protocol/debug")
+async def debug_protocol(request: ProtocolDebugRequest):
+    """Debug a protocol - test parsing and matching without saving anything"""
+    try:
+        valid, error, search_terms = parse_protocol(request.protocol)
+        
+        if not valid:
+            return {
+                "valid": False,
+                "error": error,
+                "search_terms": [],
+                "search_query": "",
+                "would_match_test": False
+            }
+        
+        search_query = protocol_to_search_query(request.protocol)
+        
+        # Test against provided text if given
+        would_match = False
+        if request.test_text:
+            test_lower = request.test_text.lower()
+            for group in search_terms:
+                if group['modifier'] == '^':  # Exclusion
+                    for term in group['terms']:
+                        if term.lower() in test_lower:
+                            would_match = False
+                            break
+                else:
+                    for term in group['terms']:
+                        if term.lower() in test_lower:
+                            would_match = True
+                            break
+        
+        return {
+            "valid": True,
+            "error": None,
+            "search_terms": search_terms,
+            "search_query": search_query,
+            "would_match_test": would_match,
+            "message": "Protocol is valid! 🎯 Ready to find amazing results!"
+        }
+    except Exception as e:
+        logger.error(f"Protocol debug error: {str(e)}")
+        return {
+            "valid": False,
+            "error": str(e),
+            "search_terms": [],
+            "search_query": "",
+            "would_match_test": False
+        }
             await db.categories.update_one(
                 {"id": category_id, "user_id": user["id"]},
                 {"$set": update_data}
