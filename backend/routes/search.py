@@ -141,12 +141,31 @@ async def collate_search(request: CollateRequest, user = Depends(get_current_use
 @router.get("/ultimate-search", response_model=dict)
 async def get_search_results(
     limit: int = Query(100, ge=1, le=500),
+    category_ids: Optional[str] = Query(None, description="Comma-separated category IDs to filter by"),
+    aggregation: str = Query("and_or", description="Search logic: and_or, and, or"),
     user = Depends(get_optional_user)
 ):
-    """Get stored search results for map and display"""
+    """Get stored search results for map and display, with category filtering"""
     query = {}
     if user:
         query["user_id"] = str(user["_id"])
+    
+    # Parse category_ids if provided
+    selected_category_ids = []
+    if category_ids:
+        selected_category_ids = [cid.strip() for cid in category_ids.split(",") if cid.strip()]
+    
+    # Apply category filtering based on aggregation mode
+    if selected_category_ids:
+        if aggregation == "and":
+            # AND: Results must contain ALL selected categories
+            query["category_ids"] = {"$all": selected_category_ids}
+        elif aggregation == "or":
+            # OR: Results must contain ANY of the selected categories
+            query["category_ids"] = {"$in": selected_category_ids}
+        else:
+            # AND/OR (default): Same as OR - results matching any category
+            query["category_ids"] = {"$in": selected_category_ids}
     
     results = await db.search_results.find(query).sort("created_at", -1).limit(limit).to_list(limit)
     
@@ -187,7 +206,12 @@ async def get_search_results(
             "longitude": r.get("longitude")
         })
     
-    return {"results": formatted, "count": len(formatted)}
+    return {
+        "results": formatted, 
+        "count": len(formatted),
+        "filter_applied": len(selected_category_ids) > 0,
+        "aggregation_mode": aggregation
+    }
 
 
 @router.post("/search/reaction", response_model=dict)
