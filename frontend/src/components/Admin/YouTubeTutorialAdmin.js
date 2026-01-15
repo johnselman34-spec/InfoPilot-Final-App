@@ -54,14 +54,13 @@ const YouTubeTutorialAdmin = ({ token, showToast }) => {
     const videoId = extractVideoId(videoUrl);
     
     try {
-      const res = await fetch(`${API}/tutorials/video`, {
-        method: 'POST',
+      const res = await fetch(`${API}/tutorials/admin/${tutorialId}/video`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          tutorial_id: tutorialId,
           video_url: videoUrl,
           video_id: videoId
         })
