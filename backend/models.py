@@ -135,26 +135,29 @@ class NewsletterArticleCreate(BaseModel):
     title: str
     content: str
 
-# Marketplace Models
+# Marketplace Models - Updated price range $1.00 to $99.00
 class MarketplaceProtocol(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     category_id: str
     user_id: str
-    price: float = Field(ge=1.01, le=2.99)
+    price: float = Field(ge=0, le=99.00)  # 0 = Pay What You Want
     description: Optional[str] = None
     is_for_sale: bool = True
     purchase_count: int = 0
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     location: Optional[Dict[str, Any]] = None  # {latitude, longitude, city, country}
+    pay_what_you_want: bool = False
 
 class MarketplaceSell(BaseModel):
     category_id: str
-    price: float = Field(ge=1.01, le=2.99)
+    price: float = Field(ge=0, le=99.00)  # 0 = Pay What You Want
     description: Optional[str] = None
+    pay_what_you_want: bool = False
 
 class MarketplacePurchase(BaseModel):
     protocol_id: str
+    offer_price: Optional[float] = None  # For Pay What You Want
 
 class PayoutRequest(BaseModel):
     paypal_email: str
@@ -171,3 +174,39 @@ class Transaction(BaseModel):
     status: str = "pending"  # pending, completed, failed
     paypal_transaction_id: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+# Statistics Models
+class StatisticsData(BaseModel):
+    total_users: int = 0
+    total_protocols: int = 0
+    total_searches: int = 0
+    total_sales: int = 0
+    total_revenue: float = 0.0
+    top_sellers: List[Dict[str, Any]] = []
+    top_protocols: List[Dict[str, Any]] = []
+    country_breakdown: Dict[str, int] = {}
+    content_type_breakdown: Dict[str, int] = {}
+
+# Gamification Models
+class Badge(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    icon: str
+    category: str  # sales, searches, social, milestone
+    requirement: int  # Number needed to earn
+    rarity: str = "common"  # common, rare, epic, legendary
+
+class UserBadge(BaseModel):
+    user_id: str
+    badge_id: str
+    earned_at: datetime = Field(default_factory=datetime.utcnow)
+
+class LeaderboardEntry(BaseModel):
+    user_id: str
+    username: str
+    profile_photo: Optional[str] = None
+    sales_count: int = 0
+    revenue: float = 0.0
+    protocols_created: int = 0
+    badges_count: int = 0
