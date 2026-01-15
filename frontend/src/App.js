@@ -70,6 +70,8 @@ const MainApp = () => {
         return <MessagesPage showToast={showToast} />;
       case 'chat':
         return <ChatPage showToast={showToast} />;
+      case 'tutorials':
+        return <TutorialsPage showToast={showToast} />;
       case 'settings':
         return <SettingsPage showToast={showToast} setCurrentPage={setCurrentPage} />;
       case 'subscribe':
