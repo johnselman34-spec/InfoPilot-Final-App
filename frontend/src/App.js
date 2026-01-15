@@ -3014,7 +3014,12 @@ const MarketplaceMap = ({ protocols, onSelectProtocol }) => {
                     <h4 className="font-bold text-gray-800 mb-1">{selectedMarker.name}</h4>
                     <p className="text-gray-600 text-sm">by {selectedMarker.owner_username}</p>
                     <p className="text-green-600 font-bold mt-1">${selectedMarker.price?.toFixed(2)}</p>
-                    <p className="text-gray-500 text-xs mt-1">{selectedMarker.city}</p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      {selectedMarker.city}{selectedMarker.state ? `, ${selectedMarker.state}` : ''}{selectedMarker.country && selectedMarker.country !== 'USA' ? `, ${selectedMarker.country}` : ''}
+                    </p>
+                    {selectedMarker.hasRealLocation && (
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-pink-100 text-pink-800 text-xs rounded">📍 Verified Location</span>
+                    )}
                     {selectedMarker.is_purchased && (
                       <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">PURCHASED</span>
                     )}
@@ -3029,10 +3034,14 @@ const MarketplaceMap = ({ protocols, onSelectProtocol }) => {
           )}
           
           {/* Map Legend */}
-          <div className="flex items-center gap-6 justify-center">
+          <div className="flex flex-wrap items-center gap-4 md:gap-6 justify-center">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
               <span className="text-purple-400/60 font-mono text-xs">Available</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 rounded-full bg-pink-500"></div>
+              <span className="text-purple-400/60 font-mono text-xs">Verified Location</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full bg-green-500"></div>
