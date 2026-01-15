@@ -48,6 +48,7 @@ from routes.rate_limiting import router as rate_limiting_router
 from routes.webhooks import router as webhooks_router
 from routes.ai_suggestions import router as ai_suggestions_router
 from routes.protocol_analytics import router as protocol_analytics_router
+from routes.ab_testing import router as ab_testing_router
 
 # Import services
 from services.location_service import LocationService
