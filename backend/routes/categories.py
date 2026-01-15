@@ -107,7 +107,7 @@ async def create_category(category: CategoryCreate, user = Depends(get_current_u
 
 @router.put("/categories/{category_id}", response_model=dict)
 async def update_category(category_id: str, update: CategoryUpdate, user = Depends(get_current_user)):
-    """Update a category"""
+    """Update a category - supports full hierarchy editing"""
     # Admin can edit any category, regular users can only edit their own
     if user.get("is_admin"):
         category = await db.categories.find_one({"_id": ObjectId(category_id)})
@@ -136,6 +136,27 @@ async def update_category(category_id: str, update: CategoryUpdate, user = Depen
             raise HTTPException(status_code=400, detail="Price must be between $0 and $99")
         update_data["price"] = update.price
     
+    # Handle parent_id update for hierarchy changes
+    if hasattr(update, 'parent_id') and update.parent_id is not None:
+        # Prevent circular references
+        if update.parent_id == category_id:
+            raise HTTPException(status_code=400, detail="Category cannot be its own parent")
+        
+        # Calculate new level
+        new_level = 0
+        if update.parent_id:
+            parent = await db.categories.find_one({"_id": ObjectId(update.parent_id)})
+            if parent:
+                new_level = parent.get("level", 0) + 1
+            else:
+                raise HTTPException(status_code=400, detail="Parent category not found")
+        
+        update_data["parent_id"] = update.parent_id
+        update_data["level"] = new_level
+        
+        # Update children's levels recursively
+        await update_children_levels(category_id, new_level + 1)
+    
     if update_data:
         await db.categories.update_one(
             {"_id": ObjectId(category_id)},
@@ -144,6 +165,19 @@ async def update_category(category_id: str, update: CategoryUpdate, user = Depen
     
     updated = await db.categories.find_one({"_id": ObjectId(category_id)})
     return format_category(updated)
+
+
+async def update_children_levels(parent_id: str, new_level: int):
+    """Recursively update children category levels"""
+    children = await db.categories.find({"parent_id": parent_id}).to_list(1000)
+    for child in children:
+        child_id = str(child["_id"])
+        await db.categories.update_one(
+            {"_id": child["_id"]},
+            {"$set": {"level": new_level}}
+        )
+        # Recursively update grandchildren
+        await update_children_levels(child_id, new_level + 1)
 
 
 @router.delete("/categories/{category_id}")
