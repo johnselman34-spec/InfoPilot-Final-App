@@ -2544,10 +2544,19 @@ async def get_marketplace_stats(user: dict = Depends(require_user)):
 @api_router.get("/marketplace/protocols")
 async def get_protocols_for_sale(user: dict = Depends(require_user)):
     """Get all protocols listed for sale"""
-    # Get protocols marked for sale
+    # Get protocols marked for sale (for_sale must be True)
+    # Note: for_sale is only valid for private protocols, but we check for_sale explicitly
+    # is_public being False or None/missing both qualify as "not public" 
     protocols = await db.categories.find(
-        {"for_sale": True, "is_public": False}
-    ).to_list(100)
+        {
+            "for_sale": True,
+            "$or": [
+                {"is_public": False},
+                {"is_public": {"$exists": False}},
+                {"is_public": None}
+            ]
+        }
+    ).to_list(1000)  # Increased limit to show all protocols
     
     result = []
     for protocol in protocols:
