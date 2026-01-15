@@ -24,11 +24,11 @@ class TestAuthLogin:
         })
         assert response.status_code == 200, f"Login failed: {response.text}"
         data = response.json()
-        assert "token" in data, "Token not in response"
+        assert "access_token" in data, "access_token not in response"
         assert "user" in data, "User not in response"
         assert data["user"]["email"] == ADMIN_EMAIL
         assert data["user"]["is_admin"] == True, "User should be admin"
-        return data["token"]
+        return data["access_token"]
     
     def test_login_invalid_credentials(self):
         """Test login with invalid credentials"""
@@ -39,19 +39,20 @@ class TestAuthLogin:
         assert response.status_code in [401, 404], f"Expected 401/404, got {response.status_code}"
 
 
+@pytest.fixture(scope="module")
+def auth_token():
+    """Get auth token for authenticated requests"""
+    response = requests.post(f"{BASE_URL}/api/auth/login", json={
+        "email": ADMIN_EMAIL,
+        "password": ADMIN_PASSWORD
+    })
+    if response.status_code == 200:
+        return response.json().get("access_token")
+    pytest.skip("Authentication failed")
+
+
 class TestStatisticsPage:
     """Test Statistics page API endpoints"""
-    
-    @pytest.fixture
-    def auth_token(self):
-        """Get auth token for authenticated requests"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        })
-        if response.status_code == 200:
-            return response.json().get("token")
-        pytest.skip("Authentication failed")
     
     def test_statistics_endpoint(self, auth_token):
         """Test /api/statistics endpoint"""
@@ -97,17 +98,6 @@ class TestStatisticsPage:
 class TestFriendsPage:
     """Test Friends page API endpoints"""
     
-    @pytest.fixture
-    def auth_token(self):
-        """Get auth token for authenticated requests"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        })
-        if response.status_code == 200:
-            return response.json().get("token")
-        pytest.skip("Authentication failed")
-    
     def test_friends_list(self, auth_token):
         """Test /api/friends endpoint"""
         headers = {"Authorization": f"Bearer {auth_token}"}
@@ -145,17 +135,6 @@ class TestLegalPages:
 
 class TestMarketplaceFREEBadge:
     """Test Marketplace FREE badge display for $0.00 or public protocols"""
-    
-    @pytest.fixture
-    def auth_token(self):
-        """Get auth token for authenticated requests"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        })
-        if response.status_code == 200:
-            return response.json().get("token")
-        pytest.skip("Authentication failed")
     
     def test_marketplace_protocols_list(self, auth_token):
         """Test /api/marketplace/protocols endpoint"""
@@ -196,17 +175,6 @@ class TestBookPage:
 
 class TestAdminControls:
     """Test admin controls visibility"""
-    
-    @pytest.fixture
-    def auth_token(self):
-        """Get auth token for authenticated requests"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        })
-        if response.status_code == 200:
-            return response.json().get("token")
-        pytest.skip("Authentication failed")
     
     def test_admin_user_is_admin(self, auth_token):
         """Verify admin user has is_admin flag"""
