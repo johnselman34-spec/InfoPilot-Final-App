@@ -33,6 +33,9 @@ from routes.categories import router as categories_router
 from routes.social import router as social_router
 from routes.marketplace import router as marketplace_router
 from routes.admin import router as admin_router
+from routes.bundles import router as bundles_router, init_router as init_bundles_router
+from routes.push_notifications import router as push_router, init_router as init_push_router
+from routes.chat import router as chat_router, init_router as init_chat_router
 
 # DuckDuckGo Search library
 try:
