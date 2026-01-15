@@ -210,44 +210,112 @@ export default function MarketplaceScreen() {
     return matchesSearch && matchesCategory;
   });
 
-  const renderProtocolCard = ({ item: protocol }: { item: Protocol }) => (
-    <TouchableOpacity 
-      style={styles.protocolCard}
-      onPress={() => setSelectedProtocol(protocol)}
-    >
-      <View style={styles.cardHeader}>
-        <View style={styles.priceTag}>
-          <Text style={styles.priceText}>${protocol.price.toFixed(2)}</Text>
-        </View>
-        <View style={styles.purchaseCount}>
-          <Ionicons name="flame" size={14} color={colors.primary} />
-          <Text style={styles.purchaseText}>{protocol.purchase_count} sold</Text>
-        </View>
-      </View>
-      
-      <Text style={styles.protocolName}>{protocol.name}</Text>
-      <Text style={styles.creatorName}>by @{protocol.username}</Text>
-      
-      {protocol.description && (
-        <Text style={styles.description} numberOfLines={2}>{protocol.description}</Text>
-      )}
-      
-      <View style={styles.protocolPreview}>
-        <Text style={styles.previewLabel}>Protocol Preview:</Text>
-        <Text style={styles.previewText} numberOfLines={1}>{protocol.protocol_string}</Text>
-      </View>
-      
-      {protocol.location && (
-        <View style={styles.locationRow}>
-          <Ionicons name="location" size={14} color={colors.accent} />
-          <Text style={styles.locationText}>
-            {protocol.location.city}, {protocol.location.country}
-          </Text>
-        </View>
-      )}
-      
+  const renderProtocolCard = ({ item: protocol }: { item: Protocol }) => {
+    const isFree = protocol.price === 0 || protocol.pay_what_you_want;
+    
+    return (
       <TouchableOpacity 
-        style={styles.buyButton}
+        style={styles.protocolCard}
+        onPress={() => setSelectedProtocol(protocol)}
+      >
+        <View style={styles.cardHeader}>
+          {isFree ? (
+            <View style={styles.freeBadge}>
+              <Ionicons name="gift" size={14} color={colors.white} />
+              <Text style={styles.freeText}>FREE TO COPY!</Text>
+            </View>
+          ) : (
+            <View style={styles.priceTag}>
+              <Text style={styles.priceText}>${protocol.price.toFixed(2)}</Text>
+            </View>
+          )}
+          <View style={styles.purchaseCount}>
+            <Ionicons name="flame" size={14} color={colors.primary} />
+            <Text style={styles.purchaseText}>{protocol.purchase_count} sold</Text>
+          </View>
+        </View>
+        
+        {/* Pay What You Want Badge */}
+        {protocol.pay_what_you_want && (
+          <View style={styles.payWhatYouWantBadge}>
+            <Text style={styles.payWhatYouWantText}>🎁 PAY WHAT YOU WANT!</Text>
+          </View>
+        )}
+        
+        <Text style={styles.protocolName}>{protocol.name}</Text>
+        <Text style={styles.creatorName}>by @{protocol.username}</Text>
+        
+        {protocol.description && (
+          <Text style={styles.description} numberOfLines={2}>{protocol.description}</Text>
+        )}
+        
+        <View style={styles.protocolPreview}>
+          <Text style={styles.previewLabel}>Protocol Preview:</Text>
+          <Text style={styles.previewText} numberOfLines={1}>{protocol.protocol_string}</Text>
+        </View>
+        
+        {protocol.location && (
+          <View style={styles.locationRow}>
+            <Ionicons name="location" size={14} color={colors.accent} />
+            <Text style={styles.locationText}>
+              {protocol.location.city}, {protocol.location.country}
+            </Text>
+          </View>
+        )}
+        
+        {isFree ? (
+          <TouchableOpacity 
+            style={styles.copyButton}
+            onPress={() => handleCopyProtocol(protocol)}
+          >
+            <Ionicons name="copy" size={18} color={colors.white} />
+            <Text style={styles.copyButtonText}>COPY PROTOCOL FREE!</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={styles.buyButton}
+            onPress={() => handlePurchase(protocol)}
+          >
+            <Ionicons name="cart" size={18} color={colors.white} />
+            <Text style={styles.buyButtonText}>GET THIS PROTOCOL!</Text>
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+    );
+  };
+  
+  const handleCopyProtocol = async (protocol: Protocol) => {
+    // Copy protocol to clipboard
+    try {
+      // Use Clipboard API if available
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(protocol.protocol_string);
+      }
+      
+      Alert.alert(
+        '📋 Protocol Copied!',
+        `"${protocol.name}" has been copied to your clipboard!\n\n` +
+        `Protocol: ${protocol.protocol_string}\n\n` +
+        `💡 Pro tip: Paste this into your own categories to use it!\n\n` +
+        `📚 Enjoying InfoPilot? Check out "Letters to Evelyn" by John Selman - the supernatural thriller comedy that inspired this app!`,
+        [
+          { text: 'Awesome! 🎉', style: 'default' },
+          { 
+            text: '📖 Get the Book!', 
+            onPress: () => Linking.openURL('https://www.amazon.com/dp/your-book-id')
+          },
+        ]
+      );
+    } catch (error) {
+      // Fallback - just show the protocol
+      Alert.alert(
+        '📋 Copy This Protocol!',
+        `${protocol.protocol_string}\n\n` +
+        `Long-press and copy the above text to use this protocol!\n\n` +
+        `Created by @${protocol.username} - support them by leaving a tip! 💰`
+      );
+    }
+  };
         onPress={() => handlePurchase(protocol)}
       >
         <Ionicons name="cart" size={18} color={colors.white} />
