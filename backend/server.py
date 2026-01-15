@@ -655,6 +655,291 @@ async def get_admin_settings():
         logger.error(f"Get admin settings error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ==================== MARKETPLACE ROUTES ====================
+
+# PayPal credentials from user's document
+PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID', 'BAABmhMWqe1WrfJkqJ7RRzEZwoAfxSF2bclm8_HY2BuU9C-7pnakTdjFVCvSJyWh63-wUWmKN1cT1hdMIY')
+PAYPAL_HOSTED_BUTTON_ID = '765S46VPPEP5C'
+MARKETPLACE_PLATFORM_FEE = 0.10  # 10% to platform
+MARKETPLACE_SELLER_SHARE = 0.90  # 90% to seller
+MIN_PAYOUT_THRESHOLD = 1.00  # PayPal minimum
+
+@api_router.get("/marketplace/protocols")
+async def get_marketplace_protocols(
+    sort: str = Query("popularity", regex="^(popularity|price|recent)$"),
+    min_price: float = Query(1.01, ge=1.01),
+    max_price: float = Query(2.99, le=2.99),
+    limit: int = Query(100, le=500)
+):
+    """Get all protocols for sale on the marketplace - THE WORLD'S GREATEST PROTOCOL BAZAAR! 🎪"""
+    try:
+        # Build sort criteria
+        sort_criteria = {}
+        if sort == "popularity":
+            sort_criteria = {"purchase_count": -1}
+        elif sort == "price":
+            sort_criteria = {"price": 1}
+        else:  # recent
+            sort_criteria = {"created_at": -1}
+        
+        # Query protocols for sale
+        protocols_cursor = db.marketplace_protocols.find({
+            "is_for_sale": True,
+            "price": {"$gte": min_price, "$lte": max_price}
+        }).sort(list(sort_criteria.items())).limit(limit)
+        
+        protocols = []
+        async for protocol in protocols_cursor:
+            # Get category and user info
+            category = await db.categories.find_one({"id": protocol["category_id"]})
+            user = await db.users.find_one({"id": protocol["user_id"]})
+            
+            protocols.append({
+                "id": str(protocol.get("id", protocol.get("_id"))),
+                "name": category["name"] if category else "Mystery Protocol 🎭",
+                "protocol_string": category["protocol"] if category else "",
+                "user_id": protocol["user_id"],
+                "username": user["username"] if user else "Anonymous Genius",
+                "price": protocol["price"],
+                "is_for_sale": protocol["is_for_sale"],
+                "category_id": protocol["category_id"],
+                "description": protocol.get("description", "A protocol so good, words fail us! 🚀"),
+                "purchase_count": protocol.get("purchase_count", 0),
+                "location": protocol.get("location"),
+                "created_at": protocol.get("created_at").isoformat() if protocol.get("created_at") else None
+            })
+        
+        return {
+            "protocols": protocols, 
+            "total": len(protocols),
+            "message": f"🎉 {len(protocols)} AMAZING protocols available! Get 'em while they're hot!"
+        }
+        
+    except Exception as e:
+        logger.error(f"Marketplace load error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/marketplace/sell")
+async def list_protocol_for_sale(
+    data: MarketplaceSell,
+    authorization: Optional[str] = Header(None)
+):
+    """List a protocol for sale - Become a PROTOCOL MILLIONAIRE* today! 💰"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        # Verify category belongs to user
+        category = await db.categories.find_one({
+            "id": data.category_id,
+            "user_id": user["id"]
+        })
+        
+        if not category:
+            raise HTTPException(status_code=404, detail="Category not found or not owned by you. Nice try though! 😏")
+        
+        # Check if already listed
+        existing = await db.marketplace_protocols.find_one({
+            "category_id": data.category_id,
+            "user_id": user["id"]
+        })
+        
+        if existing:
+            # Update existing listing
+            await db.marketplace_protocols.update_one(
+                {"_id": existing["_id"]},
+                {"$set": {
+                    "price": data.price,
+                    "description": data.description,
+                    "is_for_sale": True,
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+            return {
+                "success": True,
+                "message": "Protocol listing updated! Time to get PAID! 💸",
+                "id": str(existing["_id"])
+            }
+        else:
+            # Create new listing
+            protocol_doc = {
+                "id": str(uuid.uuid4()),
+                "category_id": data.category_id,
+                "user_id": user["id"],
+                "price": data.price,
+                "description": data.description or "A magnificent protocol crafted with love ❤️",
+                "is_for_sale": True,
+                "purchase_count": 0,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+                "location": None  # Will be set based on user location if available
+            }
+            
+            result = await db.marketplace_protocols.insert_one(protocol_doc)
+            return {
+                "success": True,
+                "message": f"🎉 Protocol listed for ${data.price}! You're officially a protocol entrepreneur!",
+                "id": str(result.inserted_id)
+            }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Marketplace sell error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/marketplace/purchase")
+async def purchase_protocol(
+    data: MarketplacePurchase,
+    authorization: Optional[str] = Header(None)
+):
+    """Purchase a protocol - Best investment since sliced bread! 🍞"""
+    try:
+        buyer = await get_user_from_token(authorization)
+        
+        # Get the protocol listing
+        protocol = await db.marketplace_protocols.find_one({"id": data.protocol_id})
+        if not protocol:
+            raise HTTPException(status_code=404, detail="Protocol not found. Maybe it's TOO popular? 🤔")
+        
+        if not protocol.get("is_for_sale"):
+            raise HTTPException(status_code=400, detail="This protocol isn't for sale anymore. Darn! 😢")
+        
+        if protocol["user_id"] == buyer["id"]:
+            raise HTTPException(status_code=400, detail="You can't buy your own protocol, silly! 🙃")
+        
+        # Calculate amounts
+        total_amount = protocol["price"]
+        seller_amount = round(total_amount * MARKETPLACE_SELLER_SHARE, 2)
+        platform_amount = round(total_amount * MARKETPLACE_PLATFORM_FEE, 2)
+        
+        # Create transaction record
+        transaction = Transaction(
+            buyer_id=buyer["id"],
+            seller_id=protocol["user_id"],
+            protocol_id=data.protocol_id,
+            amount=total_amount,
+            seller_amount=seller_amount,
+            platform_amount=platform_amount,
+            status="pending"
+        )
+        
+        await db.transactions.insert_one(transaction.dict())
+        
+        # Generate PayPal payment URL
+        paypal_url = f"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id={PAYPAL_HOSTED_BUTTON_ID}&amount={total_amount}&custom={transaction.id}"
+        
+        return {
+            "success": True,
+            "transaction_id": transaction.id,
+            "paypal_url": paypal_url,
+            "amount": total_amount,
+            "seller_gets": seller_amount,
+            "platform_fee": platform_amount,
+            "message": f"💰 About to unlock PURE GOLD for just ${total_amount}! Creator gets ${seller_amount} (90%), we keep ${platform_amount} (10%) for coffee ☕"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Marketplace purchase error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/marketplace/payout")
+async def get_payout_info(authorization: Optional[str] = Header(None)):
+    """Get user's payout balance - Count your riches! 💎"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        # Calculate total earnings from completed transactions
+        transactions = await db.transactions.find({
+            "seller_id": user["id"],
+            "status": "completed"
+        }).to_list(1000)
+        
+        total_earned = sum(t.get("seller_amount", 0) for t in transactions)
+        
+        # Get pending payouts
+        pending_payout = await db.pending_payouts.find_one({"user_id": user["id"]})
+        accumulated = pending_payout.get("amount", 0) if pending_payout else 0
+        
+        can_request_payout = accumulated >= MIN_PAYOUT_THRESHOLD
+        
+        return {
+            "total_earned": round(total_earned, 2),
+            "accumulated_balance": round(accumulated, 2),
+            "min_payout_threshold": MIN_PAYOUT_THRESHOLD,
+            "can_request_payout": can_request_payout,
+            "transactions_count": len(transactions),
+            "message": f"💰 You've earned ${round(total_earned, 2)} total! " + 
+                      (f"Ready to cash out ${round(accumulated, 2)}! 🎉" if can_request_payout else 
+                       f"Accumulate ${round(MIN_PAYOUT_THRESHOLD - accumulated, 2)} more to request payout! 📈")
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Payout info error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/marketplace/payout")
+async def request_payout(
+    data: PayoutRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """Request a payout - Time to get PAID! 💵"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        # Get accumulated balance
+        pending_payout = await db.pending_payouts.find_one({"user_id": user["id"]})
+        accumulated = pending_payout.get("amount", 0) if pending_payout else 0
+        
+        if accumulated < MIN_PAYOUT_THRESHOLD:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Minimum payout is ${MIN_PAYOUT_THRESHOLD}. You have ${accumulated}. Keep selling! 📈"
+            )
+        
+        # Update user's PayPal email
+        await db.users.update_one(
+            {"id": user["id"]},
+            {"$set": {"paypal_email": data.paypal_email}}
+        )
+        
+        # Create payout request
+        payout_request = {
+            "user_id": user["id"],
+            "paypal_email": data.paypal_email,
+            "amount": accumulated,
+            "status": "pending",
+            "created_at": datetime.utcnow()
+        }
+        
+        await db.payout_requests.insert_one(payout_request)
+        
+        # Reset accumulated balance
+        await db.pending_payouts.update_one(
+            {"user_id": user["id"]},
+            {"$set": {"amount": 0}},
+            upsert=True
+        )
+        
+        return {
+            "success": True,
+            "amount": accumulated,
+            "paypal_email": data.paypal_email,
+            "message": f"🎉 Payout of ${accumulated} requested to {data.paypal_email}! Money incoming! 💸"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Payout request error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Import uuid for transaction IDs
+import uuid
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/health")
