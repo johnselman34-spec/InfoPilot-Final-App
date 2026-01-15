@@ -215,7 +215,7 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - **Admin User**: 500 points, Level 5 "Knowledge Hunter", 8 achievements (36.4% complete)
 
 ## Preview URL
-https://explorer-hub-7.preview.emergentagent.com
+https://navigator-hub-1.preview.emergentagent.com
 
 ## Third-Party Integrations
 - **SerpAPI** - Web search

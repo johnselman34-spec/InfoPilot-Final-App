@@ -8,7 +8,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = "https://explorer-hub-7.preview.emergentagent.com"
+BASE_URL = "https://navigator-hub-1.preview.emergentagent.com"
 
 # Test credentials
 ADMIN_EMAIL = "john@infojet.com"
