@@ -11,7 +11,9 @@ import {
   Dimensions,
   Platform,
   FlatList,
+  ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../src/utils/colors';
 import { marketplaceAPI } from '../../src/services/api';
