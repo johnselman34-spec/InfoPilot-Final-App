@@ -52,6 +52,7 @@ from routes.ab_testing import router as ab_testing_router
 from routes.ab_optimizer import router as ab_optimizer_router
 from routes.revenue_forecast import router as revenue_forecast_router
 from routes.email_reports import router as email_reports_router
+from routes.unified_chat import router as unified_chat_router
 
 # Import services
 from services.location_service import LocationService
