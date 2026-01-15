@@ -224,30 +224,161 @@ const AdminPanel = ({ showToast }) => {
 
         {activeTab === 'general' && (
           <div>
-            <h3 style={{ marginBottom: 20, color: '#f472b6' }}>General Settings</h3>
-            <div className="admin-setting">
-              <label>Daily Collate Limit</label>
-              <input
-                type="number"
-                defaultValue={getSetting('daily_collate_limit') || 10}
-                onBlur={(e) => updateSetting('daily_collate_limit', parseInt(e.target.value))}
-              />
+            <h3 style={{ marginBottom: 20, color: '#f472b6' }}>🎛️ General Settings</h3>
+            
+            {/* Collation Settings Section */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(59, 130, 246, 0.15))',
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 25,
+              border: '1px solid rgba(124, 58, 237, 0.3)'
+            }}>
+              <h4 style={{ color: '#a78bfa', margin: '0 0 15px 0' }}>🔍 Collation Settings</h4>
+              
+              <div className="admin-setting">
+                <label>Collation Limit (Per Search)</label>
+                <input
+                  type="number"
+                  min="10"
+                  max="200"
+                  defaultValue={getSetting('collation_limit') || 40}
+                  onBlur={(e) => updateSetting('collation_limit', Math.min(200, Math.max(10, parseInt(e.target.value))))}
+                />
+                <small style={{ color: '#a1a1aa', display: 'block', marginTop: 5 }}>
+                  Results per Search & Collate (default: 40, max: 200)
+                </small>
+              </div>
+              
+              <div className="admin-setting">
+                <label>Daily Collate Limit (Total)</label>
+                <input
+                  type="number"
+                  defaultValue={getSetting('daily_collate_limit') || 100}
+                  onBlur={(e) => updateSetting('daily_collate_limit', parseInt(e.target.value))}
+                />
+              </div>
+              
+              <div className="admin-setting" style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+                <label style={{ margin: 0 }}>Allow Multiple Categories</label>
+                <input
+                  type="checkbox"
+                  checked={getSetting('allow_multiple_categories') !== false}
+                  onChange={(e) => updateSetting('allow_multiple_categories', e.target.checked)}
+                  style={{ width: 20, height: 20, accentColor: '#10b981' }}
+                />
+                <span style={{ color: getSetting('allow_multiple_categories') !== false ? '#10b981' : '#ef4444', fontSize: '0.9rem' }}>
+                  {getSetting('allow_multiple_categories') !== false ? '✅ Enabled' : '❌ Disabled'}
+                </span>
+              </div>
             </div>
-            <div className="admin-setting">
-              <label>Max Category Levels</label>
-              <input
-                type="number"
-                defaultValue={getSetting('max_category_levels') || 100}
-                onBlur={(e) => updateSetting('max_category_levels', parseInt(e.target.value))}
-              />
+            
+            {/* Category Hierarchy Section */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.15))',
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 25,
+              border: '1px solid rgba(16, 185, 129, 0.3)'
+            }}>
+              <h4 style={{ color: '#10b981', margin: '0 0 15px 0' }}>📁 Category Hierarchy</h4>
+              
+              <div className="admin-setting">
+                <label>Max Category Levels (Depth)</label>
+                <input
+                  type="number"
+                  defaultValue={getSetting('max_category_levels') || 100}
+                  onBlur={(e) => updateSetting('max_category_levels', parseInt(e.target.value))}
+                />
+                <small style={{ color: '#a1a1aa', display: 'block', marginTop: 5 }}>
+                  Maximum sub-category depth (category → sub → sub-sub → ...)
+                </small>
+              </div>
             </div>
+            
+            {/* Payment Settings Section */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15))',
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 25,
+              border: '1px solid rgba(245, 158, 11, 0.3)'
+            }}>
+              <h4 style={{ color: '#f59e0b', margin: '0 0 15px 0' }}>💰 Payment Settings</h4>
+              
+              <div className="admin-setting">
+                <label>Platform Fee %</label>
+                <input
+                  type="number"
+                  min="5"
+                  max="50"
+                  defaultValue={getSetting('platform_fee_percent') || 15}
+                  onBlur={(e) => updateSetting('platform_fee_percent', Math.min(50, Math.max(5, parseInt(e.target.value))))}
+                />
+                <small style={{ color: '#a1a1aa', display: 'block', marginTop: 5 }}>
+                  Admin receives this % from protocol sales (default: 15%)
+                </small>
+              </div>
+              
+              <div className="admin-setting">
+                <label>Min Payout Threshold ($)</label>
+                <input
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  defaultValue={getSetting('min_payout_threshold') || 1.00}
+                  onBlur={(e) => updateSetting('min_payout_threshold', parseFloat(e.target.value))}
+                />
+                <small style={{ color: '#a1a1aa', display: 'block', marginTop: 5 }}>
+                  PayPal minimum payout (default: $1.00). Earnings accumulate until threshold.
+                </small>
+              </div>
+              
+              <div style={{
+                background: 'rgba(0,0,0,0.3)',
+                borderRadius: 8,
+                padding: 12,
+                marginTop: 15
+              }}>
+                <p style={{ color: '#fbbf24', margin: 0, fontSize: '0.85rem' }}>
+                  💡 <strong>Note:</strong> With 15% fee, protocols priced below $6.67 will accumulate earnings until $1.00 is reached for payout.
+                </p>
+              </div>
+            </div>
+            
+            {/* Bundle of the Week Section */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(124, 58, 237, 0.15))',
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 25,
+              border: '1px solid rgba(236, 72, 153, 0.3)'
+            }}>
+              <h4 style={{ color: '#f472b6', margin: '0 0 15px 0' }}>🏆 Bundle of the Week</h4>
+              
+              <div className="admin-setting">
+                <label>Featured Bundle ID</label>
+                <input
+                  type="text"
+                  defaultValue={getSetting('bundle_of_week_id') || ''}
+                  onBlur={(e) => updateSetting('bundle_of_week_id', e.target.value)}
+                  placeholder="Enter bundle ID to feature (leave empty for auto)"
+                  style={{ width: 300 }}
+                />
+                <small style={{ color: '#a1a1aa', display: 'block', marginTop: 5 }}>
+                  Leave empty to automatically feature the most popular bundle
+                </small>
+              </div>
+            </div>
+            
+            {/* Other Settings */}
             <div className="admin-setting">
               <label>Tutorial Video URL</label>
               <input
                 type="text"
                 defaultValue={getSetting('tutorial_video_url') || ''}
                 onBlur={(e) => updateSetting('tutorial_video_url', e.target.value)}
-                style={{ width: 250 }}
+                style={{ width: 300 }}
               />
             </div>
           </div>
