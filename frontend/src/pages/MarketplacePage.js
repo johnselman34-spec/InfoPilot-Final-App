@@ -528,7 +528,7 @@ const MarketplacePage = ({ showToast }) => {
       
       if (res.ok) {
         showToast('🎉 Protocol listed successfully! Start earning money!', 'success');
-        setNewProtocol({ name: '', description: '', protocol: '', price: 0.99, category: 'General', tags: '' });
+        setNewProtocol({ name: '', description: '', protocol: '', price: 0, category: 'General', tags: '' });
         fetchProtocols();
         fetchDashboard();
         setActiveTab('dashboard');
@@ -537,6 +537,34 @@ const MarketplacePage = ({ showToast }) => {
       }
     } catch (e) {
       showToast('Failed to list protocol', 'error');
+    }
+  };
+
+  const handleCopyFreeProtocol = async (protocol) => {
+    try {
+      const res = await fetch(`${API}/marketplace/protocols/${protocol.id}/copy`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok) {
+        // Copy to clipboard
+        navigator.clipboard.writeText(data.protocol).then(() => {
+          showToast('🎉 FREE Protocol copied to clipboard! Use it in Ultimate Search!', 'success');
+        }).catch(() => {
+          // Fallback for clipboard API failure
+          showToast(`Protocol: ${data.protocol}`, 'info');
+        });
+      } else {
+        showToast(data.detail || 'Failed to copy protocol', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to copy protocol', 'error');
     }
   };
 
