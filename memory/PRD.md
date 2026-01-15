@@ -14,12 +14,23 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - "Three ventures. One mission. Zero turbulence."
 
 ## Three Business Ventures
-1. **Letters to Evelyn** by John Selman - Supernatural Thriller Comedy Memoir (Amazon)
+1. **Letters to Evelyn** by John Selman - Supernatural Thriller Comedy Memoir
+   - eBook: $2.99 on Amazon: https://a.co/d/gsRLapf
+   - Hardcover: $250 special edition: https://a.co/d/g0aeHkI
+   - 19 Five-Star Reviews on Readers' Favorite
+   - Optioned for Film by Voyage Media
 2. **InfoPilot Explorer** - World Wide Information Exchange Platform
-3. **Maestro Bistro** - Brunswick, Maine (Beef, Vegetable, Fish Chowder)
+   - InfoJet 2.0™ proprietary search language
+   - Protocol Marketplace
+   - Interactive Maps
+3. **Maestro Bistro** - On the Mall, Brunswick, Maine
+   - deLectaBLe Beef Chowder - Evenly spiced perfection
+   - Vegetable Chowder - With Bacon! (Yes, really!)
+   - Fresh Fish Chowder - Maine's finest catch
+   - "Appropriate & conscientable prices for appropriately & conscientiously AMAZING food!"
 
 ## User Accounts
-### Admin Accounts
+### Admin Accounts (All have is_admin: true)
 - **jjspilot24@gmail.com** - Primary Admin (Password: InfoPilot2024!)
 - **JohnSelman34@gmail.com** - Admin (Password: InfoPilot2024!)
 - **john.1976.selman@gmail.com** - Admin (Password: InfoPilot2024!)
@@ -31,20 +42,30 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 
 ### Core Features ✅
 - [x] User authentication (Google OAuth + Email/Password)
-- [x] Admin badge display in sidebar
+- [x] **Admin badge displays correctly for Google OAuth logins**
 - [x] Ultimate Search with InfoJet 2.0 protocol language
-- [x] Category creation, editing (name, protocol, visibility)
+- [x] **Category editing saves name, protocol, AND visibility**
 - [x] Protocol parsing with abbreviation support (William C. Gamble, etc.)
-- [x] Collate button for batch search execution
+- [x] **Collate button showing selected category count**
 - [x] Interactive Map for geolocated results
 - [x] Statistics/Analytics page
 
-### Marketplace ✅
-- [x] Browse protocols with filtering/sorting
-- [x] Sell protocols ($0.99-$99.99, 90% to creator)
+### Enhanced Marketplace ✅ (NEW)
+- [x] **World Wide Protocol Map** - Interactive map with markers
+- [x] **Statistics Dashboard** - Total Protocols, Total Sales, Avg Price, Top Category
+- [x] **AI-Powered Search** - Intelligent search input
+- [x] **Search Logic Radio Buttons** - AND/OR (default), AND, OR
+- [x] **Document Type Checkboxes** - Webpage, News Article, PDF, MS Word (all checked by default)
+- [x] **Protocol Selection Checkboxes** - Select multiple protocols
+- [x] Buy/sell protocols ($0.99-$99.99, 90% to creator)
 - [x] PayPal integration for payments
 - [x] Seller dashboard with earnings
-- [x] Purchase history
+
+### Promotional Content ✅
+- [x] **Top Pilot Enterprises, Inc.** banner and branding
+- [x] **Letters to Evelyn** - Rotating book images, reviews, buy links ($2.99 eBook)
+- [x] **InfoPilot Explorer** - InfoJet 2.0™, Interactive Maps, Protocol Marketplace
+- [x] **Maestro Bistro** - Brunswick, ME with chowder menu
 
 ### Social Features ✅
 - [x] Groups (create, join, post)
@@ -58,13 +79,6 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - [x] Badges (First Search, Power User, etc.)
 - [x] Leaderboard
 - [x] User profiles with stats
-
-### Promotional Content ✅
-- [x] Top Pilot Enterprises banner
-- [x] Letters to Evelyn book promotion (images, reviews, buy links)
-- [x] InfoPilot Explorer features section
-- [x] Maestro Bistro menu section
-- [x] Rotating taglines and quotes
 
 ### Admin Features ✅
 - [x] Admin dashboard with statistics
@@ -83,22 +97,23 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 ```
 /app/
 ├── backend/
-│   ├── server.py           # Main FastAPI app (2.2k lines)
+│   ├── server.py           # Main FastAPI app
 │   ├── routes/             # Modular API routes
-│   │   ├── auth.py         # Authentication
+│   │   ├── auth.py         # Authentication (Google OAuth fixed)
 │   │   ├── categories.py   # Category CRUD
 │   │   ├── search.py       # Search endpoints
 │   │   ├── social.py       # Groups, Pages, Posts
 │   │   ├── notifications.py # WebSocket + Push
 │   │   └── marketplace.py  # Protocol marketplace
 │   └── services/           # Business logic
-│       ├── protocol_service.py
-│       └── search_service.py
 └── frontend/
     └── src/
-        ├── pages/          # React pages
-        ├── components/     # Shared components
-        ├── contexts/       # Auth, Theme contexts
+        ├── pages/
+        │   ├── MarketplacePage.js  # Enhanced with map, AI search, filters
+        │   └── UltimateSearchPage.js
+        ├── components/
+        │   └── shared/
+        │       └── BookPromoBanner.js  # All three businesses
         └── public/         # PWA assets
 ```
 
@@ -106,9 +121,8 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 
 ### Authentication
 - `POST /api/auth/login` - Email/password login
+- `POST /api/auth/google` - Google OAuth (returns is_admin correctly)
 - `POST /api/auth/register` - User registration
-- `GET /api/auth/google` - Google OAuth initiation
-- `GET /api/auth/google/callback` - OAuth callback
 
 ### Categories
 - `GET /api/categories` - List user categories
@@ -116,7 +130,7 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - `PUT /api/categories/{id}` - Update category (name, protocol, is_public)
 - `DELETE /api/categories/{id}` - Delete category
 
-### Search
+### Search & Collate
 - `POST /api/search` - Quick search
 - `POST /api/collate` - Collate category results
 - `GET /api/ultimate-search` - Get stored results
@@ -124,30 +138,34 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 
 ### Marketplace
 - `GET /api/marketplace/protocols` - Browse protocols
+- `GET /api/marketplace/categories` - Get marketplace categories
 - `POST /api/marketplace/protocols` - List protocol for sale
 - `POST /api/marketplace/purchase` - Purchase protocol
 
-### Social
-- `GET /api/groups` - List groups
-- `POST /api/groups` - Create group
-- `GET /api/pages` - List pages
-- `WS /api/ws/{user_id}` - Real-time notifications
+## Testing Results (Iteration 13)
+- **Backend: 20/20 tests passed (100%)**
+- **Frontend: All UI features working (100%)**
+- Test report: `/app/test_reports/iteration_13.json`
+
+## Preview URL
+https://protocol-hub-5.preview.emergentagent.com
+
+## Third-Party Integrations
+- **SerpAPI** - Web search via `google-search-results`
+- **ddgs** - DuckDuckGo fallback
+- **Emergent Google Auth** - OAuth
+- **PayPal** - Marketplace payments
+- **Resend** - Newsletter emails
+- **MongoDB** - Database
 
 ## Prioritized Backlog
 
-### P0 (Critical)
-- [x] Admin badge display - DONE
-- [x] Category name editing - DONE
-- [x] Search collation - DONE
-
 ### P1 (High Priority)
-- [ ] Document type filters (webpage, news, PDF, MS Word)
-- [ ] AI-powered search integration
-- [ ] Map integration with category checkboxes
-- [ ] Enhanced statistics on Marketplace
+- [ ] Full PDF/MS Word document indexing in search
+- [ ] Real map integration (Leaflet or Google Maps)
+- [ ] Web Push server-side notifications (VAPID)
 
 ### P2 (Medium Priority)
-- [ ] Web Push server-side notifications (VAPID)
 - [ ] Real-time chat
 - [ ] Advanced analytics visualizations
 - [ ] Multi-language support
@@ -156,19 +174,3 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - [ ] Mobile app wrapper
 - [ ] Voice search
 - [ ] Collaborative protocol editing
-
-## Third-Party Integrations
-- **SerpAPI** - Web search
-- **ddgs** - DuckDuckGo fallback
-- **Emergent Google Auth** - OAuth
-- **PayPal** - Marketplace payments
-- **Resend** - Newsletter emails
-- **MongoDB** - Database
-
-## Testing
-- Backend tests: `/app/tests/`
-- Test reports: `/app/test_reports/iteration_*.json`
-- Latest: iteration_12.json (21/21 tests passed)
-
-## Preview URL
-https://protocol-hub-5.preview.emergentagent.com
