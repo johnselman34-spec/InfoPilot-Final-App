@@ -2457,6 +2457,14 @@ async def startup_db_client():
         logger.info("🚀 Email scheduler started successfully!")
     except Exception as e:
         logger.error(f"Failed to start email scheduler: {e}")
+    
+    # Start the A/B optimizer scheduler
+    try:
+        from services.ab_optimizer import start_optimizer_scheduler
+        start_optimizer_scheduler()
+        logger.info("🤖 A/B Optimizer scheduler started successfully!")
+    except Exception as e:
+        logger.error(f"Failed to start A/B optimizer scheduler: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
