@@ -51,7 +51,7 @@ InfoPilot Explorer is your ultimate search companion. Here's how to get started:
 - 📊 Check the Statistics page to see community trends
 - 🏆 Earn achievements by using different features!
         """,
-        "image_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800",
+        "video_url": None, "video_id": None, "image_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800",
         "video_url": None,  # YouTube URL - to be added by admin
         "video_id": None,   # YouTube video ID - to be added by admin
         "duration": "5 min read",
@@ -91,7 +91,7 @@ This searches for George Bush's career, excluding pilot/aviation content.
 - Click the 🎤 icon to search by voice
 - Speak naturally - our AI understands context!
         """,
-        "image_url": "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800",
+        "video_url": None, "video_id": None, "image_url": "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800",
         "duration": "8 min read",
         "category": "search",
         "order": 2
@@ -131,7 +131,7 @@ Turn your search expertise into revenue!
 - 🏷️ Price competitively
 - ⭐ Build your reputation with quality protocols
         """,
-        "image_url": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800",
+        "video_url": None, "video_id": None, "image_url": "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800",
         "duration": "7 min read",
         "category": "marketplace",
         "order": 3
@@ -171,7 +171,7 @@ Build your research community!
 - Moderators can manage posts
 - Keep your community healthy!
         """,
-        "image_url": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800",
+        "video_url": None, "video_id": None, "image_url": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800",
         "duration": "6 min read",
         "category": "social",
         "order": 4
@@ -206,7 +206,7 @@ Real-time communication made easy!
 - Block unwanted contacts
 - Report inappropriate behavior
         """,
-        "image_url": "https://images.unsplash.com/photo-1611606063065-ee7946f0787a?w=800",
+        "video_url": None, "video_id": None, "image_url": "https://images.unsplash.com/photo-1611606063065-ee7946f0787a?w=800",
         "duration": "4 min read",
         "category": "social",
         "order": 5
@@ -245,7 +245,7 @@ Level up and earn rewards!
 - Show off on Facebook
 - Build your reputation!
         """,
-        "image_url": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=800",
+        "video_url": None, "video_id": None, "image_url": "https://images.unsplash.com/photo-1567427017947-545c5f8d16ad?w=800",
         "duration": "5 min read",
         "category": "gamification",
         "order": 6
@@ -283,7 +283,7 @@ Hands-free searching powered by OpenAI Whisper!
 - Use for quick searches
 - Perfect for mobile use
         """,
-        "image_url": "https://images.unsplash.com/photo-1589254065878-42c9da997008?w=800",
+        "video_url": None, "video_id": None, "image_url": "https://images.unsplash.com/photo-1589254065878-42c9da997008?w=800",
         "duration": "4 min read",
         "category": "search",
         "order": 7
@@ -322,7 +322,7 @@ Engage your community with polls!
 - Topic preferences
 - Fun engagement
         """,
-        "image_url": "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=800",
+        "video_url": None, "video_id": None, "image_url": "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=800",
         "duration": "4 min read",
         "category": "social",
         "order": 8
@@ -368,7 +368,7 @@ Manage your communities effectively!
 - Be fair with moderation
 - Engage with your community
         """,
-        "image_url": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800",
+        "video_url": None, "video_id": None, "image_url": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800",
         "duration": "6 min read",
         "category": "admin",
         "order": 9
@@ -411,7 +411,7 @@ Use InfoPilot everywhere!
 - Protocols available everywhere
 - Settings preserved
         """,
-        "image_url": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800",
+        "video_url": None, "video_id": None, "image_url": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800",
         "duration": "5 min read",
         "category": "basics",
         "order": 10
