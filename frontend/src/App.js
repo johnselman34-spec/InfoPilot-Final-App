@@ -2930,11 +2930,29 @@ const MarketplaceMap = ({ protocols, onSelectProtocol }) => {
       { lat: 38.9072, lng: -77.0369, city: "Washington DC" },
     ];
     
-    return protocols.map((p, i) => ({
-      ...p,
-      ...locations[i % locations.length],
-      offset: { lat: (Math.random() - 0.5) * 2, lng: (Math.random() - 0.5) * 2 }
-    }));
+    return protocols.map((p, i) => {
+      // Use real location data if available, otherwise use default locations
+      if (p.location && p.location.lat && p.location.lng) {
+        return {
+          ...p,
+          lat: p.location.lat,
+          lng: p.location.lng,
+          city: p.location.city || "Custom Location",
+          state: p.location.state,
+          country: p.location.country || "USA",
+          hasRealLocation: true
+        };
+      }
+      
+      // Fall back to rotating default locations
+      const defaultLoc = locations[i % locations.length];
+      return {
+        ...p,
+        ...defaultLoc,
+        offset: { lat: (Math.random() - 0.5) * 2, lng: (Math.random() - 0.5) * 2 },
+        hasRealLocation: false
+      };
+    });
   }, [protocols]);
 
   if (!protocols || protocols.length === 0) return null;
@@ -2974,9 +2992,9 @@ const MarketplaceMap = ({ protocols, onSelectProtocol }) => {
                   icon={{
                     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
                       <svg xmlns="http://www.w3.org/2000/svg" width="30" height="40" viewBox="0 0 30 40">
-                        <path d="M15 0C6.72 0 0 6.72 0 15c0 10.5 15 25 15 25s15-14.5 15-25C30 6.72 23.28 0 15 0z" fill="${protocol.is_purchased ? '#22c55e' : '#f59e0b'}"/>
+                        <path d="M15 0C6.72 0 0 6.72 0 15c0 10.5 15 25 15 25s15-14.5 15-25C30 6.72 23.28 0 15 0z" fill="${protocol.is_purchased ? '#22c55e' : protocol.hasRealLocation ? '#ec4899' : '#f59e0b'}"/>
                         <circle cx="15" cy="15" r="8" fill="white"/>
-                        <text x="15" y="19" text-anchor="middle" font-size="10" font-weight="bold" fill="${protocol.is_purchased ? '#22c55e' : '#f59e0b'}">$</text>
+                        <text x="15" y="19" text-anchor="middle" font-size="10" font-weight="bold" fill="${protocol.is_purchased ? '#22c55e' : protocol.hasRealLocation ? '#ec4899' : '#f59e0b'}">$</text>
                       </svg>
                     `)}`,
                     scaledSize: { width: 30, height: 40 }
