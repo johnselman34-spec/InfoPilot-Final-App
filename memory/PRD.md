@@ -48,14 +48,20 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - [x] Collate button showing selected category count
 - [x] Interactive Map for geolocated results
 
-### Enhanced Marketplace ✅
+### Enhanced Marketplace ✅ (COMPLETED January 15, 2026)
 - [x] World Wide Protocol Map - Interactive map with markers
 - [x] Statistics Dashboard - Total Protocols, Total Sales, Avg Price, Top Category
 - [x] AI-Powered Search - Intelligent search input
 - [x] Search Logic Radio Buttons - AND/OR, AND, OR
 - [x] Document Type Checkboxes - Webpage, News Article, PDF, MS Word
-- [x] Protocol Selection Checkboxes - Select multiple protocols
+- [x] Protocol Selection Checkboxes - Select multiple protocols with Select All/Deselect All buttons
 - [x] Protocol Bundles - Buy curated collections at discount
+- [x] **Pay-What-You-Want Model** - Users can pay any amount including $0 (FREE)
+- [x] **Admin Revenue Split Control** - Configurable 5-30% platform fee (default 10%)
+- [x] **PayPal Minimum Payout Handling** - Accumulated earnings below $1.00 threshold
+- [x] **Payout Ledger Tracking** - Full audit trail of all earnings
+- [x] **Category Tree with Expansion** - Expandable categories with + buttons
+- [x] Revenue Distribution Display - Shows creator % vs platform fee %
 
 ### Real-Time Chat ✅ (NEW)
 - [x] Chat page with sidebar and main chat area
