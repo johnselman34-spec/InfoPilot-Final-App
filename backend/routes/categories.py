@@ -14,8 +14,37 @@ from services.protocol_service import ProtocolParser
 router = APIRouter(tags=["Categories"])
 
 
+async def format_category_with_count(cat: dict, user_id: str = None) -> dict:
+    """Format category for API response with result count"""
+    cat_id = str(cat["_id"])
+    
+    # Count search results in this category
+    result_count = await db.search_results.count_documents({
+        "category_ids": cat_id
+    })
+    
+    # Count subcategories
+    subcategory_count = await db.categories.count_documents({
+        "parent_id": cat_id
+    })
+    
+    return {
+        "id": cat_id,
+        "name": cat["name"],
+        "protocol": cat["protocol"],
+        "user_id": cat["user_id"],
+        "parent_id": cat.get("parent_id"),
+        "is_public": cat.get("is_public", False),
+        "price": cat.get("price"),
+        "level": cat.get("level", 0),
+        "result_count": result_count,
+        "subcategory_count": subcategory_count,
+        "created_at": cat.get("created_at", datetime.utcnow()).isoformat()
+    }
+
+
 def format_category(cat: dict) -> dict:
-    """Format category for API response"""
+    """Format category for API response (sync version without count)"""
     return {
         "id": str(cat["_id"]),
         "name": cat["name"],
@@ -30,8 +59,8 @@ def format_category(cat: dict) -> dict:
 
 
 @router.get("/categories", response_model=List[dict])
-async def get_categories(user = Depends(get_current_user)):
-    """Get all categories for the current user"""
+async def get_categories(user = Depends(get_current_user), include_counts: bool = True):
+    """Get all categories for the current user with result counts"""
     categories = await db.categories.find({
         "$or": [
             {"user_id": str(user["_id"])},
@@ -39,7 +68,10 @@ async def get_categories(user = Depends(get_current_user)):
         ]
     }).to_list(1000)
     
-    return [format_category(cat) for cat in categories]
+    if include_counts:
+        return [await format_category_with_count(cat, str(user["_id"])) for cat in categories]
+    else:
+        return [format_category(cat) for cat in categories]
 
 
 @router.post("/categories", response_model=dict)
