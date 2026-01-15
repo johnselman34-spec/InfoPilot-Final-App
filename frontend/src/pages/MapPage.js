@@ -184,9 +184,35 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     <div className="card" data-testid="map-page">
       <div className="card-header">
         <h2>🗺️ Interactive World Map</h2>
-        <span style={{ color: '#10b981', fontSize: '0.9rem' }}>
-          {mapResults.length} results mapped • Click markers to open articles
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 15, flexWrap: 'wrap' }}>
+          <span style={{ color: '#10b981', fontSize: '0.9rem' }}>
+            {mapResults.length} results mapped • Click markers to open articles
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button 
+              onClick={() => fetchMapResults(true)} 
+              className="btn btn-secondary"
+              style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+              data-testid="map-refresh-btn"
+            >
+              🔄 Refresh
+            </button>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', fontSize: '0.8rem', color: '#a1a1aa' }}>
+              <input 
+                type="checkbox" 
+                checked={autoRefresh} 
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+                style={{ accentColor: '#10b981' }}
+              />
+              Auto-refresh
+            </label>
+            {lastUpdate && (
+              <span style={{ fontSize: '0.75rem', color: '#71717a' }}>
+                Last: {lastUpdate.toLocaleTimeString()}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Legend */}
