@@ -258,7 +258,7 @@ const CreateBundleForm = ({ userProtocols, onCreateBundle, showToast }) => {
           }}>
             {userProtocols.length === 0 ? (
               <p style={{ color: '#71717a', textAlign: 'center', margin: 10 }}>
-                You haven't created any protocols yet. Create some first!
+                You have not created any protocols yet. Create some first!
               </p>
             ) : (
               userProtocols.map(protocol => (
