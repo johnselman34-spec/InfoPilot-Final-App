@@ -4,60 +4,93 @@ import { API } from '../utils/api';
 import { Icons } from '../components/shared';
 
 const AchievementsPage = ({ showToast }) => {
-  const { token } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [leaderboard, setLeaderboard] = useState([]);
+  const { token, user } = useAuth();
+  const [achievements, setAchievements] = useState({ earned: [], unearned: [] });
+  const [allAchievements, setAllAchievements] = useState([]);
   const [weeklyLeaderboard, setWeeklyLeaderboard] = useState([]);
-  const [monthlyLeaderboard, setMonthlyLeaderboard] = useState([]);
-  const [allBadges, setAllBadges] = useState([]);
+  const [allTimeLeaderboard, setAllTimeLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('profile'); // profile, badges, leaderboard
-  const [leaderboardPeriod, setLeaderboardPeriod] = useState('all'); // all, weekly, monthly
+  const [activeTab, setActiveTab] = useState('my-achievements');
   const [shareModal, setShareModal] = useState(null);
+  const [checkingNew, setCheckingNew] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
-      const [profileRes, leaderboardRes, badgesRes] = await Promise.all([
-        fetch(`${API}/gamification/profile`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API}/gamification/leaderboard`),
-        fetch(`${API}/gamification/badges`)
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      
+      const [allRes, weeklyRes, allTimeRes] = await Promise.all([
+        fetch(`${API}/gamification/achievements`),
+        fetch(`${API}/gamification/leaderboard/weekly`),
+        fetch(`${API}/gamification/leaderboard/all-time`)
       ]);
 
-      const profileData = await profileRes.json();
-      const leaderboardData = await leaderboardRes.json();
-      const badgesData = await badgesRes.json();
+      const allData = await allRes.json();
+      const weeklyData = await weeklyRes.json();
+      const allTimeData = await allTimeRes.json();
 
-      setProfile(profileData);
-      setLeaderboard(leaderboardData.leaderboard || []);
-      setAllBadges(badgesData.badges || []);
+      setAllAchievements(allData.achievements || []);
+      setWeeklyLeaderboard(weeklyData.leaderboard || []);
+      setAllTimeLeaderboard(allTimeData.leaderboard || []);
 
-      // Show new badges notification
-      if (profileData.new_badges?.length > 0) {
-        profileData.new_badges.forEach(badge => {
-          showToast(`🎉 New Badge Earned: ${badge.icon} ${badge.name}!`, 'success');
-        });
+      // Fetch user's achievements if logged in
+      if (token) {
+        const myRes = await fetch(`${API}/gamification/my-achievements`, { headers });
+        if (myRes.ok) {
+          const myData = await myRes.json();
+          setAchievements(myData);
+        }
       }
     } catch (e) {
       console.error('Failed to fetch gamification data:', e);
     }
     setLoading(false);
-  }, [token, showToast]);
+  }, [token]);
 
-  const fetchWeeklyLeaderboard = useCallback(async () => {
+  const checkNewAchievements = async () => {
+    if (!token) return;
+    setCheckingNew(true);
     try {
-      const res = await fetch(`${API}/gamification/leaderboard/weekly`);
+      const res = await fetch(`${API}/gamification/check-achievements`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
       if (res.ok) {
         const data = await res.json();
-        setWeeklyLeaderboard(data.leaderboard || []);
+        if (data.new_achievements?.length > 0) {
+          data.new_achievements.forEach(achievement => {
+            showToast(`🏆 Achievement Unlocked: ${achievement.icon} ${achievement.name}!`, 'success');
+          });
+          // Refresh data
+          fetchData();
+        } else {
+          showToast(data.message || 'Keep going! More achievements await!', 'info');
+        }
       }
     } catch (e) {
-      console.error('Failed to fetch weekly leaderboard');
+      showToast('Failed to check achievements', 'error');
     }
-  }, []);
+    setCheckingNew(false);
+  };
 
-  const fetchMonthlyLeaderboard = useCallback(async () => {
+  const handleShareAchievement = async (achievementId) => {
+    if (!token) return;
     try {
-      const res = await fetch(`${API}/gamification/leaderboard/monthly`);
+      const res = await fetch(`${API}/gamification/share-achievement/${achievementId}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setShareModal(data);
+      }
+    } catch (e) {
+      showToast('Failed to generate share link', 'error');
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
       if (res.ok) {
         const data = await res.json();
         setMonthlyLeaderboard(data.leaderboard || []);
