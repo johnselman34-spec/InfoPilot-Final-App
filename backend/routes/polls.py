@@ -118,10 +118,13 @@ async def get_poll(poll_id: str, user = Depends(get_optional_user)):
     
     user_id = str(user["_id"]) if user else None
     
-    # Check if poll is expired
+    # Check if poll is expired (handle timezone-aware comparison)
+    expires_at = poll.get("expires_at")
     is_expired = False
-    if poll.get("expires_at") and poll["expires_at"] < datetime.now(timezone.utc):
-        is_expired = True
+    if expires_at:
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        is_expired = expires_at < datetime.now(timezone.utc)
     
     # Get creator info
     creator = await db.users.find_one({"_id": ObjectId(poll["created_by"])})
