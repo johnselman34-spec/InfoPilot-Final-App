@@ -2475,4 +2475,13 @@ async def shutdown_db_client():
         logger.info("📧 Email scheduler stopped")
     except Exception as e:
         logger.error(f"Failed to stop email scheduler: {e}")
+    
+    # Stop the A/B optimizer scheduler
+    try:
+        from services.ab_optimizer import stop_optimizer_scheduler
+        stop_optimizer_scheduler()
+        logger.info("🤖 A/B Optimizer scheduler stopped")
+    except Exception as e:
+        logger.error(f"Failed to stop A/B optimizer scheduler: {e}")
+    
     client.close()
