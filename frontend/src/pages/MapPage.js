@@ -60,8 +60,8 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     return null;
   }, []);
 
-  const fetchMapResults = useCallback(async () => {
-    setLoading(true);
+  const fetchMapResults = useCallback(async (showLoadingState = true) => {
+    if (showLoadingState) setLoading(true);
     try {
       const res = await fetch(`${API}/ultimate-search?limit=100`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -89,15 +89,44 @@ const MapPage = ({ showToast, setCurrentPage }) => {
           })
           .filter(r => r !== null);
         setMapResults(resultsWithLocation);
+        setLastUpdate(new Date());
       }
     } catch (e) {
       console.error('Failed to fetch map results:', e);
     }
-    setLoading(false);
+    if (showLoadingState) setLoading(false);
   }, [token, extractLocation]);
 
   useEffect(() => {
     fetchMapResults();
+  }, [fetchMapResults]);
+
+  // Auto-refresh map data
+  useEffect(() => {
+    if (autoRefresh && token) {
+      refreshIntervalRef.current = setInterval(() => {
+        fetchMapResults(false); // Silent refresh (no loading state)
+      }, MAP_REFRESH_INTERVAL);
+    }
+    
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+    };
+  }, [autoRefresh, token, fetchMapResults]);
+
+  // Listen for custom events to trigger map refresh
+  useEffect(() => {
+    const handleMapRefresh = () => {
+      fetchMapResults(false);
+    };
+    
+    window.addEventListener('infopilot-data-changed', handleMapRefresh);
+    
+    return () => {
+      window.removeEventListener('infopilot-data-changed', handleMapRefresh);
+    };
   }, [fetchMapResults]);
 
   const getMarkerColor = (articleType) => {
