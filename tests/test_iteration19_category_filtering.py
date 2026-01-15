@@ -239,7 +239,8 @@ class TestCategoryFilteringWithoutAuth:
         
         if response.status_code == 200:
             data = response.json()
-            print(f"✅ Public access allowed: {data['count']} results")
+            count = data.get("count", data.get("total", 0))
+            print(f"✅ Public access allowed: {count} results")
         else:
             print("✅ Authentication required for ultimate-search (expected behavior)")
 
