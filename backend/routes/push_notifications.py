@@ -20,10 +20,11 @@ router = APIRouter(prefix="/api/push", tags=["push"])
 # Database will be injected
 db = None
 
-# VAPID keys - in production, these should be in environment variables
+# VAPID keys - loaded from environment variables
 VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")
-VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "BNbxGYNMhEIi9RHkdj8mOJQq2X3e5_gYpLMgYbZ3Y4qLk_ZMHR8f_4T_Kp0vKqZJhJxN0TqB5Fq8K4LfWqRd9Hs")
-VAPID_CLAIMS = {"sub": "mailto:admin@infopilot.com"}
+VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "")
+VAPID_CLAIMS_EMAIL = os.environ.get("VAPID_CLAIMS_EMAIL", "jjspilot24@gmail.com")
+VAPID_CLAIMS = {"sub": f"mailto:{VAPID_CLAIMS_EMAIL}"}
 
 def init_router(database):
     global db
