@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>InfoJet Settings</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a0a28 0%, #0f0318 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 40px;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    
+    .card {
+      background: rgba(30, 20, 50, 0.5);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .card h3 {
+      color: #a78bfa;
+      margin-bottom: 15px;
+      font-size: 1rem;
+    }
+    
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+    }
+    
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+    
+    .setting-label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .setting-label span {
+      font-size: 0.95rem;
+    }
+    
+    .setting-label small {
+      color: #71717a;
+      font-size: 0.75rem;
+    }
+    
+    input[type="text"], input[type="url"] {
+      padding: 10px 15px;
+      border: 1px solid rgba(124, 58, 237, 0.5);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #e2e8f0;
+      width: 200px;
+    }
+    
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: #7c3aed;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s;
+    }
+    
+    .btn:hover {
+      transform: scale(1.02);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+      color: white;
+    }
+    
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .btn-secondary {
+      background: rgba(124, 58, 237, 0.2);
+      color: #a78bfa;
+      border: 1px solid rgba(124, 58, 237, 0.5);
+    }
+    
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .status {
+      padding: 10px 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      display: none;
+    }
+    
+    .status.success {
+      display: block;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      color: #10b981;
+    }
+    
+    .status.error {
+      display: block;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+    }
+    
+    .account-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #7c3aed, #f472b6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 InfoJet Settings</h1>
+    
+    <div class="card">
+      <h3>👤 Account</h3>
+      <div id="account-section">
+        <div class="account-info">
+          <div class="avatar">👤</div>
+          <div>
+            <div id="account-email">Not logged in</div>
+            <small id="account-status" style="color: #71717a;">Connect to InfoPilot Explorer</small>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" id="login-btn">Login to InfoPilot</button>
+          <button class="btn btn-danger" id="logout-btn" style="display: none;">Logout</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>⚙️ Search Settings</h3>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span>Show floating search button</span>
+          <small>Display a search button when selecting text</small>
+        </div>
+        <input type="checkbox" id="float-btn-enabled" checked>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span>Open results in new tab</span>
+          <small>Always open search results in a new tab</small>
+        </div>
+        <input type="checkbox" id="new-tab-enabled" checked>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span>Default search protocol</span>
+          <small>Select a protocol to use by default</small>
+        </div>
+        <select id="default-protocol" style="padding: 8px; border-radius: 6px; background: rgba(0,0,0,0.3); border: 1px solid rgba(124,58,237,0.5); color: #e2e8f0;">
+          <option value="">None (standard search)</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>🔔 Notifications</h3>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span>Enable notifications</span>
+          <small>Get notified about new messages and activities</small>
+        </div>
+        <input type="checkbox" id="notifications-enabled">
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3>📊 Data</h3>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span>Clear local data</span>
+          <small>Remove cached protocols and settings</small>
+        </div>
+        <button class="btn btn-secondary" id="clear-data-btn">Clear Data</button>
+      </div>
+    </div>
+    
+    <div id="status" class="status"></div>
+    
+    <div class="actions">
+      <button class="btn btn-primary" id="save-btn">Save Settings</button>
+    </div>
+  </div>
+  
+  <script src="options.js"></script>
+</body>
+</html>
