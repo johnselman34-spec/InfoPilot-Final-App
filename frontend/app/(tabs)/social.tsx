@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,15 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  FlatList,
   Image,
   Modal,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { colors } from '../../src/utils/colors';
 import { api } from '../../src/services/api';
 
@@ -26,7 +27,9 @@ interface User {
   profile_photo?: string;
   is_friend?: boolean;
   friend_request_sent?: boolean;
+  friend_request_received?: boolean;
   location?: string;
+  protocols_count?: number;
 }
 
 interface Group {
@@ -51,27 +54,61 @@ interface Page {
   category: string;
 }
 
-interface FeedPost {
+interface Post {
   id: string;
-  author: User;
+  author: {
+    id: string;
+    username: string;
+    profile_photo?: string;
+  };
   content: string;
   images?: string[];
-  likes: number;
-  comments: number;
-  shares: number;
+  reactions: {
+    like: number;
+    love: number;
+    funny: number;
+    sad: number;
+    caution: number;
+    spam: number;
+    best: number;
+  };
+  comments_count: number;
   created_at: string;
-  is_liked: boolean;
+  user_reaction?: string;
 }
 
 type TabType = 'feed' | 'friends' | 'groups' | 'pages';
 
+// Default admin friend
+const DEFAULT_ADMIN_FRIEND = {
+  id: 'admin_jjspilot24',
+  username: 'JJSPilot24',
+  email: 'jjspilot24@gmail.com',
+  is_friend: true,
+  location: 'InfoPilot HQ',
+  protocols_count: 100,
+};
+
+// Reaction types with emojis
+const REACTIONS = [
+  { key: 'like', emoji: '👍', label: 'Like' },
+  { key: 'love', emoji: '❤️', label: 'Love' },
+  { key: 'funny', emoji: '😂', label: 'Funny' },
+  { key: 'sad', emoji: '😢', label: 'Sad' },
+  { key: 'caution', emoji: '⚠️', label: 'Caution' },
+  { key: 'spam', emoji: '🚫', label: 'Spam' },
+  { key: 'best', emoji: '🏆', label: 'Best' },
+];
+
 export default function SocialScreen() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('feed');
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Data states
-  const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [friends, setFriends] = useState<User[]>([]);
   const [friendRequests, setFriendRequests] = useState<User[]>([]);
   const [searchResults, setSearchResults] = useState<User[]>([]);
@@ -81,14 +118,17 @@ export default function SocialScreen() {
   // Modals
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showCreatePage, setShowCreatePage] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
   const [showUserSearch, setShowUserSearch] = useState(false);
+  const [showReactions, setShowReactions] = useState<string | null>(null);
   
-  // Create form states
+  // Form states
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
   const [newPageName, setNewPageName] = useState('');
   const [newPageDesc, setNewPageDesc] = useState('');
   const [newPageCategory, setNewPageCategory] = useState('');
+  const [newPostContent, setNewPostContent] = useState('');
 
   useEffect(() => {
     loadData();
@@ -119,56 +159,28 @@ export default function SocialScreen() {
   };
 
   const loadFeed = async () => {
-    // Demo feed data
-    setFeedPosts([
-      {
-        id: '1',
-        author: { id: 'u1', username: 'SearchMaster42', profile_photo: 'https://i.pravatar.cc/150?img=1' },
-        content: "🔥 Just created an AMAZING protocol for finding historical documents! Check out my marketplace listing - it's got everything from ancient manuscripts to modern declassified documents! #InfoPilot #SearchPro",
-        likes: 42,
-        comments: 8,
-        shares: 5,
-        created_at: '2 hours ago',
-        is_liked: false,
-      },
-      {
-        id: '2',
-        author: { id: 'u2', username: 'DataNinja', profile_photo: 'https://i.pravatar.cc/150?img=2' },
-        content: "Finally finished reading 'Letters to Evelyn' by John Selman! 📚 Such an inspiring book about the journey of creating InfoPilot. If you haven't read it yet, you're missing out! Available on Amazon - go grab a copy! 💫",
-        likes: 156,
-        comments: 23,
-        shares: 45,
-        created_at: '5 hours ago',
-        is_liked: true,
-      },
-      {
-        id: '3',
-        author: { id: 'u3', username: 'ProtocolPro', profile_photo: 'https://i.pravatar.cc/150?img=3' },
-        content: "Pro tip: Use the (term1 or term2) & (term3)+ format for the BEST search results! The + modifier means 'prioritize these results' - game changer! 🎮",
-        likes: 89,
-        comments: 12,
-        shares: 34,
-        created_at: '1 day ago',
-        is_liked: false,
-      },
-    ]);
+    try {
+      const response = await api.get('/social/feed');
+      setPosts(response.posts || []);
+    } catch (error) {
+      // Use mock data
+      setPosts(getMockPosts());
+    }
   };
 
   const loadFriends = async () => {
     try {
       const response = await api.get('/social/friends');
-      setFriends(response.friends || []);
-      setFriendRequests(response.pending_requests || []);
+      // Ensure default admin friend is included
+      const friendsList = response.friends || [];
+      if (!friendsList.find((f: User) => f.username === 'JJSPilot24')) {
+        friendsList.unshift(DEFAULT_ADMIN_FRIEND);
+      }
+      setFriends(friendsList);
+      setFriendRequests(response.requests || []);
     } catch (error) {
-      // Demo data
-      setFriends([
-        { id: 'f1', username: 'JohnSearcher', profile_photo: 'https://i.pravatar.cc/150?img=4', location: 'New York, USA' },
-        { id: 'f2', username: 'SarahResearch', profile_photo: 'https://i.pravatar.cc/150?img=5', location: 'London, UK' },
-        { id: 'f3', username: 'MikeProtocol', profile_photo: 'https://i.pravatar.cc/150?img=6', location: 'Tokyo, Japan' },
-      ]);
-      setFriendRequests([
-        { id: 'r1', username: 'NewUser123', profile_photo: 'https://i.pravatar.cc/150?img=7' },
-      ]);
+      setFriends([DEFAULT_ADMIN_FRIEND, ...getMockFriends()]);
+      setFriendRequests(getMockFriendRequests());
     }
   };
 
@@ -177,12 +189,7 @@ export default function SocialScreen() {
       const response = await api.get('/social/groups');
       setGroups(response.groups || []);
     } catch (error) {
-      // Demo data
-      setGroups([
-        { id: 'g1', name: 'History Protocol Masters', description: 'Share and discuss historical research protocols', member_count: 1234, is_member: true, is_admin: false, created_at: '2024-01-15' },
-        { id: 'g2', name: 'Science Search Pros', description: 'For those who love finding scientific papers', member_count: 892, is_member: false, is_admin: false, created_at: '2024-02-20' },
-        { id: 'g3', name: 'Business Intel Hub', description: 'Competitive intelligence and market research', member_count: 567, is_member: true, is_admin: true, created_at: '2024-03-10' },
-      ]);
+      setGroups(getMockGroups());
     }
   };
 
@@ -191,287 +198,338 @@ export default function SocialScreen() {
       const response = await api.get('/social/pages');
       setPages(response.pages || []);
     } catch (error) {
-      // Demo data
-      setPages([
-        { id: 'p1', name: 'InfoPilot Official', description: 'Official page for InfoPilot updates and news', follower_count: 5432, is_following: true, is_owner: false, category: 'Technology' },
-        { id: 'p2', name: 'Letters to Evelyn Fan Page', description: 'For fans of John Selman\'s amazing book!', follower_count: 2341, is_following: true, is_owner: false, category: 'Books' },
-        { id: 'p3', name: 'Protocol Marketplace Tips', description: 'Tips for selling protocols and making money!', follower_count: 1876, is_following: false, is_owner: false, category: 'Business' },
-      ]);
+      setPages(getMockPages());
     }
   };
 
-  const handleSearchUsers = async () => {
-    if (!searchQuery.trim()) return;
-    
-    setLoading(true);
-    try {
-      const response = await api.get('/social/search-users', { query: searchQuery });
-      setSearchResults(response.users || []);
-    } catch (error) {
-      // Demo search results
-      setSearchResults([
-        { id: 's1', username: searchQuery + '_user', profile_photo: 'https://i.pravatar.cc/150?img=10', location: 'Chicago, USA', is_friend: false },
-        { id: 's2', username: searchQuery + '_pro', profile_photo: 'https://i.pravatar.cc/150?img=11', location: 'Berlin, Germany', is_friend: false },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
   };
 
+  // Mock data generators
+  const getMockPosts = (): Post[] => [
+    {
+      id: '1',
+      author: { id: 'admin', username: 'JJSPilot24', profile_photo: undefined },
+      content: '🚀 Welcome to InfoPilot Social! Share your protocols, connect with researchers, and discover amazing content! Remember: "The best protocol is the one that finds what you\'re looking for!" 📚',
+      images: [],
+      reactions: { like: 42, love: 28, funny: 15, sad: 0, caution: 0, spam: 0, best: 12 },
+      comments_count: 23,
+      created_at: new Date().toISOString(),
+      user_reaction: undefined,
+    },
+    {
+      id: '2',
+      author: { id: '2', username: 'ProtocolMaster', profile_photo: undefined },
+      content: 'Just created a new protocol for American Civil War research! Check out the marketplace - it\'s FREE to copy! 🎯 #InfoPilot #Research #History',
+      images: [],
+      reactions: { like: 89, love: 34, funny: 5, sad: 0, caution: 0, spam: 0, best: 21 },
+      comments_count: 45,
+      created_at: new Date(Date.now() - 3600000).toISOString(),
+      user_reaction: undefined,
+    },
+    {
+      id: '3',
+      author: { id: '3', username: 'ResearchGuru', profile_photo: undefined },
+      content: 'Pro tip: Use the AND/OR radio buttons on the Ultimate Search page to combine categories! It\'s like having a superpower for research! 💡',
+      images: [],
+      reactions: { like: 156, love: 78, funny: 23, sad: 0, caution: 0, spam: 0, best: 45 },
+      comments_count: 67,
+      created_at: new Date(Date.now() - 7200000).toISOString(),
+      user_reaction: undefined,
+    },
+  ];
+
+  const getMockFriends = (): User[] => [
+    { id: '2', username: 'ProtocolMaster', is_friend: true, protocols_count: 45 },
+    { id: '3', username: 'ResearchGuru', is_friend: true, protocols_count: 78 },
+    { id: '4', username: 'DataWizard', is_friend: true, protocols_count: 32 },
+  ];
+
+  const getMockFriendRequests = (): User[] => [
+    { id: '5', username: 'NewResearcher', friend_request_received: true, protocols_count: 5 },
+  ];
+
+  const getMockGroups = (): Group[] => [
+    { id: '1', name: 'History Researchers', description: 'A group for history enthusiasts and researchers', member_count: 1234, is_member: true, is_admin: false, created_at: new Date().toISOString() },
+    { id: '2', name: 'Protocol Masters', description: 'Share and discuss the best protocols', member_count: 892, is_member: false, is_admin: false, created_at: new Date().toISOString() },
+    { id: '3', name: 'InfoPilot Tips & Tricks', description: 'Learn advanced techniques', member_count: 2156, is_member: true, is_admin: false, created_at: new Date().toISOString() },
+  ];
+
+  const getMockPages = (): Page[] => [
+    { id: '1', name: 'Letters to Evelyn', description: 'Official page for the book that started it all!', follower_count: 5678, is_following: true, is_owner: false, category: 'Books' },
+    { id: '2', name: 'Top Pilot Enterprises', description: 'Official company page', follower_count: 3456, is_following: true, is_owner: false, category: 'Business' },
+    { id: '3', name: 'Protocol Academy', description: 'Learn to create amazing protocols', follower_count: 2345, is_following: false, is_owner: false, category: 'Education' },
+  ];
+
+  // Friend actions
   const handleSendFriendRequest = async (userId: string) => {
     try {
-      await api.post('/social/friend-request', { user_id: userId });
-      Alert.alert('🎉 Friend Request Sent!', 'They\'ll be notified. Fingers crossed! 🤞');
+      await api.post('/social/friends/request', { user_id: userId });
+      Alert.alert('Success! 🎉', 'Friend request sent!');
       setSearchResults(prev => prev.map(u => 
         u.id === userId ? { ...u, friend_request_sent: true } : u
       ));
     } catch (error) {
-      Alert.alert('Oops!', 'Couldn\'t send friend request. Try again!');
+      Alert.alert('Error', 'Failed to send friend request');
     }
   };
 
   const handleAcceptFriendRequest = async (userId: string) => {
     try {
-      await api.post('/social/accept-friend', { user_id: userId });
-      Alert.alert('🎊 New Friend!', 'You\'re now connected!');
+      await api.post('/social/friends/accept', { user_id: userId });
+      Alert.alert('Success! 🤝', 'Friend request accepted!');
       setFriendRequests(prev => prev.filter(u => u.id !== userId));
       loadFriends();
     } catch (error) {
-      Alert.alert('Oops!', 'Something went wrong.');
+      Alert.alert('Error', 'Failed to accept friend request');
     }
   };
 
   const handleUnfriend = async (userId: string, username: string) => {
     Alert.alert(
-      '😢 Unfriend?',
-      `Are you sure you want to unfriend ${username}? This is like unfollowing but WORSE!`,
+      'Unfriend',
+      `Are you sure you want to unfriend @${username}?`,
       [
-        { text: 'Nope, keep them!', style: 'cancel' },
-        { 
-          text: 'Yes, unfriend', 
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Unfriend',
           style: 'destructive',
           onPress: async () => {
             try {
-              await api.delete(`/social/friends/${userId}`);
+              await api.post('/social/friends/unfriend', { user_id: userId });
+              Alert.alert('Done', `You are no longer friends with @${username}`);
               setFriends(prev => prev.filter(f => f.id !== userId));
             } catch (error) {
-              console.error('Unfriend error:', error);
+              Alert.alert('Error', 'Failed to unfriend');
             }
-          }
+          },
         },
       ]
     );
   };
 
-  const handleJoinGroup = async (groupId: string) => {
-    try {
-      await api.post(`/social/groups/${groupId}/join`);
-      setGroups(prev => prev.map(g => 
-        g.id === groupId ? { ...g, is_member: true, member_count: g.member_count + 1 } : g
-      ));
-      Alert.alert('🎉 Welcome!', 'You\'re now a member of this group!');
-    } catch (error) {
-      Alert.alert('Oops!', 'Couldn\'t join the group.');
-    }
-  };
-
-  const handleLeaveGroup = async (groupId: string) => {
-    try {
-      await api.post(`/social/groups/${groupId}/leave`);
-      setGroups(prev => prev.map(g => 
-        g.id === groupId ? { ...g, is_member: false, member_count: g.member_count - 1 } : g
-      ));
-    } catch (error) {
-      console.error('Leave group error:', error);
-    }
-  };
-
-  const handleFollowPage = async (pageId: string) => {
-    try {
-      await api.post(`/social/pages/${pageId}/follow`);
-      setPages(prev => prev.map(p => 
-        p.id === pageId ? { ...p, is_following: true, follower_count: p.follower_count + 1 } : p
-      ));
-    } catch (error) {
-      console.error('Follow page error:', error);
-    }
-  };
-
-  const handleLikePost = async (postId: string) => {
-    setFeedPosts(prev => prev.map(p => 
-      p.id === postId ? { ...p, is_liked: !p.is_liked, likes: p.is_liked ? p.likes - 1 : p.likes + 1 } : p
-    ));
-    try {
-      await api.post(`/social/posts/${postId}/like`);
-    } catch (error) {
-      console.error('Like error:', error);
-    }
-  };
-
-  const handleCreateGroup = async () => {
-    if (!newGroupName.trim()) {
-      Alert.alert('Oops!', 'Please enter a group name');
-      return;
-    }
+  // Search users
+  const handleSearchUsers = async () => {
+    if (!searchQuery.trim()) return;
     
     try {
-      await api.post('/social/groups', {
-        name: newGroupName,
-        description: newGroupDesc,
-      });
-      Alert.alert('🎉 Group Created!', 'Your group is now live!');
-      setShowCreateGroup(false);
-      setNewGroupName('');
-      setNewGroupDesc('');
-      loadGroups();
+      const response = await api.get('/social/users/search', { q: searchQuery });
+      setSearchResults(response.users || []);
     } catch (error) {
-      Alert.alert('Oops!', 'Couldn\'t create the group.');
+      // Mock search results
+      setSearchResults([
+        { id: '10', username: searchQuery + '_user', is_friend: false, protocols_count: 10 },
+      ]);
     }
   };
 
-  const handleCreatePage = async () => {
-    if (!newPageName.trim()) {
-      Alert.alert('Oops!', 'Please enter a page name');
+  // Reactions
+  const handleReaction = async (postId: string, reactionType: string) => {
+    try {
+      await api.post(`/social/posts/${postId}/react`, { reaction_type: reactionType });
+      setPosts(prev => prev.map(p => {
+        if (p.id === postId) {
+          const newReactions = { ...p.reactions };
+          // Remove old reaction if exists
+          if (p.user_reaction) {
+            newReactions[p.user_reaction as keyof typeof newReactions]--;
+          }
+          // Add new reaction
+          newReactions[reactionType as keyof typeof newReactions]++;
+          return { ...p, reactions: newReactions, user_reaction: reactionType };
+        }
+        return p;
+      }));
+    } catch (error) {
+      console.error('Reaction error:', error);
+    }
+    setShowReactions(null);
+  };
+
+  // Create post
+  const handleCreatePost = async () => {
+    if (!newPostContent.trim()) {
+      Alert.alert('Error', 'Please write something!');
       return;
     }
-    
+
     try {
-      await api.post('/social/pages', {
-        name: newPageName,
-        description: newPageDesc,
-        category: newPageCategory || 'General',
-      });
-      Alert.alert('🎉 Page Created!', 'Your page is now live!');
-      setShowCreatePage(false);
-      setNewPageName('');
-      setNewPageDesc('');
-      setNewPageCategory('');
-      loadPages();
+      await api.post('/social/posts', { content: newPostContent });
+      Alert.alert('Success! 🎉', 'Your post has been published!');
+      setNewPostContent('');
+      setShowCreatePost(false);
+      loadFeed();
     } catch (error) {
-      Alert.alert('Oops!', 'Couldn\'t create the page.');
+      Alert.alert('Error', 'Failed to create post');
     }
   };
 
-  const renderFeedPost = ({ item }: { item: FeedPost }) => (
-    <View style={styles.postCard}>
+  // Navigate to messages
+  const handleOpenMessages = () => {
+    router.push('/(tabs)/messages');
+  };
+
+  // Render tabs
+  const tabs: { key: TabType; label: string; icon: string }[] = [
+    { key: 'feed', label: 'Feed', icon: 'newspaper' },
+    { key: 'friends', label: 'Friends', icon: 'people' },
+    { key: 'groups', label: 'Groups', icon: 'people-circle' },
+    { key: 'pages', label: 'Pages', icon: 'flag' },
+  ];
+
+  // Render post card
+  const renderPost = (post: Post) => (
+    <View key={post.id} style={styles.postCard}>
       <View style={styles.postHeader}>
-        <Image 
-          source={{ uri: item.author.profile_photo || 'https://i.pravatar.cc/150' }}
-          style={styles.authorAvatar}
-        />
-        <View>
-          <Text style={styles.authorName}>{item.author.username}</Text>
-          <Text style={styles.postTime}>{item.created_at}</Text>
+        <View style={styles.postAuthorPhoto}>
+          <Ionicons name="person-circle" size={40} color={colors.primary} />
+        </View>
+        <View style={styles.postAuthorInfo}>
+          <Text style={styles.postAuthorName}>@{post.author.username}</Text>
+          <Text style={styles.postTime}>
+            {new Date(post.created_at).toLocaleDateString()}
+          </Text>
         </View>
       </View>
       
-      <Text style={styles.postContent}>{item.content}</Text>
+      <Text style={styles.postContent}>{post.content}</Text>
       
+      {/* Reactions Summary */}
+      <View style={styles.reactionsSummary}>
+        {Object.entries(post.reactions).filter(([_, count]) => count > 0).slice(0, 4).map(([type, count]) => {
+          const reaction = REACTIONS.find(r => r.key === type);
+          return reaction ? (
+            <Text key={type} style={styles.reactionSummaryItem}>
+              {reaction.emoji} {count}
+            </Text>
+          ) : null;
+        })}
+        <Text style={styles.commentsCount}>💬 {post.comments_count} comments</Text>
+      </View>
+      
+      {/* Action Buttons */}
       <View style={styles.postActions}>
         <TouchableOpacity 
-          style={styles.postAction}
-          onPress={() => handleLikePost(item.id)}
+          style={styles.actionButton}
+          onPress={() => setShowReactions(showReactions === post.id ? null : post.id)}
         >
-          <Ionicons 
-            name={item.is_liked ? "heart" : "heart-outline"} 
-            size={20} 
-            color={item.is_liked ? colors.love : colors.textMuted} 
-          />
-          <Text style={styles.actionCount}>{item.likes}</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.postAction}>
-          <Ionicons name="chatbubble-outline" size={20} color={colors.textMuted} />
-          <Text style={styles.actionCount}>{item.comments}</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.postAction}>
-          <Ionicons name="share-outline" size={20} color={colors.textMuted} />
-          <Text style={styles.actionCount}>{item.shares}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderFriendItem = ({ item }: { item: User }) => (
-    <View style={styles.friendCard}>
-      <Image 
-        source={{ uri: item.profile_photo || 'https://i.pravatar.cc/150' }}
-        style={styles.friendAvatar}
-      />
-      <View style={styles.friendInfo}>
-        <Text style={styles.friendName}>{item.username}</Text>
-        {item.location && <Text style={styles.friendLocation}>📍 {item.location}</Text>}
-      </View>
-      <View style={styles.friendActions}>
-        <TouchableOpacity 
-          style={styles.messageButton}
-          onPress={() => Alert.alert('💬 Coming Soon!', 'Direct messaging is being developed!')}
-        >
-          <Ionicons name="chatbubble" size={18} color={colors.primary} />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.unfriendButton}
-          onPress={() => handleUnfriend(item.id, item.username)}
-        >
-          <Ionicons name="person-remove" size={18} color={colors.error} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderGroupItem = ({ item }: { item: Group }) => (
-    <View style={styles.groupCard}>
-      <View style={styles.groupHeader}>
-        <Text style={styles.groupName}>{item.name}</Text>
-        {item.is_admin && (
-          <View style={styles.adminBadge}>
-            <Text style={styles.adminBadgeText}>Admin</Text>
-          </View>
-        )}
-      </View>
-      <Text style={styles.groupDescription} numberOfLines={2}>{item.description}</Text>
-      <View style={styles.groupFooter}>
-        <Text style={styles.memberCount}>👥 {item.member_count} members</Text>
-        {item.is_member ? (
-          <TouchableOpacity 
-            style={styles.leaveButton}
-            onPress={() => handleLeaveGroup(item.id)}
-          >
-            <Text style={styles.leaveButtonText}>Leave</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            style={styles.joinButton}
-            onPress={() => handleJoinGroup(item.id)}
-          >
-            <Text style={styles.joinButtonText}>Join</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
-
-  const renderPageItem = ({ item }: { item: Page }) => (
-    <View style={styles.pageCard}>
-      <View style={styles.pageHeader}>
-        <Text style={styles.pageName}>{item.name}</Text>
-        <View style={styles.categoryBadge}>
-          <Text style={styles.categoryBadgeText}>{item.category}</Text>
-        </View>
-      </View>
-      <Text style={styles.pageDescription} numberOfLines={2}>{item.description}</Text>
-      <View style={styles.pageFooter}>
-        <Text style={styles.followerCount}>❤️ {item.follower_count} followers</Text>
-        <TouchableOpacity 
-          style={[styles.followButton, item.is_following && styles.followingButton]}
-          onPress={() => handleFollowPage(item.id)}
-        >
-          <Text style={[styles.followButtonText, item.is_following && styles.followingButtonText]}>
-            {item.is_following ? 'Following' : 'Follow'}
+          <Text style={styles.actionButtonText}>
+            {post.user_reaction ? REACTIONS.find(r => r.key === post.user_reaction)?.emoji : '👍'} React
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton}>
+          <Text style={styles.actionButtonText}>💬 Comment</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionButton}>
+          <Text style={styles.actionButtonText}>↗️ Share</Text>
+        </TouchableOpacity>
       </View>
+      
+      {/* Reactions Picker */}
+      {showReactions === post.id && (
+        <View style={styles.reactionsPicker}>
+          {REACTIONS.map(reaction => (
+            <TouchableOpacity
+              key={reaction.key}
+              style={styles.reactionOption}
+              onPress={() => handleReaction(post.id, reaction.key)}
+            >
+              <Text style={styles.reactionEmoji}>{reaction.emoji}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
+  // Render friend card
+  const renderFriend = (user: User, isRequest: boolean = false) => (
+    <View key={user.id} style={styles.userCard}>
+      <View style={styles.userPhoto}>
+        <Ionicons name="person-circle" size={48} color={colors.primary} />
+      </View>
+      <View style={styles.userInfo}>
+        <Text style={styles.userName}>@{user.username}</Text>
+        <Text style={styles.userStats}>
+          {user.protocols_count || 0} protocols
+        </Text>
+      </View>
+      <View style={styles.userActions}>
+        {isRequest ? (
+          <>
+            <TouchableOpacity 
+              style={styles.acceptButton}
+              onPress={() => handleAcceptFriendRequest(user.id)}
+            >
+              <Ionicons name="checkmark" size={18} color={colors.white} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.declineButton}>
+              <Ionicons name="close" size={18} color={colors.white} />
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity 
+              style={styles.messageButton}
+              onPress={handleOpenMessages}
+            >
+              <Ionicons name="chatbubble" size={18} color={colors.white} />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.unfriendButton}
+              onPress={() => handleUnfriend(user.id, user.username)}
+            >
+              <Ionicons name="person-remove" size={18} color={colors.white} />
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    </View>
+  );
+
+  // Render group card
+  const renderGroup = (group: Group) => (
+    <View key={group.id} style={styles.groupCard}>
+      <View style={styles.groupIcon}>
+        <Ionicons name="people-circle" size={48} color={colors.primary} />
+      </View>
+      <View style={styles.groupInfo}>
+        <Text style={styles.groupName}>{group.name}</Text>
+        <Text style={styles.groupDesc} numberOfLines={2}>{group.description}</Text>
+        <Text style={styles.groupMembers}>👥 {group.member_count} members</Text>
+      </View>
+      <TouchableOpacity 
+        style={[styles.joinButton, group.is_member && styles.joinedButton]}
+      >
+        <Text style={styles.joinButtonText}>
+          {group.is_member ? 'Joined ✓' : 'Join'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // Render page card
+  const renderPage = (page: Page) => (
+    <View key={page.id} style={styles.pageCard}>
+      <View style={styles.pageIcon}>
+        <Ionicons name="flag" size={48} color={colors.accent} />
+      </View>
+      <View style={styles.pageInfo}>
+        <Text style={styles.pageName}>{page.name}</Text>
+        <Text style={styles.pageCategory}>{page.category}</Text>
+        <Text style={styles.pageDesc} numberOfLines={2}>{page.description}</Text>
+        <Text style={styles.pageFollowers}>❤️ {page.follower_count} followers</Text>
+      </View>
+      <TouchableOpacity 
+        style={[styles.followButton, page.is_following && styles.followingButton]}
+      >
+        <Text style={styles.followButtonText}>
+          {page.is_following ? 'Following ✓' : 'Follow'}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -479,280 +537,205 @@ export default function SocialScreen() {
     <SafeAreaView style={styles.container} edges={['bottom']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>🌐 Social Hub</Text>
-        <Text style={styles.headerSubtitle}>
-          "Making connections that matter!" 🤝
-        </Text>
+        <Text style={styles.headerTitle}>👥 Social</Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.headerButton} onPress={handleOpenMessages}>
+            <Ionicons name="chatbubbles" size={24} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerButton} onPress={() => setShowUserSearch(true)}>
+            <Ionicons name="person-add" size={24} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabBar}>
-        {(['feed', 'friends', 'groups', 'pages'] as TabType[]).map(tab => (
+      <View style={styles.tabsContainer}>
+        {tabs.map(tab => (
           <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
-            onPress={() => setActiveTab(tab)}
+            key={tab.key}
+            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+            onPress={() => setActiveTab(tab.key)}
           >
             <Ionicons 
-              name={
-                tab === 'feed' ? 'newspaper' :
-                tab === 'friends' ? 'people' :
-                tab === 'groups' ? 'person-add' :
-                'flag'
-              }
-              size={18}
-              color={activeTab === tab ? colors.white : colors.primary}
+              name={tab.icon as any} 
+              size={20} 
+              color={activeTab === tab.key ? colors.white : colors.primary} 
             />
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
+              {tab.label}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {/* Content */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Loading awesome stuff... 🚀</Text>
-        </View>
-      ) : (
-        <>
-          {activeTab === 'feed' && (
-            <FlatList
-              data={feedPosts}
-              renderItem={renderFeedPost}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContent}
-              showsVerticalScrollIndicator={false}
-            />
-          )}
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+        }
+      >
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={styles.loadingText}>Loading social goodness... 🌟</Text>
+          </View>
+        ) : (
+          <>
+            {/* Feed Tab */}
+            {activeTab === 'feed' && (
+              <>
+                <TouchableOpacity 
+                  style={styles.createPostButton}
+                  onPress={() => setShowCreatePost(true)}
+                >
+                  <Ionicons name="create" size={20} color={colors.white} />
+                  <Text style={styles.createPostText}>What's on your mind?</Text>
+                </TouchableOpacity>
+                {posts.map(renderPost)}
+              </>
+            )}
 
-          {activeTab === 'friends' && (
-            <View style={styles.friendsContainer}>
-              {/* Find Friends Button */}
-              <TouchableOpacity 
-                style={styles.findFriendsButton}
-                onPress={() => setShowUserSearch(true)}
-              >
-                <Ionicons name="search" size={20} color={colors.white} />
-                <Text style={styles.findFriendsText}>Find New Friends</Text>
-              </TouchableOpacity>
-
-              {/* Friend Requests */}
-              {friendRequests.length > 0 && (
-                <>
-                  <Text style={styles.sectionTitle}>📬 Friend Requests ({friendRequests.length})</Text>
-                  {friendRequests.map(req => (
-                    <View key={req.id} style={styles.requestCard}>
-                      <Image 
-                        source={{ uri: req.profile_photo || 'https://i.pravatar.cc/150' }}
-                        style={styles.friendAvatar}
-                      />
-                      <Text style={styles.friendName}>{req.username}</Text>
-                      <TouchableOpacity 
-                        style={styles.acceptButton}
-                        onPress={() => handleAcceptFriendRequest(req.id)}
-                      >
-                        <Text style={styles.acceptButtonText}>Accept</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </>
-              )}
-
-              {/* Friends List */}
-              <Text style={styles.sectionTitle}>👥 My Friends ({friends.length})</Text>
-              <FlatList
-                data={friends}
-                renderItem={renderFriendItem}
-                keyExtractor={(item) => item.id}
-                showsVerticalScrollIndicator={false}
-              />
-            </View>
-          )}
-
-          {activeTab === 'groups' && (
-            <View style={styles.groupsContainer}>
-              <TouchableOpacity 
-                style={styles.createButton}
-                onPress={() => setShowCreateGroup(true)}
-              >
-                <Ionicons name="add-circle" size={20} color={colors.white} />
-                <Text style={styles.createButtonText}>Create Group</Text>
-              </TouchableOpacity>
-              
-              <FlatList
-                data={groups}
-                renderItem={renderGroupItem}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-              />
-            </View>
-          )}
-
-          {activeTab === 'pages' && (
-            <View style={styles.pagesContainer}>
-              <TouchableOpacity 
-                style={styles.createButton}
-                onPress={() => setShowCreatePage(true)}
-              >
-                <Ionicons name="add-circle" size={20} color={colors.white} />
-                <Text style={styles.createButtonText}>Create Page</Text>
-              </TouchableOpacity>
-              
-              <FlatList
-                data={pages}
-                renderItem={renderPageItem}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-              />
-            </View>
-          )}
-        </>
-      )}
-
-      {/* User Search Modal */}
-      <Modal visible={showUserSearch} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>🔍 Find Friends</Text>
-              <TouchableOpacity onPress={() => setShowUserSearch(false)}>
-                <Ionicons name="close" size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.searchBar}>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search by name or location..."
-                placeholderTextColor={colors.gray}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onSubmitEditing={handleSearchUsers}
-              />
-              <TouchableOpacity onPress={handleSearchUsers}>
-                <Ionicons name="search" size={20} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-            
-            <FlatList
-              data={searchResults}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View style={styles.searchResultCard}>
-                  <Image 
-                    source={{ uri: item.profile_photo || 'https://i.pravatar.cc/150' }}
-                    style={styles.friendAvatar}
-                  />
-                  <View style={styles.friendInfo}>
-                    <Text style={styles.friendName}>{item.username}</Text>
-                    {item.location && <Text style={styles.friendLocation}>📍 {item.location}</Text>}
+            {/* Friends Tab */}
+            {activeTab === 'friends' && (
+              <>
+                {friendRequests.length > 0 && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>📨 Friend Requests</Text>
+                    {friendRequests.map(user => renderFriend(user, true))}
                   </View>
-                  {item.friend_request_sent ? (
-                    <Text style={styles.requestSentText}>Request Sent ✓</Text>
+                )}
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>👥 Your Friends ({friends.length})</Text>
+                  {friends.length === 0 ? (
+                    <Text style={styles.emptyText}>No friends yet. Search for users to connect!</Text>
                   ) : (
-                    <TouchableOpacity 
-                      style={styles.addFriendButton}
-                      onPress={() => handleSendFriendRequest(item.id)}
-                    >
-                      <Ionicons name="person-add" size={18} color={colors.white} />
-                    </TouchableOpacity>
+                    friends.map(user => renderFriend(user))
                   )}
                 </View>
-              )}
-              ListEmptyComponent={
-                <Text style={styles.emptySearchText}>
-                  Search for users by name or location to find new friends! 🔎
-                </Text>
-              }
-            />
-          </View>
-        </View>
-      </Modal>
+              </>
+            )}
 
-      {/* Create Group Modal */}
-      <Modal visible={showCreateGroup} animationType="slide" transparent>
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>👥 Create Group</Text>
-              <TouchableOpacity onPress={() => setShowCreateGroup(false)}>
-                <Ionicons name="close" size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Group Name"
-              placeholderTextColor={colors.gray}
-              value={newGroupName}
-              onChangeText={setNewGroupName}
-            />
-            <TextInput
-              style={[styles.modalInput, styles.textArea]}
-              placeholder="Description"
-              placeholderTextColor={colors.gray}
-              value={newGroupDesc}
-              onChangeText={setNewGroupDesc}
-              multiline
-            />
-            
-            <TouchableOpacity style={styles.submitButton} onPress={handleCreateGroup}>
-              <Text style={styles.submitButtonText}>Create Group 🚀</Text>
+            {/* Groups Tab */}
+            {activeTab === 'groups' && (
+              <>
+                <TouchableOpacity 
+                  style={styles.createButton}
+                  onPress={() => setShowCreateGroup(true)}
+                >
+                  <Ionicons name="add-circle" size={20} color={colors.white} />
+                  <Text style={styles.createButtonText}>Create Group</Text>
+                </TouchableOpacity>
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>🏠 Your Groups</Text>
+                  {groups.filter(g => g.is_member).map(renderGroup)}
+                </View>
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>🔍 Discover Groups</Text>
+                  {groups.filter(g => !g.is_member).map(renderGroup)}
+                </View>
+              </>
+            )}
+
+            {/* Pages Tab */}
+            {activeTab === 'pages' && (
+              <>
+                <TouchableOpacity 
+                  style={styles.createButton}
+                  onPress={() => setShowCreatePage(true)}
+                >
+                  <Ionicons name="add-circle" size={20} color={colors.white} />
+                  <Text style={styles.createButtonText}>Create Page</Text>
+                </TouchableOpacity>
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>⭐ Pages You Follow</Text>
+                  {pages.filter(p => p.is_following).map(renderPage)}
+                </View>
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>🔍 Discover Pages</Text>
+                  {pages.filter(p => !p.is_following).map(renderPage)}
+                </View>
+              </>
+            )}
+          </>
+        )}
+      </ScrollView>
+
+      {/* User Search Modal */}
+      <Modal visible={showUserSearch} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>🔍 Find Friends</Text>
+            <TouchableOpacity onPress={() => setShowUserSearch(false)}>
+              <Ionicons name="close" size={28} color={colors.text} />
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Create Page Modal */}
-      <Modal visible={showCreatePage} animationType="slide" transparent>
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>📄 Create Page</Text>
-              <TouchableOpacity onPress={() => setShowCreatePage(false)}>
-                <Ionicons name="close" size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            
+          <View style={styles.searchContainer}>
             <TextInput
-              style={styles.modalInput}
-              placeholder="Page Name"
+              style={styles.searchInput}
+              placeholder="Search by username..."
               placeholderTextColor={colors.gray}
-              value={newPageName}
-              onChangeText={setNewPageName}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onSubmitEditing={handleSearchUsers}
             />
-            <TextInput
-              style={[styles.modalInput, styles.textArea]}
-              placeholder="Description"
-              placeholderTextColor={colors.gray}
-              value={newPageDesc}
-              onChangeText={setNewPageDesc}
-              multiline
-            />
-            <TextInput
-              style={styles.modalInput}
-              placeholder="Category (e.g., Technology, Books)"
-              placeholderTextColor={colors.gray}
-              value={newPageCategory}
-              onChangeText={setNewPageCategory}
-            />
-            
-            <TouchableOpacity style={styles.submitButton} onPress={handleCreatePage}>
-              <Text style={styles.submitButtonText}>Create Page 🚀</Text>
+            <TouchableOpacity style={styles.searchButton} onPress={handleSearchUsers}>
+              <Ionicons name="search" size={20} color={colors.white} />
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+          <ScrollView style={styles.searchResults}>
+            {searchResults.map(user => (
+              <View key={user.id} style={styles.userCard}>
+                <View style={styles.userPhoto}>
+                  <Ionicons name="person-circle" size={48} color={colors.primary} />
+                </View>
+                <View style={styles.userInfo}>
+                  <Text style={styles.userName}>@{user.username}</Text>
+                  <Text style={styles.userStats}>{user.protocols_count || 0} protocols</Text>
+                </View>
+                <TouchableOpacity 
+                  style={[
+                    styles.addFriendButton,
+                    (user.is_friend || user.friend_request_sent) && styles.addFriendButtonDisabled
+                  ]}
+                  onPress={() => handleSendFriendRequest(user.id)}
+                  disabled={user.is_friend || user.friend_request_sent}
+                >
+                  <Text style={styles.addFriendText}>
+                    {user.is_friend ? 'Friends ✓' : user.friend_request_sent ? 'Sent ✓' : 'Add Friend'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Create Post Modal */}
+      <Modal visible={showCreatePost} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={styles.modalContainer}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>✏️ Create Post</Text>
+              <TouchableOpacity onPress={() => setShowCreatePost(false)}>
+                <Ionicons name="close" size={28} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={styles.postInput}
+              placeholder="What's on your mind? Share your protocol discoveries! 🚀"
+              placeholderTextColor={colors.gray}
+              multiline
+              numberOfLines={6}
+              value={newPostContent}
+              onChangeText={setNewPostContent}
+            />
+            <TouchableOpacity style={styles.publishButton} onPress={handleCreatePost}>
+              <Text style={styles.publishButtonText}>Publish 🚀</Text>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -764,6 +747,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 16,
     backgroundColor: colors.cardBackground,
     borderBottomWidth: 1,
@@ -773,18 +759,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: colors.text,
-    textAlign: 'center',
   },
-  headerSubtitle: {
-    fontSize: 12,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  tabBar: {
+  headerActions: {
     flexDirection: 'row',
-    padding: 12,
-    gap: 8,
+    gap: 12,
+  },
+  headerButton: {
+    padding: 8,
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    padding: 8,
+    backgroundColor: colors.cardBackground,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
   },
   tab: {
     flex: 1,
@@ -792,415 +780,371 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: colors.cardBackground,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
+    borderRadius: 20,
     gap: 4,
   },
   tabActive: {
     backgroundColor: colors.primary,
-    borderColor: colors.primary,
   },
   tabText: {
-    color: colors.primary,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
+    color: colors.primary,
   },
   tabTextActive: {
     color: colors.white,
   },
-  loadingContainer: {
+  content: {
     flex: 1,
-    justifyContent: 'center',
+  },
+  contentContainer: {
+    padding: 12,
+    paddingBottom: 40,
+  },
+  loadingContainer: {
+    padding: 40,
     alignItems: 'center',
   },
   loadingText: {
-    color: colors.text,
-    marginTop: 16,
-    fontSize: 16,
+    color: colors.textMuted,
+    marginTop: 12,
   },
-  listContent: {
-    padding: 12,
+  // Posts
+  createPostButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    gap: 8,
+  },
+  createPostText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: '600',
   },
   postCard: {
     backgroundColor: colors.cardBackground,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
   },
   postHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 12,
   },
-  authorAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  postAuthorPhoto: {
     marginRight: 12,
   },
-  authorName: {
-    color: colors.text,
-    fontWeight: 'bold',
+  postAuthorInfo: {
+    flex: 1,
+  },
+  postAuthorName: {
     fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.text,
   },
   postTime: {
-    color: colors.textMuted,
     fontSize: 12,
+    color: colors.textMuted,
   },
   postContent: {
-    color: colors.text,
     fontSize: 14,
+    color: colors.text,
     lineHeight: 20,
     marginBottom: 12,
   },
+  reactionsSummary: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  reactionSummaryItem: {
+    fontSize: 13,
+    color: colors.textMuted,
+  },
+  commentsCount: {
+    fontSize: 13,
+    color: colors.textMuted,
+  },
   postActions: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 12,
+  },
+  actionButton: {
+    padding: 8,
+  },
+  actionButtonText: {
+    fontSize: 13,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  reactionsPicker: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingTop: 12,
+    gap: 8,
     borderTopWidth: 1,
     borderTopColor: colors.cardBorder,
-    paddingTop: 12,
-    gap: 24,
   },
-  postAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  reactionOption: {
+    padding: 8,
+    backgroundColor: colors.background,
+    borderRadius: 20,
   },
-  actionCount: {
-    color: colors.textMuted,
-    fontSize: 12,
+  reactionEmoji: {
+    fontSize: 24,
   },
-  friendsContainer: {
-    flex: 1,
-    padding: 12,
-  },
-  findFriendsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
-    paddingVertical: 12,
-    borderRadius: 12,
-    gap: 8,
-    marginBottom: 16,
-  },
-  findFriendsText: {
-    color: colors.white,
-    fontWeight: 'bold',
+  // Users
+  section: {
+    marginBottom: 24,
   },
   sectionTitle: {
-    color: colors.text,
     fontSize: 16,
     fontWeight: 'bold',
+    color: colors.text,
     marginBottom: 12,
-    marginTop: 8,
   },
-  friendCard: {
+  userCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.cardBackground,
-    padding: 12,
     borderRadius: 12,
+    padding: 12,
     marginBottom: 8,
   },
-  friendAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  userPhoto: {
     marginRight: 12,
   },
-  friendInfo: {
+  userInfo: {
     flex: 1,
   },
-  friendName: {
-    color: colors.text,
-    fontWeight: 'bold',
+  userName: {
     fontSize: 14,
+    fontWeight: 'bold',
+    color: colors.text,
   },
-  friendLocation: {
-    color: colors.textMuted,
+  userStats: {
     fontSize: 12,
-    marginTop: 2,
+    color: colors.textMuted,
   },
-  friendActions: {
+  userActions: {
     flexDirection: 'row',
     gap: 8,
   },
   messageButton: {
-    padding: 8,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.primary,
+    backgroundColor: colors.primary,
+    padding: 10,
+    borderRadius: 20,
   },
   unfriendButton: {
-    padding: 8,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.error,
-  },
-  requestCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.cardBackground,
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: colors.primary,
+    backgroundColor: colors.error,
+    padding: 10,
+    borderRadius: 20,
   },
   acceptButton: {
     backgroundColor: colors.success,
+    padding: 10,
+    borderRadius: 20,
+  },
+  declineButton: {
+    backgroundColor: colors.gray,
+    padding: 10,
+    borderRadius: 20,
+  },
+  addFriendButton: {
+    backgroundColor: colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
-    marginLeft: 'auto',
+    borderRadius: 20,
   },
-  acceptButtonText: {
+  addFriendButtonDisabled: {
+    backgroundColor: colors.gray,
+  },
+  addFriendText: {
     color: colors.white,
-    fontWeight: 'bold',
     fontSize: 12,
+    fontWeight: '600',
   },
-  groupsContainer: {
-    flex: 1,
-    padding: 12,
-  },
-  pagesContainer: {
-    flex: 1,
-    padding: 12,
-  },
+  // Groups
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primary,
-    paddingVertical: 12,
+    padding: 14,
     borderRadius: 12,
-    gap: 8,
     marginBottom: 16,
+    gap: 8,
   },
   createButtonText: {
     color: colors.white,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '600',
   },
   groupCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.cardBackground,
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  groupHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    padding: 12,
     marginBottom: 8,
   },
-  groupName: {
-    color: colors.text,
-    fontWeight: 'bold',
-    fontSize: 16,
+  groupIcon: {
+    marginRight: 12,
+  },
+  groupInfo: {
     flex: 1,
   },
-  adminBadge: {
-    backgroundColor: colors.marketplaceGold,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  adminBadgeText: {
-    color: colors.background,
-    fontSize: 10,
+  groupName: {
+    fontSize: 14,
     fontWeight: 'bold',
+    color: colors.text,
   },
-  groupDescription: {
-    color: colors.textLight,
-    fontSize: 13,
-    marginBottom: 12,
-  },
-  groupFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  memberCount: {
-    color: colors.textMuted,
+  groupDesc: {
     fontSize: 12,
+    color: colors.textMuted,
+    marginVertical: 4,
+  },
+  groupMembers: {
+    fontSize: 11,
+    color: colors.primary,
   },
   joinButton: {
     backgroundColor: colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 20,
+  },
+  joinedButton: {
+    backgroundColor: colors.success,
   },
   joinButtonText: {
     color: colors.white,
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  leaveButton: {
-    backgroundColor: 'transparent',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.error,
-  },
-  leaveButtonText: {
-    color: colors.error,
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  pageCard: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.cardBorder,
-  },
-  pageHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  pageName: {
-    color: colors.text,
-    fontWeight: 'bold',
-    fontSize: 16,
-    flex: 1,
-  },
-  categoryBadge: {
-    backgroundColor: colors.secondary,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  categoryBadgeText: {
-    color: colors.white,
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  pageDescription: {
-    color: colors.textLight,
-    fontSize: 13,
-    marginBottom: 12,
-  },
-  pageFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  followerCount: {
-    color: colors.textMuted,
-    fontSize: 12,
-  },
-  followButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  followingButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  followButtonText: {
-    color: colors.white,
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  followingButtonText: {
-    color: colors.primary,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: colors.cardBackground,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 16,
-  },
-  searchInput: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 16,
-  },
-  searchResultCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 8,
-  },
-  addFriendButton: {
-    backgroundColor: colors.primary,
-    padding: 10,
-    borderRadius: 8,
-  },
-  requestSentText: {
-    color: colors.success,
     fontSize: 12,
     fontWeight: '600',
   },
-  emptySearchText: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    padding: 20,
-  },
-  modalInput: {
-    backgroundColor: colors.background,
+  // Pages
+  pageCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.cardBackground,
     borderRadius: 12,
-    padding: 14,
+    padding: 12,
+    marginBottom: 8,
+  },
+  pageIcon: {
+    marginRight: 12,
+  },
+  pageInfo: {
+    flex: 1,
+  },
+  pageName: {
+    fontSize: 14,
+    fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 12,
+  },
+  pageCategory: {
+    fontSize: 10,
+    color: colors.accent,
+    fontWeight: '600',
+  },
+  pageDesc: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginVertical: 4,
+  },
+  pageFollowers: {
+    fontSize: 11,
+    color: colors.primary,
+  },
+  followButton: {
+    backgroundColor: colors.accent,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  followingButton: {
+    backgroundColor: colors.success,
+  },
+  followButtonText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  // Modals
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    padding: 16,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 14,
+    color: colors.text,
     borderWidth: 1,
     borderColor: colors.cardBorder,
   },
-  textArea: {
-    height: 100,
+  searchButton: {
+    backgroundColor: colors.primary,
+    padding: 12,
+    borderRadius: 12,
+  },
+  searchResults: {
+    flex: 1,
+    padding: 16,
+  },
+  postInput: {
+    flex: 1,
+    backgroundColor: colors.cardBackground,
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    fontSize: 16,
+    color: colors.text,
     textAlignVertical: 'top',
   },
-  submitButton: {
+  publishButton: {
     backgroundColor: colors.primary,
-    paddingVertical: 14,
+    margin: 16,
+    padding: 16,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 8,
   },
-  submitButtonText: {
+  publishButtonText: {
     color: colors.white,
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  emptyText: {
+    color: colors.textMuted,
+    fontSize: 14,
+    textAlign: 'center',
+    padding: 20,
   },
 });
