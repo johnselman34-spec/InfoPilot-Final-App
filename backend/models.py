@@ -210,3 +210,118 @@ class LeaderboardEntry(BaseModel):
     revenue: float = 0.0
     protocols_created: int = 0
     badges_count: int = 0
+
+# Poll Models - For Groups, Pages, and Ultimate Search
+class PollOption(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    text: str
+    image_url: Optional[str] = None  # Optional image for the option
+    votes: int = 0
+
+class Poll(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    creator_id: str
+    title: str
+    description: Optional[str] = None
+    options: List[PollOption] = []
+    context_type: str  # "group", "page", "ultimate_search"
+    context_id: str  # ID of the group, page, or user's ultimate search
+    is_active: bool = True
+    allows_multiple: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    expires_at: Optional[datetime] = None
+    voters: List[str] = []  # List of user IDs who have voted
+
+class PollCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    options: List[Dict[str, Any]]  # [{text: str, image_url: Optional[str]}]
+    context_type: str
+    context_id: str
+    allows_multiple: bool = False
+    expires_in_hours: Optional[int] = None
+
+class PollVote(BaseModel):
+    poll_id: str
+    option_ids: List[str]
+
+# Clipboard Copy Tracking
+class ClipboardCopy(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    protocol_id: str
+    user_id: Optional[str] = None
+    copied_at: datetime = Field(default_factory=datetime.utcnow)
+
+# Group/Page Admin Privileges
+class AdminPrivilege(BaseModel):
+    user_id: str
+    granted_by: str
+    privileges: List[str] = []  # ["create_polls", "moderate_comments", "approve_posts", "manage_members"]
+    granted_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Group(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    cover_image: Optional[str] = None
+    creator_id: str
+    admins: List[AdminPrivilege] = []
+    member_ids: List[str] = []
+    is_public: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class GroupCreate(BaseModel):
+    name: str
+    description: str
+    cover_image: Optional[str] = None
+    is_public: bool = True
+
+class Page(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    category: str
+    cover_image: Optional[str] = None
+    owner_id: str
+    admins: List[AdminPrivilege] = []
+    follower_ids: List[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PageCreate(BaseModel):
+    name: str
+    description: str
+    category: str
+    cover_image: Optional[str] = None
+
+# Newsletter with AI Generation
+class Newsletter(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    subject: str
+    content: str  # HTML content
+    funny_intro: str  # AI-generated funny intro
+    book_promo: str  # Letters to Evelyn promotion
+    marketplace_highlights: List[Dict[str, Any]] = []
+    sent_to: List[str] = []  # User IDs
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    sent_at: Optional[datetime] = None
+
+# Achievement Badges with Share Feature
+class AchievementBadge(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    description: str
+    funny_tagline: str  # Funny description for sharing
+    icon: str  # Emoji or icon name
+    category: str  # "sales", "protocols", "social", "searches", "special"
+    requirement_type: str  # "count", "milestone", "special"
+    requirement_value: int
+    rarity: str = "common"  # common, rare, epic, legendary, mythic
+    share_text: str  # Pre-filled text for sharing
+
+class UserAchievement(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    badge_id: str
+    earned_at: datetime = Field(default_factory=datetime.utcnow)
+    shared: bool = False
+    share_count: int = 0
