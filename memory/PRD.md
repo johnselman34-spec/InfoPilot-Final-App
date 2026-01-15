@@ -185,6 +185,52 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - VAPID-based web push (simulation mode without keys)
   - Triggers when recipient is offline
 
+### Batch 1 - Core Features ✅ (NEW - January 15, 2026)
+- [x] **Copy to Clipboard** - Protocol titles and content
+  - CopyButton component with clipboard API + fallback
+  - ProtocolCopyButtons for marketplace cards
+  - Title always copyable, Protocol only if user has access
+  - "Protocol locked" indicator for non-owners
+- [x] **Capacitor Mobile App Wrapper** - Setup complete
+  - capacitor.config.json with app configuration
+  - MOBILE_APP_SETUP.md with deployment guide
+  - Ready for Android/iOS builds
+- [x] **Chrome Browser Extension** - Full implementation
+  - manifest.json (manifest v3)
+  - popup.html/js for quick search
+  - background.js for context menus
+  - content.js for floating search button
+  - options.html for settings
+
+### Batch 2 - Social Enhancements ✅ (NEW - January 15, 2026)
+- [x] **Partial Admin Roles** - Groups and Pages
+  - Group moderators: POST/DELETE /api/groups/{id}/moderators
+  - Page admins: POST/DELETE /api/pages/{id}/admins
+  - Role definitions with permissions
+  - GET /api/groups/{id}/roles for role info
+- [x] **Most Copied Protocols Leaderboard**
+  - GET /api/statistics/most-copied
+  - Top 10 protocols with rankings
+  - Stats: total copies, free vs paid breakdown
+  - Integrated into Statistics page UI
+
+### Batch 3 - Platform Features ✅ (NEW - January 15, 2026)
+- [x] **Video Tutorials System**
+  - GET /api/tutorials (10 tutorials, 6 categories)
+  - TutorialsPage.js with video player
+  - Progress tracking per user
+  - Category filtering
+- [x] **Rate Limiting Dashboard**
+  - GET /api/rate-limit/status (authenticated)
+  - Usage tracking by time window
+  - Tier-based limits (free/premium/admin)
+  - History and admin overview endpoints
+- [x] **Webhook Integrations**
+  - Slack and Discord support
+  - 8 event types: protocol_purchase, protocol_copy, new_follower, new_friend, new_message, group_join, poll_vote, achievement_unlock
+  - CRUD for user webhooks
+  - Test webhook functionality
+
 ### Admin Features ✅
 - [x] Admin dashboard with statistics
 - [x] User management
@@ -201,33 +247,44 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 │   │   ├── auth.py         # Authentication
 │   │   ├── categories.py   # Category CRUD
 │   │   ├── search.py       # Search endpoints
-│   │   ├── social.py       # Friends, Groups, Pages, Posts (ENHANCED)
+│   │   ├── social.py       # Friends, Groups, Pages, Posts, Partial Admin Roles (ENHANCED)
 │   │   ├── messages.py     # Direct Messaging + Push Notifications (ENHANCED)
-│   │   ├── polls.py        # Polls CRUD (NEW)
+│   │   ├── polls.py        # Polls CRUD
 │   │   ├── marketplace.py  # Protocol marketplace
 │   │   ├── bundles.py      # Protocol bundles
 │   │   ├── chat.py         # Real-time group chat
-│   │   ├── newsletter.py   # AI Newsletter system (NEW)
-│   │   ├── voice.py        # Voice Search (NEW)
-│   │   ├── collaborate.py  # Collaborative Editing (NEW)
-│   │   ├── statistics.py   # Statistics dashboard
+│   │   ├── newsletter.py   # AI Newsletter system
+│   │   ├── voice.py        # Voice Search
+│   │   ├── collaborate.py  # Collaborative Editing
+│   │   ├── statistics.py   # Statistics + Most Copied (ENHANCED)
 │   │   ├── gamification.py # Achievements system
+│   │   ├── tutorials.py    # Video Tutorials (NEW)
+│   │   ├── rate_limiting.py # Rate Limit Dashboard (NEW)
+│   │   ├── webhooks.py     # Webhook Integrations (NEW)
 │   │   ├── push_notifications.py  # Web push
 │   │   └── notifications.py # WebSocket notifications
 │   └── services/
-│       ├── ai_service.py      # GPT-5.2 for newsletters (NEW)
-│       ├── voice_service.py   # Whisper transcription (NEW)
-│       ├── location_service.py # Geo-extraction (NEW)
+│       ├── ai_service.py      # GPT-5.2 for newsletters
+│       ├── voice_service.py   # Whisper transcription
+│       ├── location_service.py # Geo-extraction
 │       ├── auth_service.py    # Authentication + Default Friend (ENHANCED)
 │       ├── gamification_service.py # Achievement logic
 │       └── protocol_service.py # Protocol parsing
+├── browser-extension/      # Chrome Extension (NEW)
+│   ├── manifest.json
+│   ├── popup.html/js
+│   ├── background.js
+│   ├── content.js/css
+│   └── options.html/js
 └── frontend/
     └── src/
         ├── pages/
-        │   ├── SocialPage.js       # Social Hub with tabs + Polls (ENHANCED)
-        │   ├── MessagesPage.js     # Direct Messages (ENHANCED)
-        │   ├── UltimateSearchPage.js # Search with map
-        │   ├── MarketplacePage.js  # Protocol marketplace
+        │   ├── SocialPage.js       # Social Hub with Polls (ENHANCED)
+        │   ├── MessagesPage.js     # Direct Messages
+        │   ├── TutorialsPage.js    # Video Tutorials (NEW)
+        │   ├── UltimateSearchPage.js # Search with map + Copy buttons (ENHANCED)
+        │   ├── MarketplacePage.js  # Marketplace + Copy buttons (ENHANCED)
+        │   ├── StatisticsPage.js   # Stats + Most Copied (ENHANCED)
         │   ├── StatisticsPage.js   # Statistics dashboard
         │   ├── AchievementsPage.js # Gamification
         │   └── ChatPage.js         # Group chat
