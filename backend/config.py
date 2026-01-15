@@ -52,7 +52,7 @@ SERPAPI_KEY = os.environ.get('SERPAPI_KEY')
 
 # Protocol Marketplace Settings
 MARKETPLACE_PLATFORM_FEE = 0.10  # 10% platform fee, 90% to creators
-MARKETPLACE_MIN_PRICE = 0.99
+MARKETPLACE_MIN_PRICE = 0.00  # Allow FREE protocols ($0.00)
 MARKETPLACE_MAX_PRICE = 99.99
 
 # Book Promotion Data
