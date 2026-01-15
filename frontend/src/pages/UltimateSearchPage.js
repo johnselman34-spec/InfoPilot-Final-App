@@ -1102,6 +1102,49 @@ const UltimateSearchPage = ({ showToast }) => {
                 </button>
               </div>
               
+              {/* Price Setting */}
+              <div style={{ 
+                padding: '12px 15px',
+                background: 'rgba(245, 158, 11, 0.1)',
+                borderRadius: 10,
+                border: '1px solid rgba(245, 158, 11, 0.3)'
+              }}>
+                <label style={{ 
+                  color: '#f59e0b', 
+                  fontWeight: 600,
+                  display: 'block',
+                  marginBottom: 8
+                }}>
+                  💰 Protocol Price (Optional)
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ color: '#f59e0b', fontSize: '1.2rem' }}>$</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="99"
+                    step="0.01"
+                    placeholder="0.00 (FREE)"
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    className="input-field"
+                    style={{ 
+                      flex: 1,
+                      maxWidth: 150
+                    }}
+                    data-testid="edit-price-input"
+                  />
+                  <span style={{ color: '#a1a1aa', fontSize: '0.8rem' }}>
+                    {editPrice && parseFloat(editPrice) > 0 
+                      ? `Will sell for $${parseFloat(editPrice).toFixed(2)}` 
+                      : 'FREE to copy'}
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: '#a1a1aa', margin: '8px 0 0 0' }}>
+                  Set a price ($1-$99) to sell this protocol on the marketplace, or leave empty/0 for FREE.
+                </p>
+              </div>
+              
               <div style={{ 
                 background: 'rgba(16, 185, 129, 0.1)', 
                 padding: 12, 
