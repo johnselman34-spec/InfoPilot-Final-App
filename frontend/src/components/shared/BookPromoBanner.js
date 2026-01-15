@@ -15,6 +15,187 @@ const FUNNY_TAGLINES = [
   { image: 3, text: "TERROR OF THE COSMIC GULPER", subtext: "A comedy of galactic proportions!" }
 ];
 
+// Top Pilot Enterprises - Parent Company Banner
+const TopPilotBanner = () => (
+  <div style={{
+    background: 'linear-gradient(135deg, #1a0a30 0%, #2d1b4e 50%, #1a365d 100%)',
+    padding: '12px 20px',
+    textAlign: 'center',
+    borderBottom: '2px solid rgba(251, 191, 36, 0.5)'
+  }}>
+    <div style={{
+      color: '#fbbf24',
+      fontSize: '0.85rem',
+      fontWeight: 700,
+      letterSpacing: '2px',
+      textTransform: 'uppercase'
+    }}>
+      ✈️ A <span style={{ color: '#fff' }}>Top Pilot Enterprises, Inc.</span> Venture ✈️
+    </div>
+    <div style={{
+      color: 'rgba(255,255,255,0.7)',
+      fontSize: '0.7rem',
+      marginTop: 4,
+      fontStyle: 'italic'
+    }}>
+      "Three ventures. One mission. Zero turbulence." (Okay, maybe a little during lunch rush at the bistro.)
+    </div>
+  </div>
+);
+
+// Maestro Bistro Promo Section
+const MaestroBistroSection = () => (
+  <div style={{
+    background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.3), rgba(101, 67, 33, 0.4))',
+    padding: 20,
+    borderRadius: 15,
+    border: '2px solid rgba(210, 105, 30, 0.5)',
+    marginTop: 15
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 15, flexWrap: 'wrap' }}>
+      <div style={{
+        fontSize: '3rem',
+        background: 'linear-gradient(135deg, #d97706, #f59e0b)',
+        borderRadius: '50%',
+        width: 70,
+        height: 70,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        🍲
+      </div>
+      <div style={{ flex: 1, minWidth: 200 }}>
+        <h3 style={{
+          fontSize: '1.4rem',
+          fontWeight: 800,
+          color: '#f59e0b',
+          marginBottom: 5
+        }}>
+          MAESTRO BISTRO
+        </h3>
+        <div style={{ color: '#fcd34d', fontSize: '0.9rem', marginBottom: 8 }}>
+          🏪 On the Mall • Brunswick, Maine
+        </div>
+        <div style={{ color: '#fff', fontSize: '0.85rem', lineHeight: 1.5 }}>
+          <div style={{ marginBottom: 5 }}>
+            🥩 <strong style={{ color: '#f59e0b' }}>deLectaBLe Beef Chowder</strong> - Evenly spiced perfection
+          </div>
+          <div style={{ marginBottom: 5 }}>
+            🥬 <strong style={{ color: '#10b981' }}>Vegetable Chowder</strong> - With Bacon! (Yes, really!)
+          </div>
+          <div>
+            🐟 <strong style={{ color: '#38bdf8' }}>Fresh Fish Chowder</strong> - Maine's finest catch
+          </div>
+        </div>
+        <div style={{
+          marginTop: 12,
+          padding: '8px 15px',
+          background: 'rgba(251, 191, 36, 0.2)',
+          borderRadius: 10,
+          color: '#fbbf24',
+          fontSize: '0.8rem',
+          fontStyle: 'italic',
+          fontWeight: 600
+        }}>
+          "Appropriate & conscientable prices for appropriately & conscientiously AMAZING food!" 🎻
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// InfoPilot Promo Section
+const InfoPilotSection = () => (
+  <div style={{
+    background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.2))',
+    padding: 20,
+    borderRadius: 15,
+    border: '2px solid rgba(124, 58, 237, 0.5)',
+    marginTop: 15
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 15, flexWrap: 'wrap' }}>
+      <div style={{
+        fontSize: '2.5rem',
+        background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
+        borderRadius: 15,
+        width: 70,
+        height: 70,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: 900,
+        color: '#fff'
+      }}>
+        🔍
+      </div>
+      <div style={{ flex: 1, minWidth: 200 }}>
+        <h3 style={{
+          fontSize: '1.4rem',
+          fontWeight: 800,
+          background: 'linear-gradient(135deg, #7c3aed, #3b82f6)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          marginBottom: 5
+        }}>
+          INFOPILOT EXPLORER
+        </h3>
+        <div style={{ color: '#a78bfa', fontSize: '0.9rem', marginBottom: 8 }}>
+          🌐 World Wide Information Exchange
+        </div>
+        <div style={{ color: '#fff', fontSize: '0.85rem', lineHeight: 1.6 }}>
+          <div style={{ marginBottom: 5 }}>
+            ⚡ <strong style={{ color: '#7c3aed' }}>InfoJet 2.0™</strong> - Proprietary search & categorization language
+          </div>
+          <div style={{ marginBottom: 5 }}>
+            🗺️ <strong style={{ color: '#3b82f6' }}>Interactive Maps</strong> - Geolocated results worldwide
+          </div>
+          <div>
+            🏪 <strong style={{ color: '#10b981' }}>Protocol Marketplace</strong> - Buy & sell search protocols
+          </div>
+        </div>
+        <div style={{
+          marginTop: 12,
+          display: 'flex',
+          gap: 10,
+          flexWrap: 'wrap'
+        }}>
+          <span style={{
+            padding: '6px 12px',
+            background: 'rgba(16, 185, 129, 0.2)',
+            color: '#10b981',
+            borderRadius: 20,
+            fontSize: '0.75rem',
+            fontWeight: 700
+          }}>
+            ✓ 100% FREE
+          </span>
+          <span style={{
+            padding: '6px 12px',
+            background: 'rgba(124, 58, 237, 0.2)',
+            color: '#a78bfa',
+            borderRadius: 20,
+            fontSize: '0.75rem',
+            fontWeight: 700
+          }}>
+            ✓ Google Sign-In
+          </span>
+          <span style={{
+            padding: '6px 12px',
+            background: 'rgba(251, 191, 36, 0.2)',
+            color: '#fbbf24',
+            borderRadius: 20,
+            fontSize: '0.75rem',
+            fontWeight: 700
+          }}>
+            ✓ Copyright Protected
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const BookPromoBanner = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
