@@ -179,7 +179,14 @@ async def get_polls_for_parent(
     
     formatted = []
     for poll in polls:
-        is_expired = poll.get("expires_at") and poll["expires_at"] < datetime.now(timezone.utc)
+        # Handle timezone-aware comparison
+        expires_at = poll.get("expires_at")
+        is_expired = False
+        if expires_at:
+            # Make the comparison timezone-aware
+            if expires_at.tzinfo is None:
+                expires_at = expires_at.replace(tzinfo=timezone.utc)
+            is_expired = expires_at < datetime.now(timezone.utc)
         
         options = []
         user_voted = False
