@@ -34,7 +34,7 @@ export const BOOK_INFO = {
   amazonUrl: "https://a.co/d/atfpIds",
   sintraUrl: "https://www.Letters-to-Evelyn.sintra.site",
   officialUrl: "https://letterstoevelynbyjohnselmanii.com",
-  readersFavorite Url: "https://readersfavorite.com/book-review/letters-to-evelyn",
+  readersFavoriteUrl: "https://readersfavorite.com/book-review/letters-to-evelyn",
   googleDriveUrl: "https://drive.google.com/file/d/1YFhr75fWLzF2nu6nYDgVKB0fjEzZ36Pt/view?usp=drivesdk",
   quotes: [
     { text: "A profound and unforgettable literary piece... poetic prose and introspective storytelling create an immersive reading experience that is as enlightening as it is emotionally resonant.", author: "Divine Zape, Readers' Favorite ⭐⭐⭐⭐⭐" },
