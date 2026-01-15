@@ -400,7 +400,7 @@ class TestAdminPanelEndpoints:
     def test_admin_polls(self, admin_token):
         """Test admin polls endpoint (Polls tab)"""
         response = requests.get(
-            f"{BASE_URL}/api/admin/polls",
+            f"{BASE_URL}/api/polls/admin/all",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
