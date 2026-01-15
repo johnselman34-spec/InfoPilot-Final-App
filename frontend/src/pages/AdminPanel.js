@@ -606,6 +606,10 @@ const AdminPanel = ({ showToast }) => {
         {activeTab === 'email-reports' && (
           <EmailReportsTab token={token} showToast={showToast} />
         )}
+
+        {activeTab === 'tutorials' && (
+          <YouTubeTutorialAdmin token={token} showToast={showToast} />
+        )}
       </div>
     </div>
   );
