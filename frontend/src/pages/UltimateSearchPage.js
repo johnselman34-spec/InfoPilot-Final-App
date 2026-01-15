@@ -269,6 +269,8 @@ const UltimateSearchPage = ({ showToast }) => {
       showToast(`✅ Collated ${totalCollated} results across ${selectedCategories.length} categories in ${totalTime}s!`, 'success');
       fetchSearchResults();
       fetchBatches();
+      // Trigger map refresh after data changes
+      triggerMapRefresh();
     } catch (e) {
       showToast('Failed to collate results', 'error');
     }
