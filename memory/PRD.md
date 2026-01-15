@@ -146,6 +146,24 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 
 ## API Endpoints
 
+### Marketplace (ENHANCED January 15, 2026)
+- `GET /api/marketplace/protocols` - List marketplace protocols
+- `GET /api/marketplace/protocols/{id}` - Get protocol details
+- `POST /api/marketplace/protocols` - List a new protocol for sale
+- `POST /api/marketplace/initiate-purchase` - Start Pay-What-You-Want purchase
+- `POST /api/marketplace/confirm-payment` - Confirm PayPal payment with revenue split
+- `GET /api/marketplace/purchases` - Get user's purchased protocols
+- `GET /api/marketplace/categories` - Get marketplace categories with counts
+- `GET /api/marketplace/admin/revenue-settings` - Get revenue split (admin)
+- `PUT /api/marketplace/admin/revenue-settings` - Set platform fee 5-30% (admin)
+- `GET /api/marketplace/admin/payouts` - Get pending payouts (admin)
+- `POST /api/marketplace/admin/process-payout` - Mark payout processed (admin)
+- `GET /api/marketplace/my-earnings` - Get user's accumulated earnings
+- `PUT /api/marketplace/my-paypal-email` - Update PayPal email for payouts
+- `GET /api/marketplace/map-data` - Get protocol locations for map
+- `GET /api/marketplace/seller/dashboard` - Get seller stats
+- `GET /api/marketplace/paypal-config` - Get PayPal client config
+
 ### Chat (NEW)
 - `GET /api/chat/rooms` - Get user's chat rooms
 - `POST /api/chat/rooms` - Create new room
