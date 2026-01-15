@@ -502,8 +502,120 @@ export default function StatisticsScreen() {
     { key: 'words', label: 'Words', icon: 'text' },
     { key: 'documents', label: 'Docs', icon: 'document' },
     { key: 'geography', label: 'Geo', icon: 'globe' },
-    { key: 'leaderboard', label: 'Leaders', icon: 'trophy' },
+    { key: 'leaderboard', label: 'Sellers', icon: 'trophy' },
+    { key: 'clipboard', label: 'Copies', icon: 'clipboard' },
+    { key: 'achievements', label: 'Badges', icon: 'ribbon' },
   ];
+
+  // Render Clipboard Leaders - Most Copied Protocols
+  const renderClipboardLeaders = () => {
+    return (
+      <View style={styles.leaderboardContainer}>
+        <Text style={styles.chartTitle}>📋 Most Copied Protocols</Text>
+        <Text style={styles.chartSubtitle}>
+          The protocols everyone is ctrl+c-ing! 🔥
+        </Text>
+        
+        {clipboardLeaders.length === 0 ? (
+          <View style={styles.emptyLeaderboard}>
+            <Text style={styles.emptyText}>No copies yet - be the trendsetter! 📋</Text>
+          </View>
+        ) : (
+          clipboardLeaders.map((leader, index) => (
+            <View 
+              key={leader.protocol_id} 
+              style={[
+                styles.leaderboardItem, 
+                index === 0 && styles.leaderboardFirst,
+                index === 1 && styles.leaderboardSecond,
+                index === 2 && styles.leaderboardThird,
+              ]}
+            >
+              <View style={styles.leaderboardRank}>
+                <Text style={styles.rankText}>
+                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
+                </Text>
+              </View>
+              <View style={styles.leaderboardInfo}>
+                <Text style={styles.leaderboardUsername}>{leader.protocol_name}</Text>
+                <Text style={styles.leaderboardStats}>
+                  by @{leader.creator} • {leader.price === 0 ? 'FREE!' : `$${leader.price}`}
+                </Text>
+              </View>
+              <View style={styles.leaderboardBadge}>
+                <Text style={styles.badgeText}>📋 {leader.copy_count}</Text>
+              </View>
+            </View>
+          ))
+        )}
+        
+        <View style={styles.funnyNote}>
+          <Text style={styles.funnyNoteText}>
+            💡 Pro tip: FREE protocols get copied MORE! But paid ones make you RICH! 
+            It's the eternal dilemma... 🤔
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
+  // Render Achievements
+  const renderAchievements = () => {
+    const rarityColors: Record<string, string> = {
+      'common': '#9CA3AF',
+      'rare': '#3B82F6',
+      'epic': '#8B5CF6',
+      'legendary': '#F59E0B',
+      'mythic': '#EC4899',
+    };
+
+    return (
+      <View style={styles.leaderboardContainer}>
+        <Text style={styles.chartTitle}>🏆 Achievement Badges</Text>
+        <Text style={styles.chartSubtitle}>
+          Collect 'em all! (Like Pokémon, but for nerds who like research 🤓)
+        </Text>
+        
+        <View style={styles.achievementsGrid}>
+          {achievements.map((badge) => (
+            <View 
+              key={badge.id} 
+              style={[
+                styles.achievementCard,
+                badge.earned && styles.achievementEarned,
+                { borderColor: rarityColors[badge.rarity] || '#9CA3AF' }
+              ]}
+            >
+              <Text style={styles.achievementIcon}>{badge.icon}</Text>
+              <Text style={styles.achievementName}>{badge.name}</Text>
+              <Text style={styles.achievementRarity}>
+                {badge.rarity.toUpperCase()}
+              </Text>
+              <Text style={styles.achievementDesc}>{badge.description}</Text>
+              {badge.earned ? (
+                <View style={styles.earnedBadge}>
+                  <Text style={styles.earnedText}>✓ EARNED!</Text>
+                </View>
+              ) : (
+                <View style={styles.progressContainer}>
+                  <View style={[styles.progressBar, { width: `${badge.progress}%` }]} />
+                  <Text style={styles.progressText}>{badge.progress}%</Text>
+                </View>
+              )}
+              <Text style={styles.achievementTagline}>{badge.funny_tagline}</Text>
+            </View>
+          ))}
+        </View>
+        
+        <View style={styles.funnyNote}>
+          <Text style={styles.funnyNoteText}>
+            🎮 Fun fact: Earning ALL badges unlocks the secret "I Have No Life But Great Protocols" achievement!
+            (Just kidding... or are we? 😏)
+          </Text>
+        </View>
+      </View>
+    );
+  };
 
   if (loading) {
     return (
