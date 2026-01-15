@@ -171,6 +171,20 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - [x] **Shareable Badges** - Twitter/Facebook share
 - [x] **Weekly/All-Time Leaderboards**
 
+### Quick Win Features ✅ (NEW - January 15, 2026)
+- [x] **Polls Feature** - Create polls in Groups, Pages, USP
+  - Full CRUD API (create, read, vote, delete, close)
+  - Validation (2-10 options, expiration)
+  - Frontend UI with poll buttons for admins
+  - PollCard component with voting functionality
+- [x] **Default Admin Friend** - New users get jjspilot24@gmail.com as first friend
+  - Automatic friendship upon registration
+  - Works for both email/password and Google OAuth registrations
+- [x] **Push Notifications for DMs** - Offline user notifications
+  - send_dm_push_notification helper function
+  - VAPID-based web push (simulation mode without keys)
+  - Triggers when recipient is offline
+
 ### Admin Features ✅
 - [x] Admin dashboard with statistics
 - [x] User management
@@ -188,7 +202,8 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 │   │   ├── categories.py   # Category CRUD
 │   │   ├── search.py       # Search endpoints
 │   │   ├── social.py       # Friends, Groups, Pages, Posts (ENHANCED)
-│   │   ├── messages.py     # Direct Messaging (NEW)
+│   │   ├── messages.py     # Direct Messaging + Push Notifications (ENHANCED)
+│   │   ├── polls.py        # Polls CRUD (NEW)
 │   │   ├── marketplace.py  # Protocol marketplace
 │   │   ├── bundles.py      # Protocol bundles
 │   │   ├── chat.py         # Real-time group chat
@@ -203,12 +218,13 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 │       ├── ai_service.py      # GPT-5.2 for newsletters (NEW)
 │       ├── voice_service.py   # Whisper transcription (NEW)
 │       ├── location_service.py # Geo-extraction (NEW)
+│       ├── auth_service.py    # Authentication + Default Friend (ENHANCED)
 │       ├── gamification_service.py # Achievement logic
 │       └── protocol_service.py # Protocol parsing
 └── frontend/
     └── src/
         ├── pages/
-        │   ├── SocialPage.js       # Social Hub with tabs (ENHANCED)
+        │   ├── SocialPage.js       # Social Hub with tabs + Polls (ENHANCED)
         │   ├── MessagesPage.js     # Direct Messages (ENHANCED)
         │   ├── UltimateSearchPage.js # Search with map
         │   ├── MarketplacePage.js  # Protocol marketplace
@@ -217,6 +233,7 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
         │   └── ChatPage.js         # Group chat
         ├── components/
         │   ├── shared/
+        │   │   ├── PollCard.js     # Poll display + voting (NEW)
         │   │   └── VoiceSearchButton.js # Voice input (NEW)
         │   └── AdvancedAnalytics.js  # Recharts dashboard
         └── i18n.js                 # Multi-language support
