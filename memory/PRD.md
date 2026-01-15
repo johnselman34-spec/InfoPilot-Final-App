@@ -187,22 +187,39 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 │   │   ├── auth.py         # Authentication
 │   │   ├── categories.py   # Category CRUD
 │   │   ├── search.py       # Search endpoints
-│   │   ├── social.py       # Groups, Pages
+│   │   ├── social.py       # Friends, Groups, Pages, Posts (ENHANCED)
+│   │   ├── messages.py     # Direct Messaging (NEW)
 │   │   ├── marketplace.py  # Protocol marketplace
-│   │   ├── bundles.py      # Protocol bundles (NEW)
-│   │   ├── chat.py         # Real-time chat (NEW)
-│   │   ├── push_notifications.py  # Web push (NEW)
+│   │   ├── bundles.py      # Protocol bundles
+│   │   ├── chat.py         # Real-time group chat
+│   │   ├── newsletter.py   # AI Newsletter system (NEW)
+│   │   ├── voice.py        # Voice Search (NEW)
+│   │   ├── collaborate.py  # Collaborative Editing (NEW)
+│   │   ├── statistics.py   # Statistics dashboard
+│   │   ├── gamification.py # Achievements system
+│   │   ├── push_notifications.py  # Web push
 │   │   └── notifications.py # WebSocket notifications
 │   └── services/
+│       ├── ai_service.py      # GPT-5.2 for newsletters (NEW)
+│       ├── voice_service.py   # Whisper transcription (NEW)
+│       ├── location_service.py # Geo-extraction (NEW)
+│       ├── gamification_service.py # Achievement logic
+│       └── protocol_service.py # Protocol parsing
 └── frontend/
     └── src/
         ├── pages/
-        │   ├── ChatPage.js         # Real-time chat (NEW)
-        │   └── MarketplacePage.js  # Enhanced marketplace
+        │   ├── SocialPage.js       # Social Hub with tabs (ENHANCED)
+        │   ├── MessagesPage.js     # Direct Messages (ENHANCED)
+        │   ├── UltimateSearchPage.js # Search with map
+        │   ├── MarketplacePage.js  # Protocol marketplace
+        │   ├── StatisticsPage.js   # Statistics dashboard
+        │   ├── AchievementsPage.js # Gamification
+        │   └── ChatPage.js         # Group chat
         ├── components/
-        │   └── AdvancedAnalytics.js  # Recharts dashboard (NEW)
-        ├── i18n.js                 # Multi-language support (NEW)
-        └── public/
+        │   ├── shared/
+        │   │   └── VoiceSearchButton.js # Voice input (NEW)
+        │   └── AdvancedAnalytics.js  # Recharts dashboard
+        └── i18n.js                 # Multi-language support
 ```
 
 ## API Endpoints
