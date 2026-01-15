@@ -713,6 +713,205 @@ const StatisticsPage = ({ showToast }) => {
         )}
       </div>
 
+      {/* Interactive Statistics Map */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)',
+        borderRadius: 20,
+        padding: 30,
+        marginBottom: 30,
+        border: '1px solid rgba(59, 130, 246, 0.3)'
+      }}>
+        <h2 style={{ 
+          color: '#fff', 
+          marginBottom: 15,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 15
+        }}>
+          🗺️ Statistics Map
+          <span style={{
+            background: 'linear-gradient(135deg, #3b82f6 0%, #10b981 100%)',
+            padding: '5px 15px',
+            borderRadius: 20,
+            fontSize: '0.8rem',
+            fontWeight: 600
+          }}>
+            INTERACTIVE
+          </span>
+        </h2>
+        <p style={{ color: '#a1a1aa', marginBottom: 20, fontSize: '0.9rem' }}>
+          Click on any statistic below to visualize it on the map!
+        </p>
+
+        {/* Stat Type Buttons */}
+        <div style={{ 
+          display: 'flex', 
+          gap: 10, 
+          marginBottom: 20,
+          flexWrap: 'wrap'
+        }}>
+          <button
+            onClick={() => populateMapForStat('countries', stats?.countries?.data)}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 25,
+              border: 'none',
+              background: selectedStatType === 'countries' 
+                ? 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' 
+                : 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 600
+            }}
+            data-testid="map-countries-btn"
+          >
+            🌍 Countries
+          </button>
+          <button
+            onClick={() => populateMapForStat('us_states', stats?.us_states?.data)}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 25,
+              border: 'none',
+              background: selectedStatType === 'us_states' 
+                ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
+                : 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 600
+            }}
+            data-testid="map-states-btn"
+          >
+            🇺🇸 US States
+          </button>
+          <button
+            onClick={() => populateMapForStat('top_sellers', leaderboard.sales)}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 25,
+              border: 'none',
+              background: selectedStatType === 'top_sellers' 
+                ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' 
+                : 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 600
+            }}
+            data-testid="map-sellers-btn"
+          >
+            🏆 Top Sellers
+          </button>
+          <button
+            onClick={() => populateMapForStat('most_copied', mostCopied.leaderboard)}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 25,
+              border: 'none',
+              background: selectedStatType === 'most_copied' 
+                ? 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' 
+                : 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 600
+            }}
+            data-testid="map-copied-btn"
+          >
+            📋 Most Copied
+          </button>
+        </div>
+
+        {/* Map Container */}
+        <div style={{
+          height: 400,
+          borderRadius: 15,
+          overflow: 'hidden',
+          border: '2px solid rgba(59, 130, 246, 0.3)'
+        }}>
+          <MapContainer
+            center={[39.8283, -98.5795]}
+            zoom={4}
+            style={{ height: '100%', width: '100%' }}
+          >
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            />
+            
+            {mapMarkers.map((marker) => (
+              <React.Fragment key={marker.id}>
+                <Marker 
+                  position={marker.position}
+                  icon={createStatMarker(marker.color, marker.type === 'country' ? 30 : 24)}
+                >
+                  <Popup>
+                    <div style={{ textAlign: 'center', minWidth: 120 }}>
+                      <strong style={{ color: marker.color }}>{marker.label}</strong>
+                      <br />
+                      <span style={{ fontSize: '1.2rem', fontWeight: 700 }}>
+                        {marker.type === 'seller' ? '$' : ''}{marker.value.toLocaleString()}
+                      </span>
+                      <br />
+                      <small style={{ color: '#666' }}>
+                        {marker.type === 'country' ? 'searches' : 
+                         marker.type === 'state' ? 'searches' :
+                         marker.type === 'seller' ? 'revenue' : 'copies'}
+                      </small>
+                    </div>
+                  </Popup>
+                </Marker>
+                <Circle
+                  center={marker.position}
+                  radius={Math.max(50000, marker.value * 1000)}
+                  pathOptions={{
+                    color: marker.color,
+                    fillColor: marker.color,
+                    fillOpacity: 0.2
+                  }}
+                />
+              </React.Fragment>
+            ))}
+          </MapContainer>
+        </div>
+
+        {mapMarkers.length === 0 && (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: 20, 
+            color: '#a1a1aa',
+            marginTop: 15
+          }}>
+            <p>👆 Click a button above to populate the map with statistics!</p>
+          </div>
+        )}
+
+        {mapMarkers.length > 0 && (
+          <div style={{ 
+            marginTop: 15, 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            color: '#a1a1aa',
+            fontSize: '0.85rem'
+          }}>
+            <span>Showing {mapMarkers.length} data points for {selectedStatType?.replace('_', ' ')}</span>
+            <button
+              onClick={() => { setMapMarkers([]); setSelectedStatType(null); }}
+              style={{
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#ef4444',
+                padding: '5px 15px',
+                borderRadius: 15,
+                cursor: 'pointer',
+                fontSize: '0.8rem'
+              }}
+            >
+              Clear Map
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Book Promo */}
       <div style={{
         background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
