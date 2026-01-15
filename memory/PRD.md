@@ -166,10 +166,20 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - `POST /api/push/send` - Send notification (admin)
 - `GET /api/push/stats` - Get push stats (admin)
 
-## Testing Results (Iteration 14)
-- **Backend: 22/22 tests passed (100%)**
+## Testing Results (Iteration 15 - January 15, 2026)
+- **Backend: 18/18 tests passed (100%)**
 - **Frontend: All UI features working (100%)**
-- Test report: `/app/test_reports/iteration_14.json`
+- Test report: `/app/test_reports/iteration_15.json`
+
+### Marketplace Tests Verified:
+- Protocol listing API with category filtering and sorting
+- Categories API returning 6 categories with counts
+- Admin revenue settings (GET/PUT) with 5-30% validation
+- Admin payouts tracking showing accumulated earnings
+- User earnings API with payout history
+- Map data API returning protocol locations
+- PayPal config endpoint
+- Revenue split calculation (85% creator, 15% admin)
 
 ## Preview URL
 https://explorer-hub-7.preview.emergentagent.com
