@@ -60,7 +60,7 @@ document.addEventListener('mouseup', (e) => {
     `;
     
     floatingButton.addEventListener('click', () => {
-      const API_BASE = 'https://infopilot-hub.preview.emergentagent.com';
+      const API_BASE = 'https://infoexplore.preview.emergentagent.com';
       window.open(`${API_BASE}/search?q=${encodeURIComponent(selection)}&source=extension`, '_blank');
       floatingButton.remove();
       floatingButton = null;

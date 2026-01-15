@@ -69,7 +69,7 @@ AI-powered suggestions, and a marketplace for search strategies.
 • No browsing data is collected or stored
 • Your protocols are encrypted in transit
 
-Visit https://infopilot-hub.preview.emergentagent.com for the full experience!
+Visit https://infoexplore.preview.emergentagent.com for the full experience!
 ```
 
 #### Category

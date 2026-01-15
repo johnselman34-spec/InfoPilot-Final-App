@@ -6,214 +6,202 @@ The user wants to build a comprehensive web application, InfoPilot Explorer, wit
 **PRODUCT REQUIREMENTS:**
 - **Core Features:**
     - **Ultimate Search:** A search page with a custom protocol parser, advanced filtering (including AND/OR logic), category selection, and results displayed on an interactive map.
-    - **Protocol Marketplace:** A Pay What You Want marketplace for search protocols, with admin-controlled revenue splits and PayPal integration. Protocols can also be listed for FREE.
-    - **Social Hub:** Full-fledged social features including a friend system, user-created Groups and Pages, posts with reactions, comments, and photo uploads (up to 6.9MB).
-    - **Direct Messaging:** Real-time one-on-one chat with text and image support.
-    - **Polls:** Users can create polls on their Ultimate Search Page, Groups, and Pages.
-    - **Statistics & Gamification:** A detailed statistics page with various charts and a Top Sellers leaderboard. An achievement system with points, levels, and badges.
+    - **Protocol Marketplace:** A Pay What You Want marketplace for search protocols, with admin-controlled revenue splits and PayPal integration. Protocols can also be listed for FREE. A key requirement is the ability to copy a protocol's title even if not owned, and both title and content if owned.
+    - **Social Hub:** Full-fledged social features including a friend system, user-created Groups and Pages (with partial admin roles), posts with reactions, comments, and photo uploads.
+    - **Direct Messaging:** Real-time one-on-one chat with text/image support and push notifications.
+    - **Polls:** Users can create polls on their Ultimate Search Page, Groups, and Pages. Admin monitoring and management of polls is required.
+    - **Statistics & Gamification:** A detailed statistics page with various charts, a Top Sellers leaderboard, a Most Copied Protocols leaderboard, and an interactive map that populates based on selected stats. An achievement system with points, levels, and badges.
 - **Integrations & Enhancements:**
-    - **AI Integration:** Use GPT-5.2 for AI-generated newsletters and OpenAI Whisper for voice search.
+    - **AI Integration:** Use GPT-5.2 for AI-generated newsletters and protocol suggestions, and OpenAI Whisper for voice search.
     - **Mobile App & Extension:** Create a mobile app wrapper using Capacitor and a Chrome browser extension for the search functionality.
-    - **Push Notifications:** Implement push notifications for direct messages.
+    - **Push Notifications:** Implement push notifications for direct messages using VAPID keys.
+    - **Protocol Analytics:** A dashboard for creators to track views, copies, and conversion rates for their protocols.
+    - **A/B Testing:** An A/B testing framework to optimize marketing copy for the user's book, Letters to Evelyn.
 - **Admin & User Experience:**
     - **Admin Accounts:** Pre-defined admin access for specific email addresses.
     - **Default Friend:**  should be the default first friend for all new users.
-    - **Marketing Tone:** All user-facing copy should be extremely funny and extremely convincing to maximize revenue and engagement, promoting the user's book Letters to Evelyn.
-    - **SEO/ASO:** Optimize the application for specific keywords and app store categories.
+    - **PayPal Integration:** Use PayPal Commerce Platform for users to sell their protocols.
+    - **Tutorials:** A section with text/image-based tutorials, with the ability to add YouTube videos in the future.
+    - **Automated Reports:** Automated A/B testing performance reports sent via email to admins.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a full-stack React/FastAPI app with a MongoDB database. Key implemented features include:
-- A Pay What You Want marketplace with support for FREE protocols.
-- A functional statistics page with charts and a Top Sellers Leaderboard.
-- A complete gamification system with achievements and leaderboards.
-- A robust social hub with Friends, Groups, Pages, and a post feed.
-- A real-time direct messaging system.
-- AI-powered services for newsletters (GPT-5.2) and voice search (Whisper).
-- The Ultimate Search page now has a working category filter with AND/OR logic and an interactive map.
-- A feature to set a price for protocols/categories has been added to the edit modal.
+The application is a feature-rich full-stack React/FastAPI app with a MongoDB database. It is nearly feature-complete based on the user's extensive requests. Key implemented systems include a social hub, marketplace, statistics page, gamification, direct messaging, AI-powered suggestions (GPT-5.2), and voice search (Whisper).
+
+Most recently, the agent implemented several major features:
+- A complete A/B testing system for promotional content, with a backend and a frontend dashboard for admins.
+- A protocol analytics system for creators to track their marketplace performance.
+- Backend and frontend support for YouTube video tutorials.
+- Poll monitoring and management for admins.
+- AI-powered protocol suggestions on the search and marketplace pages.
+- Finalized build/packaging scripts and detailed guides for the mobile app and Chrome extension.
+- VAPID key integration for production-ready push notifications.
 
 **Last working item**:
-- **Last item agent was working:** The agent analyzed all recent user requests and documents, formulated a comprehensive implementation plan, and was about to begin work on the first batch of quick win features.
-    1.  **Polls Feature:** Enable owners of Groups, Pages, and Ultimate Search Pages to create polls.
-    2.  **Push Notifications for DMs:** Notify users of new direct messages when they are offline.
-    3.  **Default Admin Friend:** Automatically add  as the first friend for new users.
-- **Status:** NOT STARTED
+- **Last item agent was working:** Implementing a system for automated A/B testing email reports using Gmail SMTP. The user chose this option to avoid creating a new Resend account. The agent created the initial backend files (, ) and was in the process of integrating them.
+- **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** both. First, use  to test the new backend endpoints for polls, push notification subscriptions, and the default friend logic. After backend validation, use the  to verify the frontend UI for creating/viewing polls and to confirm that the default friend appears for newly registered users.
+- **Which testing method agent to use?** both. First, the agent must complete the backend implementation (add router, configure , create scheduling logic) and test it with . Then, the agent needs to build the admin configuration UI on the frontend and use the  tool to verify it.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-There are no P0 bugs. The last major bug (category filtering) was resolved.
-
-- **Issue 1: Unused ML Dependencies (P2)**
+- **Issue 1: ML Dependency Constraint (P2)**
 
 **Issues Detail:**
-- **Issue 1: Unused ML Dependencies**
-    - **Attempted fixes:** The agent confirmed that  and  are present in  but are not directly used in the codebase; they are transitive dependencies.
-    - **Next debug checklist:**
-        1.  Determine which package(s) are pulling in  and . A tool like  could be useful.
-        2.  Evaluate if the parent package is essential.
-        3.  If not essential, remove the parent package to clean up dependencies. If it is essential, document that these are required transitive dependencies and can be ignored.
-    - **Why fix this issue and what will be achieved with the fix?** This resolves a warning flagged by the deployment agent. Cleaning up unnecessary heavy dependencies can improve deployment times and reduce potential security vulnerabilities.
-    - **Status:** NOT STARTED
+- **Issue 1: ML Dependency Constraint**
+    - **Attempted fixes:** The agent identified that  (a dependency of ) pulls in ML-related packages like  and . An attempt to remove them broke the  library, so they were reinstalled.
+    - **Next debug checklist:** This is now considered a known constraint of using the  library. No further action should be taken unless the library is updated or replaced.
+    - **Why fix this issue and what will be achieved with the fix?** This is a technical debt item. Fixing it would reduce the application's size and remove unnecessary dependencies, but it is blocked by an external library's requirements.
+    - **Status:** BLOCKED
     - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Backend (to ensure no functionality broke).
-    - **Blocked on other issue:** None
+    - **Should Test frontend/backend/both after fix?** Backend.
+    - **Blocked on other issue:** The  library dependency.
 
 **In progress Task List**:
-- **Task 1: Implement Quick Win Features (P0)**
+- **Task 1: Complete Automated Email Reports (P0)**
+    - **Where to resume:** The agent has created  and .
+    - **Next steps:**
+        1. Add the new  to .
+        2. Add  and  placeholders to .
+        3. Implement a background scheduling mechanism in the backend to send the reports periodically.
+        4. Create a UI in the  for admins to manage report settings (e.g., enable/disable, set frequency, confirm recipient email).
+        5. Provide clear instructions for the user on how to generate a **Gmail App Password**.
+    - **What will be achieved with this?** Admins will receive automated A/B test performance summaries via email, enabling data-driven marketing decisions.
+    - **Status:** IN PROGRESS
+    - **Should Test frontend/backend/both after fix?** Both.
+    - **Blocked on something:** User needs to provide a Gmail App Password for production testing.
 
-**Task Detail:**
-- **Task 1: Implement Quick Win Features**
-    - **Where to resume:** Start by creating the necessary backend models, services, and API routes for Polls, Push Notifications (subscribing/triggering), and the default friend logic upon user registration. Then, build the corresponding frontend components.
-    - **What will be achieved with this?** This will complete the first set of high-priority features requested by the user, enhancing social engagement and user retention.
-    - **Status:** NOT STARTED
-    - **Should Test frontend/backend/both after fix?** Both
-    - **Blocked on something:** None
+- **Task 2: Deep Frontend Refactoring (P1)**
+    - **Where to resume:** The user approved a deep refactor. The agent has created the new component directory structure but has not yet migrated the code.
+    - **Next steps:**
+        1. Systematically move logic and JSX from  into the smaller components within .
+        2. Replace the extracted code in  with imports of the new components.
+        3. Repeat this process for , , and .
+    - **What will be achieved with this?** This will significantly improve code maintainability, readability, and reusability, making future development easier.
+    - **Status:** IN PROGRESS
+    - **Should Test frontend/backend/both after fix?** Frontend. A full regression test using  is critical after this task.
+    - **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
-**Upcoming Tasks:**
-- **(P0) Capacitor Mobile App Wrapper:** Begin configuration to wrap the web app for Google Play/App Store deployment.
-- **(P0) Chrome Browser Extension:** Create a browser extension for InfoJet quick search functionality.
-- **(P1) Social Enhancements:**
-    - Implement partial admin roles for Groups and Pages.
-    - Create a recommendation system for users to suggest changes to public protocols.
-- **(P1) Statistics Enhancements:**
-    - Add a Most Copied Protocols leaderboard to the statistics page.
-    - Implement a wider variety of chart types (8+ total).
-- **(P2) Marketing & SEO:**
-    - Integrate the 20 specified ASO/SEO keywords into the application's metadata and content.
-    - Enhance the promotional copy for Letters to Evelyn.
-
-**Future Tasks:**
-- Video tutorials for application features.
-- An API rate-limiting dashboard for admins.
-- Webhook integrations for Slack/Discord.
+- **YouTube Tutorial Management UI (P1):** The backend and frontend player are ready. An admin UI needs to be added to the  to allow admins to easily add, update, or remove YouTube video URLs for tutorials, using the existing admin endpoints.
 
 **Completed work in this session**
-- **Ultimate Search Page Bug Fix:** Resolved a critical bug where selecting a category did not filter search results. The fix included integrating AND/OR logic and adding a second interactive map that updates based on selections.
-- **Category Price Setting:** Implemented a feature in the Edit Category modal to allow users to set a price for their protocols, which is displayed dynamically.
-- **Full Social & Messaging Suite:** Built and tested a comprehensive set of features including Friends, Groups, Pages, Posts with reactions, and a real-time Direct Messaging system.
-- **AI & Voice Integration:** Integrated GPT-5.2 for AI newsletter generation and OpenAI Whisper for voice search, using the  library.
-- **Deployment Readiness:** Repeatedly ran health checks to confirm the application is ready for deployment, successfully diagnosing and overriding false-negative reports from the deployment subagent regarding missing  files.
-- **Content Update:** Updated all occurrences of a promotional text string (Maestro Bistro menu) as requested by the user.
-- **Comprehensive Testing:** Used the  twice ( and ), achieving 100% pass rates across 11 and 23 tests respectively, validating all new features and bug fixes.
-- **PRD Updates:** Consistently updated  to reflect all completed tasks, new APIs, and architectural changes.
+- **A/B Testing System:** Implemented a full-stack A/B testing framework for the Letters to Evelyn promo, including a backend API and an admin dashboard to view results. (DONE)
+- **Protocol Analytics:** Created a creator-facing analytics system to track protocol views and other metrics. (DONE)
+- **VAPID Push Notifications:** Generated and integrated VAPID keys into the backend for secure, production-ready web push notifications. (DONE)
+- **AI Protocol Suggestions:** Implemented a GPT-5.2 powered service to suggest marketplace protocols to users on the search and marketplace pages. (DONE)
+- **Polls Admin Management:** Added backend endpoints and a frontend UI in the Admin Panel for admins to monitor and manage all user-created polls. (DONE)
+- **Release Packaging & Guides:**
+    - Created a script to package the browser extension into a  file. (DONE)
+    - Wrote  and  with detailed instructions for the user. (DONE)
+- **Tutorials System Upgrade:** Enhanced the backend and frontend to support YouTube videos in addition to text/image tutorials. (DONE)
+- **Frontend Refactoring Prep:** Created the directory structure for a deep refactoring of monolithic page components. (DONE)
+- **Testing:** Successfully completed three full test cycles (, , ) using , ensuring all new features are stable.
 
 **Earlier issues found/mentioned but not fixed**
-- The deployment health check flagged  and  as potential ML dependencies that could block deployment. This was noted as a low-priority technical debt item to investigate later.
+- **Redundant Chat Routes:** The backend has two sets of routes for chat ( and ). This is a low-priority technical debt item that should be consolidated in the future.
 
 **Known issue recurrence from previous fork**
-- None.
+- **ML Dependencies:** The issue of  and  being installed was identified, fixed by removing , and then recurred when  had to be reinstalled as a dependency for . This is now a known constraint.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend:** React, TailwindCSS, Recharts, .
-- **Backend:** FastAPI, MongoDB (Motor), Pydantic, JWT for authentication.
-- **Real-time:** WebSockets for Direct Messaging.
-- **LLM Integration:**  library with  for GPT-5.2 and Whisper.
+- A/B Testing (Backend logic, frontend variants, event tracking)
+- Background Task Scheduling (for email reports)
+- Gmail SMTP Integration
+- VAPID Web Push Notifications
+- Component-based architecture and refactoring
 
 **key DB schema**
-- **categories:** Added optional  field.
-- **New (Inferred) Schemas:**
-    - **friends:** 
-    - **groups:** 
-    - **group_members:** 
-    - **pages:** 
-    - **posts:** 
-    - **reactions:** 
-    - **conversations:** 
-    - **messages:** 
-    - **newsletters:** 
-
-**changes in tech stack**
-- No changes to the core stack. Adopted  as the standard for interfacing with external LLM services (OpenAI, Gemini, etc.).
+- **ab_tests:** 
+- **ab_assignments:** 
+- **ab_events:** 
+- **protocol_analytics:** 
+- **tutorials:** (Static list in code) schema updated to include  and .
 
 **All files of reference**
-- : Heavily modified to fix category filtering and add a price field to the edit modal.
-- : Heavily modified to include all new routers for social, messaging, newsletters, etc.
-- : Overwritten with a full implementation of friends, groups, pages, and posts.
-- : New file for the real-time chat backend.
-- : New frontend page for the Social Hub.
-- : New frontend page for Direct Messaging.
-- : The source of truth for all requirements, updated extensively.
-- , : Test results confirming recent fixes and features.
+- **New Backend:**
+    - 
+    - 
+    - 
+    - 
+    - 
+- **New Frontend:**
+    - 
+    - 
+    - 
+    - 
+- **New Guides & Artifacts:**
+    - 
+    - 
+    - 
+- **Test Reports:** , , 
 
 **Areas that need refactoring**:
-- Frontend components like , , , and  are large and monolithic. They should be broken down into smaller, reusable components to improve maintainability.
-- The existence of both  and  is redundant. The logic should be consolidated into one, and the unused file should be removed to avoid confusion.
+- The deep refactoring of , , , and  is in progress and must be completed.
+- The redundant chat routes ( vs. ) remain a low-priority technical debt item.
 
 **key api endpoints**
-- **Social:** , , , , , , , , 
-- **Messaging:** , 
-- **Newsletter:** , , 
-- **Voice Search:** 
-- **Collaboration:** 
-- **Categories:**  (updated to accept ).
+- **A/B Testing:** , 
+- **Protocol Analytics:** 
+- **AI Suggestions:** 
+- **Polls Admin:** , , 
+- **Tutorials Admin:** , 
 
 **Critical Info for New Agent**
-- **Follow the Plan:** The user has approved a very detailed, multi-phase implementation plan. The immediate priorities are Polls, Push Notifications for DMs, and the Default Admin Friend feature. Refer to  and the user's latest messages for the full roadmap.
-- **Deployment Agent Issues:** The deployment subagent consistently reports that  files are missing, which is a false negative. Manually verify the existence and contents of  and  using total 48
--rw-r--r-- 1 root root    29 Jun 18  2025 README.md
-drwxr-xr-x 8 root root  4096 Jan 15 13:13 backend
--rw-r--r-- 1 root root 10610 Jan 15 12:35 backend_test.py
-drwxr-xr-x 7 root root  4096 Jan 15 15:37 frontend
-drwxr-xr-x 2 root root  4096 Jan 15 12:35 memory
-drwxr-xr-x 3 root root  4096 Jan 15 13:31 test_reports
--rw-r--r-- 1 root root  4774 Jun 18  2025 test_result.md
-drwxr-xr-x 3 root root  4096 Jan 15 13:27 tests
--rw-r--r-- 1 root root    86 Jun 18  2025 yarn.lock and  before concluding there is a deployment issue.
-- **User's Tone is a Requirement:** The directive for extremely funny and extremely convincing copy is a core product requirement. All new user-facing text must adhere to this style.
-- **Use :** All LLM integrations (like the upcoming Polls feature's AI suggestions) must use the  library and the  provided in the environment.
+- **Gmail App Password Required:** The email reporting feature requires the user to generate and provide a Gmail App Password. You must provide clear, step-by-step instructions for them to do this. Do not proceed with implementation using hardcoded or fake credentials.
+- **Deep Refactor is a Priority:** The user explicitly confirmed a deep refactor for the large frontend pages. This is a major task that will improve the codebase's health and must be handled carefully with thorough regression testing afterward.
+- ** is a required dependency:** Do not attempt to remove , , or  again. They are required by  and removing them will break AI features.
 
 **documents and test reports created in this job**
+- 
+- 
+- 
+- 
 - 
 - 
 -  (updated extensively)
 
 **Last 10 User Messages and any pending HUMAN messages**
-- **1. (LATEST) User:** Provided a massive, consolidated list of all remaining features, including Polls, Mobile App Wrapper, Chrome Extension, partial admin roles, and more. Explicitly approved implementing all of them. **Status: ACKNOWLEDGED, plan created.**
-- **2. User:** Confirmed all previous features were implemented and asked to run another deployment health check. **Status: COMPLETED.**
-- **3. User:** Requested a text change for the Maestro Bistro promotional section from Beef Chowder to Beef Rouladen. **Status: COMPLETED.**
-- **4. User:** Asked to add a price-setting function to the edit category/protocol screen. **Status: COMPLETED.**
-- **5. User:** Requested deployment health checks multiple times. The agent performed them and noted the recurring false negative from the deployment agent. **Status: COMPLETED.**
-- **6. User:** Confirmed scope for integrations (GPT-5.2, Whisper, Capacitor) and approved proceeding with the Emergent LLM Key. **Status: ACKNOWLEDGED, integrations implemented.**
-- **7. User:** Approved the agent's plan to implement the full suite of upcoming features after the category filter bug was fixed. **Status: ACKNOWLEDGED.**
-- **8. User:** Confirmed that clicking a category should filter results in a list and on the map. **Status: ACKNOWLEDGED, implemented in the bug fix.**
-- **9. User:** Reported the critical bug on the Ultimate Search Page where category clicks did not filter results. **Status: COMPLETED.**
-- **10. User:** Provided multiple documents containing a comprehensive and sometimes overlapping list of all feature requests for the entire application lifecycle. **Status: ACKNOWLEDGED, documents analyzed.**
+- **1. (LATEST) User:** Confirmed choice to use Gmail SMTP for email reports if it avoids needing a new Resend account, and specified  as the recipient. **Status: ACKNOWLEDGED, implementation started.**
+- **2. User:** Approved the agent's proposed enhancement (automated A/B test email reports). **Status: ACKNOWLEDGED, options provided.**
+- **3. User:** Approved all remaining tasks: Mobile/Chrome guides, A/B Testing System, and provided clarification on the deep refactor. **Status: ACKNOWLEDGED, all items implemented.**
+- **4. User:** Requested all 'Next action items', 'Future/backlog', and the 'Enhancement suggestion' to be implemented. **Status: ACKNOWLEDGED, plan created and approved.**
+- **5. to 10.** These messages cover the user's approvals for the agent's work, including the final feature batch (AI suggestions, poll stats) and the plan to tackle the remaining backlog items. All have been actioned.
 
 **Project Health Check:**
-- **Broken:** None. The last critical bug has been fixed and tested.
-- **Mocked:** None. All features are connected to the live database.
+- **Broken:** None. The application is stable.
+- **Mocked:**
+    - The  and  backend routes are still placeholders.
+    - The new  is non-functional pending user credentials.
 - **Technical Debt:**
-    - Large monolithic frontend components: , , , .
-    - Unused transitive ML dependencies (, ) in .
-    - Redundant chat routes ( vs. ).
+    - Monolithic frontend components (Refactoring is IN PROGRESS).
+    - /ML dependencies are a known constraint due to an external library.
+    - Redundant chat routes in the backend.
 
 **3rd Party Integrations**
-- **SerpAPI:** For web search.
-- **ddgs:** Fallback search provider.
-- **Emergent-managed Google Auth:** For user login.
-- **PayPal:** Backend logic for marketplace payments.
+- **PayPal Commerce Platform:** For marketplace payments.
 - **Recharts:** For frontend charts.
 - **pywebpush:** For web push notifications.
-- **OpenAI GPT-5.2 (via ):** Used for AI newsletter generation. Uses Emergent LLM Key.
+- **OpenAI GPT-5.2 (via ):** Used for AI features. Uses Emergent LLM Key.
 - **OpenAI Whisper (via ):** Used for voice search. Uses Emergent LLM Key.
+- **react-markdown:** For rendering text/image tutorials.
+- **Capacitor:** For mobile app wrapper.
+- **Gmail SMTP:** For sending automated email reports. Requires User Credentials (App Password).
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. The testing agent was used twice to validate the category filter fix and the new social/messaging features, with all tests passing.
+- **Testing agent used after significant changes:** YES. Used three times in this session (, , ) with 100% success.
 - **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** The testing agent created and updated numerous test files, with reports at  and .
+- **Test files created:** Test reports are located at .
 - **Known regressions:** None.
 
 **Credentials to test flow:**
 - **Admin User:**  / 
 - **Test User:**  / 
+- **Gmail Credentials:** Not provided. The agent must request an **App Password** from the user.
 
 **What agent forgot to execute**
-- The agent has not yet removed or confirmed the necessity of the  and  dependencies. This remains an outstanding technical debt item.</analysis>
+The agent has been thorough. All user-approved tasks are either completed or in progress.</analysis>
