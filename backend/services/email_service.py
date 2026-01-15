@@ -317,3 +317,62 @@ View full dashboard: https://infoexplore.preview.emergentagent.com/#admin
 """
     
     return plain
+
+
+# ==================== LEGACY EMAIL SERVICE CLASS ====================
+# For backward compatibility with newsletter routes in admin.py
+
+class EmailService:
+    """Legacy email service class for backward compatibility"""
+    
+    @staticmethod
+    async def generate_newsletter_content():
+        """Generate newsletter content"""
+        from config import BOOK_PROMO
+        return f"""
+        <h1>InfoPilot Weekly Update</h1>
+        <p>Welcome to this week's InfoPilot newsletter!</p>
+        <h2>Featured Book: {BOOK_PROMO.get('title', 'Letters to Evelyn')}</h2>
+        <p>By {BOOK_PROMO.get('author', 'John Selman')}</p>
+        <p>{BOOK_PROMO.get('genre', 'Fiction')}</p>
+        <p>Available for {BOOK_PROMO.get('price', '$2.99')} on <a href="{BOOK_PROMO.get('amazon_url', '#')}">Amazon</a></p>
+        """
+    
+    @staticmethod
+    async def get_subscriber_emails():
+        """Get list of subscriber emails"""
+        from config import db
+        users = await db.users.find({"email": {"$exists": True}}).to_list(1000)
+        return [u["email"] for u in users if u.get("email")]
+    
+    @staticmethod
+    async def send_newsletter(subject: str, content: str, emails: List[str]) -> dict:
+        """Send newsletter to multiple recipients"""
+        if not is_email_configured():
+            return {"success": False, "error": "Email not configured"}
+        
+        success_count = 0
+        failed_count = 0
+        
+        for email in emails[:100]:  # Limit to 100
+            try:
+                result = await send_email(email, subject, content)
+                if result.get("success"):
+                    success_count += 1
+                else:
+                    failed_count += 1
+            except Exception as e:
+                logger.error(f"Failed to send to {email}: {e}")
+                failed_count += 1
+        
+        return {
+            "success": success_count > 0,
+            "sent_count": success_count,
+            "failed_count": failed_count
+        }
+    
+    @staticmethod
+    async def send_test_email(recipient: str) -> dict:
+        """Send a test newsletter email"""
+        content = await EmailService.generate_newsletter_content()
+        return await send_email(recipient, "InfoPilot Test Newsletter", content)
