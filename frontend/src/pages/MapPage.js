@@ -6,13 +6,19 @@ import { API } from '../utils/api';
 import { extractHashtags } from '../utils/hashtags';
 import { HashtagDisplay } from '../components/shared';
 
+// Auto-refresh interval for map (30 seconds)
+const MAP_REFRESH_INTERVAL = 30000;
+
 const MapPage = ({ showToast, setCurrentPage }) => {
   const { token } = useAuth();
   const [mapResults, setMapResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hoveredResult, setHoveredResult] = useState(null);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
   const mapContainerRef = useRef(null);
+  const refreshIntervalRef = useRef(null);
 
   // Known locations for context-based geocoding
   const KNOWN_LOCATIONS = {
