@@ -150,17 +150,30 @@ async def get_search_results(
     
     results = await db.search_results.find(query).sort("created_at", -1).limit(limit).to_list(limit)
     
-    formatted = []
+    # Collect all unique category IDs for bulk fetch (N+1 query optimization)
+    all_category_ids = set()
     for r in results:
-        # Get category names
-        category_names = []
         for cat_id in r.get("category_ids", []):
             try:
-                cat = await db.categories.find_one({"_id": ObjectId(cat_id)})
-                if cat:
-                    category_names.append(cat["name"])
+                all_category_ids.add(ObjectId(cat_id))
             except:
                 pass
+    
+    # Bulk fetch all categories at once
+    categories_map = {}
+    if all_category_ids:
+        categories_cursor = db.categories.find({"_id": {"$in": list(all_category_ids)}})
+        async for cat in categories_cursor:
+            categories_map[str(cat["_id"])] = cat["name"]
+    
+    formatted = []
+    for r in results:
+        # Get category names from pre-fetched map
+        category_names = []
+        for cat_id in r.get("category_ids", []):
+            cat_name = categories_map.get(str(cat_id))
+            if cat_name:
+                category_names.append(cat_name)
         
         formatted.append({
             "id": str(r["_id"]),

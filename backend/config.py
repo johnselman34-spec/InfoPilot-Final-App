@@ -36,7 +36,7 @@ db = client[DB_NAME]
 PAYPAL_CLIENT_ID = os.environ.get('PAYPAL_CLIENT_ID')
 PAYPAL_SECRET = os.environ.get('PAYPAL_SECRET')
 PAYPAL_HOSTED_BUTTON_ID = os.environ.get('PAYPAL_HOSTED_BUTTON_ID')
-PAYPAL_PAYMENT_LINK = os.environ.get('PAYPAL_PAYMENT_LINK', 'https://py.pl/vdf9TkEwfV1ngxIsu9JzlQ')
+PAYPAL_PAYMENT_LINK = os.environ.get('PAYPAL_PAYMENT_LINK')
 
 # Resend Email Configuration
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY')
