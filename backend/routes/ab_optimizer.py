@@ -8,7 +8,7 @@ from typing import Optional, List
 from datetime import datetime, timezone
 
 from config import db
-from routes.auth import get_current_user, require_admin
+from routes.auth import get_current_user
 from services.ab_optimizer import (
     analyze_test,
     auto_optimize_test,
@@ -18,6 +18,13 @@ from services.ab_optimizer import (
 )
 
 router = APIRouter(prefix="/ab-optimizer", tags=["A/B Test Auto-Optimizer"])
+
+
+async def require_admin(user = Depends(get_current_user)):
+    """Require user to be an admin"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user
 
 
 class OptimizerConfigRequest(BaseModel):
