@@ -367,3 +367,155 @@ async def delete_bundle(bundle_id: str, user = Depends(get_current_user)):
     )
     
     return {"success": True, "message": "Bundle deleted"}
+
+
+@router.get("/featured")
+async def get_featured_bundle():
+    """Get the Bundle of the Week (featured bundle)"""
+    # Check if there's a manually set bundle of the week
+    setting = await db.settings.find_one({"key": "bundle_of_week_id"})
+    featured_id = setting.get("value") if setting else None
+    
+    bundle = None
+    
+    if featured_id:
+        try:
+            bundle = await db.protocol_bundles.find_one({
+                "_id": ObjectId(featured_id),
+                "is_active": True
+            })
+        except Exception:
+            pass
+    
+    # If no featured bundle set, get the most popular one
+    if not bundle:
+        bundles = await db.protocol_bundles.find({"is_active": True}).sort("total_sales", -1).limit(1).to_list(1)
+        if bundles:
+            bundle = bundles[0]
+    
+    if not bundle:
+        return {"featured": None, "message": "No bundles available yet!"}
+    
+    # Get protocol details
+    protocol_ids = [ObjectId(pid) for pid in bundle.get("protocol_ids", [])]
+    protocols = await db.marketplace_protocols.find({"_id": {"$in": protocol_ids}}).to_list(100)
+    
+    original_price = sum(p.get("price", 0) for p in protocols)
+    bundle_price = original_price * (1 - bundle.get("discount_percent", 15) / 100)
+    
+    return {
+        "featured": {
+            "id": str(bundle["_id"]),
+            "name": bundle.get("name"),
+            "description": bundle.get("description"),
+            "category": bundle.get("category"),
+            "protocol_count": len(protocols),
+            "protocols": [{"id": str(p["_id"]), "name": p.get("name")} for p in protocols],
+            "original_price": round(original_price, 2),
+            "bundle_price": round(bundle_price, 2),
+            "discount_percent": bundle.get("discount_percent", 15),
+            "savings": round(original_price - bundle_price, 2),
+            "total_sales": bundle.get("total_sales", 0),
+            "is_bundle_of_week": True
+        },
+        "funny_tagline": "🏆 This week's HOTTEST bundle! Grab it before it's gone! 🔥"
+    }
+
+
+@router.get("/cross-sell/{protocol_id}")
+async def get_cross_sell_recommendations(protocol_id: str, user = Depends(get_optional_user)):
+    """Get cross-sell recommendations for a protocol during checkout"""
+    # Get the protocol being purchased
+    try:
+        protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(protocol_id)})
+    except Exception:
+        return {"recommendations": [], "message": "Invalid protocol"}
+    
+    if not protocol:
+        return {"recommendations": [], "message": "Protocol not found"}
+    
+    # Find related protocols in the same category
+    category = protocol.get("category", "General")
+    
+    related_protocols = await db.marketplace_protocols.find({
+        "_id": {"$ne": ObjectId(protocol_id)},
+        "category": category,
+        "is_active": {"$ne": False}
+    }).sort("total_sales", -1).limit(3).to_list(3)
+    
+    # Also find bundles containing this protocol
+    bundles_with_protocol = await db.protocol_bundles.find({
+        "protocol_ids": protocol_id,
+        "is_active": True
+    }).limit(2).to_list(2)
+    
+    # Random funny cross-sell messages
+    import random
+    funny_messages = [
+        "🎯 People who bought this also bought these beauties!",
+        "🚀 Level up your search game with these related protocols!",
+        "💡 Your search IQ would skyrocket with these additions!",
+        "🔥 Hot picks that go PERFECTLY with your selection!",
+        "✨ Complete the set! Your future self will thank you!",
+        "🏆 Champions bundle these together - just sayin'!",
+    ]
+    
+    recommendations = []
+    for p in related_protocols:
+        recommendations.append({
+            "type": "protocol",
+            "id": str(p["_id"]),
+            "name": p.get("name"),
+            "price": p.get("price", 0),
+            "is_free": p.get("price", 0) == 0,
+            "category": p.get("category")
+        })
+    
+    for b in bundles_with_protocol:
+        recommendations.append({
+            "type": "bundle",
+            "id": str(b["_id"]),
+            "name": b.get("name"),
+            "discount_percent": b.get("discount_percent", 15),
+            "protocol_count": len(b.get("protocol_ids", [])),
+            "category": b.get("category")
+        })
+    
+    return {
+        "recommendations": recommendations,
+        "funny_message": random.choice(funny_messages),
+        "cross_sell_count": len(recommendations)
+    }
+
+
+@router.post("/admin/set-featured")
+async def set_featured_bundle(data: dict, user = Depends(get_current_user)):
+    """Set the Bundle of the Week (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    bundle_id = data.get("bundle_id")
+    
+    if bundle_id:
+        # Verify bundle exists
+        try:
+            bundle = await db.protocol_bundles.find_one({"_id": ObjectId(bundle_id), "is_active": True})
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid bundle ID")
+        
+        if not bundle:
+            raise HTTPException(status_code=404, detail="Bundle not found")
+    
+    # Update the setting
+    await db.settings.update_one(
+        {"key": "bundle_of_week_id"},
+        {"$set": {"value": bundle_id or ""}},
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "message": f"Bundle of the Week {'set' if bundle_id else 'cleared'}!",
+        "bundle_id": bundle_id
+    }
+
