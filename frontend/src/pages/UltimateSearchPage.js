@@ -323,6 +323,7 @@ const UltimateSearchPage = ({ showToast }) => {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ 
+          name: editCategoryName,
           protocol: editProtocol,
           is_public: editIsPublic
         })
@@ -338,7 +339,7 @@ const UltimateSearchPage = ({ showToast }) => {
       }
       
       if (res.ok) {
-        showToast('Protocol updated!', 'success');
+        showToast('Category updated successfully!', 'success');
         fetchCategories();
         setEditingCategory(null);
       } else {
@@ -346,7 +347,7 @@ const UltimateSearchPage = ({ showToast }) => {
       }
     } catch (e) {
       console.error('Update error:', e);
-      showToast('Failed to update protocol', 'error');
+      showToast('Failed to update category', 'error');
     }
   };
 
