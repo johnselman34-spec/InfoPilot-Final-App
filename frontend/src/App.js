@@ -1586,7 +1586,18 @@ const WelcomeSaleBanner = ({ onUpgrade, compact }) => {
 // MEGA Book Sales Banner - New Design
 const BookSalesBanner = ({ variant = "full" }) => {
   const [currentImage, setCurrentImage] = useState(0);
+  const [currentQuote, setCurrentQuote] = useState(0);
   const bookImages = [IMAGES.bookCoverMain, IMAGES.bookCover1, IMAGES.bookCover2, IMAGES.bookCover3, IMAGES.bookCover4];
+  
+  // Hilarious taglines that rotate
+  const funnyTaglines = [
+    "The Navy Taught Me to Fly Jets. The Universe Taught Me Everything Else.",
+    "Get yourself giggling in disoriented, stupefying hee-haw laughter!",
+    "Hurricane-force winds of laughter from the most skeptical of minds!",
+    "Finally, an easy-to-read novella that flows - you won't be able to put it down!",
+    "50+ zingers in succession. Bat-shit insane? Maybe. Unforgettable? Definitely.",
+    "Written by a U.S. Naval Officer who graduated FIRST in his class!"
+  ];
   
   useEffect(() => {
     const timer = setInterval(() => {
@@ -1595,7 +1606,27 @@ const BookSalesBanner = ({ variant = "full" }) => {
     return () => clearInterval(timer);
   }, [bookImages.length]);
   
+  useEffect(() => {
+    const quoteTimer = setInterval(() => {
+      setCurrentQuote((prev) => (prev + 1) % funnyTaglines.length);
+    }, 6000);
+    return () => clearInterval(quoteTimer);
+  }, [funnyTaglines.length]);
+  
   const openAmazon = () => window.open(BOOK_INFO.amazonUrl, '_blank');
+  
+  // Mini variant for sidebars and small spaces
+  if (variant === "mini") {
+    return (
+      <div className="bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/50 rounded-lg p-3 cursor-pointer hover:scale-[1.02] transition-transform" onClick={openAmazon}>
+        <p className="text-pink-400 font-mono text-xs text-center font-bold">
+          📚 NEW: Letters to Evelyn
+        </p>
+        <p className="text-purple-400/60 font-mono text-xs text-center">Only $2.99!</p>
+        <p className="text-yellow-400/80 font-mono text-[10px] text-center mt-1">⭐⭐⭐⭐⭐ 19 Reviews</p>
+      </div>
+    );
+  }
   
   if (variant === "compact") {
     return (
@@ -1610,12 +1641,68 @@ const BookSalesBanner = ({ variant = "full" }) => {
               </div>
             </div>
             <p className="text-purple-300 text-xs font-mono">19 Five-Star Reviews • Supernatural Thriller Comedy</p>
-            <p className="text-blue-300/70 text-xs font-mono italic mt-1">"A profound and unforgettable literary piece"</p>
+            <p className="text-blue-300/70 text-xs font-mono italic mt-1 line-clamp-1">"{funnyTaglines[currentQuote]}"</p>
+            <p className="text-yellow-400/60 text-[10px] font-mono mt-1">By World Record Navy Pilot John Selman</p>
           </div>
           <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-mono text-sm rounded hover:scale-105 transition-transform flex items-center gap-1">
             <ShoppingCart className="w-4 h-4" />
-            GET BOOK
+            $2.99
           </button>
+        </div>
+      </div>
+    );
+  }
+  
+  // Hero variant for special pages
+  if (variant === "hero") {
+    return (
+      <div className="relative overflow-hidden bg-gradient-to-br from-purple-900 via-pink-900/80 to-blue-900 border-2 border-pink-500 rounded-2xl">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9InN0YXJzIiB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjEiIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4zIi8+PGNpcmNsZSBjeD0iMTAiIGN5PSI1MCIgcj0iMC41IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMiIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iMTAiIHI9IjAuNSIgZmlsbD0iI2ZmZiIgZmlsbC1vcGFjaXR5PSIwLjIiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjc3RhcnMpIi8+PC9zdmc+')] opacity-50"></div>
+        <div className="relative p-8">
+          <div className="text-center mb-6">
+            <span className="inline-block px-4 py-1 bg-yellow-500/20 border border-yellow-500/50 rounded-full text-yellow-400 font-mono text-sm mb-4 animate-pulse">
+              🏆 OPTIONED FOR FILM • 19 FIVE-STAR REVIEWS
+            </span>
+            <h2 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 font-mono tracking-wider mb-2">
+              LETTERS TO EVELYN
+            </h2>
+            <p className="text-xl text-pink-300 font-mono">A True Supernatural Thriller Comedy</p>
+            <p className="text-purple-300/70 font-mono text-sm">By World Record Aviation Holder <span className="text-yellow-400 font-bold">John Selman</span></p>
+          </div>
+          
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="md:w-1/3 flex justify-center">
+              <img 
+                src={bookImages[currentImage]} 
+                alt="Letters to Evelyn" 
+                className="w-48 h-auto rounded-lg shadow-2xl shadow-pink-500/40 hover:scale-105 transition-transform cursor-pointer"
+                onClick={openAmazon}
+              />
+            </div>
+            <div className="md:w-2/3 text-center md:text-left">
+              <p className="text-2xl text-purple-200 font-mono italic mb-6 min-h-[60px] transition-all">
+                "{funnyTaglines[currentQuote]}"
+              </p>
+              
+              <div className="bg-black/30 rounded-lg p-4 mb-6">
+                <p className="text-purple-200/90 font-mono text-sm italic">
+                  "A profound and unforgettable literary piece... The author's imagination is off the charts!"
+                </p>
+                <p className="text-pink-400 font-mono text-xs mt-2">— Readers' Favorite ⭐⭐⭐⭐⭐</p>
+              </div>
+              
+              <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                <a href={BOOK_INFO.amazonUrl} target="_blank" rel="noopener noreferrer" className="px-8 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold font-mono rounded-lg hover:scale-105 transition-transform shadow-lg flex items-center gap-2 text-lg">
+                  <ShoppingCart className="w-6 h-6" />
+                  BUY NOW - $2.99
+                </a>
+                <a href={BOOK_INFO.googleDriveUrl} target="_blank" rel="noopener noreferrer" className="px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-mono rounded-lg hover:scale-105 transition-transform flex items-center gap-2">
+                  <Gift className="w-5 h-5" />
+                  FREE PREVIEW
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -1635,6 +1722,9 @@ const BookSalesBanner = ({ variant = "full" }) => {
               />
               <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-black px-2 py-1 rounded font-bold text-xs">
                 ⭐ 19 FIVE-STAR REVIEWS
+              </div>
+              <div className="absolute bottom-2 left-2 bg-pink-500/90 text-white px-2 py-1 rounded font-bold text-xs">
+                🎬 OPTIONED FOR FILM
               </div>
             </div>
             {/* Thumbnail Gallery */}
@@ -1660,6 +1750,7 @@ const BookSalesBanner = ({ variant = "full" }) => {
             </div>
             
             <p className="text-purple-300 font-mono mb-2">By World Record Aviation Holder <span className="text-pink-400 font-bold">John Selman</span></p>
+            <p className="text-yellow-400/60 font-mono text-xs mb-2">A Top Pilot Enterprises, Inc. Publication</p>
             
             <div className="flex items-center gap-4 mb-4">
               <div className="flex">
@@ -1669,8 +1760,8 @@ const BookSalesBanner = ({ variant = "full" }) => {
               <span className="text-purple-300 font-mono text-sm">(19 Professional Reviews)</span>
             </div>
             
-            <p className="text-xl text-pink-300 font-mono italic mb-4">
-              "{BOOK_INFO.tagline}"
+            <p className="text-xl text-pink-300 font-mono italic mb-4 min-h-[50px]">
+              "{funnyTaglines[currentQuote]}"
             </p>
             
             <p className="text-purple-300/80 font-mono text-sm mb-4">
@@ -1694,16 +1785,16 @@ const BookSalesBanner = ({ variant = "full" }) => {
                 className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold font-mono rounded-lg hover:scale-105 transition-transform shadow-lg flex items-center gap-2"
               >
                 <ShoppingCart className="w-5 h-5" />
-                BUY ON AMAZON
+                BUY ON AMAZON - $2.99
               </a>
               <a
-                href={BOOK_INFO.officialUrl}
+                href={BOOK_INFO.googleDriveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-mono rounded-lg hover:scale-105 transition-transform flex items-center gap-2"
+                className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-mono rounded-lg hover:scale-105 transition-transform flex items-center gap-2"
               >
-                <ExternalLink className="w-5 h-5" />
-                OFFICIAL SITE
+                <Gift className="w-5 h-5" />
+                FREE PREVIEW
               </a>
               <a
                 href={BOOK_INFO.readersFavoriteUrl}
