@@ -604,6 +604,10 @@ const AdminPanel = ({ showToast }) => {
           <ABTestDashboard showToast={showToast} />
         )}
 
+        {activeTab === 'optimizer' && (
+          <ABOptimizerAdmin token={token} showToast={showToast} />
+        )}
+
         {activeTab === 'email-reports' && (
           <EmailReportsTab token={token} showToast={showToast} />
         )}
