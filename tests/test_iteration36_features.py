@@ -268,16 +268,15 @@ class TestCategoriesWithCounts:
         assert response.status_code == 200
         data = response.json()
         
-        categories = data.get("categories", [])
+        # Categories endpoint returns a list directly
+        categories = data if isinstance(data, list) else data.get("categories", [])
         if categories:
             category = categories[0]
             # Check for count fields
-            assert "result_count" in category or "protocol_count" in category
-            print(f"✅ Categories include count fields")
-            
-            # Check for subcategory_count if applicable
-            if "subcategory_count" in category:
-                print(f"   Subcategory count present")
+            assert "result_count" in category, "result_count field missing"
+            assert "subcategory_count" in category, "subcategory_count field missing"
+            print(f"✅ Categories include result_count and subcategory_count fields")
+            print(f"   First category: {category.get('name')} - {category.get('result_count')} results, {category.get('subcategory_count')} subcategories")
         else:
             print("✅ Categories endpoint working (no categories yet)")
 
