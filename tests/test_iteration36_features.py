@@ -12,8 +12,9 @@ BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 # Test credentials
 ADMIN_EMAIL = "jjspilot24@gmail.com"
 ADMIN_PASSWORD = "InfoPilot2024!"
-TEST_EMAIL = "testuser@example.com"
-TEST_PASSWORD = "password123"
+# Using admin credentials for all authenticated tests since test user doesn't exist
+TEST_EMAIL = "jjspilot24@gmail.com"
+TEST_PASSWORD = "InfoPilot2024!"
 
 
 class TestHealthAndBasics:
