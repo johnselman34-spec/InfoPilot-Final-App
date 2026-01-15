@@ -293,101 +293,86 @@ class TestAuthenticatedGamification:
 class TestProtocolParserAbbreviations:
     """Test protocol parser handles abbreviations correctly"""
     
-    @pytest.fixture
-    def auth_token(self):
-        """Get authentication token for admin user"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": "jjspilot24@gmail.com",
-            "password": "InfoPilot2024!"
-        })
-        if response.status_code == 200:
-            return response.json().get("token")
-        pytest.skip("Authentication failed - skipping authenticated tests")
-    
-    def test_protocol_parser_debug_william_c_gamble(self, auth_token):
+    def test_protocol_parser_william_c_gamble(self):
         """Test protocol parser handles 'William C. Gamble' abbreviation"""
-        headers = {"Authorization": f"Bearer {auth_token}"}
-        
         # Test protocol with abbreviated name
         protocol = "(William C. Gamble or William Gamble) & (Civil War or military)"
         
-        response = requests.post(f"{BASE_URL}/api/protocols/debug", 
-            json={"protocol": protocol},
-            headers=headers
+        response = requests.post(f"{BASE_URL}/api/protocol/validate", 
+            json={"protocol": protocol}
         )
         
-        # If endpoint exists
-        if response.status_code == 200:
-            data = response.json()
-            assert data.get("valid") == True, "Protocol should be valid"
-            
-            # Check that terms are parsed correctly
-            groups = data.get("groups", [])
-            assert len(groups) >= 1, "Should have at least 1 group"
-            
-            # First group should contain "William C. Gamble"
-            first_group_terms = groups[0].get("terms", [])
-            assert "William C. Gamble" in first_group_terms or "William Gamble" in first_group_terms, \
-                f"First group should contain name terms, got: {first_group_terms}"
-            
-            print(f"SUCCESS: Protocol parser correctly handles 'William C. Gamble'. Groups: {groups}")
-        else:
-            # Endpoint may not exist, skip
-            pytest.skip(f"Protocol debug endpoint returned {response.status_code}")
-    
-    def test_protocol_parser_debug_john_j_s(self, auth_token):
-        """Test protocol parser handles 'John J S' abbreviation"""
-        headers = {"Authorization": f"Bearer {auth_token}"}
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        data = response.json()
+        assert data.get("valid") == True, "Protocol should be valid"
         
+        # Check that terms are parsed correctly
+        groups = data.get("groups", [])
+        assert len(groups) >= 1, "Should have at least 1 group"
+        
+        # First group should contain "William C. Gamble"
+        first_group_terms = groups[0].get("terms", [])
+        assert "William C. Gamble" in first_group_terms or "William Gamble" in first_group_terms, \
+            f"First group should contain name terms, got: {first_group_terms}"
+        
+        print(f"SUCCESS: Protocol parser correctly handles 'William C. Gamble'. Groups: {groups}")
+    
+    def test_protocol_parser_john_j_s(self):
+        """Test protocol parser handles 'John J S' abbreviation"""
         protocol = "(John J S or John S.) & (pilot or aviation)"
         
-        response = requests.post(f"{BASE_URL}/api/protocols/debug", 
-            json={"protocol": protocol},
-            headers=headers
+        response = requests.post(f"{BASE_URL}/api/protocol/validate", 
+            json={"protocol": protocol}
         )
         
-        if response.status_code == 200:
-            data = response.json()
-            assert data.get("valid") == True, "Protocol should be valid"
-            print(f"SUCCESS: Protocol parser correctly handles 'John J S'. Data: {data}")
-        else:
-            pytest.skip(f"Protocol debug endpoint returned {response.status_code}")
-    
-    def test_protocol_parser_debug_nm_location(self, auth_token):
-        """Test protocol parser handles 'NM' state abbreviation"""
-        headers = {"Authorization": f"Bearer {auth_token}"}
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        data = response.json()
+        assert data.get("valid") == True, "Protocol should be valid"
         
+        groups = data.get("groups", [])
+        first_group_terms = groups[0].get("terms", [])
+        assert "John J S" in first_group_terms or "John S." in first_group_terms, \
+            f"First group should contain name terms, got: {first_group_terms}"
+        
+        print(f"SUCCESS: Protocol parser correctly handles 'John J S'. Data: {data}")
+    
+    def test_protocol_parser_nm_location(self):
+        """Test protocol parser handles 'NM' state abbreviation"""
         protocol = "(Albuquerque, NM or New Mexico) & (history or records)"
         
-        response = requests.post(f"{BASE_URL}/api/protocols/debug", 
-            json={"protocol": protocol},
-            headers=headers
+        response = requests.post(f"{BASE_URL}/api/protocol/validate", 
+            json={"protocol": protocol}
         )
         
-        if response.status_code == 200:
-            data = response.json()
-            assert data.get("valid") == True, "Protocol should be valid"
-            print(f"SUCCESS: Protocol parser correctly handles 'NM' location. Data: {data}")
-        else:
-            pytest.skip(f"Protocol debug endpoint returned {response.status_code}")
-    
-    def test_protocol_parser_debug_ger_country(self, auth_token):
-        """Test protocol parser handles 'GER' country abbreviation"""
-        headers = {"Authorization": f"Bearer {auth_token}"}
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        data = response.json()
+        assert data.get("valid") == True, "Protocol should be valid"
         
+        groups = data.get("groups", [])
+        first_group_terms = groups[0].get("terms", [])
+        assert "Albuquerque, NM" in first_group_terms or "New Mexico" in first_group_terms, \
+            f"First group should contain location terms, got: {first_group_terms}"
+        
+        print(f"SUCCESS: Protocol parser correctly handles 'NM' location. Data: {data}")
+    
+    def test_protocol_parser_ger_country(self):
+        """Test protocol parser handles 'GER' country abbreviation"""
         protocol = "(Heidelberg, GER or Germany) & (university or research)"
         
-        response = requests.post(f"{BASE_URL}/api/protocols/debug", 
-            json={"protocol": protocol},
-            headers=headers
+        response = requests.post(f"{BASE_URL}/api/protocol/validate", 
+            json={"protocol": protocol}
         )
         
-        if response.status_code == 200:
-            data = response.json()
-            assert data.get("valid") == True, "Protocol should be valid"
-            print(f"SUCCESS: Protocol parser correctly handles 'GER' country. Data: {data}")
-        else:
-            pytest.skip(f"Protocol debug endpoint returned {response.status_code}")
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        data = response.json()
+        assert data.get("valid") == True, "Protocol should be valid"
+        
+        groups = data.get("groups", [])
+        first_group_terms = groups[0].get("terms", [])
+        assert "Heidelberg, GER" in first_group_terms or "Germany" in first_group_terms, \
+            f"First group should contain location terms, got: {first_group_terms}"
+        
+        print(f"SUCCESS: Protocol parser correctly handles 'GER' country. Data: {data}")
 
 
 class TestLevelSystem:
