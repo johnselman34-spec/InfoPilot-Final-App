@@ -502,17 +502,6 @@ async def debug_protocol(request: ProtocolDebugRequest):
             "search_query": "",
             "would_match_test": False
         }
-            await db.categories.update_one(
-                {"id": category_id, "user_id": user["id"]},
-                {"$set": update_data}
-            )
-        
-        return {"success": True}
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        logger.error(f"Update category error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.delete("/categories/{category_id}")
 async def delete_category(category_id: str, authorization: Optional[str] = Header(None)):
