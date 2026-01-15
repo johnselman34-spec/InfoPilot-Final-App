@@ -861,12 +861,16 @@ MARKETPLACE_PLATFORM_FEE = 0.10  # 10% to platform
 MARKETPLACE_SELLER_SHARE = 0.90  # 90% to seller
 MIN_PAYOUT_THRESHOLD = 1.00  # PayPal minimum
 
+# Price range updated: $1.00 to $99.00
+MIN_PROTOCOL_PRICE = 1.00
+MAX_PROTOCOL_PRICE = 99.00
+
 @api_router.get("/marketplace/protocols")
 async def get_marketplace_protocols(
     sort: str = Query("popularity", regex="^(popularity|price|recent)$"),
-    min_price: float = Query(1.01, ge=1.01),
-    max_price: float = Query(2.99, le=2.99),
-    limit: int = Query(100, le=500)
+    min_price: float = Query(1.00, ge=0),
+    max_price: float = Query(99.00, le=999),
+    limit: int = Query(200, le=500)
 ):
     """Get all protocols for sale on the marketplace - THE WORLD'S GREATEST PROTOCOL BAZAAR! 🎪"""
     try:
@@ -879,13 +883,14 @@ async def get_marketplace_protocols(
         else:  # recent
             sort_criteria = {"created_at": -1}
         
-        # Query protocols for sale
+        protocols = []
+        
+        # 1. First get explicitly listed marketplace protocols
         protocols_cursor = db.marketplace_protocols.find({
             "is_for_sale": True,
             "price": {"$gte": min_price, "$lte": max_price}
         }).sort(list(sort_criteria.items())).limit(limit)
         
-        protocols = []
         async for protocol in protocols_cursor:
             # Get category and user info
             category = await db.categories.find_one({"id": protocol["category_id"]})
@@ -898,23 +903,79 @@ async def get_marketplace_protocols(
                 "user_id": protocol["user_id"],
                 "username": user["username"] if user else "Anonymous Genius",
                 "price": protocol["price"],
-                "is_for_sale": protocol["is_for_sale"],
+                "is_for_sale": True,
                 "category_id": protocol["category_id"],
                 "description": protocol.get("description", "A protocol so good, words fail us! 🚀"),
                 "purchase_count": protocol.get("purchase_count", 0),
                 "location": protocol.get("location"),
-                "created_at": protocol.get("created_at").isoformat() if protocol.get("created_at") else None
+                "created_at": protocol.get("created_at").isoformat() if protocol.get("created_at") else None,
+                "from_public_category": False
             })
         
+        # 2. AUTO-LIST: Also get ALL public categories that aren't explicitly listed
+        existing_category_ids = [p["category_id"] for p in protocols]
+        
+        public_categories_cursor = db.categories.find({
+            "is_public": True,
+            "id": {"$nin": existing_category_ids}  # Exclude already listed ones
+        }).limit(limit - len(protocols))
+        
+        async for category in public_categories_cursor:
+            user = await db.users.find_one({"id": category["user_id"]})
+            
+            # Auto-list public categories with "Pay What You Want" pricing
+            protocols.append({
+                "id": f"auto_{category['id']}",
+                "name": category["name"],
+                "protocol_string": category["protocol"],
+                "user_id": category["user_id"],
+                "username": user["username"] if user else "Anonymous Genius",
+                "price": 0,  # Pay What You Want - buyer chooses!
+                "is_for_sale": True,
+                "category_id": category["id"],
+                "description": f"🎁 PAY WHAT YOU WANT! This amazing protocol '{category['name']}' is available at YOUR price! Support the creator!",
+                "purchase_count": 0,
+                "location": generate_random_location(),
+                "created_at": category.get("created_at").isoformat() if category.get("created_at") else None,
+                "from_public_category": True,
+                "pay_what_you_want": True
+            })
+        
+        # Sort combined results
+        if sort == "popularity":
+            protocols.sort(key=lambda x: x.get("purchase_count", 0), reverse=True)
+        elif sort == "price":
+            protocols.sort(key=lambda x: x.get("price", 0))
+        else:  # recent
+            protocols.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        
         return {
-            "protocols": protocols, 
+            "protocols": protocols[:limit], 
             "total": len(protocols),
-            "message": f"🎉 {len(protocols)} AMAZING protocols available! Get 'em while they're hot!"
+            "message": f"🎉 {len(protocols)} AMAZING protocols available! Get 'em while they're hot!",
+            "includes_pay_what_you_want": any(p.get("pay_what_you_want") for p in protocols)
         }
         
     except Exception as e:
         logger.error(f"Marketplace load error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+def generate_random_location():
+    """Generate random location for protocols without location data"""
+    import random
+    locations = [
+        {"latitude": 40.7128, "longitude": -74.0060, "city": "New York", "country": "USA"},
+        {"latitude": 51.5074, "longitude": -0.1278, "city": "London", "country": "UK"},
+        {"latitude": 48.8566, "longitude": 2.3522, "city": "Paris", "country": "France"},
+        {"latitude": 35.6762, "longitude": 139.6503, "city": "Tokyo", "country": "Japan"},
+        {"latitude": -33.8688, "longitude": 151.2093, "city": "Sydney", "country": "Australia"},
+        {"latitude": 55.7558, "longitude": 37.6173, "city": "Moscow", "country": "Russia"},
+        {"latitude": -22.9068, "longitude": -43.1729, "city": "Rio", "country": "Brazil"},
+        {"latitude": 52.5200, "longitude": 13.4050, "city": "Berlin", "country": "Germany"},
+        {"latitude": 34.0522, "longitude": -118.2437, "city": "Los Angeles", "country": "USA"},
+        {"latitude": 37.7749, "longitude": -122.4194, "city": "San Francisco", "country": "USA"},
+    ]
+    return random.choice(locations)
 
 @api_router.post("/marketplace/sell")
 async def list_protocol_for_sale(
