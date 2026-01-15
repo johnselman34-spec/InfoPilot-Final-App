@@ -2156,7 +2156,8 @@ const CategoriesPage = () => {
       protocol_string: cat.protocol_string, 
       is_public: cat.is_public,
       for_sale: cat.for_sale || false,
-      price: cat.price || 0.75
+      price: cat.price || 0.75,
+      location: cat.location || { city: '', state: '', lat: null, lng: null }
     }); 
     setShowEdit(true); 
   };
@@ -2171,7 +2172,8 @@ const CategoriesPage = () => {
         protocol_string: editingCategory.protocol_string, 
         is_public: editingCategory.is_public,
         for_sale: !editingCategory.is_public && editingCategory.for_sale,
-        price: (!editingCategory.is_public && editingCategory.for_sale) ? editingCategory.price : null
+        price: (!editingCategory.is_public && editingCategory.for_sale) ? editingCategory.price : null,
+        location: (!editingCategory.is_public && editingCategory.for_sale && editingCategory.location?.city) ? editingCategory.location : null
       });
       toast.success("CATEGORY UPDATED");
       setShowEdit(false);
