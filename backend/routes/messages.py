@@ -259,6 +259,15 @@ async def send_message(
         "created_at": datetime.now(timezone.utc)
     })
     
+    # Send push notification if recipient is offline
+    if other_id not in dm_connections:
+        await send_dm_push_notification(
+            recipient_id=other_id,
+            sender_name=user.get('username', 'Someone'),
+            message_preview=preview,
+            conversation_id=conversation_id
+        )
+    
     return {
         "id": str(result.inserted_id),
         "image_url": image_url,

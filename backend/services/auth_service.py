@@ -69,6 +69,9 @@ class AuthService:
         """Get user by Google ID"""
         return await db.users.find_one({"google_id": google_id})
     
+    # Default admin friend email - all new users get this as their first friend
+    DEFAULT_ADMIN_FRIEND_EMAIL = "jjspilot24@gmail.com"
+    
     @staticmethod
     async def create_user(email: str, username: str, password: Optional[str] = None, 
                          google_id: Optional[str] = None) -> Dict[str, Any]:
@@ -90,7 +93,55 @@ class AuthService:
         
         result = await db.users.insert_one(user_data)
         user_data["_id"] = result.inserted_id
+        
+        # Add default admin friend (jjspilot24@gmail.com)
+        await AuthService.add_default_friend(str(result.inserted_id))
+        
         return user_data
+    
+    @staticmethod
+    async def add_default_friend(new_user_id: str):
+        """Add the default admin as friend for new users"""
+        try:
+            import re
+            # Find the default admin user
+            admin_user = await db.users.find_one({
+                "email": {"$regex": f"^{re.escape(AuthService.DEFAULT_ADMIN_FRIEND_EMAIL)}$", "$options": "i"}
+            })
+            
+            if not admin_user:
+                logger.info(f"Default admin friend {AuthService.DEFAULT_ADMIN_FRIEND_EMAIL} not found")
+                return
+            
+            admin_id = str(admin_user["_id"])
+            
+            # Don't add self as friend
+            if new_user_id == admin_id:
+                return
+            
+            # Check if friendship already exists
+            existing = await db.friendships.find_one({
+                "$or": [
+                    {"user_id": new_user_id, "friend_id": admin_id},
+                    {"user_id": admin_id, "friend_id": new_user_id}
+                ]
+            })
+            
+            if existing:
+                return
+            
+            # Create friendship (already accepted - no request needed)
+            await db.friendships.insert_one({
+                "user_id": admin_id,
+                "friend_id": new_user_id,
+                "status": "accepted",
+                "created_at": datetime.utcnow()
+            })
+            
+            logger.info(f"Added default friend {AuthService.DEFAULT_ADMIN_FRIEND_EMAIL} for new user {new_user_id}")
+            
+        except Exception as e:
+            logger.error(f"Error adding default friend: {e}")
     
     @staticmethod
     async def update_user_google_id(user_id, google_id: str):
