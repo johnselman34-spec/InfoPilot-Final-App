@@ -525,13 +525,23 @@ export default function MarketplaceScreen() {
               <Text style={styles.modalProtocolText}>{selectedProtocol.protocol_string}</Text>
             </View>
             
-            <TouchableOpacity 
-              style={styles.modalBuyButton}
-              onPress={() => handlePurchase(selectedProtocol)}
-            >
-              <Ionicons name="cart" size={24} color={colors.white} />
-              <Text style={styles.modalBuyText}>BUY NOW FOR ${selectedProtocol.price.toFixed(2)}</Text>
-            </TouchableOpacity>
+            {selectedProtocol.price === 0 || selectedProtocol.pay_what_you_want ? (
+              <TouchableOpacity 
+                style={styles.modalCopyButton}
+                onPress={() => handleCopyProtocol(selectedProtocol)}
+              >
+                <Ionicons name="copy" size={24} color={colors.white} />
+                <Text style={styles.modalBuyText}>COPY PROTOCOL FREE!</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                style={styles.modalBuyButton}
+                onPress={() => handlePurchase(selectedProtocol)}
+              >
+                <Ionicons name="cart" size={24} color={colors.white} />
+                <Text style={styles.modalBuyText}>BUY NOW FOR ${selectedProtocol.price.toFixed(2)}</Text>
+              </TouchableOpacity>
+            )}
             
             <Text style={styles.revenueNote}>
               90% goes to the creator • 10% keeps our servers running ☕
@@ -539,17 +549,7 @@ export default function MarketplaceScreen() {
           </View>
         </TouchableOpacity>
       )}
-
-      {/* Book Promotion Footer */}
-      <TouchableOpacity 
-        style={styles.bookPromo}
-        onPress={() => Linking.openURL('https://www.amazon.com/dp/your-book-id')}
-      >
-        <Text style={styles.bookPromoText}>
-          📚 Check out "Letters to Evelyn" - The book that started it all! 📚
-        </Text>
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
