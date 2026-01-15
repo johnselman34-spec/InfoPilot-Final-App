@@ -441,59 +441,6 @@ async def delete_bundle(bundle_id: str, user = Depends(get_current_user)):
     return {"success": True, "message": "Bundle deleted"}
 
 
-@router.get("/featured")
-async def get_featured_bundle():
-    """Get the Bundle of the Week (featured bundle)"""
-    # Check if there's a manually set bundle of the week
-    setting = await db.settings.find_one({"key": "bundle_of_week_id"})
-    featured_id = setting.get("value") if setting and setting.get("value") else None
-    
-    bundle = None
-    
-    if featured_id and featured_id.strip():
-        try:
-            bundle = await db.protocol_bundles.find_one({
-                "_id": ObjectId(featured_id),
-                "is_active": True
-            })
-        except Exception:
-            pass
-    
-    # If no featured bundle set, get the most popular one
-    if not bundle:
-        bundles = await db.protocol_bundles.find({"is_active": True}).sort("total_sales", -1).limit(1).to_list(1)
-        if bundles:
-            bundle = bundles[0]
-    
-    if not bundle:
-        return {"featured": None, "message": "No bundles available yet! Create one to be featured! 🏆"}
-    
-    # Get protocol details
-    protocol_ids = [ObjectId(pid) for pid in bundle.get("protocol_ids", [])]
-    protocols = await db.marketplace_protocols.find({"_id": {"$in": protocol_ids}}).to_list(100)
-    
-    original_price = sum(p.get("price", 0) for p in protocols)
-    bundle_price = original_price * (1 - bundle.get("discount_percent", 15) / 100)
-    
-    return {
-        "featured": {
-            "id": str(bundle["_id"]),
-            "name": bundle.get("name"),
-            "description": bundle.get("description"),
-            "category": bundle.get("category"),
-            "protocol_count": len(protocols),
-            "protocols": [{"id": str(p["_id"]), "name": p.get("name")} for p in protocols],
-            "original_price": round(original_price, 2),
-            "bundle_price": round(bundle_price, 2),
-            "discount_percent": bundle.get("discount_percent", 15),
-            "savings": round(original_price - bundle_price, 2),
-            "total_sales": bundle.get("total_sales", 0),
-            "is_bundle_of_week": True
-        },
-        "funny_tagline": "🏆 This week's HOTTEST bundle! Grab it before it's gone! 🔥"
-    }
-
-
 @router.get("/cross-sell/{protocol_id}")
 async def get_cross_sell_recommendations(protocol_id: str, user = Depends(get_optional_user)):
     """Get cross-sell recommendations for a protocol during checkout"""
@@ -590,4 +537,5 @@ async def set_featured_bundle(data: dict, user = Depends(get_current_user)):
         "message": f"Bundle of the Week {'set' if bundle_id else 'cleared'}!",
         "bundle_id": bundle_id
     }
+
 
