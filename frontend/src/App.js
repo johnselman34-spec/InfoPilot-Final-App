@@ -7223,6 +7223,211 @@ const ModerationPanel = () => {
   );
 };
 
+// AI Marketing Panel Component
+const AIMarketingPanel = () => {
+  const [generating, setGenerating] = useState(false);
+  const [contentType, setContentType] = useState("tagline");
+  const [customContext, setCustomContext] = useState("");
+  const [generatedContent, setGeneratedContent] = useState("");
+  const [suggestions, setSuggestions] = useState(null);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
+
+  useEffect(() => { fetchSuggestions(); }, []);
+
+  const fetchSuggestions = async () => {
+    try {
+      const res = await axios.get(`${API}/ai/marketing-suggestions`);
+      setSuggestions(res.data);
+    } catch (error) {
+      console.error("Failed to fetch suggestions");
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const generateContent = async () => {
+    setGenerating(true);
+    setGeneratedContent("");
+    try {
+      const res = await axios.post(`${API}/ai/generate-marketing`, {
+        type: contentType,
+        context: customContext
+      });
+      if (res.data.success) {
+        setGeneratedContent(res.data.generated_content);
+        toast.success("Content generated successfully!");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Copied to clipboard!");
+  };
+
+  return (
+    <div className="space-y-6">
+      <FuturisticFrame title="🤖 AI MARKETING CONTENT GENERATOR" color="pink" className="bg-slate-900/80 border border-pink-500/30 rounded-lg">
+        <div className="space-y-4">
+          <p className="text-purple-300/70 font-mono text-sm">
+            Generate compelling marketing content for "Letters to Evelyn" using AI. Content is tailored for different platforms and purposes.
+          </p>
+
+          {/* Content Type Selection */}
+          <div>
+            <label className="block text-xs font-mono text-pink-400 mb-2">CONTENT TYPE</label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {[
+                { id: "tagline", label: "Tagline", icon: "✨" },
+                { id: "description", label: "Description", icon: "📝" },
+                { id: "social_post", label: "Social Post", icon: "📱" },
+                { id: "email", label: "Email Subject", icon: "📧" }
+              ].map(type => (
+                <button
+                  key={type.id}
+                  onClick={() => setContentType(type.id)}
+                  className={`p-3 rounded border font-mono text-sm flex items-center gap-2 ${
+                    contentType === type.id
+                      ? 'bg-pink-500/20 border-pink-500 text-pink-400'
+                      : 'bg-slate-950 border-purple-500/30 text-purple-300 hover:border-pink-500/50'
+                  }`}
+                >
+                  <span>{type.icon}</span> {type.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom Context */}
+          <div>
+            <label className="block text-xs font-mono text-pink-400 mb-2">ADDITIONAL CONTEXT (Optional)</label>
+            <input
+              type="text"
+              value={customContext}
+              onChange={(e) => setCustomContext(e.target.value)}
+              placeholder="E.g., 'Focus on humor' or 'Target military veterans'"
+              className="w-full px-4 py-2 bg-slate-950 border border-purple-500/30 rounded text-purple-300 font-mono text-sm focus:border-pink-500"
+            />
+          </div>
+
+          {/* Generate Button */}
+          <button
+            onClick={generateContent}
+            disabled={generating}
+            className="w-full px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white font-mono font-bold rounded hover:scale-[1.02] disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" /> GENERATING...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-5 h-5" /> GENERATE {contentType.toUpperCase().replace('_', ' ')}
+              </>
+            )}
+          </button>
+
+          {/* Generated Content */}
+          {generatedContent && (
+            <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-green-400 font-mono text-sm font-bold">GENERATED CONTENT</span>
+                <button
+                  onClick={() => copyToClipboard(generatedContent)}
+                  className="px-3 py-1 bg-green-500/20 text-green-400 rounded font-mono text-xs hover:bg-green-500/30 flex items-center gap-1"
+                >
+                  <Copy className="w-3 h-3" /> COPY
+                </button>
+              </div>
+              <p className="text-purple-200 font-mono text-sm whitespace-pre-wrap">{generatedContent}</p>
+            </div>
+          )}
+        </div>
+      </FuturisticFrame>
+
+      {/* Pre-Generated Suggestions */}
+      <FuturisticFrame title="📚 MARKETING CONTENT LIBRARY" color="purple" className="bg-slate-900/80 border border-purple-500/30 rounded-lg">
+        {loadingSuggestions ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-8 h-8 animate-spin text-pink-400" />
+          </div>
+        ) : suggestions && (
+          <div className="space-y-6">
+            {/* Taglines */}
+            <div>
+              <h4 className="text-pink-400 font-mono font-bold mb-3 flex items-center gap-2">
+                <Sparkles className="w-4 h-4" /> TAGLINES
+              </h4>
+              <div className="space-y-2">
+                {suggestions.taglines?.map((tagline, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 bg-slate-950 rounded border border-purple-500/20 hover:border-pink-500/50">
+                    <p className="flex-1 text-purple-300 font-mono text-sm italic">"{tagline}"</p>
+                    <button
+                      onClick={() => copyToClipboard(tagline)}
+                      className="p-2 text-purple-400 hover:text-pink-400 hover:bg-pink-500/10 rounded"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Social Posts */}
+            <div>
+              <h4 className="text-blue-400 font-mono font-bold mb-3 flex items-center gap-2">
+                <MessageCircle className="w-4 h-4" /> SOCIAL MEDIA POSTS
+              </h4>
+              <div className="space-y-2">
+                {suggestions.social_posts?.map((post, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 bg-slate-950 rounded border border-blue-500/20 hover:border-blue-500/50">
+                    <p className="flex-1 text-purple-300 font-mono text-sm">{post}</p>
+                    <button
+                      onClick={() => copyToClipboard(post)}
+                      className="p-2 text-purple-400 hover:text-blue-400 hover:bg-blue-500/10 rounded"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Email Subjects */}
+            <div>
+              <h4 className="text-yellow-400 font-mono font-bold mb-3 flex items-center gap-2">
+                <Mail className="w-4 h-4" /> EMAIL SUBJECTS
+              </h4>
+              <div className="space-y-2">
+                {suggestions.email_subjects?.map((email, i) => (
+                  <div key={i} className="p-3 bg-slate-950 rounded border border-yellow-500/20 hover:border-yellow-500/50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-yellow-400 font-mono text-sm font-bold">{email.subject}</p>
+                        <p className="text-purple-400/60 font-mono text-xs mt-1">{email.preview}</p>
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard(`Subject: ${email.subject}\nPreview: ${email.preview}`)}
+                        className="p-2 text-purple-400 hover:text-yellow-400 hover:bg-yellow-500/10 rounded"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </FuturisticFrame>
+    </div>
+  );
+};
+
 // Email Digest Panel Component  
 const EmailDigestPanel = () => {
   const [config, setConfig] = useState({ enabled: false, day_of_week: "monday", hour: 9, include_trending: true, include_marketplace: true, include_notifications: true, last_sent: null, total_sent: 0 });
