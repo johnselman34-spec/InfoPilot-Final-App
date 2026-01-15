@@ -385,3 +385,224 @@ async def get_laugh_leaderboard(limit: int = 20):
         "leaderboard": leaderboard,
         "total_participants": await db.laugh_stats.count_documents({})
     }
+
+
+# ==================== DAILY LAUGH GOAL ENDPOINTS ====================
+
+# Streak bonus XP values
+STREAK_BONUSES = {
+    3: 25,    # 3-day streak
+    7: 75,    # 1-week streak
+    14: 150,  # 2-week streak
+    30: 400,  # Monthly streak
+    100: 1000 # 100-day streak (LEGENDARY!)
+}
+
+@router.get("/daily-laugh-goal", response_model=dict)
+async def get_daily_laugh_goal(user = Depends(get_current_user)):
+    """Get user's daily laugh goal settings and progress"""
+    user_id = str(user["_id"])
+    
+    goal_data = await db.daily_laugh_goals.find_one({"user_id": user_id})
+    
+    if not goal_data:
+        # Create default goal
+        goal_data = {
+            "user_id": user_id,
+            "daily_goal": 10,  # Default: 10 laughs per day
+            "current_progress": 0,
+            "streak_days": 0,
+            "longest_streak": 0,
+            "total_goals_completed": 0,
+            "last_goal_date": None,
+            "streak_xp_earned": 0,
+            "created_at": datetime.utcnow()
+        }
+        await db.daily_laugh_goals.insert_one(goal_data)
+    
+    # Check if it's a new day and reset progress
+    today = datetime.utcnow().date()
+    last_goal_date = goal_data.get("last_goal_date")
+    
+    if last_goal_date:
+        last_date = last_goal_date.date() if isinstance(last_goal_date, datetime) else last_goal_date
+        if last_date < today:
+            # Check if goal was completed yesterday (maintain streak)
+            yesterday = today - timedelta(days=1)
+            if last_date == yesterday and goal_data.get("current_progress", 0) >= goal_data.get("daily_goal", 10):
+                # Streak continues!
+                pass
+            elif last_date < yesterday:
+                # Streak broken!
+                await db.daily_laugh_goals.update_one(
+                    {"user_id": user_id},
+                    {"$set": {"streak_days": 0, "current_progress": 0}}
+                )
+                goal_data["streak_days"] = 0
+                goal_data["current_progress"] = 0
+    
+    return {
+        "daily_goal": goal_data.get("daily_goal", 10),
+        "current_progress": goal_data.get("current_progress", 0),
+        "streak_days": goal_data.get("streak_days", 0),
+        "longest_streak": goal_data.get("longest_streak", 0),
+        "total_goals_completed": goal_data.get("total_goals_completed", 0),
+        "streak_xp_earned": goal_data.get("streak_xp_earned", 0),
+        "goal_completed_today": goal_data.get("current_progress", 0) >= goal_data.get("daily_goal", 10),
+        "next_streak_bonus": next((days for days in sorted(STREAK_BONUSES.keys()) if days > goal_data.get("streak_days", 0)), None)
+    }
+
+
+@router.post("/daily-laugh-goal/set", response_model=dict)
+async def set_daily_laugh_goal(data: dict, user = Depends(get_current_user)):
+    """Set user's daily laugh goal (5-100 laughs)"""
+    user_id = str(user["_id"])
+    new_goal = data.get("goal", 10)
+    
+    # Validate goal (5-100 range)
+    new_goal = max(5, min(100, int(new_goal)))
+    
+    await db.daily_laugh_goals.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {"daily_goal": new_goal},
+            "$setOnInsert": {
+                "current_progress": 0,
+                "streak_days": 0,
+                "longest_streak": 0,
+                "total_goals_completed": 0,
+                "streak_xp_earned": 0,
+                "created_at": datetime.utcnow()
+            }
+        },
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "daily_goal": new_goal,
+        "message": f"🎯 Daily laugh goal set to {new_goal}! Let the giggles begin!"
+    }
+
+
+@router.post("/daily-laugh-goal/record-progress", response_model=dict)
+async def record_daily_laugh_progress(user = Depends(get_current_user)):
+    """Record progress toward daily laugh goal"""
+    user_id = str(user["_id"])
+    today = datetime.utcnow()
+    
+    goal_data = await db.daily_laugh_goals.find_one({"user_id": user_id})
+    
+    if not goal_data:
+        goal_data = {
+            "user_id": user_id,
+            "daily_goal": 10,
+            "current_progress": 0,
+            "streak_days": 0,
+            "longest_streak": 0,
+            "total_goals_completed": 0,
+            "streak_xp_earned": 0
+        }
+        await db.daily_laugh_goals.insert_one(goal_data)
+    
+    daily_goal = goal_data.get("daily_goal", 10)
+    current_progress = goal_data.get("current_progress", 0) + 1
+    streak_days = goal_data.get("streak_days", 0)
+    longest_streak = goal_data.get("longest_streak", 0)
+    total_completed = goal_data.get("total_goals_completed", 0)
+    streak_xp = goal_data.get("streak_xp_earned", 0)
+    
+    goal_just_completed = False
+    streak_bonus_earned = 0
+    
+    # Check if goal just completed
+    if current_progress >= daily_goal and (goal_data.get("current_progress", 0) < daily_goal):
+        goal_just_completed = True
+        streak_days += 1
+        total_completed += 1
+        
+        # Update longest streak
+        if streak_days > longest_streak:
+            longest_streak = streak_days
+        
+        # Check for streak bonuses
+        if streak_days in STREAK_BONUSES:
+            streak_bonus_earned = STREAK_BONUSES[streak_days]
+            streak_xp += streak_bonus_earned
+            
+            # Award XP to laugh stats
+            await db.laugh_stats.update_one(
+                {"user_id": user_id},
+                {"$inc": {"xp": streak_bonus_earned}},
+                upsert=True
+            )
+    
+    # Update goal data
+    await db.daily_laugh_goals.update_one(
+        {"user_id": user_id},
+        {
+            "$set": {
+                "current_progress": current_progress,
+                "streak_days": streak_days,
+                "longest_streak": longest_streak,
+                "total_goals_completed": total_completed,
+                "last_goal_date": today,
+                "streak_xp_earned": streak_xp
+            }
+        }
+    )
+    
+    response = {
+        "success": True,
+        "current_progress": current_progress,
+        "daily_goal": daily_goal,
+        "goal_completed": current_progress >= daily_goal,
+        "streak_days": streak_days
+    }
+    
+    if goal_just_completed:
+        response["celebration"] = "🎉 DAILY GOAL COMPLETE! You're on FIRE!"
+        response["streak_message"] = f"🔥 {streak_days}-day streak! Keep it going!"
+    
+    if streak_bonus_earned > 0:
+        response["streak_bonus"] = {
+            "days": streak_days,
+            "xp_earned": streak_bonus_earned,
+            "message": f"🏆 STREAK BONUS! +{streak_bonus_earned} XP for {streak_days}-day streak!"
+        }
+    
+    return response
+
+
+@router.get("/daily-laugh-goal/leaderboard", response_model=dict)
+async def get_streak_leaderboard(limit: int = 20):
+    """Get the streak leaderboard - who has the longest laugh goal streak!"""
+    top_streakers = await db.daily_laugh_goals.find({}).sort("streak_days", -1).limit(limit).to_list(limit)
+    
+    leaderboard = []
+    for i, goal_data in enumerate(top_streakers):
+        # Get username
+        try:
+            user = await db.users.find_one({"_id": ObjectId(goal_data["user_id"])})
+            username = "Mystery Laugher"
+            if user:
+                username = user.get("callsign", user.get("username", user.get("email", "Unknown")))
+        except Exception:
+            username = "Mystery Laugher"
+        
+        leaderboard.append({
+            "rank": i + 1,
+            "username": username,
+            "streak_days": goal_data.get("streak_days", 0),
+            "longest_streak": goal_data.get("longest_streak", 0),
+            "total_goals_completed": goal_data.get("total_goals_completed", 0),
+            "daily_goal": goal_data.get("daily_goal", 10),
+            "streak_xp_earned": goal_data.get("streak_xp_earned", 0)
+        })
+    
+    return {
+        "leaderboard": leaderboard,
+        "total_participants": await db.daily_laugh_goals.count_documents({"streak_days": {"$gt": 0}}),
+        "funny_title": "🏆 Hall of Hilarious Habits 🏆"
+    }
+
