@@ -320,9 +320,11 @@ class TestRegressionBasicEndpoints:
     
     def test_ab_tests_endpoint(self):
         """Test A/B tests endpoint still works"""
-        response = self.session.get(f"{BASE_URL}/api/ab-tests")
+        response = self.session.get(f"{BASE_URL}/api/ab-testing/tests")
         assert response.status_code == 200, f"A/B tests endpoint failed: {response.status_code}"
-        print("✅ A/B tests endpoint working")
+        data = response.json()
+        assert "tests" in data, "Response should have 'tests' field"
+        print(f"✅ A/B tests endpoint working - {len(data['tests'])} tests found")
     
     def test_tutorials_endpoint(self):
         """Test tutorials endpoint still works"""
