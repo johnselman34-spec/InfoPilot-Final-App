@@ -82,15 +82,16 @@ class TestCategoriesAPI:
         assert response.status_code == 200, f"Failed to get categories: {response.text}"
         data = response.json()
         
-        assert "categories" in data, "Missing categories in response"
-        print(f"✓ Categories fetched successfully: {len(data['categories'])} categories")
+        # API returns list directly
+        assert isinstance(data, list), f"Expected list, got {type(data)}"
+        print(f"✓ Categories fetched successfully: {len(data)} categories")
     
     def test_create_category_with_location(self, auth_headers):
         """Test creating a category with location data for marketplace"""
         unique_id = str(uuid.uuid4())[:8]
         category_data = {
             "name": f"TEST_Location_Category_{unique_id}",
-            "protocol_string": "(test or location) & (marketplace)",
+            "protocol": "(test or location) & (marketplace)",  # API uses 'protocol' not 'protocol_string'
             "is_public": False,
             "for_sale": True,
             "price": 1.50,
@@ -128,7 +129,7 @@ class TestCategoriesAPI:
         unique_id = str(uuid.uuid4())[:8]
         create_data = {
             "name": f"TEST_Update_Location_{unique_id}",
-            "protocol_string": "(update or test)",
+            "protocol": "(update or test)",  # API uses 'protocol' not 'protocol_string'
             "is_public": False,
             "for_sale": True,
             "price": 0.99
@@ -236,13 +237,14 @@ class TestCleanup:
         """Clean up TEST_ prefixed categories"""
         response = requests.get(f"{BASE_URL}/api/categories", headers=auth_headers)
         if response.status_code == 200:
-            categories = response.json().get("categories", [])
-            test_categories = [c for c in categories if c["name"].startswith("TEST_")]
-            
-            for cat in test_categories:
-                requests.delete(f"{BASE_URL}/api/categories/{cat['id']}", headers=auth_headers)
-            
-            print(f"✓ Cleaned up {len(test_categories)} test categories")
+            categories = response.json()  # API returns list directly
+            if isinstance(categories, list):
+                test_categories = [c for c in categories if c["name"].startswith("TEST_")]
+                
+                for cat in test_categories:
+                    requests.delete(f"{BASE_URL}/api/categories/{cat['id']}", headers=auth_headers)
+                
+                print(f"✓ Cleaned up {len(test_categories)} test categories")
 
 
 if __name__ == "__main__":
