@@ -732,19 +732,26 @@ const UltimateSearchPage = ({ showToast }) => {
         <div className="modal-overlay" onClick={() => setEditingCategory(null)}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
             <div className="modal-header">
-              <h2>Edit Protocol: {editingCategory.name}</h2>
+              <h2>Edit Category</h2>
               <button className="modal-close" onClick={() => setEditingCategory(null)}>×</button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+              {/* Category Name Edit */}
+              <label style={{ color: '#f472b6', fontWeight: 600 }}>Category Name:</label>
+              <input
+                className="input-field"
+                placeholder="Category Name"
+                value={editCategoryName}
+                onChange={(e) => setEditCategoryName(e.target.value)}
+                data-testid="edit-category-name-input"
+              />
+              
               <div style={{ 
                 background: 'rgba(124, 58, 237, 0.1)', 
                 padding: 15, 
                 borderRadius: 10,
                 borderLeft: '4px solid #7c3aed'
               }}>
-                <p style={{ color: '#a1a1aa', fontSize: '0.85rem', marginBottom: 8 }}>
-                  <strong>Category:</strong> {editingCategory.name}
-                </p>
                 <p style={{ color: '#a1a1aa', fontSize: '0.85rem' }}>
                   <strong>Current Protocol:</strong>
                 </p>
@@ -764,7 +771,7 @@ const UltimateSearchPage = ({ showToast }) => {
               
               <label style={{ color: '#f472b6', fontWeight: 600 }}>New Protocol:</label>
               <textarea
-                className="input"
+                className="input-field"
                 placeholder="Enter new protocol (e.g., (keyphrase1 or keyphrase2) & (keyphrase3)+)"
                 rows={5}
                 value={editProtocol}
