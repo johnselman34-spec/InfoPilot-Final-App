@@ -298,16 +298,16 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 │   │   ├── messages.py     # Direct Messaging + Push Notifications (ENHANCED)
 │   │   ├── polls.py        # Polls CRUD
 │   │   ├── marketplace.py  # Protocol marketplace
-│   │   ├── bundles.py      # Protocol bundles
+│   │   ├── bundles.py      # Protocol bundles (ENHANCED)
 │   │   ├── chat.py         # Real-time group chat
 │   │   ├── newsletter.py   # AI Newsletter system
 │   │   ├── voice.py        # Voice Search
 │   │   ├── collaborate.py  # Collaborative Editing
 │   │   ├── statistics.py   # Statistics + Most Copied (ENHANCED)
 │   │   ├── gamification.py # Achievements system
-│   │   ├── tutorials.py    # Video Tutorials (NEW)
-│   │   ├── rate_limiting.py # Rate Limit Dashboard (NEW)
-│   │   ├── webhooks.py     # Webhook Integrations (NEW)
+│   │   ├── tutorials.py    # Video Tutorials
+│   │   ├── rate_limiting.py # Rate Limit Dashboard
+│   │   ├── webhooks.py     # Webhook Integrations
 │   │   ├── push_notifications.py  # Web push
 │   │   └── notifications.py # WebSocket notifications
 │   └── services/
@@ -316,8 +316,9 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 │       ├── location_service.py # Geo-extraction
 │       ├── auth_service.py    # Authentication + Default Friend (ENHANCED)
 │       ├── gamification_service.py # Achievement logic
-│       └── protocol_service.py # Protocol parsing
-├── browser-extension/      # Chrome Extension (NEW)
+│       ├── protocol_service.py # Protocol parsing
+│       └── triweekly_newsletter.py # Tri-Weekly Newsletter Scheduler (NEW)
+├── browser-extension/      # Chrome Extension
 │   ├── manifest.json
 │   ├── popup.html/js
 │   ├── background.js
@@ -328,15 +329,17 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
         ├── pages/
         │   ├── SocialPage.js       # Social Hub with Polls (ENHANCED)
         │   ├── MessagesPage.js     # Direct Messages
-        │   ├── TutorialsPage.js    # Video Tutorials (NEW)
+        │   ├── TutorialsPage.js    # Video Tutorials
         │   ├── UltimateSearchPage.js # Search with map + Copy buttons (ENHANCED)
-        │   ├── MarketplacePage.js  # Marketplace + Copy buttons (ENHANCED)
-        │   ├── StatisticsPage.js   # Stats + Most Copied (ENHANCED)
+        │   ├── MarketplacePage.js  # Marketplace + Bundles tab (ENHANCED)
+        │   ├── MapPage.js          # Interactive Map with auto-refresh (ENHANCED)
         │   ├── StatisticsPage.js   # Statistics dashboard
         │   ├── AchievementsPage.js # Gamification
         │   └── ChatPage.js         # Group chat
         ├── components/
         │   ├── shared/
+        │   ├── Marketplace/
+        │   │   └── ProtocolBundlesSection.js # Bundles UI (NEW)
         │   │   ├── PollCard.js     # Poll display + voting (NEW)
         │   │   └── VoiceSearchButton.js # Voice input (NEW)
         │   └── AdvancedAnalytics.js  # Recharts dashboard
