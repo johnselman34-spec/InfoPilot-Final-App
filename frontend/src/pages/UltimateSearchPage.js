@@ -584,6 +584,142 @@ const UltimateSearchPage = ({ showToast }) => {
         {showTemplates && <ProtocolTemplates showToast={showToast} onApplyTemplate={handleApplyTemplate} />}
       </div>
 
+      {/* Interactive Map for filtered results */}
+      {showMap && (
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+            <h3 style={{ color: '#f472b6', margin: 0 }}>
+              🗺️ Results Map 
+              <span style={{ 
+                fontSize: '0.85rem', 
+                color: '#a1a1aa', 
+                fontWeight: 'normal',
+                marginLeft: 10
+              }}>
+                {mapResults.length} location{mapResults.length !== 1 ? 's' : ''} plotted
+                {filterInfo.filter_applied && ` (${filterInfo.aggregation_mode.toUpperCase().replace('_', '/')} filter active)`}
+              </span>
+            </h3>
+            {/* Map Legend */}
+            {selectedCategories.length > 0 && (
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {selectedCategories.slice(0, 5).map((catId, idx) => {
+                  const cat = categories.find(c => c.id === catId);
+                  return cat ? (
+                    <span 
+                      key={catId}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 5,
+                        fontSize: '0.75rem',
+                        color: '#a1a1aa'
+                      }}
+                    >
+                      <span style={{ 
+                        width: 10, 
+                        height: 10, 
+                        borderRadius: '50%', 
+                        background: getCategoryColor(catId) 
+                      }}></span>
+                      {cat.name}
+                    </span>
+                  ) : null;
+                })}
+                {selectedCategories.length > 5 && (
+                  <span style={{ fontSize: '0.75rem', color: '#71717a' }}>+{selectedCategories.length - 5} more</span>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <div style={{ 
+            height: 400, 
+            borderRadius: 12, 
+            overflow: 'hidden',
+            border: '1px solid rgba(124, 58, 237, 0.3)'
+          }}>
+            <MapContainer
+              center={mapCenter}
+              zoom={mapZoom}
+              style={{ height: '100%', width: '100%' }}
+              key={`map-${mapCenter[0]}-${mapCenter[1]}`}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              />
+              {mapResults.map((result, idx) => (
+                <Marker 
+                  key={result.id || idx}
+                  position={[result.latitude, result.longitude]}
+                  icon={createCategoryIcon(
+                    result.categories?.length > 0 
+                      ? getCategoryColor(categories.find(c => result.categories.includes(c.name))?.id || '')
+                      : '#7c3aed'
+                  )}
+                >
+                  <Popup>
+                    <div style={{ maxWidth: 250 }}>
+                      <strong style={{ color: '#1e1b4b' }}>{result.title}</strong>
+                      <p style={{ fontSize: '0.8rem', margin: '5px 0', color: '#4b5563' }}>
+                        {result.snippet?.substring(0, 100)}...
+                      </p>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                        <span style={{ 
+                          fontSize: '0.7rem', 
+                          padding: '2px 6px', 
+                          background: '#e0e7ff', 
+                          borderRadius: 4,
+                          color: '#3730a3'
+                        }}>
+                          {result.article_type}
+                        </span>
+                        {result.categories?.map((cat, i) => (
+                          <span key={i} style={{ 
+                            fontSize: '0.7rem', 
+                            padding: '2px 6px', 
+                            background: '#fce7f3', 
+                            borderRadius: 4,
+                            color: '#be185d'
+                          }}>
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+                      <a 
+                        href={result.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ 
+                          fontSize: '0.75rem', 
+                          color: '#7c3aed', 
+                          display: 'block', 
+                          marginTop: 8 
+                        }}
+                      >
+                        Open Link →
+                      </a>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          </div>
+          
+          {mapResults.length === 0 && searchResults.length > 0 && (
+            <p style={{ 
+              color: '#a1a1aa', 
+              fontSize: '0.85rem', 
+              marginTop: 10,
+              textAlign: 'center'
+            }}>
+              💡 No results have location data. Results will appear on the map when they have latitude/longitude coordinates.
+            </p>
+          )}
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 20 }}>
         {/* Categories Sidebar */}
         <div className="card">
