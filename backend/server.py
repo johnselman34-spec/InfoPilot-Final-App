@@ -1092,50 +1092,65 @@ class InfoPilot2Parser:
         content_lower = content.lower()
         
         def phrase_matches(phrase: str, text: str) -> bool:
-            """Check if a phrase/word matches in text using word boundaries.
+            """Check if a phrase/word matches in text using flexible matching.
             
             Handles:
             - Multi-word phrases like 'William C. Gamble' as complete phrases
             - Abbreviations like 'Ph.D.', 'etc.', 'U.S.', 'Dr.'
-            - Personal pronouns with periods like 'C.' in names
-            - Case-insensitive matching
+            - Personal initials with/without periods: 'John J S', 'John J. S.', 'C.'
+            - Location abbreviations: 'Heidelberg, GER', 'Albuquerque, NM', 'Albuquerque, Nm'
+            - Case-insensitive matching for all patterns
             
             Uses simple string operations first for speed, then regex for edge cases.
             """
             phrase_lower = phrase.lower().strip()
             
-            # Quick check: if phrase not in text at all, skip regex
-            if phrase_lower not in text:
+            # Quick check: if phrase not in text at all (with some flexibility), skip
+            # Remove periods for initial check to handle "John J S" vs "John J. S."
+            phrase_no_periods = phrase_lower.replace('.', '').replace(',', ' ')
+            text_no_periods = text.replace('.', '').replace(',', ' ')
+            
+            # Normalize multiple spaces
+            phrase_normalized = ' '.join(phrase_no_periods.split())
+            text_normalized = ' '.join(text_no_periods.split())
+            
+            if phrase_normalized not in text_normalized and phrase_lower not in text:
                 return False
             
             # For single words without special chars, use simple word boundary check
-            if ' ' not in phrase_lower and '.' not in phrase_lower:
-                # Check if it's a whole word match using split
+            if ' ' not in phrase_lower and '.' not in phrase_lower and ',' not in phrase_lower:
                 words_in_text = set(re.findall(r'\b\w+\b', text))
                 return phrase_lower in words_in_text
             
-            # For abbreviations (contains periods), handle specially
-            if '.' in phrase_lower:
-                # Build a pattern that treats periods as literal dots
-                # And allows for optional spaces around periods in abbreviations
-                # E.g., "William C. Gamble" should match "William C. Gamble" and "William C Gamble"
-                escaped_parts = []
-                parts = phrase_lower.split('.')
-                for i, part in enumerate(parts):
-                    escaped_parts.append(re.escape(part.strip()))
-                    if i < len(parts) - 1:  # Don't add after last part
-                        # Allow optional period and optional space
-                        escaped_parts.append(r'\.?\s*')
-                
-                # Join and create pattern with word boundaries
-                pattern_core = ''.join(escaped_parts).rstrip(r'\.?\s*')
-                pattern = r'(?:^|[\s\.,;:!?\-\(\)\[\]"])' + pattern_core + r'(?:[\s\.,;:!?\-\(\)\[\]"]|$)'
-                return bool(re.search(pattern, text, re.IGNORECASE))
+            # Build flexible pattern for the phrase
+            # Handle initials (single letters followed by optional period and space)
+            # E.g., "John J S" matches "John J. S.", "John J S", "john j. s."
+            # E.g., "Heidelberg, GER" matches "Heidelberg, GER", "Heidelberg, Germany", "heidelberg, ger"
             
-            # For multi-word phrases without periods, use standard matching
-            escaped_phrase = re.escape(phrase_lower)
-            pattern = r'(?:^|[\s\.,;:!?\-\(\)\[\]"])' + escaped_phrase + r'(?:[\s\.,;:!?\-\(\)\[\]"]|$)'
-            return bool(re.search(pattern, text))
+            pattern_parts = []
+            words = phrase_lower.split()
+            
+            for word in words:
+                word = word.strip('.,;:')
+                if not word:
+                    continue
+                    
+                # Check if it's a single letter initial (possibly with period)
+                if len(word) == 1 or (len(word) == 2 and word.endswith('.')):
+                    # Single initial - match with or without period
+                    initial = word.rstrip('.')
+                    pattern_parts.append(re.escape(initial) + r'\.?\s*')
+                elif len(word) <= 3 and word.isupper():
+                    # Short abbreviation like "NM", "GER", "USA"
+                    pattern_parts.append(re.escape(word) + r'\.?\s*')
+                else:
+                    # Regular word
+                    pattern_parts.append(re.escape(word) + r'\s*')
+            
+            # Join pattern parts and add word boundaries
+            pattern = r'(?:^|[\s\.,;:!?\-\(\)\[\]"])' + ''.join(pattern_parts).rstrip(r'\s*') + r'(?:[\s\.,;:!?\-\(\)\[\]"]|$)'
+            
+            return bool(re.search(pattern, text, re.IGNORECASE))
         
         for group in parsed_protocol["groups"]:
             words = group["words"]
