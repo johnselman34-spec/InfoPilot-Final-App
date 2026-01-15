@@ -965,4 +965,46 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  // FREE badge and copy button styles
+  freeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.success,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+  },
+  freeText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  payWhatYouWantBadge: {
+    backgroundColor: colors.marketplaceGold,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  payWhatYouWantText: {
+    color: colors.background,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  copyButton: {
+    flexDirection: 'row',
+    backgroundColor: colors.success,
+    paddingVertical: 12,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  copyButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
 });
