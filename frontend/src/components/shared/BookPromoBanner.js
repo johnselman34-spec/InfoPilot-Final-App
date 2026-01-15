@@ -450,10 +450,11 @@ const BookPromoBanner = () => {
                 textDecoration: 'none',
                 boxShadow: '0 8px 30px rgba(236, 72, 153, 0.5)',
                 border: '2px solid rgba(255,255,255,0.2)',
-                transition: 'transform 0.2s'
+                transition: 'transform 0.2s',
+                animation: 'pulse 2s infinite'
               }}
             >
-              🛒 BUY NOW - $2.99
+              🛒 GET IT NOW - Only $2.99!
             </a>
             <a 
               href="https://letters-to-evelyn.sintra.site"
@@ -493,8 +494,25 @@ const BookPromoBanner = () => {
                 border: '2px solid rgba(16, 185, 129, 0.5)'
               }}
             >
-              ⭐ READ REVIEWS
+              ⭐ SEE 19 Five-Star Reviews
             </a>
+          </div>
+
+          {/* Urgency Message - Rotating */}
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            borderRadius: 12,
+            padding: '10px 16px',
+            marginBottom: 15,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10
+          }}>
+            <span style={{ fontSize: '1.2rem', animation: 'pulse 1.5s infinite' }}>🔥</span>
+            <span style={{ color: '#f87171', fontSize: '0.9rem', fontWeight: 600 }}>
+              {URGENCY_MESSAGES[Math.floor(Date.now() / 10000) % URGENCY_MESSAGES.length]}
+            </span>
           </div>
 
           {/* Film Badge */}
