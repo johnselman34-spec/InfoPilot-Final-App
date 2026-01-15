@@ -430,8 +430,8 @@ CATEGORIES = [
 
 @router.get("", response_model=dict)
 async def get_tutorials(category: Optional[str] = None):
-    """Get all tutorials"""
-    tutorials = TUTORIALS.copy()
+    """Get all tutorials with any admin-configured videos"""
+    tutorials = await get_tutorials_with_videos()
     
     if category:
         tutorials = [t for t in tutorials if t["category"] == category]
