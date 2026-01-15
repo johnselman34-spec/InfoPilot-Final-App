@@ -85,8 +85,85 @@ def get_random_closing() -> str:
 
 def get_random_revenue_quote() -> str:
     """Get a random revenue-focused quote"""
-    import random
     return random.choice(REVENUE_QUOTES)
+
+
+async def generate_ai_insights(test_stats: List[Dict], total_impressions: int, total_conversions: int) -> str:
+    """
+    Generate AI-powered insights using GPT-5.2 for personalized recommendations
+    """
+    try:
+        from emergentintegrations.llm.chat import chat, Message, ModelType
+        
+        # Build context about the A/B tests
+        test_summary = []
+        for test in test_stats:
+            winner = test.get("winner", {})
+            winner_rate = winner.get("rate", 0) if winner else 0
+            test_summary.append(f"- {test['name']}: {test['impressions']} impressions, {test['rate']:.1f}% conversion rate, winner variant: {winner.get('id', 'N/A')} ({winner_rate:.1f}%)")
+        
+        overall_rate = (total_conversions / total_impressions * 100) if total_impressions > 0 else 0
+        
+        prompt = f"""You are a witty marketing optimization expert. Analyze this A/B testing data and provide 3 SHORT, ACTIONABLE, and FUNNY insights.
+
+DATA SUMMARY:
+- Total Impressions: {total_impressions:,}
+- Total Conversions: {total_conversions:,}
+- Overall Conversion Rate: {overall_rate:.2f}%
+
+TEST DETAILS:
+{chr(10).join(test_summary) if test_summary else "No test data available yet."}
+
+RULES:
+1. Each insight must be 1-2 sentences MAX
+2. Include ONE relevant emoji per insight
+3. Be genuinely helpful AND funny
+4. Focus on actionable revenue optimization tips
+5. Reference the actual data when possible
+6. If a variant is winning significantly, suggest applying it broadly
+
+Format your response as:
+🎯 Insight 1: [your insight]
+💡 Insight 2: [your insight]
+🚀 Insight 3: [your insight]"""
+
+        response = await chat(
+            api_key=os.environ.get("EMERGENT_API_KEY", ""),
+            messages=[Message(role="user", content=prompt)],
+            model=ModelType.GPT_5_2
+        )
+        
+        if response and response.content:
+            return response.content
+        else:
+            return get_fallback_insights(test_stats, overall_rate)
+            
+    except Exception as e:
+        logger.error(f"AI insights generation failed: {e}")
+        return get_fallback_insights(test_stats, (total_conversions / total_impressions * 100) if total_impressions > 0 else 0)
+
+
+def get_fallback_insights(test_stats: List[Dict], overall_rate: float) -> str:
+    """Fallback insights when AI is unavailable"""
+    insights = []
+    
+    if overall_rate >= 5:
+        insights.append("🎯 Your conversion rates are killing it! Consider increasing traffic to your top-performing variants.")
+    elif overall_rate >= 2:
+        insights.append("🎯 Solid performance! Try testing more dramatic headline changes to push past the 5% barrier.")
+    else:
+        insights.append("🎯 Room for growth! Focus on testing value propositions and urgency messaging.")
+    
+    if test_stats:
+        best_test = max(test_stats, key=lambda x: x.get("rate", 0))
+        if best_test.get("rate", 0) > 0:
+            insights.append(f"💡 Your '{best_test['name']}' test is your star performer - consider applying those learnings elsewhere!")
+    else:
+        insights.append("💡 No active tests yet - time to start experimenting! A/B testing is like a gym membership that actually pays you back.")
+    
+    insights.append("🚀 Pro tip: Even small wins compound. A 0.5% improvement today could mean thousands in revenue tomorrow!")
+    
+    return "\n".join(insights)
 
 
 async def generate_hilarious_report_html(days: int = 7) -> tuple[str, str]:
