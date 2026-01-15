@@ -752,6 +752,17 @@ const MarketplacePage = ({ showToast }) => {
       {/* Browse Tab */}
       {activeTab === 'browse' && (
         <div>
+          {/* AI-Powered Protocol Suggestions */}
+          <AISuggestions 
+            showToast={showToast} 
+            onViewProtocol={(protocolId) => {
+              const protocol = protocols.find(p => p.id === protocolId);
+              if (protocol) {
+                setSelectedProtocol(protocol);
+              }
+            }}
+          />
+
           {/* World Wide Map */}
           <WorldWideMap 
             protocols={filteredProtocols}
