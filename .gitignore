@@ -81,3 +81,7 @@ android-sdk/
 
 # Environment files - DO NOT add *.env here as they are required for deployment
 # Emergent automatically updates these during deployment
+-e 
+# Environment files
+*.env
+*.env.*
