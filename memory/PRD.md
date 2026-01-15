@@ -199,12 +199,28 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - `POST /api/push/send` - Send notification (admin)
 - `GET /api/push/stats` - Get push stats (admin)
 
-## Testing Results (Iteration 18 - January 15, 2026)
-- **Backend: 19/19 tests passed (100%)**
+## Testing Results (Iteration 19 - January 15, 2026)
+- **Backend: 11/11 tests passed (100%)**
 - **Frontend: All UI features working (100%)**
-- Test report: `/app/test_reports/iteration_18.json`
+- Test report: `/app/test_reports/iteration_19.json`
 
-### Features Verified:
+### Category Filtering Bug Fix (January 15, 2026):
+- **Bug**: Category checkboxes on Ultimate Search Page were not filtering results
+- **Root Cause**: `/api/ultimate-search` endpoint only accepted single `category_id`, not comma-separated `category_ids`
+- **Fix**: Updated server.py to support:
+  - `category_ids` (comma-separated string for multiple categories)
+  - `aggregation` parameter (and_or/and/or)
+  - Returns `filter_applied` and `aggregation_mode` in response
+- **Features Verified**:
+  - Category checkboxes toggle correctly with visual feedback (pink highlight)
+  - Filter status shows "Filtering by X categories (AND/OR)" badge
+  - AND/OR/AND radio buttons change filtering logic
+  - Map legend shows selected categories with colored dots
+  - Collate button shows count of selected categories
+  - Clear Selection button works
+  - Results properly filtered (200 total → 94 with 2 categories)
+
+### Previous Verified Features (Iteration 18):
 - **Gamification System**: 22 achievements across 6 categories (search, protocol, marketplace, social, special, consistency)
 - **Level System**: Levels 1-10 with fun names (Search Newbie → InfoPilot Supreme)
 - **Points System**: 2,895 total possible points
@@ -234,12 +250,15 @@ https://navigator-hub-1.preview.emergentagent.com
 - [ ] Mobile app wrapper (Capacitor/React Native)
 - [ ] Voice search integration
 - [ ] Collaborative protocol editing
+- [ ] Complete Social Features (Friends, Groups, Pages with reactions)
 
 ### P2 (Medium Priority)
 - [ ] Video tutorials
 - [ ] API rate limiting dashboard
 - [ ] Webhook integrations
+- [ ] Direct Messaging with WebSockets
 
 ### P3 (Low Priority)
 - [ ] Browser extension
 - [ ] Slack/Discord integration
+- [ ] AI-generated Email Newsletters
