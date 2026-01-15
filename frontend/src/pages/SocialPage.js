@@ -788,18 +788,44 @@ const SocialPage = ({ showToast }) => {
                 <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: 10 }}>
                   {group.description || 'No description'}
                 </p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span style={{ color: '#71717a', fontSize: '0.8rem' }}>
                     {group.member_count} members
                   </span>
-                  {!group.is_member ? (
-                    <button className="btn btn-primary btn-sm" onClick={() => joinGroup(group.id)}>
-                      Join
-                    </button>
-                  ) : (
-                    <span style={{ color: '#10b981', fontSize: '0.8rem' }}>Member</span>
-                  )}
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    {group.is_admin && (
+                      <button 
+                        className="btn btn-secondary btn-sm" 
+                        onClick={() => openCreatePollModal('group', group.id)}
+                        data-testid={`create-poll-group-${group.id}`}
+                        title="Create Poll"
+                      >
+                        📊 Poll
+                      </button>
+                    )}
+                    {!group.is_member ? (
+                      <button className="btn btn-primary btn-sm" onClick={() => joinGroup(group.id)}>
+                        Join
+                      </button>
+                    ) : (
+                      <span style={{ color: '#10b981', fontSize: '0.8rem' }}>Member</span>
+                    )}
+                  </div>
                 </div>
+                
+                {/* Polls for this group */}
+                {polls[`group_${group.id}`]?.length > 0 && (
+                  <div style={{ marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
+                    {polls[`group_${group.id}`].slice(0, 2).map(poll => (
+                      <PollCard 
+                        key={poll.id} 
+                        poll={poll}
+                        onDelete={(pollId) => handleDeletePoll(pollId, 'group', group.id)}
+                        showContext={false}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
