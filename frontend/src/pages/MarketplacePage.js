@@ -544,6 +544,9 @@ const MarketplacePage = ({ showToast }) => {
       {/* Dashboard Tab */}
       {activeTab === 'dashboard' && <DashboardTab dashboard={dashboard} adminPercent={adminPercent} />}
 
+      {/* Analytics Tab */}
+      {activeTab === 'analytics' && <ProtocolAnalyticsDashboard showToast={showToast} />}
+
       {/* Purchase Modal */}
       {purchaseModal && (
         <div className="modal-overlay" onClick={() => setPurchaseModal(null)}>
