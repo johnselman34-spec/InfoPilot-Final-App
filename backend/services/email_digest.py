@@ -163,7 +163,7 @@ def create_digest_html(digest_data: Dict[str, Any]) -> str:
             </div>
             {locations_list}
             <div style="text-align: center; margin-top: 16px;">
-                <a href="https://explorer-social.preview.emergentagent.com/global-database" style="display: inline-block; background: linear-gradient(135deg, #3b82f6, #06b6d4); color: white; text-decoration: none; padding: 12px 32px; border-radius: 25px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);">🌍 EXPLORE WORLD MAP →</a>
+                <a href="https://social-research.preview.emergentagent.com/global-database" style="display: inline-block; background: linear-gradient(135deg, #3b82f6, #06b6d4); color: white; text-decoration: none; padding: 12px 32px; border-radius: 25px; font-weight: bold; font-size: 14px; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);">🌍 EXPLORE WORLD MAP →</a>
             </div>
         </div>'''
     
@@ -202,7 +202,7 @@ def create_digest_html(digest_data: Dict[str, Any]) -> str:
                     ✅ Exclusive Protocols &nbsp;&nbsp; ✅ Advanced Features
                 </div>
                 
-                <a href="https://explorer-social.preview.emergentagent.com/subscribe" style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; text-decoration: none; padding: 16px 48px; border-radius: 30px; font-weight: bold; font-size: 18px; margin-top: 16px; box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5); text-transform: uppercase; letter-spacing: 1px;">🔓 SUBSCRIBE NOW →</a>
+                <a href="https://social-research.preview.emergentagent.com/subscribe" style="display: inline-block; background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; text-decoration: none; padding: 16px 48px; border-radius: 30px; font-weight: bold; font-size: 18px; margin-top: 16px; box-shadow: 0 8px 25px rgba(239, 68, 68, 0.5); text-transform: uppercase; letter-spacing: 1px;">🔓 SUBSCRIBE NOW →</a>
                 
                 <p style="color: #6b7280; font-size: 12px; margin-top: 16px;">💳 Secure PayPal payment • Cancel anytime</p>
             </div>
@@ -335,7 +335,7 @@ def create_digest_html(digest_data: Dict[str, Any]) -> str:
             
             <!-- CTA BUTTON -->
             <div style="text-align: center; margin: 32px 0;">
-                <a href="https://explorer-social.preview.emergentagent.com/" style="display: inline-block; background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; text-decoration: none; padding: 18px 48px; border-radius: 30px; font-weight: bold; letter-spacing: 1px; font-size: 16px; box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4); text-transform: uppercase;">🚀 LAUNCH INFOPILOT →</a>
+                <a href="https://social-research.preview.emergentagent.com/" style="display: inline-block; background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; text-decoration: none; padding: 18px 48px; border-radius: 30px; font-weight: bold; letter-spacing: 1px; font-size: 16px; box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4); text-transform: uppercase;">🚀 LAUNCH INFOPILOT →</a>
             </div>
             
             <!-- SUBSCRIPTION SALES -->
@@ -355,7 +355,7 @@ def create_digest_html(digest_data: Dict[str, Any]) -> str:
                 © 2026 InfoPilot Explorer • Tactical Research v2.0
             </p>
             <p style="margin-top: 16px;">
-                <a href="https://explorer-social.preview.emergentagent.com/settings" style="color: #8b5cf6; font-size: 12px; text-decoration: none;">Manage email preferences</a>
+                <a href="https://social-research.preview.emergentagent.com/settings" style="color: #8b5cf6; font-size: 12px; text-decoration: none;">Manage email preferences</a>
             </p>
         </div>
         
