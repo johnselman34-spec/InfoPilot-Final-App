@@ -791,5 +791,200 @@ async def get_paypal_config():
     }
 
 
+# ==================== PAYOUT MANAGEMENT ====================
+
+@router.get("/admin/payouts", response_model=dict)
+async def get_pending_payouts(user = Depends(get_current_user)):
+    """Get all users with accumulated earnings ready for payout (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Find users with accumulated earnings >= minimum payout
+    users_ready = await db.users.find({
+        "accumulated_earnings": {"$gte": PAYPAL_MIN_PAYOUT}
+    }).to_list(1000)
+    
+    # Find users with accumulated earnings < minimum (for reporting)
+    users_accumulating = await db.users.find({
+        "accumulated_earnings": {"$gt": 0, "$lt": PAYPAL_MIN_PAYOUT}
+    }).to_list(1000)
+    
+    ready_for_payout = []
+    accumulating = []
+    
+    for u in users_ready:
+        ready_for_payout.append({
+            "user_id": str(u["_id"]),
+            "email": u.get("email", "Unknown"),
+            "username": u.get("username", u.get("callsign", "Unknown")),
+            "accumulated_earnings": u.get("accumulated_earnings", 0),
+            "paypal_email": u.get("paypal_email", u.get("email", ""))
+        })
+    
+    for u in users_accumulating:
+        accumulating.append({
+            "user_id": str(u["_id"]),
+            "email": u.get("email", "Unknown"),
+            "username": u.get("username", u.get("callsign", "Unknown")),
+            "accumulated_earnings": u.get("accumulated_earnings", 0),
+            "remaining_to_payout": PAYPAL_MIN_PAYOUT - u.get("accumulated_earnings", 0)
+        })
+    
+    # Get admin's accumulated platform fees
+    admin_fees = sum(a.get("accumulated_platform_fees", 0) for a in await db.users.find({"is_admin": True}).to_list(10))
+    
+    return {
+        "ready_for_payout": ready_for_payout,
+        "total_ready_amount": sum(u["accumulated_earnings"] for u in ready_for_payout),
+        "accumulating": accumulating,
+        "total_accumulating_amount": sum(u.get("accumulated_earnings", 0) for u in users_accumulating),
+        "admin_platform_fees": admin_fees,
+        "min_payout_threshold": PAYPAL_MIN_PAYOUT
+    }
+
+
+@router.post("/admin/process-payout", response_model=dict)
+async def process_payout(data: dict, user = Depends(get_current_user)):
+    """Mark a user's payout as processed (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    user_id = data.get("user_id")
+    paypal_transaction_id = data.get("paypal_transaction_id")
+    
+    if not user_id:
+        raise HTTPException(status_code=400, detail="User ID required")
+    
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    amount = target_user.get("accumulated_earnings", 0)
+    
+    if amount < PAYPAL_MIN_PAYOUT:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"User has ${amount:.2f}, below minimum payout of ${PAYPAL_MIN_PAYOUT:.2f}"
+        )
+    
+    # Record payout
+    payout_record = {
+        "user_id": user_id,
+        "amount": amount,
+        "paypal_transaction_id": paypal_transaction_id,
+        "processed_by": str(user["_id"]),
+        "status": "completed",
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.payouts.insert_one(payout_record)
+    
+    # Reset user's accumulated earnings
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"accumulated_earnings": 0}}
+    )
+    
+    # Update payout ledger entries
+    await db.payout_ledger.update_many(
+        {"creator_id": user_id, "status": "accumulated"},
+        {"$set": {"status": "paid", "paid_at": datetime.utcnow()}}
+    )
+    
+    return {
+        "success": True,
+        "message": f"Payout of ${amount:.2f} processed for user",
+        "amount": amount,
+        "user_id": user_id
+    }
+
+
+@router.get("/my-earnings", response_model=dict)
+async def get_my_earnings(user = Depends(get_current_user)):
+    """Get current user's accumulated earnings and payout status"""
+    accumulated = user.get("accumulated_earnings", 0)
+    
+    # Get payout history
+    payouts = await db.payouts.find({"user_id": str(user["_id"])}).sort("created_at", -1).to_list(50)
+    
+    total_paid_out = sum(p.get("amount", 0) for p in payouts)
+    
+    return {
+        "accumulated_earnings": accumulated,
+        "ready_for_payout": accumulated >= PAYPAL_MIN_PAYOUT,
+        "remaining_to_payout": max(0, PAYPAL_MIN_PAYOUT - accumulated),
+        "min_payout_threshold": PAYPAL_MIN_PAYOUT,
+        "total_paid_out": total_paid_out,
+        "payout_history": [{
+            "amount": p["amount"],
+            "date": p["created_at"].isoformat(),
+            "transaction_id": p.get("paypal_transaction_id", "N/A")
+        } for p in payouts]
+    }
+
+
+@router.put("/my-paypal-email", response_model=dict)
+async def update_paypal_email(data: dict, user = Depends(get_current_user)):
+    """Update user's PayPal email for payouts"""
+    paypal_email = data.get("paypal_email")
+    
+    if not paypal_email:
+        raise HTTPException(status_code=400, detail="PayPal email required")
+    
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"paypal_email": paypal_email}}
+    )
+    
+    return {"success": True, "message": "PayPal email updated"}
+
+
+# ==================== MAP DATA ====================
+
+@router.get("/map-data", response_model=dict)
+async def get_map_data():
+    """Get all protocols with location data for the world map"""
+    protocols = await db.marketplace_protocols.find({"status": "active"}).to_list(1000)
+    
+    # Generate location data for map display
+    locations = [
+        {"lat": 40.7128, "lng": -74.0060, "city": "New York", "country": "USA"},
+        {"lat": 34.0522, "lng": -118.2437, "city": "Los Angeles", "country": "USA"},
+        {"lat": 51.5074, "lng": -0.1278, "city": "London", "country": "UK"},
+        {"lat": 48.8566, "lng": 2.3522, "city": "Paris", "country": "France"},
+        {"lat": 35.6762, "lng": 139.6503, "city": "Tokyo", "country": "Japan"},
+        {"lat": -33.8688, "lng": 151.2093, "city": "Sydney", "country": "Australia"},
+        {"lat": 43.9108, "lng": -69.9669, "city": "Brunswick, ME", "country": "USA"},
+        {"lat": 55.7558, "lng": 37.6173, "city": "Moscow", "country": "Russia"},
+        {"lat": 19.4326, "lng": -99.1332, "city": "Mexico City", "country": "Mexico"},
+        {"lat": -23.5505, "lng": -46.6333, "city": "São Paulo", "country": "Brazil"},
+        {"lat": 52.5200, "lng": 13.4050, "city": "Berlin", "country": "Germany"},
+        {"lat": 37.7749, "lng": -122.4194, "city": "San Francisco", "country": "USA"},
+        {"lat": 1.3521, "lng": 103.8198, "city": "Singapore", "country": "Singapore"},
+        {"lat": 22.3193, "lng": 114.1694, "city": "Hong Kong", "country": "China"},
+        {"lat": 41.9028, "lng": 12.4964, "city": "Rome", "country": "Italy"},
+    ]
+    
+    map_data = []
+    for i, p in enumerate(protocols):
+        loc = locations[i % len(locations)]
+        map_data.append({
+            "id": str(p["_id"]),
+            "name": p["name"],
+            "category": p["category"],
+            "price": p["price"],
+            "lat": loc["lat"],
+            "lng": loc["lng"],
+            "city": loc["city"],
+            "country": loc["country"],
+            "total_sales": p.get("total_sales", 0)
+        })
+    
+    return {
+        "protocols": map_data,
+        "total": len(map_data)
+    }
+
+
 # Import timedelta at the top
 from datetime import timedelta
