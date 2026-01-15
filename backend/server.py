@@ -2446,7 +2446,21 @@ async def create_indexes_with_retry(max_retries=5, delay=3):
 @app.on_event("startup")
 async def startup_db_client():
     await create_indexes_with_retry()
+    # Start the email scheduler for automated reports
+    try:
+        from services.email_scheduler import start_scheduler
+        start_scheduler()
+        logger.info("🚀 Email scheduler started successfully!")
+    except Exception as e:
+        logger.error(f"Failed to start email scheduler: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    # Stop the email scheduler
+    try:
+        from services.email_scheduler import stop_scheduler
+        stop_scheduler()
+        logger.info("📧 Email scheduler stopped")
+    except Exception as e:
+        logger.error(f"Failed to stop email scheduler: {e}")
     client.close()
