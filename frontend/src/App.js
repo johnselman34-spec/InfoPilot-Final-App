@@ -2786,16 +2786,17 @@ const MarketplacePage = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 border-b border-purple-500/30 pb-2">
+        <div className="flex gap-2 border-b border-purple-500/30 pb-2 overflow-x-auto">
           {[
             { id: "browse", label: "🛒 BROWSE", icon: ShoppingCart },
+            { id: "leaderboard", label: "🏆 TOP SELLERS", icon: Trophy },
             { id: "purchases", label: "📦 MY PURCHASES", icon: Gift },
             { id: "sales", label: "💵 MY SALES", icon: DollarSign }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 font-mono text-sm rounded-t flex items-center gap-2 transition-colors ${
+              className={`px-4 py-2 font-mono text-sm rounded-t flex items-center gap-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id 
                   ? "bg-yellow-500/20 text-yellow-400 border-b-2 border-yellow-400" 
                   : "text-purple-400/60 hover:text-purple-300"
