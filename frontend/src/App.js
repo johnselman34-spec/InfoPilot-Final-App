@@ -2105,7 +2105,7 @@ const CategoriesPage = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  const [newCategory, setNewCategory] = useState({ name: "", protocol: "", parentId: null, isPublic: true, forSale: false, price: 0.75 });
+  const [newCategory, setNewCategory] = useState({ name: "", protocol: "", parentId: null, isPublic: true, forSale: false, price: 0.75, location: { city: "", state: "", country: "USA", lat: null, lng: null } });
   const [creating, setCreating] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [viewRecsCategory, setViewRecsCategory] = useState(null);
@@ -2126,17 +2126,24 @@ const CategoriesPage = () => {
     e.preventDefault();
     setCreating(true);
     try {
-      await axios.post(`${API}/categories`, { 
+      const payload = { 
         name: newCategory.name, 
         protocol: { protocol_string: newCategory.protocol }, 
         parent_id: newCategory.parentId || null, 
         is_public: newCategory.isPublic,
         for_sale: !newCategory.isPublic && newCategory.forSale,
         price: (!newCategory.isPublic && newCategory.forSale) ? newCategory.price : null
-      });
+      };
+      
+      // Add location if selling and has city
+      if (!newCategory.isPublic && newCategory.forSale && newCategory.location.city) {
+        payload.location = newCategory.location;
+      }
+      
+      await axios.post(`${API}/categories`, payload);
       toast.success("CATEGORY CREATED");
       setShowCreate(false);
-      setNewCategory({ name: "", protocol: "", parentId: null, isPublic: true, forSale: false, price: 0.75 });
+      setNewCategory({ name: "", protocol: "", parentId: null, isPublic: true, forSale: false, price: 0.75, location: { city: "", state: "", country: "USA", lat: null, lng: null } });
       fetchCategories();
     } catch (error) { toast.error(error.response?.data?.detail || "CREATION FAILED"); }
     finally { setCreating(false); }
