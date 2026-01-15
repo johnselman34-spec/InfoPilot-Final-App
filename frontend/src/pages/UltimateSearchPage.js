@@ -159,7 +159,7 @@ const UltimateSearchPage = ({ showToast }) => {
     try {
       const params = new URLSearchParams({
         aggregation,
-        page: 1
+        limit: 500
       });
       if (selectedCategories.length > 0) {
         params.append('category_ids', selectedCategories.join(','));
@@ -171,6 +171,19 @@ const UltimateSearchPage = ({ showToast }) => {
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data.results || []);
+        setFilterInfo({
+          filter_applied: data.filter_applied || false,
+          aggregation_mode: data.aggregation_mode || 'and_or',
+          count: data.count || 0
+        });
+        
+        // Update map center if there are results with locations
+        const withLocation = (data.results || []).filter(r => r.latitude && r.longitude);
+        if (withLocation.length > 0) {
+          const avgLat = withLocation.reduce((sum, r) => sum + r.latitude, 0) / withLocation.length;
+          const avgLng = withLocation.reduce((sum, r) => sum + r.longitude, 0) / withLocation.length;
+          setMapCenter([avgLat, avgLng]);
+        }
       }
     } catch (e) {
       console.error('Failed to fetch results:', e);
