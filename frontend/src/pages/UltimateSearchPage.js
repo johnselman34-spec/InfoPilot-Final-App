@@ -51,6 +51,27 @@ const UltimateSearchPage = ({ showToast }) => {
   const [showDebugger, setShowDebugger] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [collateLoading, setCollateLoading] = useState(false);
+  const [showMap, setShowMap] = useState(true);
+  const [mapCenter, setMapCenter] = useState([39.8283, -98.5795]); // USA center
+  const [mapZoom, setMapZoom] = useState(4);
+  const [filterInfo, setFilterInfo] = useState({ filter_applied: false, aggregation_mode: 'and_or' });
+
+  // Category colors for map markers
+  const categoryColors = useMemo(() => [
+    '#f472b6', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', 
+    '#ef4444', '#06b6d4', '#ec4899', '#84cc16', '#a855f7'
+  ], []);
+
+  // Get color for a category
+  const getCategoryColor = useCallback((categoryId) => {
+    const index = categories.findIndex(c => c.id === categoryId);
+    return categoryColors[index % categoryColors.length];
+  }, [categories, categoryColors]);
+
+  // Results with location data for map
+  const mapResults = useMemo(() => {
+    return searchResults.filter(r => r.latitude && r.longitude);
+  }, [searchResults]);
 
   // Handle applying a template
   const handleApplyTemplate = (protocol, templateName) => {
