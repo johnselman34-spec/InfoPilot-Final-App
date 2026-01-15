@@ -1986,6 +1986,517 @@ async def generate_newsletter():
         logger.error(f"Newsletter generation error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ==================== POLL SYSTEM ====================
+
+@api_router.post("/polls/create")
+async def create_poll(data: dict, authorization: Optional[str] = Header(None)):
+    """Create a poll - Democracy in action! 🗳️"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        # Verify user has permission for the context
+        context_type = data.get("context_type")  # "group", "page", "ultimate_search"
+        context_id = data.get("context_id")
+        
+        if context_type == "group":
+            group = await db.groups.find_one({"id": context_id})
+            if not group:
+                raise HTTPException(status_code=404, detail="Group not found")
+            # Check if user is creator or admin
+            is_creator = group.get("creator_id") == user["id"]
+            is_admin = any(a.get("user_id") == user["id"] and "create_polls" in a.get("privileges", []) 
+                         for a in group.get("admins", []))
+            if not is_creator and not is_admin:
+                raise HTTPException(status_code=403, detail="Only creators and authorized admins can create polls")
+                
+        elif context_type == "page":
+            page = await db.pages.find_one({"id": context_id})
+            if not page:
+                raise HTTPException(status_code=404, detail="Page not found")
+            is_owner = page.get("owner_id") == user["id"]
+            is_admin = any(a.get("user_id") == user["id"] and "create_polls" in a.get("privileges", []) 
+                         for a in page.get("admins", []))
+            if not is_owner and not is_admin:
+                raise HTTPException(status_code=403, detail="Only owners and authorized admins can create polls")
+                
+        elif context_type == "ultimate_search":
+            # Only the owner can create polls on their Ultimate Search page
+            if context_id != user["id"]:
+                raise HTTPException(status_code=403, detail="Only the page owner can create polls")
+        
+        # Create poll options
+        options = []
+        for opt in data.get("options", []):
+            options.append({
+                "id": str(uuid.uuid4()),
+                "text": opt.get("text"),
+                "image_url": opt.get("image_url"),
+                "votes": 0
+            })
+        
+        poll = {
+            "id": str(uuid.uuid4()),
+            "creator_id": user["id"],
+            "title": data.get("title"),
+            "description": data.get("description"),
+            "options": options,
+            "context_type": context_type,
+            "context_id": context_id,
+            "is_active": True,
+            "allows_multiple": data.get("allows_multiple", False),
+            "created_at": datetime.utcnow(),
+            "expires_at": datetime.utcnow() + timedelta(hours=data.get("expires_in_hours", 24 * 7)) if data.get("expires_in_hours") else None,
+            "voters": []
+        }
+        
+        await db.polls.insert_one(poll)
+        
+        return {
+            "success": True,
+            "poll_id": poll["id"],
+            "message": "Poll created! Let the voting begin! 🗳️"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Create poll error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/polls/{context_type}/{context_id}")
+async def get_polls(context_type: str, context_id: str):
+    """Get all polls for a context (group, page, or ultimate search)"""
+    try:
+        polls = await db.polls.find({
+            "context_type": context_type,
+            "context_id": context_id,
+            "is_active": True
+        }).to_list(100)
+        
+        return {
+            "polls": polls,
+            "count": len(polls),
+            "funny_message": "Democracy is beautiful! (Even when people vote for pineapple on pizza) 🍕"
+        }
+    except Exception as e:
+        logger.error(f"Get polls error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/polls/{poll_id}/vote")
+async def vote_on_poll(poll_id: str, data: dict, authorization: Optional[str] = Header(None)):
+    """Vote on a poll - Your voice matters! 📢"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        poll = await db.polls.find_one({"id": poll_id})
+        if not poll:
+            raise HTTPException(status_code=404, detail="Poll not found")
+        
+        if not poll.get("is_active"):
+            raise HTTPException(status_code=400, detail="This poll has ended")
+        
+        if poll.get("expires_at") and datetime.utcnow() > poll["expires_at"]:
+            await db.polls.update_one({"id": poll_id}, {"$set": {"is_active": False}})
+            raise HTTPException(status_code=400, detail="This poll has expired")
+        
+        if user["id"] in poll.get("voters", []):
+            raise HTTPException(status_code=400, detail="You've already voted on this poll")
+        
+        option_ids = data.get("option_ids", [])
+        if not poll.get("allows_multiple") and len(option_ids) > 1:
+            raise HTTPException(status_code=400, detail="This poll only allows one choice")
+        
+        # Update vote counts
+        for option in poll.get("options", []):
+            if option["id"] in option_ids:
+                await db.polls.update_one(
+                    {"id": poll_id, "options.id": option["id"]},
+                    {"$inc": {"options.$.votes": 1}}
+                )
+        
+        # Add user to voters
+        await db.polls.update_one(
+            {"id": poll_id},
+            {"$push": {"voters": user["id"]}}
+        )
+        
+        return {
+            "success": True,
+            "message": "Your vote has been counted! Democracy wins! 🎉"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Vote error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== CLIPBOARD COPY TRACKING ====================
+
+@api_router.post("/clipboard/track")
+async def track_clipboard_copy(data: dict, authorization: Optional[str] = Header(None)):
+    """Track when a protocol is copied to clipboard"""
+    try:
+        user_id = None
+        try:
+            user = await get_user_from_token(authorization)
+            user_id = user["id"]
+        except:
+            pass  # Anonymous copy is allowed
+        
+        protocol_id = data.get("protocol_id")
+        if not protocol_id:
+            raise HTTPException(status_code=400, detail="Protocol ID required")
+        
+        # Record the copy
+        copy_record = {
+            "id": str(uuid.uuid4()),
+            "protocol_id": protocol_id,
+            "user_id": user_id,
+            "copied_at": datetime.utcnow()
+        }
+        await db.clipboard_copies.insert_one(copy_record)
+        
+        # Update protocol's copy count
+        await db.marketplace_protocols.update_one(
+            {"id": protocol_id},
+            {"$inc": {"copy_count": 1}}
+        )
+        
+        return {"success": True, "message": "Copy tracked! 📋"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Clipboard track error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/statistics/clipboard-leaders")
+async def get_clipboard_leaders():
+    """Get most copied protocols - The people have spoken! 📋"""
+    try:
+        pipeline = [
+            {"$group": {
+                "_id": "$protocol_id",
+                "copy_count": {"$sum": 1}
+            }},
+            {"$sort": {"copy_count": -1}},
+            {"$limit": 20}
+        ]
+        
+        leaders = await db.clipboard_copies.aggregate(pipeline).to_list(20)
+        
+        result = []
+        for leader in leaders:
+            protocol = await db.marketplace_protocols.find_one({"id": leader["_id"]})
+            if protocol:
+                category = await db.categories.find_one({"id": protocol.get("category_id")})
+                user = await db.users.find_one({"id": protocol.get("user_id")}, {"password_hash": 0})
+                result.append({
+                    "protocol_id": leader["_id"],
+                    "copy_count": leader["copy_count"],
+                    "protocol_name": category.get("name") if category else "Unknown",
+                    "creator": user.get("username") if user else "Unknown",
+                    "price": protocol.get("price", 0)
+                })
+        
+        return {
+            "leaders": result,
+            "funny_message": "These protocols are spreading faster than cat videos! 🐱"
+        }
+    except Exception as e:
+        logger.error(f"Clipboard leaders error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== GROUP/PAGE ADMIN MANAGEMENT ====================
+
+@api_router.post("/groups/{group_id}/admins")
+async def add_group_admin(group_id: str, data: dict, authorization: Optional[str] = Header(None)):
+    """Add an admin to a group with specific privileges"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        group = await db.groups.find_one({"id": group_id})
+        if not group:
+            raise HTTPException(status_code=404, detail="Group not found")
+        
+        if group.get("creator_id") != user["id"]:
+            raise HTTPException(status_code=403, detail="Only the creator can add admins")
+        
+        new_admin_id = data.get("user_id")
+        privileges = data.get("privileges", [])
+        
+        # Valid privileges: create_polls, moderate_comments, approve_posts, manage_members
+        valid_privileges = ["create_polls", "moderate_comments", "approve_posts", "manage_members"]
+        privileges = [p for p in privileges if p in valid_privileges]
+        
+        admin_entry = {
+            "user_id": new_admin_id,
+            "granted_by": user["id"],
+            "privileges": privileges,
+            "granted_at": datetime.utcnow()
+        }
+        
+        await db.groups.update_one(
+            {"id": group_id},
+            {"$push": {"admins": admin_entry}}
+        )
+        
+        return {
+            "success": True,
+            "message": f"Admin added with privileges: {', '.join(privileges)}"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Add admin error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/pages/{page_id}/admins")
+async def add_page_admin(page_id: str, data: dict, authorization: Optional[str] = Header(None)):
+    """Add an admin to a page with specific privileges"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        page = await db.pages.find_one({"id": page_id})
+        if not page:
+            raise HTTPException(status_code=404, detail="Page not found")
+        
+        if page.get("owner_id") != user["id"]:
+            raise HTTPException(status_code=403, detail="Only the owner can add admins")
+        
+        new_admin_id = data.get("user_id")
+        privileges = data.get("privileges", [])
+        
+        valid_privileges = ["create_polls", "moderate_comments", "approve_posts", "manage_followers"]
+        privileges = [p for p in privileges if p in valid_privileges]
+        
+        admin_entry = {
+            "user_id": new_admin_id,
+            "granted_by": user["id"],
+            "privileges": privileges,
+            "granted_at": datetime.utcnow()
+        }
+        
+        await db.pages.update_one(
+            {"id": page_id},
+            {"$push": {"admins": admin_entry}}
+        )
+        
+        return {
+            "success": True,
+            "message": f"Admin added with privileges: {', '.join(privileges)}"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Add page admin error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== ACHIEVEMENT BADGES WITH SHARE ====================
+
+ACHIEVEMENT_BADGES = [
+    {
+        "id": "first_protocol",
+        "name": "Protocol Pioneer",
+        "description": "Created your first protocol",
+        "funny_tagline": "You've taken your first step into a larger world! 🌌",
+        "icon": "🎯",
+        "category": "protocols",
+        "requirement_type": "count",
+        "requirement_value": 1,
+        "rarity": "common",
+        "share_text": "I just earned the Protocol Pioneer badge on InfoPilot! 🎯 My first protocol is live! Join me: #InfoPilot #ProtocolPioneer"
+    },
+    {
+        "id": "protocol_addict",
+        "name": "Protocol Addict",
+        "description": "Created 10 protocols",
+        "funny_tagline": "You can stop anytime... but why would you? 😅",
+        "icon": "🔥",
+        "category": "protocols",
+        "requirement_type": "count",
+        "requirement_value": 10,
+        "rarity": "rare",
+        "share_text": "10 protocols and counting! 🔥 I'm officially a Protocol Addict on InfoPilot! #InfoPilot #ProtocolAddict"
+    },
+    {
+        "id": "first_sale",
+        "name": "Money Maker",
+        "description": "Made your first sale",
+        "funny_tagline": "Cha-ching! The sound of success! 💸",
+        "icon": "💰",
+        "category": "sales",
+        "requirement_type": "count",
+        "requirement_value": 1,
+        "rarity": "common",
+        "share_text": "Just made my first sale on InfoPilot! 💰 My protocols are officially VALUABLE! #InfoPilot #MoneyMaker"
+    },
+    {
+        "id": "sales_machine",
+        "name": "Sales Machine",
+        "description": "Sold 25 protocols",
+        "funny_tagline": "You're not human, you're a MACHINE! 🤖",
+        "icon": "🤖",
+        "category": "sales",
+        "requirement_type": "count",
+        "requirement_value": 25,
+        "rarity": "epic",
+        "share_text": "25 sales! 🤖 I'm officially a Sales Machine on InfoPilot! My protocols are FLYING off the marketplace! #InfoPilot"
+    },
+    {
+        "id": "tycoon",
+        "name": "Protocol Tycoon",
+        "description": "Earned $100 from protocol sales",
+        "funny_tagline": "Move over Bezos, there's a new tycoon in town! 👑",
+        "icon": "👑",
+        "category": "sales",
+        "requirement_type": "revenue",
+        "requirement_value": 100,
+        "rarity": "legendary",
+        "share_text": "I'm a Protocol Tycoon! 👑 $100+ earned from my protocols on InfoPilot! Dreams DO come true! #InfoPilot #Tycoon"
+    },
+    {
+        "id": "social_butterfly",
+        "name": "Social Butterfly",
+        "description": "Made 10 friends",
+        "funny_tagline": "You're not networking, you're FRIEND-working! 🦋",
+        "icon": "🦋",
+        "category": "social",
+        "requirement_type": "count",
+        "requirement_value": 10,
+        "rarity": "common",
+        "share_text": "10 friends on InfoPilot! 🦋 I'm a Social Butterfly! Come join my flock! #InfoPilot #SocialButterfly"
+    },
+    {
+        "id": "poll_master",
+        "name": "Poll Master",
+        "description": "Created 5 polls",
+        "funny_tagline": "You ask the questions that matter! 🗳️",
+        "icon": "🗳️",
+        "category": "social",
+        "requirement_type": "count",
+        "requirement_value": 5,
+        "rarity": "rare",
+        "share_text": "I'm a Poll Master! 🗳️ 5 polls created on InfoPilot! Democracy is MY middle name! #InfoPilot #PollMaster"
+    },
+    {
+        "id": "clipboard_king",
+        "name": "Clipboard Royalty",
+        "description": "Had your protocol copied 100 times",
+        "funny_tagline": "Ctrl+C is your best friend! 👑",
+        "icon": "📋",
+        "category": "special",
+        "requirement_type": "copies",
+        "requirement_value": 100,
+        "rarity": "epic",
+        "share_text": "My protocol was copied 100 times! 📋 I'm Clipboard Royalty on InfoPilot! #InfoPilot #ClipboardRoyalty"
+    },
+    {
+        "id": "evelyn_evangelist",
+        "name": "Letters to Evelyn Evangelist",
+        "description": "Shared the book with 5 friends",
+        "funny_tagline": "Spreading the supernatural comedy love! 📚",
+        "icon": "📚",
+        "category": "special",
+        "requirement_type": "count",
+        "requirement_value": 5,
+        "rarity": "mythic",
+        "share_text": "I'm a Letters to Evelyn Evangelist! 📚 If you haven't read it yet, WHAT ARE YOU DOING?! #LettersToEvelyn #InfoPilot"
+    },
+]
+
+@api_router.get("/achievements/all")
+async def get_all_achievements():
+    """Get all achievement badges"""
+    return {
+        "achievements": ACHIEVEMENT_BADGES,
+        "total": len(ACHIEVEMENT_BADGES),
+        "funny_message": "These badges are harder to get than a reservation at that fancy restaurant downtown! 🍽️"
+    }
+
+@api_router.get("/achievements/user")
+async def get_user_achievements(authorization: Optional[str] = Header(None)):
+    """Get achievements earned by the current user"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        earned = await db.user_achievements.find({"user_id": user["id"]}).to_list(100)
+        earned_ids = [e["badge_id"] for e in earned]
+        
+        # Calculate progress for unearned badges
+        protocol_count = await db.categories.count_documents({"user_id": user["id"]})
+        sales_count = await db.transactions.count_documents({"seller_id": user["id"], "status": "completed"})
+        revenue = sum([t.get("seller_amount", 0) async for t in db.transactions.find({"seller_id": user["id"], "status": "completed"})])
+        friends_count = len(user.get("friends", []))
+        polls_count = await db.polls.count_documents({"creator_id": user["id"]})
+        
+        badges_with_progress = []
+        for badge in ACHIEVEMENT_BADGES:
+            is_earned = badge["id"] in earned_ids
+            progress = 0
+            
+            if badge["requirement_type"] == "count":
+                if badge["category"] == "protocols":
+                    progress = min(100, (protocol_count / badge["requirement_value"]) * 100)
+                elif badge["category"] == "sales":
+                    progress = min(100, (sales_count / badge["requirement_value"]) * 100)
+                elif badge["category"] == "social":
+                    if "poll" in badge["id"]:
+                        progress = min(100, (polls_count / badge["requirement_value"]) * 100)
+                    else:
+                        progress = min(100, (friends_count / badge["requirement_value"]) * 100)
+            elif badge["requirement_type"] == "revenue":
+                progress = min(100, (revenue / badge["requirement_value"]) * 100)
+            
+            badges_with_progress.append({
+                **badge,
+                "earned": is_earned,
+                "progress": round(progress, 1),
+                "earned_at": next((e["earned_at"] for e in earned if e["badge_id"] == badge["id"]), None)
+            })
+        
+        return {
+            "achievements": badges_with_progress,
+            "earned_count": len(earned_ids),
+            "total_count": len(ACHIEVEMENT_BADGES),
+            "funny_message": "Keep going! These badges aren't going to earn themselves! 💪"
+        }
+    except Exception as e:
+        logger.error(f"Get user achievements error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/achievements/{badge_id}/share")
+async def share_achievement(badge_id: str, authorization: Optional[str] = Header(None)):
+    """Share an achievement on social media"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        # Check if user has earned this badge
+        earned = await db.user_achievements.find_one({"user_id": user["id"], "badge_id": badge_id})
+        if not earned:
+            raise HTTPException(status_code=403, detail="You haven't earned this badge yet!")
+        
+        badge = next((b for b in ACHIEVEMENT_BADGES if b["id"] == badge_id), None)
+        if not badge:
+            raise HTTPException(status_code=404, detail="Badge not found")
+        
+        # Track share
+        await db.user_achievements.update_one(
+            {"user_id": user["id"], "badge_id": badge_id},
+            {"$set": {"shared": True}, "$inc": {"share_count": 1}}
+        )
+        
+        return {
+            "success": True,
+            "share_text": badge["share_text"],
+            "badge_name": badge["name"],
+            "icon": badge["icon"],
+            "message": "Time to show off! You've earned it! 🎉"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Share achievement error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/health")
