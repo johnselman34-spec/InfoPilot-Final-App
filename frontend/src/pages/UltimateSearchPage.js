@@ -159,7 +159,7 @@ const UltimateSearchPage = ({ showToast }) => {
     try {
       const params = new URLSearchParams({
         aggregation,
-        limit: 500
+        limit: 200
       });
       if (selectedCategories.length > 0) {
         params.append('category_ids', selectedCategories.join(','));
