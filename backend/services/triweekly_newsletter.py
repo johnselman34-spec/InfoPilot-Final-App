@@ -352,38 +352,38 @@ def start_triweekly_scheduler():
     
     triweekly_scheduler = AsyncIOScheduler(timezone="UTC")
     
-    # Schedule 1: 5:46 AM UTC (Morning Edition)
+    # Schedule 1: 5:42 AM UTC (Morning Edition) - Updated as per user request
     triweekly_scheduler.add_job(
         lambda: asyncio.create_task(send_triweekly_newsletter("morning")),
-        CronTrigger(hour=5, minute=46),
+        CronTrigger(hour=5, minute=42),
         id="triweekly_morning",
-        name="Tri-Weekly Newsletter (5:46 AM)",
+        name="Tri-Weekly Newsletter (5:42 AM)",
         replace_existing=True
     )
     
-    # Schedule 2: 9:42 AM UTC (Mid-Morning Edition) - UPDATED from 9:05 AM
+    # Schedule 2: 8:37 AM UTC (Mid-Morning Edition) - Updated as per user request
     triweekly_scheduler.add_job(
         lambda: asyncio.create_task(send_triweekly_newsletter("midmorning")),
-        CronTrigger(hour=9, minute=42),
+        CronTrigger(hour=8, minute=37),
         id="triweekly_midmorning",
-        name="Tri-Weekly Newsletter (9:42 AM)",
+        name="Tri-Weekly Newsletter (8:37 AM)",
         replace_existing=True
     )
     
-    # Schedule 3: 4:20 PM UTC (Afternoon Edition)
+    # Schedule 3: 4:41 PM UTC (Afternoon Edition) - Updated as per user request
     triweekly_scheduler.add_job(
         lambda: asyncio.create_task(send_triweekly_newsletter("afternoon")),
-        CronTrigger(hour=16, minute=20),
+        CronTrigger(hour=16, minute=41),
         id="triweekly_afternoon",
-        name="Tri-Weekly Newsletter (4:20 PM)",
+        name="Tri-Weekly Newsletter (4:41 PM)",
         replace_existing=True
     )
     
     triweekly_scheduler.start()
     logger.info("📬 Tri-weekly newsletter scheduler started!")
-    logger.info("   - 5:46 AM UTC (Morning Edition)")
-    logger.info("   - 9:42 AM UTC (Mid-Morning Edition)")
-    logger.info("   - 4:20 PM UTC (Afternoon Edition)")
+    logger.info("   - 5:42 AM UTC (Morning Edition)")
+    logger.info("   - 8:37 AM UTC (Mid-Morning Edition)")
+    logger.info("   - 4:41 PM UTC (Afternoon Edition)")
 
 
 def stop_triweekly_scheduler():
