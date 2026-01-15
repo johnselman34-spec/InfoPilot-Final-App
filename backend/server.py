@@ -535,16 +535,35 @@ async def get_ultimate_search(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=200),
     category_id: Optional[str] = None,
+    category_ids: Optional[str] = Query(None, description="Comma-separated category IDs to filter by"),
+    aggregation: str = Query("and_or", description="Search logic: and_or, and, or"),
     batch_id: Optional[str] = None,
     user = Depends(get_optional_user_local)
 ):
-    """Get stored search results"""
+    """Get stored search results with category filtering"""
     query = {}
     
     if user:
         query["user_id"] = str(user["_id"])
     
-    if category_id:
+    # Parse category_ids (comma-separated) for multi-category filtering
+    selected_category_ids = []
+    if category_ids:
+        selected_category_ids = [cid.strip() for cid in category_ids.split(",") if cid.strip()]
+    
+    # Apply category filtering based on aggregation mode
+    if selected_category_ids:
+        if aggregation == "and":
+            # AND: Results must contain ALL selected categories
+            query["category_ids"] = {"$all": selected_category_ids}
+        elif aggregation == "or":
+            # OR: Results must contain ANY of the selected categories
+            query["category_ids"] = {"$in": selected_category_ids}
+        else:
+            # AND/OR (default): Same as OR - results matching any category
+            query["category_ids"] = {"$in": selected_category_ids}
+    elif category_id:
+        # Backward compatibility: single category_id parameter
         query["category_ids"] = category_id
     
     if batch_id:
@@ -554,17 +573,30 @@ async def get_ultimate_search(
     total = await db.search_results.count_documents(query)
     results = await db.search_results.find(query).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     
-    formatted = []
+    # Collect all unique category IDs for bulk fetch (N+1 query optimization)
+    all_category_ids = set()
     for r in results:
-        # Get category names
-        category_names = []
         for cat_id in r.get("category_ids", []):
             try:
-                cat = await db.categories.find_one({"_id": ObjectId(cat_id)})
-                if cat:
-                    category_names.append(cat["name"])
+                all_category_ids.add(ObjectId(cat_id))
             except:
                 pass
+    
+    # Bulk fetch all categories at once
+    categories_map = {}
+    if all_category_ids:
+        categories_cursor = db.categories.find({"_id": {"$in": list(all_category_ids)}})
+        async for cat in categories_cursor:
+            categories_map[str(cat["_id"])] = cat["name"]
+    
+    formatted = []
+    for r in results:
+        # Get category names from pre-fetched map
+        category_names = []
+        for cat_id in r.get("category_ids", []):
+            cat_name = categories_map.get(str(cat_id))
+            if cat_name:
+                category_names.append(cat_name)
         
         formatted.append({
             "id": str(r["_id"]),
@@ -583,8 +615,11 @@ async def get_ultimate_search(
     return {
         "results": formatted,
         "total": total,
+        "count": len(formatted),
         "page": page,
-        "pages": (total + limit - 1) // limit
+        "pages": (total + limit - 1) // limit,
+        "filter_applied": len(selected_category_ids) > 0,
+        "aggregation_mode": aggregation
     }
 
 @api_router.get("/ultimate-search/stats", response_model=dict)
