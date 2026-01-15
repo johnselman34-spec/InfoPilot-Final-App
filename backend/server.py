@@ -6567,6 +6567,167 @@ async def delete_results_batch(result_ids: List[str], user: dict = Depends(requi
     return {"message": f"Deleted {result.deleted_count} results"}
 
 # ============================================
+# GEOCODING ENDPOINT
+# ============================================
+
+@api_router.post("/geocode")
+async def geocode_location(data: dict, user: dict = Depends(require_user)):
+    """Convert city/state to lat/lng coordinates using Google Geocoding API"""
+    city = data.get("city", "")
+    state = data.get("state", "")
+    country = data.get("country", "USA")
+    
+    if not city:
+        raise HTTPException(status_code=400, detail="City is required")
+    
+    # Build address string
+    address_parts = [city]
+    if state:
+        address_parts.append(state)
+    address_parts.append(country)
+    address = ", ".join(address_parts)
+    
+    try:
+        # Call Google Geocoding API
+        geocode_url = f"https://maps.googleapis.com/maps/api/geocode/json"
+        params = {
+            "address": address,
+            "key": GOOGLE_MAPS_API_KEY
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(geocode_url, params=params)
+            result = response.json()
+        
+        if result.get("status") != "OK" or not result.get("results"):
+            return {"success": False, "error": "Location not found", "address": address}
+        
+        location = result["results"][0]["geometry"]["location"]
+        formatted_address = result["results"][0].get("formatted_address", address)
+        
+        return {
+            "success": True,
+            "lat": location["lat"],
+            "lng": location["lng"],
+            "formatted_address": formatted_address,
+            "city": city,
+            "state": state,
+            "country": country
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# ============================================
+# AI MARKETING CONTENT GENERATION
+# ============================================
+
+@api_router.post("/ai/generate-marketing")
+async def generate_marketing_content(data: dict, user: dict = Depends(require_user)):
+    """Generate AI-powered marketing content for the book using Emergent LLM"""
+    content_type = data.get("type", "tagline")  # tagline, description, social_post, email
+    context = data.get("context", "")
+    
+    # Book information for context
+    book_info = {
+        "title": "Letters to Evelyn",
+        "author": "John Selman",
+        "genre": "Supernatural Thriller Comedy",
+        "price": "$2.99",
+        "reviews": "19 Five-Star Reviews",
+        "tagline": "The Navy Taught Me to Fly Jets. The Universe Taught Me Everything Else.",
+        "description": "A true supernatural thriller comedy spanning 13 years of cosmic chaos",
+        "highlights": [
+            "Optioned for film",
+            "Written by a U.S. Naval Officer who graduated FIRST in his class",
+            "19 professional five-star reviews",
+            "Easy-to-read novella format"
+        ]
+    }
+    
+    # System prompts for different content types
+    prompts = {
+        "tagline": f"""You are a creative marketing copywriter. Generate a catchy, funny, and compelling tagline for the book "{book_info['title']}" by {book_info['author']}. 
+The book is a {book_info['genre']}. 
+Key selling points: {', '.join(book_info['highlights'])}
+Current tagline for reference: "{book_info['tagline']}"
+Generate a NEW, different tagline that is witty, memorable, and makes people want to buy the book. Keep it under 15 words.""",
+        
+        "description": f"""You are a creative book marketing expert. Write a compelling 2-3 sentence book description for "{book_info['title']}" by {book_info['author']}.
+Genre: {book_info['genre']}
+Highlights: {', '.join(book_info['highlights'])}
+Make it intriguing, funny where appropriate, and end with a hook that makes readers want to buy immediately.""",
+        
+        "social_post": f"""You are a social media marketing expert. Create an engaging social media post promoting "{book_info['title']}" by {book_info['author']}.
+Price: {book_info['price']}
+Reviews: {book_info['reviews']}
+Genre: {book_info['genre']}
+Include relevant emojis, a hook, the key selling point, and a call to action. Keep it under 280 characters for Twitter compatibility.""",
+        
+        "email": f"""You are an email marketing specialist. Write a short, compelling email subject line and preview text for promoting "{book_info['title']}".
+The email is promoting a {book_info['genre']} book at {book_info['price']} with {book_info['reviews']}.
+Format:
+Subject: [subject line here]
+Preview: [preview text here - 50-90 characters]"""
+    }
+    
+    system_prompt = prompts.get(content_type, prompts["tagline"])
+    if context:
+        system_prompt += f"\n\nAdditional context: {context}"
+    
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        
+        EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY", "")
+        if not EMERGENT_KEY:
+            raise HTTPException(status_code=500, detail="AI service not configured")
+        
+        chat = LlmChat(
+            api_key=EMERGENT_KEY,
+            session_id=f"marketing-{user['id']}-{datetime.now().timestamp()}",
+            system_message=system_prompt
+        ).with_model("openai", "gpt-5.2")
+        
+        user_message = UserMessage(text=f"Generate {content_type} content for the book marketing.")
+        response = await chat.send_message(user_message)
+        
+        return {
+            "success": True,
+            "content_type": content_type,
+            "generated_content": response,
+            "book_title": book_info["title"]
+        }
+    except ImportError:
+        raise HTTPException(status_code=500, detail="AI library not installed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
+
+@api_router.get("/ai/marketing-suggestions")
+async def get_marketing_suggestions(user: dict = Depends(require_user)):
+    """Get a batch of pre-generated marketing suggestions"""
+    # Return variety of marketing content
+    suggestions = {
+        "taglines": [
+            "The Navy Taught Me to Fly Jets. The Universe Taught Me Everything Else.",
+            "Get yourself giggling in disoriented, stupefying hee-haw laughter!",
+            "Hurricane-force winds of laughter from the most skeptical of minds!",
+            "Finally, an easy-to-read novella that flows - you won't be able to put it down!",
+            "50+ zingers in succession. Bat-shit insane? Maybe. Unforgettable? Definitely.",
+            "Written by a U.S. Naval Officer who graduated FIRST in his class!"
+        ],
+        "social_posts": [
+            "📚 NEW RELEASE: Letters to Evelyn - A supernatural thriller comedy that will leave you laughing AND questioning reality! ⭐⭐⭐⭐⭐ 19 Five-Star Reviews. Only $2.99! #BookTwitter #MustRead",
+            "🎬 OPTIONED FOR FILM! Letters to Evelyn by Navy pilot John Selman - the book Hollywood is watching! Get it before the movie comes out. $2.99 on Amazon! 📖✈️",
+            "😂 Need a laugh? Try Letters to Evelyn - 'Hurricane-force winds of laughter' from critics! Only $2.99. Your next favorite book awaits! 📚⭐"
+        ],
+        "email_subjects": [
+            {"subject": "🛩️ A Navy Pilot's Supernatural Journey Will Leave You Breathless", "preview": "19 Five-Star Reviews can't be wrong..."},
+            {"subject": "📚 The Book Hollywood Is Already Talking About", "preview": "Letters to Evelyn - Only $2.99"},
+            {"subject": "😂 Warning: May Cause Uncontrollable Laughter", "preview": "A supernatural thriller comedy unlike any other"}
+        ]
+    }
+    return suggestions
+
+# ============================================
 # WEBSOCKET ENDPOINTS
 # ============================================
 
