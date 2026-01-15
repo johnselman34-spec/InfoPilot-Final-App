@@ -46,6 +46,7 @@ class CategoryUpdate(BaseModel):
     name: Optional[str] = None
     protocol: Optional[str] = None
     is_public: Optional[bool] = None
+    price: Optional[float] = None
 
 class CategoryResponse(BaseModel):
     id: str
@@ -54,6 +55,7 @@ class CategoryResponse(BaseModel):
     user_id: str
     parent_id: Optional[str] = None
     is_public: bool = False
+    price: Optional[float] = None
     level: int = 0
     created_at: datetime
 
