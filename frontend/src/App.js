@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import './App.css';
+import './i18n'; // i18n multi-language support
 
 // Import refactored modules
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -22,6 +23,8 @@ import {
   QuoteGalleryPage,
   AnalyticsPage
 } from './pages';
+import ChatPage from './pages/ChatPage';
+import AdvancedAnalytics from './components/AdvancedAnalytics';
 
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
