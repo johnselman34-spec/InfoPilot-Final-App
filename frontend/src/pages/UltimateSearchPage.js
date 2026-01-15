@@ -230,6 +230,8 @@ const UltimateSearchPage = ({ showToast }) => {
           showToast(`Collated ${collateData.collated_count} of ${searchData.total} results in ${totalTime}s!`, 'success');
           fetchSearchResults();
           fetchBatches();
+          // Trigger map refresh after data changes
+          triggerMapRefresh();
         }
       }
     } catch (e) {
