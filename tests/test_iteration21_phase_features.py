@@ -159,7 +159,7 @@ class TestCategoryEditing:
         
         # Verify update
         get_res = requests.get(f"{BASE_URL}/api/categories", headers=headers)
-        categories = get_res.json()["categories"]
+        categories = get_res.json()  # Returns list directly
         updated_cat = next((c for c in categories if c["id"] == category_id), None)
         assert updated_cat is not None
         assert updated_cat["name"] == "TEST_Edit_Category_Updated"
