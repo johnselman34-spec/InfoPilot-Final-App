@@ -124,6 +124,8 @@ async def list_marketplace_protocols(
     
     formatted = []
     for p in protocols:
+        # Determine if protocol is free (either by is_free flag or price == 0)
+        is_free = p.get("is_free", False) or p.get("price", 0) == 0
         formatted.append({
             "id": str(p["_id"]),
             "name": p["name"],
@@ -139,6 +141,7 @@ async def list_marketplace_protocols(
             "review_count": p.get("review_count", 0),
             "created_at": p["created_at"].isoformat(),
             "is_featured": p.get("is_featured", False),
+            "is_free": is_free,  # Include is_free flag for FREE badge display
             "is_owned": str(p["_id"]) in user_purchases or (user and str(user["_id"]) == p["creator_id"]),
             "preview_results": p.get("preview_results", 3)
         })
