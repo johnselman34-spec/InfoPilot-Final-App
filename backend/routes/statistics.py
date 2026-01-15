@@ -424,6 +424,7 @@ async def get_full_dashboard(user = Depends(get_optional_user)):
     top_words = await get_top_words_statistics()
     top_phrases = await get_top_protocol_phrases()
     categories = await get_category_breakdown()
+    most_copied = await get_most_copied_protocols()
     
     return {
         "overview": overview,
@@ -433,6 +434,7 @@ async def get_full_dashboard(user = Depends(get_optional_user)):
         "top_words": top_words,
         "top_phrases": top_phrases,
         "categories": categories,
+        "most_copied": most_copied,
         "funny_fact": _get_funny_fact(),
         "generated_at": datetime.utcnow().isoformat()
     }
