@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import { Icons, ProtocolCopyButtons, AISuggestions } from '../components/shared';
 import ProtocolAnalyticsDashboard from '../components/Admin/ProtocolAnalyticsDashboard';
+import ProtocolBundlesSection from '../components/Marketplace/ProtocolBundlesSection';
 
 // Constants
 const FREE_MESSAGES = [
