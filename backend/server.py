@@ -139,19 +139,14 @@ async def login(credentials: UserLogin):
         logger.error(f"Login error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Admin email addresses - these get automatic admin privileges
-ADMIN_EMAILS = [
-    "jjspilot24@gmail.com",
-    "johnselman34@gmail.com", 
-    "john.1976.selman@gmail.com",
-    "john@infojet.com"
-]
+# Admin email addresses - loaded from environment for deployment flexibility
+ADMIN_EMAILS = os.environ.get('ADMIN_EMAILS', 'jjspilot24@gmail.com,johnselman34@gmail.com,john.1976.selman@gmail.com,john@infojet.com').split(',')
 
 def is_admin_email(email: str) -> bool:
     """Check if email is an admin email (case-insensitive)"""
     if not email:
         return False
-    return email.lower() in [e.lower() for e in ADMIN_EMAILS]
+    return email.lower() in [e.lower().strip() for e in ADMIN_EMAILS]
 
 # Google OAuth Authentication
 from pydantic import BaseModel
