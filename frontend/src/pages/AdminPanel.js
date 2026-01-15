@@ -592,7 +592,254 @@ const AdminPanel = ({ showToast }) => {
             </div>
           </div>
         )}
+
+        {activeTab === 'polls' && (
+          <PollsAdminTab token={token} showToast={showToast} />
+        )}
       </div>
+    </div>
+  );
+};
+
+// Separate component for Polls Admin Tab
+const PollsAdminTab = ({ token, showToast }) => {
+  const [polls, setPolls] = useState([]);
+  const [pollStats, setPollStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    fetchPolls();
+    fetchStats();
+  }, [statusFilter, page]);
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch(`${API}/polls/admin/statistics`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPollStats(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch poll stats:', e);
+    }
+  };
+
+  const fetchPolls = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page, limit: 10 });
+      if (statusFilter) params.append('status', statusFilter);
+      
+      const res = await fetch(`${API}/polls/admin/all?${params}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPolls(data.polls || []);
+        setTotalPages(data.pages || 1);
+      }
+    } catch (e) {
+      console.error('Failed to fetch polls:', e);
+    }
+    setLoading(false);
+  };
+
+  const handleClosePoll = async (pollId) => {
+    if (!window.confirm('Close this poll? Users will no longer be able to vote.')) return;
+    try {
+      const res = await fetch(`${API}/polls/admin/${pollId}?is_active=false`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        showToast('Poll closed', 'success');
+        fetchPolls();
+        fetchStats();
+      }
+    } catch (e) {
+      showToast('Failed to close poll', 'error');
+    }
+  };
+
+  const handleDeletePoll = async (pollId) => {
+    if (!window.confirm('Delete this poll permanently? This cannot be undone.')) return;
+    try {
+      const res = await fetch(`${API}/polls/admin/${pollId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        showToast('Poll deleted', 'success');
+        fetchPolls();
+        fetchStats();
+      }
+    } catch (e) {
+      showToast('Failed to delete poll', 'error');
+    }
+  };
+
+  return (
+    <div>
+      <h3 style={{ marginBottom: 20, color: '#f472b6' }}>📊 Poll Management</h3>
+      
+      {/* Stats Overview */}
+      {pollStats && (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+          gap: 15,
+          marginBottom: 25
+        }}>
+          {[
+            { label: 'Total Polls', value: pollStats.total_polls, color: '#8b5cf6' },
+            { label: 'Active', value: pollStats.active_polls, color: '#10b981' },
+            { label: 'Closed', value: pollStats.closed_polls, color: '#6b7280' },
+            { label: 'Total Votes', value: pollStats.total_votes, color: '#3b82f6' },
+            { label: 'This Week', value: pollStats.polls_this_week, color: '#f59e0b' },
+          ].map((stat, i) => (
+            <div key={i} style={{
+              background: `${stat.color}15`,
+              borderRadius: 12,
+              padding: '15px 12px',
+              textAlign: 'center',
+              border: `1px solid ${stat.color}30`
+            }}>
+              <div style={{ color: stat.color, fontSize: '1.5rem', fontWeight: 700 }}>{stat.value}</div>
+              <div style={{ color: '#a1a1aa', fontSize: '0.8rem' }}>{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Filter Controls */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+        <select
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          style={{
+            background: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: 8,
+            padding: '8px 12px',
+            color: '#fff'
+          }}
+        >
+          <option value="">All Polls</option>
+          <option value="active">Active</option>
+          <option value="closed">Closed</option>
+          <option value="expired">Expired</option>
+        </select>
+        <button 
+          className="btn btn-secondary"
+          onClick={() => { fetchPolls(); fetchStats(); }}
+          style={{ padding: '8px 16px' }}
+        >
+          🔄 Refresh
+        </button>
+      </div>
+
+      {/* Polls List */}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 30, color: '#a1a1aa' }}>Loading polls...</div>
+      ) : polls.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 30, color: '#a1a1aa' }}>
+          <div style={{ fontSize: '2rem', marginBottom: 10 }}>📊</div>
+          <p>No polls found</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {polls.map((poll) => (
+            <div key={poll.id} style={{
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: 12,
+              padding: 15,
+              border: `1px solid ${poll.is_active ? 'rgba(16, 185, 129, 0.3)' : 'rgba(107, 114, 128, 0.3)'}`
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                <div>
+                  <h4 style={{ color: '#fff', margin: '0 0 5px 0', fontSize: '1rem' }}>
+                    {poll.question}
+                  </h4>
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', fontSize: '0.8rem' }}>
+                    <span style={{ color: '#a1a1aa' }}>by {poll.creator_name}</span>
+                    <span style={{ color: '#8b5cf6' }}>{poll.parent_type}</span>
+                    <span style={{ color: '#3b82f6' }}>{poll.total_votes} votes</span>
+                    <span style={{ color: poll.is_active ? '#10b981' : '#6b7280' }}>
+                      {poll.is_active ? '🟢 Active' : poll.is_expired ? '⏰ Expired' : '🔴 Closed'}
+                    </span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {poll.is_active && (
+                    <button
+                      onClick={() => handleClosePoll(poll.id)}
+                      style={{
+                        background: 'rgba(251, 191, 36, 0.2)',
+                        border: '1px solid rgba(251, 191, 36, 0.3)',
+                        color: '#fbbf24',
+                        padding: '6px 12px',
+                        borderRadius: 6,
+                        cursor: 'pointer',
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      Close
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDeletePoll(poll.id)}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      color: '#ef4444',
+                      padding: '6px 12px',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#71717a' }}>
+                Created: {new Date(poll.created_at).toLocaleDateString()}
+                {poll.expires_at && ` • Expires: ${new Date(poll.expires_at).toLocaleDateString()}`}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 20 }}>
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="btn btn-secondary"
+            style={{ padding: '6px 12px' }}
+          >
+            Previous
+          </button>
+          <span style={{ color: '#a1a1aa', alignSelf: 'center' }}>
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="btn btn-secondary"
+            style={{ padding: '6px 12px' }}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };
