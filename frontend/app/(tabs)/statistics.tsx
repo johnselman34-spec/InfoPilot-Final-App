@@ -70,12 +70,16 @@ export default function StatisticsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<StatisticsData | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [clipboardLeaders, setClipboardLeaders] = useState<ClipboardLeader[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [activeChart, setActiveChart] = useState<ChartType>('overview');
   const [leaderboardTab, setLeaderboardTab] = useState<LeaderboardTab>('sales');
   const [funnyMessage, setFunnyMessage] = useState('');
 
   useEffect(() => {
     loadData();
+    loadClipboardLeaders();
+    loadAchievements();
   }, []);
 
   useEffect(() => {
@@ -97,6 +101,39 @@ export default function StatisticsScreen() {
       setLoading(false);
     }
   };
+
+  const loadClipboardLeaders = async () => {
+    try {
+      const response = await api.get('/statistics/clipboard-leaders');
+      setClipboardLeaders(response.leaders || []);
+    } catch (error) {
+      // Use mock data
+      setClipboardLeaders(getMockClipboardLeaders());
+    }
+  };
+
+  const loadAchievements = async () => {
+    try {
+      const response = await api.get('/achievements/all');
+      setAchievements(response.achievements || []);
+    } catch (error) {
+      setAchievements(getMockAchievements());
+    }
+  };
+
+  const getMockClipboardLeaders = (): ClipboardLeader[] => [
+    { protocol_id: '1', protocol_name: 'George Bush Research', creator: 'JohnSelman', copy_count: 1247, price: 0 },
+    { protocol_id: '2', protocol_name: 'William C. Gamble Historical', creator: 'JohnSelman', copy_count: 892, price: 9.99 },
+    { protocol_id: '3', protocol_name: 'Richard J. Selman Research', creator: 'JohnSelman', copy_count: 654, price: 4.99 },
+    { protocol_id: '4', protocol_name: 'American Civil War Heroes', creator: 'ProtocolMaster', copy_count: 543, price: 2.99 },
+    { protocol_id: '5', protocol_name: 'Technology Research', creator: 'DataWizard', copy_count: 432, price: 0 },
+  ];
+
+  const getMockAchievements = (): Achievement[] => [
+    { id: '1', name: 'Protocol Pioneer', description: 'Created first protocol', funny_tagline: 'Baby steps!', icon: '🎯', category: 'protocols', rarity: 'common', earned: false, progress: 0 },
+    { id: '2', name: 'Money Maker', description: 'Made first sale', funny_tagline: 'Cha-ching!', icon: '💰', category: 'sales', rarity: 'common', earned: false, progress: 0 },
+    { id: '3', name: 'Social Butterfly', description: 'Made 10 friends', funny_tagline: 'Popular!', icon: '🦋', category: 'social', rarity: 'common', earned: false, progress: 0 },
+  ];
 
   const loadLeaderboard = async () => {
     try {
