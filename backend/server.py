@@ -2296,6 +2296,11 @@ async def health_check():
 from routes.notifications import router as notifications_router
 from routes.export import router as export_router
 
+# Initialize routers that need database
+init_bundles_router(db)
+init_push_router(db)
+init_chat_router(db)
+
 # Include modular routers with /api prefix
 app.include_router(auth_router, prefix="/api")
 app.include_router(categories_router, prefix="/api")
@@ -2304,6 +2309,9 @@ app.include_router(marketplace_router, prefix="/api")
 app.include_router(admin_router, prefix="/api")
 app.include_router(notifications_router, prefix="/api")
 app.include_router(export_router, prefix="/api")
+app.include_router(bundles_router)
+app.include_router(push_router)
+app.include_router(chat_router)
 
 # Include the local api_router
 app.include_router(api_router)
