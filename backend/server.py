@@ -2494,4 +2494,12 @@ async def shutdown_db_client():
     except Exception as e:
         logger.error(f"Failed to stop A/B optimizer scheduler: {e}")
     
+    # Stop the tri-weekly newsletter scheduler
+    try:
+        from services.triweekly_newsletter import stop_triweekly_scheduler
+        stop_triweekly_scheduler()
+        logger.info("📬 Tri-weekly newsletter scheduler stopped")
+    except Exception as e:
+        logger.error(f"Failed to stop tri-weekly newsletter scheduler: {e}")
+    
     client.close()
