@@ -91,7 +91,9 @@ class TestCategoriesAPI:
         unique_id = str(uuid.uuid4())[:8]
         category_data = {
             "name": f"TEST_Location_Category_{unique_id}",
-            "protocol": "(test or location) & (marketplace)",  # API uses 'protocol' not 'protocol_string'
+            "protocol": {
+                "protocol_string": "(test or location) & (marketplace)"
+            },
             "is_public": False,
             "for_sale": True,
             "price": 1.50,
@@ -129,7 +131,9 @@ class TestCategoriesAPI:
         unique_id = str(uuid.uuid4())[:8]
         create_data = {
             "name": f"TEST_Update_Location_{unique_id}",
-            "protocol": "(update or test)",  # API uses 'protocol' not 'protocol_string'
+            "protocol": {
+                "protocol_string": "(update or test)"
+            },
             "is_public": False,
             "for_sale": True,
             "price": 0.99
