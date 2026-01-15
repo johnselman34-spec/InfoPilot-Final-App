@@ -1137,6 +1137,526 @@ async def request_payout(
 # Import uuid for transaction IDs
 import uuid
 
+# ==================== SOCIAL ROUTES ====================
+
+@api_router.get("/social/friends")
+async def get_friends(authorization: Optional[str] = Header(None)):
+    """Get user's friends and pending friend requests"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        # Get friendships where user is either party
+        friendships = await db.friendships.find({
+            "$or": [
+                {"user_id": user["id"], "status": "accepted"},
+                {"friend_id": user["id"], "status": "accepted"}
+            ]
+        }).to_list(100)
+        
+        # Get friend user details
+        friend_ids = []
+        for f in friendships:
+            if f["user_id"] == user["id"]:
+                friend_ids.append(f["friend_id"])
+            else:
+                friend_ids.append(f["user_id"])
+        
+        friends = await db.users.find(
+            {"id": {"$in": friend_ids}},
+            {"password_hash": 0}
+        ).to_list(100)
+        
+        # Get pending friend requests TO this user
+        pending = await db.friendships.find({
+            "friend_id": user["id"],
+            "status": "pending"
+        }).to_list(20)
+        
+        pending_users = []
+        for p in pending:
+            requester = await db.users.find_one({"id": p["user_id"]}, {"password_hash": 0})
+            if requester:
+                pending_users.append({
+                    "id": requester["id"],
+                    "username": requester["username"],
+                    "profile_photo": requester.get("profile_photo")
+                })
+        
+        return {
+            "friends": [
+                {
+                    "id": f["id"],
+                    "username": f["username"],
+                    "profile_photo": f.get("profile_photo"),
+                    "location": f.get("location")
+                } for f in friends
+            ],
+            "pending_requests": pending_users
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get friends error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/social/search-users")
+async def search_users(query: str = Query(...), authorization: Optional[str] = Header(None)):
+    """Search for users by name or location"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        users = await db.users.find({
+            "$or": [
+                {"username": {"$regex": query, "$options": "i"}},
+                {"email": {"$regex": query, "$options": "i"}},
+                {"location": {"$regex": query, "$options": "i"}}
+            ],
+            "id": {"$ne": user["id"]}  # Exclude self
+        }, {"password_hash": 0}).limit(20).to_list(20)
+        
+        return {
+            "users": [
+                {
+                    "id": u["id"],
+                    "username": u["username"],
+                    "profile_photo": u.get("profile_photo"),
+                    "location": u.get("location"),
+                    "is_friend": False  # TODO: Check friendship status
+                } for u in users
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Search users error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class FriendRequestData(BaseModel):
+    user_id: str
+
+@api_router.post("/social/friend-request")
+async def send_friend_request(data: FriendRequestData, authorization: Optional[str] = Header(None)):
+    """Send a friend request"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        # Check if already friends or request pending
+        existing = await db.friendships.find_one({
+            "$or": [
+                {"user_id": user["id"], "friend_id": data.user_id},
+                {"user_id": data.user_id, "friend_id": user["id"]}
+            ]
+        })
+        
+        if existing:
+            if existing["status"] == "accepted":
+                raise HTTPException(status_code=400, detail="Already friends!")
+            else:
+                raise HTTPException(status_code=400, detail="Friend request already pending!")
+        
+        # Create friend request
+        friendship = {
+            "id": str(uuid.uuid4()),
+            "user_id": user["id"],
+            "friend_id": data.user_id,
+            "status": "pending",
+            "created_at": datetime.utcnow()
+        }
+        await db.friendships.insert_one(friendship)
+        
+        return {"success": True, "message": "Friend request sent! 🤝"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Friend request error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/social/accept-friend")
+async def accept_friend_request(data: FriendRequestData, authorization: Optional[str] = Header(None)):
+    """Accept a friend request"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        result = await db.friendships.update_one(
+            {"user_id": data.user_id, "friend_id": user["id"], "status": "pending"},
+            {"$set": {"status": "accepted", "accepted_at": datetime.utcnow()}}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Friend request not found")
+        
+        return {"success": True, "message": "Friend request accepted! 🎉"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Accept friend error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/social/friends/{friend_id}")
+async def unfriend(friend_id: str, authorization: Optional[str] = Header(None)):
+    """Remove a friend"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        await db.friendships.delete_one({
+            "$or": [
+                {"user_id": user["id"], "friend_id": friend_id},
+                {"user_id": friend_id, "friend_id": user["id"]}
+            ]
+        })
+        
+        return {"success": True, "message": "Unfriended 😢"}
+    except Exception as e:
+        logger.error(f"Unfriend error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Groups
+class GroupCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+@api_router.get("/social/groups")
+async def get_groups(authorization: Optional[str] = Header(None)):
+    """Get all groups"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        groups = await db.groups.find().limit(50).to_list(50)
+        
+        result = []
+        for g in groups:
+            member = await db.group_members.find_one({
+                "group_id": g["id"],
+                "user_id": user["id"]
+            })
+            result.append({
+                "id": g["id"],
+                "name": g["name"],
+                "description": g.get("description"),
+                "member_count": g.get("member_count", 0),
+                "is_member": member is not None,
+                "is_admin": member.get("is_admin", False) if member else False,
+                "created_at": g.get("created_at").isoformat() if g.get("created_at") else None
+            })
+        
+        return {"groups": result}
+    except Exception as e:
+        logger.error(f"Get groups error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/social/groups")
+async def create_group(data: GroupCreate, authorization: Optional[str] = Header(None)):
+    """Create a new group"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        group = {
+            "id": str(uuid.uuid4()),
+            "name": data.name,
+            "description": data.description,
+            "creator_id": user["id"],
+            "member_count": 1,
+            "created_at": datetime.utcnow()
+        }
+        await db.groups.insert_one(group)
+        
+        # Add creator as admin member
+        member = {
+            "id": str(uuid.uuid4()),
+            "group_id": group["id"],
+            "user_id": user["id"],
+            "is_admin": True,
+            "joined_at": datetime.utcnow()
+        }
+        await db.group_members.insert_one(member)
+        
+        return {"success": True, "group_id": group["id"], "message": "Group created! 🎉"}
+    except Exception as e:
+        logger.error(f"Create group error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/social/groups/{group_id}/join")
+async def join_group(group_id: str, authorization: Optional[str] = Header(None)):
+    """Join a group"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        # Check if already member
+        existing = await db.group_members.find_one({
+            "group_id": group_id,
+            "user_id": user["id"]
+        })
+        if existing:
+            raise HTTPException(status_code=400, detail="Already a member!")
+        
+        member = {
+            "id": str(uuid.uuid4()),
+            "group_id": group_id,
+            "user_id": user["id"],
+            "is_admin": False,
+            "joined_at": datetime.utcnow()
+        }
+        await db.group_members.insert_one(member)
+        
+        await db.groups.update_one(
+            {"id": group_id},
+            {"$inc": {"member_count": 1}}
+        )
+        
+        return {"success": True, "message": "Joined the group! 🎉"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Join group error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/social/groups/{group_id}/leave")
+async def leave_group(group_id: str, authorization: Optional[str] = Header(None)):
+    """Leave a group"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        await db.group_members.delete_one({
+            "group_id": group_id,
+            "user_id": user["id"]
+        })
+        
+        await db.groups.update_one(
+            {"id": group_id},
+            {"$inc": {"member_count": -1}}
+        )
+        
+        return {"success": True, "message": "Left the group 👋"}
+    except Exception as e:
+        logger.error(f"Leave group error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Pages
+class PageCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    category: Optional[str] = "General"
+
+@api_router.get("/social/pages")
+async def get_pages(authorization: Optional[str] = Header(None)):
+    """Get all pages"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        pages = await db.pages.find().limit(50).to_list(50)
+        
+        result = []
+        for p in pages:
+            following = await db.page_followers.find_one({
+                "page_id": p["id"],
+                "user_id": user["id"]
+            })
+            result.append({
+                "id": p["id"],
+                "name": p["name"],
+                "description": p.get("description"),
+                "category": p.get("category", "General"),
+                "follower_count": p.get("follower_count", 0),
+                "is_following": following is not None,
+                "is_owner": p["owner_id"] == user["id"]
+            })
+        
+        return {"pages": result}
+    except Exception as e:
+        logger.error(f"Get pages error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/social/pages")
+async def create_page(data: PageCreate, authorization: Optional[str] = Header(None)):
+    """Create a new page"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        page = {
+            "id": str(uuid.uuid4()),
+            "name": data.name,
+            "description": data.description,
+            "category": data.category,
+            "owner_id": user["id"],
+            "follower_count": 1,
+            "created_at": datetime.utcnow()
+        }
+        await db.pages.insert_one(page)
+        
+        # Owner automatically follows
+        follower = {
+            "id": str(uuid.uuid4()),
+            "page_id": page["id"],
+            "user_id": user["id"],
+            "followed_at": datetime.utcnow()
+        }
+        await db.page_followers.insert_one(follower)
+        
+        return {"success": True, "page_id": page["id"], "message": "Page created! 🎉"}
+    except Exception as e:
+        logger.error(f"Create page error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/social/pages/{page_id}/follow")
+async def follow_page(page_id: str, authorization: Optional[str] = Header(None)):
+    """Follow a page"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        existing = await db.page_followers.find_one({
+            "page_id": page_id,
+            "user_id": user["id"]
+        })
+        
+        if existing:
+            # Unfollow
+            await db.page_followers.delete_one({"id": existing["id"]})
+            await db.pages.update_one({"id": page_id}, {"$inc": {"follower_count": -1}})
+            return {"success": True, "is_following": False, "message": "Unfollowed 👋"}
+        else:
+            # Follow
+            follower = {
+                "id": str(uuid.uuid4()),
+                "page_id": page_id,
+                "user_id": user["id"],
+                "followed_at": datetime.utcnow()
+            }
+            await db.page_followers.insert_one(follower)
+            await db.pages.update_one({"id": page_id}, {"$inc": {"follower_count": 1}})
+            return {"success": True, "is_following": True, "message": "Following! 🎉"}
+    except Exception as e:
+        logger.error(f"Follow page error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==================== MESSAGING ROUTES ====================
+
+@api_router.get("/messages/conversations")
+async def get_conversations(authorization: Optional[str] = Header(None)):
+    """Get all conversations for current user"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        # Get all messages involving this user
+        messages = await db.messages.find({
+            "$or": [
+                {"sender_id": user["id"]},
+                {"receiver_id": user["id"]}
+            ]
+        }).sort("created_at", -1).to_list(500)
+        
+        # Group by conversation partner
+        conversations_map = {}
+        for msg in messages:
+            partner_id = msg["receiver_id"] if msg["sender_id"] == user["id"] else msg["sender_id"]
+            if partner_id not in conversations_map:
+                conversations_map[partner_id] = {
+                    "last_message": msg["content"],
+                    "last_message_time": msg["created_at"],
+                    "unread_count": 0 if msg["sender_id"] == user["id"] else (0 if msg.get("is_read") else 1)
+                }
+            else:
+                if msg["sender_id"] != user["id"] and not msg.get("is_read"):
+                    conversations_map[partner_id]["unread_count"] += 1
+        
+        # Get user details for each conversation
+        conversations = []
+        for partner_id, conv_data in conversations_map.items():
+            partner = await db.users.find_one({"id": partner_id}, {"password_hash": 0})
+            if partner:
+                conversations.append({
+                    "id": partner_id,
+                    "user": {
+                        "id": partner["id"],
+                        "username": partner["username"],
+                        "profile_photo": partner.get("profile_photo"),
+                        "is_online": False  # TODO: Implement online status
+                    },
+                    "last_message": conv_data["last_message"][:50] + "..." if len(conv_data["last_message"]) > 50 else conv_data["last_message"],
+                    "last_message_time": format_time_ago(conv_data["last_message_time"]),
+                    "unread_count": conv_data["unread_count"]
+                })
+        
+        return {"conversations": conversations}
+    except Exception as e:
+        logger.error(f"Get conversations error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+def format_time_ago(dt: datetime) -> str:
+    """Format datetime as relative time"""
+    now = datetime.utcnow()
+    diff = now - dt
+    
+    if diff.days > 0:
+        return f"{diff.days}d ago"
+    elif diff.seconds >= 3600:
+        return f"{diff.seconds // 3600}h ago"
+    elif diff.seconds >= 60:
+        return f"{diff.seconds // 60}m ago"
+    else:
+        return "Just now"
+
+@api_router.get("/messages/{user_id}")
+async def get_messages(user_id: str, authorization: Optional[str] = Header(None)):
+    """Get messages with a specific user"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        messages = await db.messages.find({
+            "$or": [
+                {"sender_id": user["id"], "receiver_id": user_id},
+                {"sender_id": user_id, "receiver_id": user["id"]}
+            ]
+        }).sort("created_at", 1).to_list(100)
+        
+        # Mark messages as read
+        await db.messages.update_many(
+            {"sender_id": user_id, "receiver_id": user["id"], "is_read": False},
+            {"$set": {"is_read": True}}
+        )
+        
+        return {
+            "messages": [
+                {
+                    "id": m["id"],
+                    "sender_id": m["sender_id"],
+                    "receiver_id": m["receiver_id"],
+                    "content": m["content"],
+                    "image_url": m.get("image_url"),
+                    "created_at": m["created_at"].strftime("%I:%M %p"),
+                    "is_read": m.get("is_read", False),
+                    "is_mine": m["sender_id"] == user["id"]
+                } for m in messages
+            ]
+        }
+    except Exception as e:
+        logger.error(f"Get messages error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class MessageSend(BaseModel):
+    receiver_id: str
+    content: str
+    image_url: Optional[str] = None
+
+@api_router.post("/messages/send")
+async def send_message(data: MessageSend, authorization: Optional[str] = Header(None)):
+    """Send a message"""
+    try:
+        user = await get_user_from_token(authorization)
+        
+        message = {
+            "id": str(uuid.uuid4()),
+            "sender_id": user["id"],
+            "receiver_id": data.receiver_id,
+            "content": data.content,
+            "image_url": data.image_url,
+            "is_read": False,
+            "created_at": datetime.utcnow()
+        }
+        await db.messages.insert_one(message)
+        
+        return {"success": True, "message_id": message["id"]}
+    except Exception as e:
+        logger.error(f"Send message error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ==================== HEALTH CHECK ====================
 
 @api_router.get("/health")
