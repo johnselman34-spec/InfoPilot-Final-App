@@ -310,9 +310,9 @@ class TestNewsletterScheduler:
     
     def test_newsletter_scheduler_times_in_code(self):
         """Verify newsletter scheduler times are set correctly in code"""
-        # Read the newsletter route file
+        # Read the triweekly newsletter service file (where scheduler is defined)
         try:
-            with open("/app/backend/routes/newsletter.py", "r") as f:
+            with open("/app/backend/services/triweekly_newsletter.py", "r") as f:
                 content = f.read()
             
             # Check for the specific times: 5:46 AM, 9:42 AM, 4:20 PM
@@ -322,7 +322,7 @@ class TestNewsletterScheduler:
             
             print("✅ Newsletter scheduler times verified: 5:46 AM, 9:42 AM, 4:20 PM")
         except FileNotFoundError:
-            pytest.skip("Newsletter route file not found")
+            pytest.skip("Triweekly newsletter service file not found")
 
 
 class TestAdminCollationSettings:
