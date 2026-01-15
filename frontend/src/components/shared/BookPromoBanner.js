@@ -10,11 +10,20 @@ const BOOK_IMAGES = [
 ];
 
 const FUNNY_TAGLINES = [
-  { image: 0, text: "eBook NOW ON SALE - $2.99! 📚", subtext: "The supernatural thriller comedy that'll make you cry AND laugh!" },
-  { image: 1, text: "WROTE A BOOK. UNIVERSE FACT-CHECKED IT. IT PASSED.", subtext: "Now it's YOUR turn to verify!" },
-  { image: 2, text: "THERAPIST: THIS IS A LOT TO UNPACK.", subtext: "Bring snacks. Possibly a helmet." },
-  { image: 3, text: "I FLEW JETS. THEN REALITY BROKE.", subtext: "Navy pilot meets cosmic chaos." },
-  { image: 4, text: "TERROR OF THE COSMIC GULPER", subtext: "A comedy of galactic proportions!" }
+  { image: 0, text: "⚡ LIMITED TIME: $2.99 - Less Than Your Coffee! ☕", subtext: "19 Five-Star Reviews • Optioned for Film • Read It Before Hollywood Does!" },
+  { image: 1, text: "WROTE A BOOK. UNIVERSE FACT-CHECKED IT. IT PASSED.", subtext: "World Record Holder • Navy Pilot • Now Bestselling Author!" },
+  { image: 2, text: "THERAPIST: THIS IS A LOT TO UNPACK.", subtext: "Warning: May cause uncontrollable laughter and existential questioning!" },
+  { image: 3, text: "I FLEW JETS. THEN REALITY BROKE.", subtext: "From cockpit to cosmic encounters - the story Hollywood couldn't ignore!" },
+  { image: 4, text: "🚀 TERROR OF THE COSMIC GULPER 🚀", subtext: "A comedy that will haunt you (in the best way possible!)" }
+];
+
+// Urgency/Scarcity messaging for CTAs
+const URGENCY_MESSAGES = [
+  "🔥 Over 10,000 readers can't be wrong!",
+  "⏰ Film production starting soon - read the original first!",
+  "💫 The book that made Hollywood take notice!",
+  "🎬 Before it hits theaters - experience the source!",
+  "✨ Join thousands who already know the secret!",
 ];
 
 // Professional Reviews from Readers' Favorite
