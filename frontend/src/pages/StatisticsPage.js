@@ -943,6 +943,186 @@ const StatisticsPage = ({ showToast }) => {
         )}
       </div>
 
+      {/* Poll Statistics Section - Clean & Non-Intrusive */}
+      {(userPollStats || pollStats) && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)',
+          borderRadius: 20,
+          padding: 25,
+          marginBottom: 30,
+          border: '1px solid rgba(59, 130, 246, 0.2)'
+        }} data-testid="poll-statistics-section">
+          <h2 style={{ 
+            color: '#fff', 
+            marginBottom: 20,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12
+          }}>
+            📊 Poll Insights
+            <span style={{
+              background: 'rgba(16, 185, 129, 0.2)',
+              padding: '4px 12px',
+              borderRadius: 15,
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              color: '#10b981'
+            }}>
+              COMMUNITY
+            </span>
+          </h2>
+
+          {/* User's Poll Stats */}
+          {userPollStats && (
+            <div style={{ marginBottom: 20 }}>
+              <h3 style={{ color: '#a78bfa', fontSize: '1rem', marginBottom: 12 }}>Your Poll Activity</h3>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gap: 12
+              }}>
+                {[
+                  { label: 'Polls Created', value: userPollStats.polls_created, icon: '📝', color: '#8b5cf6' },
+                  { label: 'Active Now', value: userPollStats.active_polls, icon: '🟢', color: '#10b981' },
+                  { label: 'Votes Received', value: userPollStats.total_votes_received, icon: '✅', color: '#3b82f6' },
+                  { label: 'Polls Voted', value: userPollStats.polls_voted_on, icon: '🗳️', color: '#f59e0b' },
+                ].map((stat, i) => (
+                  <div key={i} style={{
+                    background: 'rgba(0,0,0,0.2)',
+                    borderRadius: 12,
+                    padding: '12px 15px',
+                    textAlign: 'center',
+                    border: `1px solid ${stat.color}20`
+                  }}>
+                    <div style={{ fontSize: '1.3rem', marginBottom: 4 }}>{stat.icon}</div>
+                    <div style={{ color: stat.color, fontSize: '1.4rem', fontWeight: 700 }}>{stat.value}</div>
+                    <div style={{ color: '#a1a1aa', fontSize: '0.75rem' }}>{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Admin Poll Stats */}
+          {pollStats && user?.is_admin && (
+            <div>
+              <h3 style={{ 
+                color: '#f59e0b', 
+                fontSize: '1rem', 
+                marginBottom: 12,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}>
+                Platform Poll Statistics
+                <span style={{
+                  background: 'rgba(251, 191, 36, 0.2)',
+                  padding: '2px 8px',
+                  borderRadius: 10,
+                  fontSize: '0.65rem',
+                  fontWeight: 700
+                }}>
+                  ADMIN
+                </span>
+              </h3>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                gap: 10,
+                marginBottom: 15
+              }}>
+                {[
+                  { label: 'Total Polls', value: pollStats.total_polls, color: '#8b5cf6' },
+                  { label: 'Active', value: pollStats.active_polls, color: '#10b981' },
+                  { label: 'Closed', value: pollStats.closed_polls, color: '#6b7280' },
+                  { label: 'Total Votes', value: pollStats.total_votes, color: '#3b82f6' },
+                  { label: 'This Week', value: pollStats.polls_this_week, color: '#f59e0b' },
+                  { label: 'Avg Votes', value: pollStats.avg_votes_per_poll, color: '#ec4899' },
+                ].map((stat, i) => (
+                  <div key={i} style={{
+                    background: `${stat.color}15`,
+                    borderRadius: 8,
+                    padding: '10px 12px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ color: stat.color, fontSize: '1.2rem', fontWeight: 700 }}>{stat.value}</div>
+                    <div style={{ color: '#a1a1aa', fontSize: '0.7rem' }}>{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Polls by Type Breakdown */}
+              {pollStats.polls_by_type && Object.keys(pollStats.polls_by_type).length > 0 && (
+                <div style={{
+                  background: 'rgba(0,0,0,0.2)',
+                  borderRadius: 10,
+                  padding: 12,
+                  marginBottom: 15
+                }}>
+                  <div style={{ color: '#a1a1aa', fontSize: '0.8rem', marginBottom: 8 }}>Polls by Location</div>
+                  <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap' }}>
+                    {Object.entries(pollStats.polls_by_type).map(([type, count]) => (
+                      <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{
+                          background: type === 'group' ? '#8b5cf6' : type === 'page' ? '#3b82f6' : '#10b981',
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%'
+                        }}></span>
+                        <span style={{ color: '#fff', fontSize: '0.85rem' }}>
+                          {type.charAt(0).toUpperCase() + type.slice(1)}: {count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Most Active Polls */}
+              {pollStats.most_active_polls && pollStats.most_active_polls.length > 0 && (
+                <div>
+                  <div style={{ color: '#a1a1aa', fontSize: '0.8rem', marginBottom: 8 }}>Top Performing Polls</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {pollStats.most_active_polls.slice(0, 3).map((poll, i) => (
+                      <div key={poll.id} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        background: 'rgba(255,255,255,0.03)',
+                        borderRadius: 8,
+                        padding: '8px 12px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{
+                            background: i === 0 ? '#fbbf24' : i === 1 ? '#9ca3af' : '#cd7f32',
+                            width: 20,
+                            height: 20,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.7rem',
+                            fontWeight: 700,
+                            color: '#000'
+                          }}>{i + 1}</span>
+                          <span style={{ color: '#fff', fontSize: '0.85rem' }}>{poll.question}</span>
+                        </div>
+                        <span style={{ 
+                          color: '#10b981', 
+                          fontSize: '0.8rem',
+                          fontWeight: 600
+                        }}>{poll.votes} votes</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Book Promo */}
       <div style={{
         background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
