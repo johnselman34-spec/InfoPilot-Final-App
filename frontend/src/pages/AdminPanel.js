@@ -217,7 +217,7 @@ const AdminPanel = ({ showToast }) => {
               onClick={() => setActiveTab(tab)}
               data-testid={`admin-tab-${tab}`}
             >
-              {tab === 'ab-testing' ? 'A/B Testing' : tab === 'email-reports' ? 'Email Reports' : tab === 'tutorials' ? '🎬 Tutorials' : tab === 'optimizer' ? '🤖 Optimizer' : tab === 'forecast' ? '📈 Forecast' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'ab-testing' ? 'A/B Testing' : tab === 'email-reports' ? 'Email Reports' : tab === 'tutorials' ? '🎬 Tutorials' : tab === 'optimizer' ? '🤖 Optimizer' : tab === 'forecast' ? '📈 Forecast' : tab === 'protocol-forecast' ? '🔮 Protocol Forecast' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </div>
           ))}
         </div>
