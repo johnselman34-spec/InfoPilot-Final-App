@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import { extractHashtags } from '../utils/hashtags';
-import { Icons, HashtagDisplay, ProtocolDebugger, ProtocolTemplates } from '../components/shared';
+import { Icons, HashtagDisplay, ProtocolDebugger, ProtocolTemplates, CopyButton } from '../components/shared';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 
