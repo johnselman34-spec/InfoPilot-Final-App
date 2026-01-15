@@ -2635,6 +2635,8 @@ const MarketplacePage = () => {
   const [protocols, setProtocols] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [sales, setSales] = useState([]);
+  const [topSellers, setTopSellers] = useState([]);
+  const [topSellersTab, setTopSellersTab] = useState("sales"); // "sales" or "revenue"
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(null);
   const { user } = useAuth();
@@ -2668,14 +2670,17 @@ const MarketplacePage = () => {
         setPurchases(res.data.purchases || []);
       } else if (activeTab === "sales") {
         const res = await axios.get(`${API}/marketplace/my-sales`);
-        setSales(res.data.sales || []);
+        setSales(res.data);
+      } else if (activeTab === "leaderboard") {
+        const res = await axios.get(`${API}/marketplace/top-sellers?tab=${topSellersTab}`);
+        setTopSellers(res.data.leaderboard || []);
       }
     } catch (error) {
       toast.error("Failed to load marketplace data");
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [activeTab, topSellersTab]);
 
   useEffect(() => {
     fetchData();
