@@ -439,9 +439,9 @@ const MarketplacePage = ({ showToast }) => {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-        {['browse', 'sell', 'purchases', 'dashboard', 'analytics'].map(tab => (
+        {['browse', 'bundles', 'sell', 'purchases', 'dashboard', 'analytics'].map(tab => (
           <button key={tab} className={`btn ${activeTab === tab ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab(tab)} data-testid={`marketplace-tab-${tab}`}>
-            {tab === 'browse' && '🔍 Browse FREE'}{tab === 'sell' && '💰 Sell & Earn'}{tab === 'purchases' && '📦 My Purchases'}{tab === 'dashboard' && '📊 My Earnings'}{tab === 'analytics' && '📈 Analytics'}
+            {tab === 'browse' && '🔍 Browse FREE'}{tab === 'bundles' && '📦 Bundles'}{tab === 'sell' && '💰 Sell & Earn'}{tab === 'purchases' && '📦 My Purchases'}{tab === 'dashboard' && '📊 My Earnings'}{tab === 'analytics' && '📈 Analytics'}
           </button>
         ))}
         {user?.is_admin && <button className={`btn ${activeTab === 'admin' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setActiveTab('admin')} style={{ marginLeft: 'auto' }}>⚙️ Admin</button>}
