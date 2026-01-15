@@ -245,7 +245,7 @@ class TestCollateEndpoint:
         })
         
         if response.status_code == 200:
-            categories = response.json().get("categories", [])
+            categories = response.json()  # Returns list directly
             if len(categories) > 0:
                 # Find a category with a protocol
                 category_with_protocol = None
