@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useVariant } from '../ABTesting/ABTestProvider';
+import { API } from '../../utils/api';
 
 // Book promotional images - including new ebook cover
 const BOOK_IMAGES = [
@@ -25,6 +27,22 @@ const URGENCY_MESSAGES = [
   "🎬 Before it hits theaters - experience the source!",
   "✨ Join thousands who already know the secret!",
 ];
+
+// CTA Button Styles for A/B testing
+const CTA_STYLES = {
+  gradient_pink_orange: {
+    background: 'linear-gradient(135deg, #ec4899, #f97316)',
+    boxShadow: '0 8px 30px rgba(236, 72, 153, 0.5)'
+  },
+  gradient_green: {
+    background: 'linear-gradient(135deg, #10b981, #059669)',
+    boxShadow: '0 8px 30px rgba(16, 185, 129, 0.5)'
+  },
+  gradient_purple: {
+    background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+    boxShadow: '0 8px 30px rgba(139, 92, 246, 0.5)'
+  }
+};
 
 // Professional Reviews from Readers' Favorite
 const PROFESSIONAL_REVIEWS = [
