@@ -331,3 +331,15 @@ InfoPilot Explorer is a sophisticated information exchange social network with a
      - InfoWindow popups with protocol details
      - Toggle to show/hide map
      - Map legend with protocol count
+  17. **Location Input for Protocols** (Jan 15, 2026)
+     - Added City/State input fields in CREATE category form (visible when "List for sale" is checked)
+     - Added City/State input fields in EDIT category modal (visible when "List for sale" is checked)
+     - Backend stores location data (city, state, lat, lng) with categories
+     - Marketplace map uses real location data when available, falls back to US city defaults
+     - Fixed P0 JSX syntax error that was blocking frontend build
+  18. **Iteration 19 Testing** - 100% pass rate (8/8 backend tests, all frontend verified)
+     - Admin login working for jjspilot24@gmail.com with is_admin=true
+     - Categories page loads correctly
+     - Create/Edit category with location fields verified
+     - Marketplace protocols endpoint returns location data
+     - Map component loads Google Maps correctly
