@@ -101,7 +101,7 @@ const CategoryList = ({
 };
 
 /**
- * Individual Category Card
+ * Individual Category Card with Result Count
  */
 const CategoryCard = ({
   category,
@@ -113,10 +113,13 @@ const CategoryCard = ({
   isOwner
 }) => {
   const protocolPreview = (category.protocol || '').slice(0, 100);
+  const resultCount = category.result_count || 0;
+  const subcategoryCount = category.subcategory_count || 0;
 
   return (
     <div
       onClick={onToggle}
+      data-testid={`category-card-${category.id || category._id}`}
       style={{
         background: isSelected 
           ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.2))'
@@ -157,6 +160,24 @@ const CategoryCard = ({
       }}>
         {isSelected && <span style={{ color: '#fff', fontSize: '0.8rem' }}>✓</span>}
       </div>
+      
+      {/* Result Count Badge */}
+      {resultCount > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: 10,
+          left: 10,
+          background: 'linear-gradient(135deg, #10b981, #059669)',
+          color: '#fff',
+          padding: '3px 8px',
+          borderRadius: 12,
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)'
+        }}>
+          {resultCount} result{resultCount !== 1 ? 's' : ''}
+        </div>
+      )}
 
       {/* Category Name */}
       <h4 style={{ 
