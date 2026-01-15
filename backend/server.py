@@ -2467,6 +2467,14 @@ async def startup_db_client():
         logger.info("🤖 A/B Optimizer scheduler started successfully!")
     except Exception as e:
         logger.error(f"Failed to start A/B optimizer scheduler: {e}")
+    
+    # Start the tri-weekly newsletter scheduler
+    try:
+        from services.triweekly_newsletter import start_triweekly_scheduler
+        start_triweekly_scheduler()
+        logger.info("📬 Tri-weekly newsletter scheduler started successfully!")
+    except Exception as e:
+        logger.error(f"Failed to start tri-weekly newsletter scheduler: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
