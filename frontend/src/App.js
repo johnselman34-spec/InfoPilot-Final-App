@@ -2307,7 +2307,7 @@ const CategoriesPage = () => {
                             <MapPin className="w-4 h-4" /> MARKETPLACE LOCATION (Optional)
                           </label>
                           <p className="text-purple-400/60 text-xs font-mono mb-3">Add your location to appear on the marketplace map!</p>
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-2 gap-3 mb-2">
                             <input 
                               type="text" 
                               placeholder="City" 
@@ -2323,6 +2323,22 @@ const CategoriesPage = () => {
                               className="px-3 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono text-sm"
                             />
                           </div>
+                          {newCategory.location.city && (
+                            <button
+                              type="button"
+                              onClick={() => geocodeLocation(newCategory.location.city, newCategory.location.state, false)}
+                              disabled={geocoding}
+                              className="w-full px-3 py-2 bg-blue-500/20 border border-blue-500/50 rounded text-blue-400 font-mono text-xs hover:bg-blue-500/30 flex items-center justify-center gap-2"
+                            >
+                              {geocoding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
+                              {geocoding ? "LOCATING..." : "AUTO-LOCATE ON MAP"}
+                            </button>
+                          )}
+                          {newCategory.location.lat && (
+                            <p className="text-green-400 text-xs font-mono mt-2 flex items-center gap-1">
+                              <Check className="w-3 h-3" /> Coordinates: {newCategory.location.lat.toFixed(4)}, {newCategory.location.lng.toFixed(4)}
+                            </p>
+                          )}
                         </div>
                       </>
                     )}
