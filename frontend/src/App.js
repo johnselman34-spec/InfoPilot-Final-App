@@ -7571,6 +7571,11 @@ const AdminPage = () => {
           <ModerationPanel />
         )}
 
+        {/* AI Marketing Tab */}
+        {activeTab === "marketing" && (
+          <AIMarketingPanel />
+        )}
+
         {/* Email Digest Tab */}
         {activeTab === "email-digest" && (
           <EmailDigestPanel />
