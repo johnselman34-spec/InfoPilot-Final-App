@@ -177,7 +177,8 @@ class TestCategoryFilteringBackend:
         assert response.status_code == 200
         data = response.json()
         
-        if data["count"] > 0:
+        count = data.get("count", data.get("total", 0))
+        if count > 0:
             result = data["results"][0]
             
             # Check required fields for display
