@@ -251,6 +251,55 @@ async def create_marketplace_protocol(protocol: MarketplaceProtocolCreate, user 
     }
 
 
+@router.post("/protocols/{protocol_id}/copy", response_model=dict)
+async def copy_protocol_to_clipboard(protocol_id: str, user = Depends(get_optional_user)):
+    """
+    Track when a protocol is copied to clipboard.
+    FREE protocols can be copied by anyone.
+    Paid protocols require purchase.
+    """
+    protocol = await db.marketplace_protocols.find_one({"_id": ObjectId(protocol_id)})
+    
+    if not protocol:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    
+    is_free = protocol.get("is_free", False) or protocol.get("price", 0) == 0
+    
+    # Check if user can copy
+    if not is_free and user:
+        # Check if user owns this protocol
+        is_owner = protocol["creator_id"] == str(user["_id"])
+        is_purchased = await db.marketplace_purchases.find_one({
+            "protocol_id": protocol_id,
+            "user_id": str(user["_id"])
+        }) is not None
+        
+        if not is_owner and not is_purchased:
+            raise HTTPException(
+                status_code=403, 
+                detail="Purchase this protocol to copy it, or check out our FREE protocols!"
+            )
+    elif not is_free and not user:
+        raise HTTPException(
+            status_code=401, 
+            detail="Please log in to copy paid protocols, or browse our FREE protocols!"
+        )
+    
+    # Track the copy
+    await db.marketplace_protocols.update_one(
+        {"_id": ObjectId(protocol_id)},
+        {"$inc": {"clipboard_copies": 1}}
+    )
+    
+    return {
+        "success": True,
+        "protocol": protocol["protocol"],
+        "name": protocol["name"],
+        "is_free": is_free,
+        "message": "Protocol copied to clipboard! 📋" + (" (FREE!)" if is_free else "")
+    }
+
+
 @router.put("/protocols/{protocol_id}", response_model=dict)
 async def update_marketplace_protocol(protocol_id: str, update: dict, user = Depends(get_current_user)):
     """Update a marketplace protocol listing"""
