@@ -19,9 +19,11 @@ const UltimateSearchPage = ({ showToast }) => {
   const [lastBatchId, setLastBatchId] = useState(null);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editProtocol, setEditProtocol] = useState('');
+  const [editCategoryName, setEditCategoryName] = useState('');
   const [editIsPublic, setEditIsPublic] = useState(false);
   const [showDebugger, setShowDebugger] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
+  const [collateLoading, setCollateLoading] = useState(false);
 
   // Handle applying a template
   const handleApplyTemplate = (protocol, templateName) => {
