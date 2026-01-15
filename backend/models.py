@@ -134,3 +134,40 @@ class NewsletterArticle(BaseModel):
 class NewsletterArticleCreate(BaseModel):
     title: str
     content: str
+
+# Marketplace Models
+class MarketplaceProtocol(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    category_id: str
+    user_id: str
+    price: float = Field(ge=1.01, le=2.99)
+    description: Optional[str] = None
+    is_for_sale: bool = True
+    purchase_count: int = 0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    location: Optional[Dict[str, Any]] = None  # {latitude, longitude, city, country}
+
+class MarketplaceSell(BaseModel):
+    category_id: str
+    price: float = Field(ge=1.01, le=2.99)
+    description: Optional[str] = None
+
+class MarketplacePurchase(BaseModel):
+    protocol_id: str
+
+class PayoutRequest(BaseModel):
+    paypal_email: str
+
+# Transaction Models
+class Transaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    buyer_id: str
+    seller_id: str
+    protocol_id: str
+    amount: float
+    seller_amount: float  # 90%
+    platform_amount: float  # 10%
+    status: str = "pending"  # pending, completed, failed
+    paypal_transaction_id: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
