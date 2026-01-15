@@ -316,13 +316,6 @@ export default function MarketplaceScreen() {
       );
     }
   };
-        onPress={() => handlePurchase(protocol)}
-      >
-        <Ionicons name="cart" size={18} color={colors.white} />
-        <Text style={styles.buyButtonText}>GET THIS PROTOCOL!</Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
 
   // World Map Component (Web-compatible using emoji markers)
   const renderWorldMap = () => (
