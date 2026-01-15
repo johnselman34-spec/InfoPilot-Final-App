@@ -510,3 +510,116 @@ async def get_user_progress(user = Depends(get_current_user)):
         "total_count": total,
         "completion_percentage": round((completed / total * 100) if total > 0 else 0, 1)
     }
+
+
+# ==================== ADMIN VIDEO MANAGEMENT ====================
+
+@router.put("/admin/{tutorial_id}/video", response_model=dict)
+async def update_tutorial_video(
+    tutorial_id: str,
+    video_data: VideoUrlUpdate,
+    user = Depends(get_current_user)
+):
+    """Admin-only: Update a tutorial's video URL"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Validate tutorial exists
+    tutorial = next((t for t in TUTORIALS if t["id"] == tutorial_id), None)
+    if not tutorial:
+        raise HTTPException(status_code=404, detail="Tutorial not found")
+    
+    # Extract video ID from YouTube URL if provided
+    video_id = video_data.video_id
+    video_url = video_data.video_url
+    
+    if video_url and not video_id:
+        # Parse YouTube URL to get video ID
+        import re
+        patterns = [
+            r'(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})',
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, video_url)
+            if match:
+                video_id = match.group(1)
+                break
+    
+    # Store in database (override static data)
+    await db.tutorial_videos.update_one(
+        {"tutorial_id": tutorial_id},
+        {
+            "$set": {
+                "video_url": video_url,
+                "video_id": video_id,
+                "updated_by": str(user["_id"]),
+                "updated_at": datetime.now(timezone.utc)
+            }
+        },
+        upsert=True
+    )
+    
+    logger.info(f"Tutorial video updated: {tutorial_id} -> {video_id}")
+    
+    return {
+        "success": True,
+        "tutorial_id": tutorial_id,
+        "video_url": video_url,
+        "video_id": video_id
+    }
+
+
+@router.delete("/admin/{tutorial_id}/video", response_model=dict)
+async def remove_tutorial_video(
+    tutorial_id: str,
+    user = Depends(get_current_user)
+):
+    """Admin-only: Remove a tutorial's video"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.tutorial_videos.delete_one({"tutorial_id": tutorial_id})
+    
+    return {"success": True, "message": "Video removed"}
+
+
+@router.get("/admin/videos", response_model=dict)
+async def get_all_tutorial_videos(user = Depends(get_current_user)):
+    """Admin-only: Get all tutorial video configurations"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    videos = await db.tutorial_videos.find({}).to_list(100)
+    
+    return {
+        "videos": [
+            {
+                "tutorial_id": v["tutorial_id"],
+                "video_url": v.get("video_url"),
+                "video_id": v.get("video_id"),
+                "updated_at": v.get("updated_at").isoformat() if v.get("updated_at") else None
+            }
+            for v in videos
+        ],
+        "total_tutorials": len(TUTORIALS),
+        "with_videos": len(videos)
+    }
+
+
+# Helper to merge static tutorials with DB video data
+async def get_tutorials_with_videos():
+    """Get tutorials merged with any admin-configured videos"""
+    # Get video configurations from DB
+    db_videos = await db.tutorial_videos.find({}).to_list(100)
+    video_map = {v["tutorial_id"]: v for v in db_videos}
+    
+    # Merge with static tutorials
+    result = []
+    for t in TUTORIALS:
+        tutorial = t.copy()
+        if t["id"] in video_map:
+            tutorial["video_url"] = video_map[t["id"]].get("video_url")
+            tutorial["video_id"] = video_map[t["id"]].get("video_id")
+        result.append(tutorial)
+    
+    return result
