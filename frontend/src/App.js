@@ -2347,22 +2347,48 @@ const CategoriesPage = () => {
                       <label htmlFor="editForSale" className="text-sm text-purple-300 font-mono">List for sale</label>
                     </div>
                     {editingCategory.for_sale && (
-                      <div>
-                        <label className="block text-xs font-mono text-yellow-400 mb-1">PRICE (USD)</label>
-                        <div className="flex items-center gap-2">
-                          <span className="text-yellow-400 font-mono">$</span>
-                          <input 
-                            type="number" 
-                            value={editingCategory.price} 
-                            onChange={(e) => setEditingCategory({ ...editingCategory, price: Math.max(0.75, Math.min(2.99, parseFloat(e.target.value) || 0.75)) })}
-                            min="0.75" 
-                            max="2.99" 
-                            step="0.01"
-                            className="w-24 px-3 py-2 bg-slate-950 border border-yellow-500/30 rounded text-yellow-400 font-mono focus:border-yellow-500" 
-                          />
+                      <>
+                        <div>
+                          <label className="block text-xs font-mono text-yellow-400 mb-1">PRICE (USD)</label>
+                          <div className="flex items-center gap-2">
+                            <span className="text-yellow-400 font-mono">$</span>
+                            <input 
+                              type="number" 
+                              value={editingCategory.price} 
+                              onChange={(e) => setEditingCategory({ ...editingCategory, price: Math.max(0.75, Math.min(2.99, parseFloat(e.target.value) || 0.75)) })}
+                              min="0.75" 
+                              max="2.99" 
+                              step="0.01"
+                              className="w-24 px-3 py-2 bg-slate-950 border border-yellow-500/30 rounded text-yellow-400 font-mono focus:border-yellow-500" 
+                            />
+                          </div>
+                          <p className="text-xs text-purple-400/60 mt-1 font-mono">Price range: $0.75 - $2.99</p>
                         </div>
-                        <p className="text-xs text-purple-400/60 mt-1 font-mono">Price range: $0.75 - $2.99</p>
-                      </div>
+                        
+                        {/* Location for Map */}
+                        <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                          <label className="block text-xs font-mono text-blue-400 mb-2 flex items-center gap-2">
+                            <MapPin className="w-4 h-4" /> MARKETPLACE LOCATION (Optional)
+                          </label>
+                          <p className="text-purple-400/60 text-xs font-mono mb-3">Add your location to appear on the marketplace map!</p>
+                          <div className="grid grid-cols-2 gap-3">
+                            <input 
+                              type="text" 
+                              placeholder="City" 
+                              value={editingCategory.location?.city || ''}
+                              onChange={(e) => setEditingCategory({ ...editingCategory, location: { ...editingCategory.location, city: e.target.value }})}
+                              className="px-3 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono text-sm"
+                            />
+                            <input 
+                              type="text" 
+                              placeholder="State" 
+                              value={editingCategory.location?.state || ''}
+                              onChange={(e) => setEditingCategory({ ...editingCategory, location: { ...editingCategory.location, state: e.target.value }})}
+                              className="px-3 py-2 bg-slate-950 border border-blue-500/30 rounded text-purple-300 font-mono text-sm"
+                            />
+                          </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 )}
