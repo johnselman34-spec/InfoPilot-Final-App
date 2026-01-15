@@ -1,7 +1,7 @@
 {
-  "name": "InfoPilot Explorer",
+  "name": "InfoPilot Explorer - Information Exchange Network",
   "short_name": "InfoPilot",
-  "description": "Information Exchange Network - Search, Connect, Discover",
+  "description": "The ultimate search platform. Create custom search protocols, buy/sell algorithms in the marketplace, connect with researchers worldwide. Features AI voice search, social networking, gamification, and real-time messaging. InfoJet browser extension included.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f0a1a",
@@ -21,11 +21,24 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["productivity", "utilities", "social"],
+  "categories": ["productivity", "utilities", "social", "education", "business"],
   "lang": "en-US",
   "dir": "ltr",
   "prefer_related_applications": false,
   "scope": "/",
+  "iarc_rating_id": "",
+  "screenshots": [],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.infopilot.explorer",
+      "id": "com.infopilot.explorer"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/infopilot-explorer/id123456789"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Search",
@@ -41,6 +54,16 @@
       "name": "Social",
       "url": "/?page=social",
       "description": "View Social Feed"
+    },
+    {
+      "name": "Achievements",
+      "url": "/?page=achievements",
+      "description": "View Your Achievements"
+    },
+    {
+      "name": "Messages",
+      "url": "/?page=messages",
+      "description": "Direct Messages"
     }
   ]
 }
