@@ -1582,14 +1582,19 @@ async def google_auth(data: GoogleAuthRequest):
             if existing_username:
                 username = f"{username}_{uuid.uuid4().hex[:4]}"
             
+            # Check if this is an admin email
+            user_is_admin = is_admin_email(google_email)
+            if user_is_admin:
+                logger.info(f"🛡️ Admin account created via Google OAuth: {google_email}")
+            
             user = {
                 "id": user_id,
                 "username": username,
                 "email": google_email,
                 "google_id": google_sub,
                 "password_hash": "",  # No password for OAuth users
-                "is_admin": False,
-                "is_paid": False,
+                "is_admin": user_is_admin,
+                "is_paid": user_is_admin,  # Admins get paid features
                 "profile_photo": google_picture,
                 "auth_provider": "google",
                 "friends": [],
