@@ -2947,13 +2947,24 @@ const MarketplacePage = () => {
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {filteredProtocols.map((protocol) => (
-                      <div key={protocol.id} className="bg-slate-900/80 p-4 rounded-lg border border-yellow-500/20 hover:border-yellow-500/50 transition-all hover:shadow-lg hover:shadow-yellow-500/10 group">
+                      <div key={protocol.id} className="bg-slate-900/80 p-4 rounded-lg border border-yellow-500/20 hover:border-yellow-500/50 transition-all hover:shadow-lg hover:shadow-yellow-500/10 group relative">
+                        {/* FREE Badge */}
+                        {(protocol.is_free || protocol.price === 0) && (
+                          <div className="absolute -top-2 -right-2 px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-mono font-bold text-xs rounded-full shadow-lg animate-pulse">
+                            🆓 FREE
+                          </div>
+                        )}
+                        
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
                             <h3 className="text-yellow-400 font-mono font-bold group-hover:text-yellow-300 transition-colors">{protocol.name}</h3>
                             <p className="text-purple-400/60 font-mono text-xs">by {protocol.owner_username}</p>
                           </div>
-                          <span className="text-xl font-bold text-green-400 font-mono">${protocol.price?.toFixed(2)}</span>
+                          {protocol.is_free || protocol.price === 0 ? (
+                            <span className="text-xl font-bold text-green-400 font-mono">FREE!</span>
+                          ) : (
+                            <span className="text-xl font-bold text-green-400 font-mono">${protocol.price?.toFixed(2)}</span>
+                          )}
                         </div>
                         
                         {/* Protocol preview */}
@@ -2969,6 +2980,14 @@ const MarketplacePage = () => {
                           </div>
                         ) : protocol.owner_id === user?.id ? (
                           <span className="text-purple-400/60 font-mono text-sm">YOUR PROTOCOL</span>
+                        ) : (protocol.is_free || protocol.price === 0) ? (
+                          <button
+                            onClick={() => copyProtocol(protocol.protocol_preview, protocol.id)}
+                            className="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-mono font-bold rounded hover:scale-[1.02] flex items-center justify-center gap-2"
+                            data-testid={`copy-protocol-${protocol.id}`}
+                          >
+                            <Copy className="w-4 h-4" /> COPY FREE PROTOCOL
+                          </button>
                         ) : (
                           <button
                             onClick={() => handlePurchase(protocol.id)}
