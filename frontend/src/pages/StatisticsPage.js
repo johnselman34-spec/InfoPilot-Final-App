@@ -267,6 +267,174 @@ const StatisticsPage = ({ showToast }) => {
         </div>
       </div>
 
+      {/* Most Copied Protocols Leaderboard */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)',
+        borderRadius: 20,
+        padding: 30,
+        marginBottom: 30,
+        border: '1px solid rgba(16, 185, 129, 0.3)'
+      }}>
+        <h2 style={{ 
+          color: '#fff', 
+          marginBottom: 10,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 15
+        }}>
+          📋 Most Copied Protocols
+          <span style={{
+            background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 100%)',
+            padding: '5px 15px',
+            borderRadius: 20,
+            fontSize: '0.8rem',
+            fontWeight: 600
+          }}>
+            HOT 🔥
+          </span>
+        </h2>
+        <p style={{ color: '#71717a', marginBottom: 20, fontSize: '0.9rem' }}>
+          {mostCopied.funny_message || "These protocols are spreading faster than memes!"}
+        </p>
+
+        {/* Stats Bar */}
+        <div style={{ 
+          display: 'flex', 
+          gap: 20, 
+          marginBottom: 20,
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ 
+            background: 'rgba(16, 185, 129, 0.2)', 
+            padding: '10px 20px', 
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10
+          }}>
+            <span style={{ color: '#10b981', fontWeight: 700, fontSize: '1.2rem' }}>
+              {mostCopied.stats?.total_copies || 0}
+            </span>
+            <span style={{ color: '#a1a1aa', fontSize: '0.85rem' }}>Total Copies</span>
+          </div>
+          <div style={{ 
+            background: 'rgba(59, 130, 246, 0.2)', 
+            padding: '10px 20px', 
+            borderRadius: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10
+          }}>
+            <span style={{ color: '#3b82f6', fontWeight: 700, fontSize: '1.2rem' }}>
+              {mostCopied.stats?.free_percentage || 0}%
+            </span>
+            <span style={{ color: '#a1a1aa', fontSize: '0.85rem' }}>Free Protocol Copies</span>
+          </div>
+        </div>
+
+        {/* Leaderboard Grid */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+          gap: 15 
+        }}>
+          {(mostCopied.leaderboard || []).slice(0, 10).map((protocol, i) => (
+            <div 
+              key={protocol.id || i}
+              style={{
+                background: i < 3 
+                  ? `linear-gradient(135deg, ${i === 0 ? 'rgba(255,215,0,0.2)' : i === 1 ? 'rgba(192,192,192,0.2)' : 'rgba(205,127,50,0.2)'} 0%, rgba(30,20,50,0.5) 100%)`
+                  : 'rgba(30, 20, 50, 0.5)',
+                borderRadius: 12,
+                padding: 15,
+                border: `1px solid ${i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : 'rgba(255,255,255,0.1)'}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12
+              }}
+            >
+              {/* Rank Badge */}
+              <div style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: i === 0 ? 'linear-gradient(135deg, #ffd700, #ffb700)' :
+                           i === 1 ? 'linear-gradient(135deg, #c0c0c0, #a8a8a8)' :
+                           i === 2 ? 'linear-gradient(135deg, #cd7f32, #b87333)' :
+                           'rgba(124, 58, 237, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                color: i < 3 ? '#000' : '#fff',
+                fontSize: '1.1rem',
+                flexShrink: 0
+              }}>
+                {protocol.rank}
+              </div>
+              
+              {/* Protocol Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 6,
+                  marginBottom: 4
+                }}>
+                  <span style={{ 
+                    color: '#f472b6', 
+                    fontWeight: 600,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {protocol.name}
+                  </span>
+                  {protocol.trend && (
+                    <span style={{ fontSize: '0.9rem' }}>{protocol.trend}</span>
+                  )}
+                </div>
+                <div style={{ 
+                  display: 'flex', 
+                  gap: 8, 
+                  alignItems: 'center',
+                  fontSize: '0.75rem',
+                  color: '#71717a'
+                }}>
+                  <span style={{
+                    background: protocol.is_free ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                    color: protocol.is_free ? '#10b981' : '#f59e0b',
+                    padding: '2px 6px',
+                    borderRadius: 4
+                  }}>
+                    {protocol.is_free ? '🆓 FREE' : `$${protocol.price?.toFixed(2)}`}
+                  </span>
+                  <span>{protocol.category}</span>
+                </div>
+              </div>
+              
+              {/* Copy Count */}
+              <div style={{ 
+                textAlign: 'right',
+                flexShrink: 0
+              }}>
+                <div style={{ color: '#10b981', fontWeight: 700, fontSize: '1.1rem' }}>
+                  {protocol.copy_count}
+                </div>
+                <div style={{ color: '#71717a', fontSize: '0.7rem' }}>copies</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {(!mostCopied.leaderboard || mostCopied.leaderboard.length === 0) && (
+          <div style={{ textAlign: 'center', padding: 40, color: '#a1a1aa' }}>
+            <div style={{ fontSize: '3rem', marginBottom: 15 }}>📋</div>
+            <p>No copied protocols yet. Be the first to create a viral protocol!</p>
+          </div>
+        )}
+      </div>
+
       {/* Top Sellers Leaderboard */}
       <div style={{
         background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%)',
