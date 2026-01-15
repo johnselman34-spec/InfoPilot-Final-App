@@ -2,8 +2,9 @@
 InfoPilot Explorer - Protocol Marketplace Routes
 Enables users to buy and sell search protocols
 - Creators set their own prices ($0.99 - $99.99)
-- 90% to creators, 10% platform fee
-- Subscription option for all marketplace access
+- Admin-controlled revenue split (default: 90% to creators, 10% platform fee)
+- PayPal integration with minimum payout handling ($1.00 minimum)
+- 100% FREE to browse and search!
 """
 from fastapi import APIRouter, HTTPException, Depends, Query
 from datetime import datetime
@@ -16,6 +17,71 @@ from routes.auth import get_current_user, get_optional_user
 from services.protocol_service import ProtocolParser
 
 router = APIRouter(prefix="/marketplace", tags=["Protocol Marketplace"])
+
+# PayPal minimum payout threshold
+PAYPAL_MIN_PAYOUT = 1.00
+
+
+# ==================== ADMIN REVENUE SETTINGS ====================
+
+@router.get("/admin/revenue-settings", response_model=dict)
+async def get_revenue_settings(user = Depends(get_current_user)):
+    """Get current revenue distribution settings (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    settings = await db.app_settings.find_one({"key": "marketplace_revenue"})
+    
+    if not settings:
+        # Default settings
+        return {
+            "admin_percent": 10,
+            "creator_percent": 90,
+            "paypal_min_payout": PAYPAL_MIN_PAYOUT
+        }
+    
+    return {
+        "admin_percent": settings.get("admin_percent", 10),
+        "creator_percent": 100 - settings.get("admin_percent", 10),
+        "paypal_min_payout": PAYPAL_MIN_PAYOUT
+    }
+
+
+@router.put("/admin/revenue-settings", response_model=dict)
+async def update_revenue_settings(settings: dict, user = Depends(get_current_user)):
+    """Update revenue distribution settings (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    admin_percent = settings.get("admin_percent", 10)
+    
+    # Validate percentage (5-30%)
+    if admin_percent < 5 or admin_percent > 30:
+        raise HTTPException(status_code=400, detail="Admin percentage must be between 5% and 30%")
+    
+    await db.app_settings.update_one(
+        {"key": "marketplace_revenue"},
+        {"$set": {
+            "key": "marketplace_revenue",
+            "admin_percent": admin_percent,
+            "updated_at": datetime.utcnow()
+        }},
+        upsert=True
+    )
+    
+    return {
+        "success": True,
+        "admin_percent": admin_percent,
+        "creator_percent": 100 - admin_percent
+    }
+
+
+async def get_platform_fee():
+    """Get current platform fee percentage"""
+    settings = await db.app_settings.find_one({"key": "marketplace_revenue"})
+    if settings:
+        return settings.get("admin_percent", 10) / 100
+    return MARKETPLACE_PLATFORM_FEE  # Default 10%
 
 
 # ==================== PROTOCOL LISTINGS ====================
