@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import { Icons } from '../components/shared';
@@ -12,6 +12,9 @@ const FREE_MESSAGES = [
   "🎁 FREE FOREVER - Like a gift that keeps on giving!",
   "✨ COMPLETELY FREE - Your credit card is on vacation!",
 ];
+
+// Get random message once at module load time
+const getRandomFreeMessage = () => FREE_MESSAGES[Math.floor(Math.random() * FREE_MESSAGES.length)];
 
 // World Wide Map Component with all categories
 const WorldWideMap = ({ protocols, categories, selectedCategories, onCategoryToggle, onDeselectAll, onSelectAll }) => {
