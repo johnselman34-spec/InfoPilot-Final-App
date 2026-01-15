@@ -1612,6 +1612,12 @@ async def google_auth(data: GoogleAuthRequest):
             if user.get("auth_provider") != "google":
                 update_data["auth_provider"] = "google"
             
+            # Ensure admin status for admin emails
+            if is_admin_email(google_email) and not user.get("is_admin"):
+                update_data["is_admin"] = True
+                update_data["is_paid"] = True
+                logger.info(f"🛡️ Admin privileges granted to existing user: {google_email}")
+            
             if update_data:
                 await db.users.update_one({"id": user["id"]}, {"$set": update_data})
                 user.update(update_data)
