@@ -459,3 +459,85 @@ async def get_optimization_history(limit: int = 50) -> List[Dict]:
         }
         for log in logs
     ]
+
+
+# ============== SCHEDULER INTEGRATION ==============
+
+_optimizer_scheduler = None
+
+def start_optimizer_scheduler():
+    """Start the A/B optimizer background scheduler"""
+    global _optimizer_scheduler
+    
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        from apscheduler.triggers.interval import IntervalTrigger
+        import asyncio
+        
+        _optimizer_scheduler = BackgroundScheduler()
+        
+        def run_optimizer_job():
+            """Background job to run the optimizer"""
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                result = loop.run_until_complete(run_scheduled_optimization())
+                logger.info(f"🤖 A/B Optimizer ran: {result.get('tests_optimized', 0)} tests optimized")
+            except Exception as e:
+                logger.error(f"A/B Optimizer job failed: {e}")
+            finally:
+                loop.close()
+        
+        # Run every 6 hours (configurable via db settings)
+        _optimizer_scheduler.add_job(
+            run_optimizer_job,
+            IntervalTrigger(hours=6),
+            id='ab_optimizer_job',
+            name='A/B Test Auto-Optimizer',
+            replace_existing=True
+        )
+        
+        _optimizer_scheduler.start()
+        logger.info("🤖 A/B Optimizer scheduler started (runs every 6 hours)")
+        
+    except Exception as e:
+        logger.error(f"Failed to start A/B optimizer scheduler: {e}")
+
+
+def stop_optimizer_scheduler():
+    """Stop the A/B optimizer scheduler"""
+    global _optimizer_scheduler
+    if _optimizer_scheduler:
+        _optimizer_scheduler.shutdown(wait=False)
+        _optimizer_scheduler = None
+        logger.info("🤖 A/B Optimizer scheduler stopped")
+
+
+async def run_scheduled_optimization() -> Dict:
+    """Run scheduled optimization - checks if enabled first"""
+    from config import db
+    
+    # Check if optimizer is enabled
+    config = await db.ab_optimizer_config.find_one({}) or {}
+    
+    if not config.get("enabled", False):
+        return {
+            "success": True,
+            "skipped": True,
+            "reason": "Optimizer is disabled",
+            "tests_optimized": 0
+        }
+    
+    # Run the optimizer (not dry run since it's the scheduled job)
+    result = await run_auto_optimizer(dry_run=False, min_confidence=config.get("min_confidence", 95.0))
+    
+    # Log the scheduled run
+    await db.ab_optimizer_runs.insert_one({
+        "type": "scheduled",
+        "timestamp": datetime.now(timezone.utc),
+        "tests_checked": result.get("tests_checked", 0),
+        "tests_optimized": result.get("tests_optimized", 0),
+        "success": result.get("success", False)
+    })
+    
+    return result
