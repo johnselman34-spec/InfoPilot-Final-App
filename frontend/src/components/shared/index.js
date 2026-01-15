@@ -9,3 +9,4 @@ export { default as ProtocolTemplates } from './ProtocolTemplates';
 export { default as NotificationBell } from './NotificationBell';
 export { default as DataExport } from './DataExport';
 export { default as PushNotifications } from './PushNotifications';
+export { default as PollCard, CreatePollModal } from './PollCard';
