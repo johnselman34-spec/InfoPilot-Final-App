@@ -90,7 +90,7 @@ async def check_achievements(user = Depends(get_current_user)):
             await db.notifications.insert_one({
                 "user_id": str(user["_id"]),
                 "type": "achievement",
-                "title": f"🏆 Achievement Unlocked!",
+                "title": "🏆 Achievement Unlocked!",
                 "message": f"You earned: {achievement['name']} - {achievement['description']}",
                 "read": False,
                 "created_at": datetime.utcnow()
