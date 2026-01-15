@@ -262,41 +262,71 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - `POST /api/push/send` - Send notification (admin)
 - `GET /api/push/stats` - Get push stats (admin)
 
-## Testing Results (Iteration 19 - January 15, 2026)
-- **Backend: 11/11 tests passed (100%)**
+## Testing Results (Iteration 20 - January 15, 2026)
+- **Backend: 23/23 tests passed (100%)**
 - **Frontend: All UI features working (100%)**
-- Test report: `/app/test_reports/iteration_19.json`
+- Test report: `/app/test_reports/iteration_20.json`
 
-### Category Filtering Bug Fix (January 15, 2026):
-- **Bug**: Category checkboxes on Ultimate Search Page were not filtering results
-- **Root Cause**: `/api/ultimate-search` endpoint only accepted single `category_id`, not comma-separated `category_ids`
-- **Fix**: Updated server.py to support:
-  - `category_ids` (comma-separated string for multiple categories)
-  - `aggregation` parameter (and_or/and/or)
-  - Returns `filter_applied` and `aggregation_mode` in response
-- **Features Verified**:
-  - Category checkboxes toggle correctly with visual feedback (pink highlight)
-  - Filter status shows "Filtering by X categories (AND/OR)" badge
-  - AND/OR/AND radio buttons change filtering logic
-  - Map legend shows selected categories with colored dots
-  - Collate button shows count of selected categories
-  - Clear Selection button works
-  - Results properly filtered (200 total → 94 with 2 categories)
+### Major Features Implemented (January 15, 2026):
 
-### Previous Verified Features (Iteration 18):
-- **Gamification System**: 22 achievements across 6 categories (search, protocol, marketplace, social, special, consistency)
-- **Level System**: Levels 1-10 with fun names (Search Newbie → InfoPilot Supreme)
-- **Points System**: 2,895 total possible points
-- **Weekly & All-Time Leaderboards**: Sales activity and achievement rankings
-- **Share Achievement**: Generate social media share messages with Twitter/Facebook links
-- **Protocol Parser**: Correctly handles abbreviated names (William C. Gamble, John J S) and locations (NM, GER, Heidelberg, GER)
-- **FREE Protocols**: Display with green 🆓 FREE! badge
-- **Admin User**: 500 points, Level 5 "Knowledge Hunter", 8 achievements (36.4% complete)
+#### 1. Social Features
+- Friends system with search, add, accept, reject
+- Groups with create, join, leave, member management
+- Pages with create, follow, unfollow
+- Social Feed with personalized content
+- Posts with photo uploads (up to 6.9MB)
+- 6 reaction types (like, love, haha, wow, sad, angry)
+
+#### 2. Direct Messaging
+- Private 1-on-1 conversations
+- Real-time WebSocket updates
+- Image sharing in messages
+- Read receipts and typing indicators
+- Online status tracking
+
+#### 3. AI Newsletter System (GPT-5.2)
+- AI-generated "extremely funny" marketing content
+- Newsletter draft management
+- Subscriber management
+- Campaign history and analytics
+- Test email before broadcast
+
+#### 4. Voice Search (OpenAI Whisper)
+- Browser audio recording
+- Speech-to-text transcription
+- Voice search history
+- Admin voice analytics
+
+#### 5. Collaborative Protocol Editing
+- Real-time multi-user editing
+- User cursors with colors
+- Version history with restore
+- Protocol comments with resolve
+
+#### 6. Location Auto-Detection
+- Automatic geo-extraction from content
+- 50 US states coordinate database
+- 20+ major US cities
+- World country coverage
+- Auto-populate map with results
+
+### Category Filtering Bug Fix (Iteration 19):
+- Category checkboxes now filter results correctly
+- AND/OR logic integrated
+- Map updates with filtered results
+
+### Previous Features (Iteration 18):
+- 22 achievements across 6 categories
+- 10 level system with points
+- Weekly & All-Time leaderboards
+- Shareable badges
 
 ## Preview URL
 https://navigator-hub-1.preview.emergentagent.com
 
 ## Third-Party Integrations
+- **OpenAI GPT-5.2** - Newsletter generation (via Emergent LLM Key)
+- **OpenAI Whisper** - Voice transcription (via Emergent LLM Key)
 - **SerpAPI** - Web search
 - **ddgs** - DuckDuckGo fallback
 - **Emergent Google Auth** - OAuth
@@ -307,13 +337,77 @@ https://navigator-hub-1.preview.emergentagent.com
 - **i18next** - Multi-language
 - **pywebpush** - Push notifications
 
+## New API Endpoints (January 15, 2026)
+
+### Social APIs
+- `GET /api/friends` - Get friends list
+- `GET /api/friends/requests` - Get pending requests
+- `POST /api/friends/request/{id}` - Send friend request
+- `POST /api/friends/accept/{id}` - Accept request
+- `POST /api/friends/reject/{id}` - Reject request
+- `DELETE /api/friends/{id}` - Remove friend
+- `GET /api/friends/search` - Search users
+- `GET /api/groups` - List groups
+- `POST /api/groups` - Create group
+- `GET /api/groups/{id}` - Get group details
+- `POST /api/groups/{id}/join` - Join group
+- `POST /api/groups/{id}/leave` - Leave group
+- `GET /api/pages` - List pages
+- `POST /api/pages` - Create page
+- `GET /api/pages/{id}` - Get page details
+- `POST /api/pages/{id}/follow` - Follow page
+- `POST /api/pages/{id}/unfollow` - Unfollow page
+- `GET /api/feed` - Get personalized feed
+- `GET /api/posts` - Get posts
+- `POST /api/posts` - Create post
+- `POST /api/posts/with-photos` - Create post with photos
+- `POST /api/posts/{id}/react` - Add reaction
+- `DELETE /api/posts/{id}/react` - Remove reaction
+
+### Direct Messaging APIs
+- `GET /api/dm/conversations` - Get conversations
+- `POST /api/dm/conversations/{id}` - Create/get conversation
+- `GET /api/dm/conversations/{id}/messages` - Get messages
+- `POST /api/dm/conversations/{id}/messages` - Send message
+- `POST /api/dm/conversations/{id}/typing` - Typing indicator
+- `POST /api/dm/conversations/{id}/read` - Mark as read
+- `WS /api/dm/ws` - WebSocket for real-time DM
+
+### Newsletter APIs
+- `GET /api/newsletter/subscribers` - Get subscribers (admin)
+- `POST /api/newsletter/subscribe` - Subscribe
+- `POST /api/newsletter/unsubscribe` - Unsubscribe
+- `POST /api/newsletter/generate` - Generate AI content (admin)
+- `GET /api/newsletter/drafts` - Get drafts (admin)
+- `POST /api/newsletter/send/{id}` - Send newsletter (admin)
+- `GET /api/newsletter/campaigns` - Campaign history (admin)
+
+### Voice Search APIs
+- `POST /api/voice/transcribe` - Transcribe audio
+- `POST /api/voice/search` - Voice search
+- `GET /api/voice/history` - Get voice history
+- `GET /api/voice/stats` - Admin voice stats
+
+### Collaborative Editing APIs
+- `POST /api/protocols/{id}/collaborate/start` - Start session
+- `POST /api/protocols/{id}/collaborate/save` - Save changes
+- `GET /api/protocols/{id}/collaborate/history` - Get history
+- `POST /api/protocols/{id}/collaborate/restore/{id}` - Restore version
+- `WS /api/protocols/{id}/collaborate/ws` - Real-time collaboration
+
 ## Prioritized Backlog
 
-### P1 (High Priority)
-- [ ] Mobile app wrapper (Capacitor/React Native)
-- [ ] Voice search integration
-- [ ] Collaborative protocol editing
-- [ ] Complete Social Features (Friends, Groups, Pages with reactions)
+### P1 (High Priority) - COMPLETED ✅
+- [x] Social Features (Friends, Groups, Pages with reactions)
+- [x] Direct Messaging with WebSockets
+- [x] Voice search integration (OpenAI Whisper)
+- [x] Collaborative protocol editing
+- [x] AI Newsletter system (GPT-5.2)
+- [x] Location auto-detection
+
+### P1 (Remaining)
+- [ ] Mobile app wrapper (Capacitor) - Configuration ready
+- [ ] Browser extension (Chrome)
 
 ### P2 (Medium Priority)
 - [ ] Video tutorials
