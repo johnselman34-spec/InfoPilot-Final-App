@@ -242,7 +242,29 @@ const InfoPilotSection = () => (
 );
 
 const BookPromoBanner = () => {
+  const { user, token } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [hideMaestroBistro, setHideMaestroBistro] = useState(false);
+  
+  // Check if user is an admin who can hide ads
+  const canHideAds = user?.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(user.email.toLowerCase());
+  
+  // Load hide preference from localStorage or user settings
+  useEffect(() => {
+    if (canHideAds) {
+      const savedPref = localStorage.getItem('hideMaestroBistro');
+      if (savedPref !== null) {
+        setHideMaestroBistro(savedPref === 'true');
+      }
+    }
+  }, [canHideAds, user?.email]);
+  
+  // Toggle Maestro Bistro visibility
+  const toggleMaestroBistro = () => {
+    const newValue = !hideMaestroBistro;
+    setHideMaestroBistro(newValue);
+    localStorage.setItem('hideMaestroBistro', String(newValue));
+  };
   
   // A/B Testing hooks for headline and CTA
   const { variant: headlineVariant, trackEvent: trackHeadlineEvent } = useVariant('book_promo_headline');
