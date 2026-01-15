@@ -106,6 +106,8 @@ async def login(credentials: UserLogin):
 @router.post("/auth/google", response_model=dict)
 async def google_auth(data: GoogleAuthRequest):
     """Authenticate with Google OAuth"""
+    from bson import ObjectId
+    
     # Check if user exists (case-insensitive email matching)
     user = await db.users.find_one({
         "$or": [
@@ -118,6 +120,8 @@ async def google_auth(data: GoogleAuthRequest):
         # Update google_id if not set
         if not user.get("google_id"):
             await AuthService.update_user_google_id(user["_id"], data.google_id)
+        # Re-fetch to get the latest is_admin and other fields
+        user = await db.users.find_one({"_id": user["_id"]})
     else:
         # Create new user
         username = data.name.replace(" ", "_").lower() if data.name else data.email.split("@")[0]
@@ -133,9 +137,13 @@ async def google_auth(data: GoogleAuthRequest):
             username=username,
             google_id=data.google_id
         )
+        # Re-fetch to get all fields including _id
+        user = await db.users.find_one({"_id": user["_id"]})
     
     # Create session
     token = await AuthService.create_session(str(user["_id"]))
+    
+    logger.info(f"Google OAuth login for {data.email} - is_admin: {user.get('is_admin', False)}")
     
     return {
         "token": token,
