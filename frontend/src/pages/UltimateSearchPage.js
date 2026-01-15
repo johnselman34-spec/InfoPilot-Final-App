@@ -124,6 +124,8 @@ const UltimateSearchPage = ({ showToast }) => {
         showToast(`Deleted ${data.deleted_count} results`, 'success');
         fetchBatches();
         fetchSearchResults();
+        // Trigger map refresh after data changes
+        triggerMapRefresh();
       } else {
         const err = await res.json();
         showToast(err.detail || 'Failed to delete batch', 'error');
@@ -142,6 +144,8 @@ const UltimateSearchPage = ({ showToast }) => {
       if (res.ok) {
         showToast('Result deleted', 'success');
         fetchSearchResults();
+        // Trigger map refresh after data changes
+        triggerMapRefresh();
       } else {
         const err = await res.json();
         showToast(err.detail || 'Failed to delete', 'error');
