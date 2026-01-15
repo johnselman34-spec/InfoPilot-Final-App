@@ -46,7 +46,7 @@ class TestProtocolParser:
         # Verify the protocol was saved correctly
         get_res = requests.get(f"{BASE_URL}/api/categories", headers=headers)
         assert get_res.status_code == 200
-        categories = get_res.json()["categories"]
+        categories = get_res.json()  # Returns list directly
         test_cat = next((c for c in categories if c["id"] == category_id), None)
         assert test_cat is not None
         assert "William C. Gamble" in test_cat["protocol_string"]
