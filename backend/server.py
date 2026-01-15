@@ -2500,6 +2500,38 @@ async def update_category_visibility(category_id: str, is_public: bool, user: di
         raise HTTPException(status_code=404, detail="Category not found")
     return {"message": "Visibility updated"}
 
+@api_router.put("/categories/{category_id}/sale-settings")
+async def update_category_sale_settings(
+    category_id: str, 
+    for_sale: bool, 
+    price: float = 0.75, 
+    user: dict = Depends(require_user)
+):
+    """Update a category's for-sale status and price"""
+    category = await db.categories.find_one({"id": category_id, "user_id": user["id"]})
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    # Can only sell private protocols
+    if category.get("is_public", True):
+        raise HTTPException(status_code=400, detail="Public protocols cannot be sold")
+    
+    # Validate price
+    if for_sale and (price < 0.75 or price > 2.99):
+        raise HTTPException(status_code=400, detail="Price must be between $0.75 and $2.99")
+    
+    update_data = {
+        "for_sale": for_sale,
+        "price": price if for_sale else None
+    }
+    
+    await db.categories.update_one(
+        {"id": category_id, "user_id": user["id"]},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Sale settings updated", "for_sale": for_sale, "price": price if for_sale else None}
+
 # ============================================
 # API ROUTES - PROTOCOL MARKETPLACE
 # ============================================
