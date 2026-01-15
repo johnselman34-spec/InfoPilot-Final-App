@@ -504,20 +504,20 @@ const BookPromoBanner = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 8,
-                background: 'linear-gradient(135deg, #ec4899, #f97316)',
+                ...ctaStyle,
                 color: 'white',
                 padding: '14px 28px',
                 borderRadius: 30,
                 fontWeight: 800,
                 fontSize: '1rem',
                 textDecoration: 'none',
-                boxShadow: '0 8px 30px rgba(236, 72, 153, 0.5)',
                 border: '2px solid rgba(255,255,255,0.2)',
                 transition: 'transform 0.2s',
                 animation: 'pulse 2s infinite'
               }}
+              onClick={handleCtaClick}
             >
-              🛒 GET IT NOW - Only $2.99!
+              {ctaContent.text}
             </a>
             <a 
               href="https://letters-to-evelyn.sintra.site"
