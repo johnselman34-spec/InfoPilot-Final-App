@@ -143,14 +143,16 @@ class TestMarketplaceProtocols:
         assert response.status_code == 200, f"Failed to get marketplace protocols: {response.text}"
         data = response.json()
         
-        # Should return a list of protocols
-        assert isinstance(data, list), "Marketplace protocols should return a list"
-        print(f"Marketplace has {len(data)} protocols")
+        # Response is {"protocols": [...]}
+        assert "protocols" in data, "Response should have 'protocols' key"
+        protocols = data["protocols"]
+        assert isinstance(protocols, list), "Protocols should be a list"
+        print(f"Marketplace has {len(protocols)} protocols")
         
         # Check if protocols have expected fields
-        if len(data) > 0:
-            protocol = data[0]
-            expected_fields = ["id", "name", "protocol_string", "price"]
+        if len(protocols) > 0:
+            protocol = protocols[0]
+            expected_fields = ["id", "name", "price", "owner_username"]
             for field in expected_fields:
                 assert field in protocol, f"Protocol missing field: {field}"
         
