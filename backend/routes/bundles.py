@@ -130,7 +130,7 @@ async def get_bundle(bundle_id: str):
     """Get bundle details"""
     try:
         bundle = await db.protocol_bundles.find_one({"_id": ObjectId(bundle_id)})
-    except:
+    except Exception:
         raise HTTPException(status_code=400, detail="Invalid bundle ID")
     
     if not bundle:
