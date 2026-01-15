@@ -381,10 +381,255 @@ async def leave_group(group_id: str, user = Depends(get_current_user)):
     """Leave a group"""
     await db.groups.update_one(
         {"_id": ObjectId(group_id)},
-        {"$pull": {"members": str(user["_id"]), "admins": str(user["_id"])}}
+        {"$pull": {"members": str(user["_id"]), "admins": str(user["_id"]), "moderators": str(user["_id"])}}
     )
     
     return {"success": True, "message": "Left group"}
+
+
+# ==================== GROUP ADMIN ROLES ====================
+
+# Role definitions
+GROUP_ROLES = {
+    "moderator": {
+        "can_delete_posts": True,
+        "can_mute_members": True,
+        "can_approve_posts": True,
+        "can_manage_polls": True,
+        "can_add_moderators": False,
+        "can_remove_members": False,
+        "can_edit_group": False
+    },
+    "admin": {
+        "can_delete_posts": True,
+        "can_mute_members": True,
+        "can_approve_posts": True,
+        "can_manage_polls": True,
+        "can_add_moderators": True,
+        "can_remove_members": True,
+        "can_edit_group": True
+    }
+}
+
+
+@router.post("/groups/{group_id}/moderators", response_model=dict)
+async def add_moderator(group_id: str, member_id: str, user = Depends(get_current_user)):
+    """Add a moderator to the group (admin only)"""
+    user_id = str(user["_id"])
+    
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Only admins can add moderators
+    if user_id not in group.get("admins", []) and group.get("created_by") != user_id:
+        raise HTTPException(status_code=403, detail="Only admins can add moderators")
+    
+    # Check if member exists in group
+    if member_id not in group.get("members", []):
+        raise HTTPException(status_code=400, detail="User is not a member of this group")
+    
+    # Add to moderators
+    await db.groups.update_one(
+        {"_id": ObjectId(group_id)},
+        {"$addToSet": {"moderators": member_id}}
+    )
+    
+    # Notify the new moderator
+    await db.notifications.insert_one({
+        "user_id": member_id,
+        "type": "group_role",
+        "group_id": group_id,
+        "message": f"You are now a moderator of {group['name']}",
+        "read": False,
+        "created_at": datetime.utcnow()
+    })
+    
+    return {"success": True, "message": "Moderator added successfully"}
+
+
+@router.delete("/groups/{group_id}/moderators/{member_id}", response_model=dict)
+async def remove_moderator(group_id: str, member_id: str, user = Depends(get_current_user)):
+    """Remove a moderator from the group (admin only)"""
+    user_id = str(user["_id"])
+    
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Only admins can remove moderators
+    if user_id not in group.get("admins", []) and group.get("created_by") != user_id:
+        raise HTTPException(status_code=403, detail="Only admins can remove moderators")
+    
+    await db.groups.update_one(
+        {"_id": ObjectId(group_id)},
+        {"$pull": {"moderators": member_id}}
+    )
+    
+    return {"success": True, "message": "Moderator removed"}
+
+
+@router.post("/groups/{group_id}/admins", response_model=dict)
+async def add_admin(group_id: str, member_id: str, user = Depends(get_current_user)):
+    """Promote a member to admin (owner only)"""
+    user_id = str(user["_id"])
+    
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Only owner can add admins
+    if group.get("created_by") != user_id:
+        raise HTTPException(status_code=403, detail="Only the group owner can add admins")
+    
+    if member_id not in group.get("members", []):
+        raise HTTPException(status_code=400, detail="User is not a member of this group")
+    
+    await db.groups.update_one(
+        {"_id": ObjectId(group_id)},
+        {"$addToSet": {"admins": member_id}}
+    )
+    
+    await db.notifications.insert_one({
+        "user_id": member_id,
+        "type": "group_role",
+        "group_id": group_id,
+        "message": f"You are now an admin of {group['name']}",
+        "read": False,
+        "created_at": datetime.utcnow()
+    })
+    
+    return {"success": True, "message": "Admin added successfully"}
+
+
+@router.delete("/groups/{group_id}/members/{member_id}", response_model=dict)
+async def remove_member(group_id: str, member_id: str, user = Depends(get_current_user)):
+    """Remove a member from the group (admin only)"""
+    user_id = str(user["_id"])
+    
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Only admins can remove members
+    if user_id not in group.get("admins", []) and group.get("created_by") != user_id:
+        raise HTTPException(status_code=403, detail="Only admins can remove members")
+    
+    # Cannot remove the owner
+    if member_id == group.get("created_by"):
+        raise HTTPException(status_code=400, detail="Cannot remove the group owner")
+    
+    # Cannot remove yourself (use leave instead)
+    if member_id == user_id:
+        raise HTTPException(status_code=400, detail="Use leave endpoint to leave the group")
+    
+    await db.groups.update_one(
+        {"_id": ObjectId(group_id)},
+        {"$pull": {"members": member_id, "admins": member_id, "moderators": member_id}}
+    )
+    
+    return {"success": True, "message": "Member removed"}
+
+
+@router.get("/groups/{group_id}/roles", response_model=dict)
+async def get_group_roles(group_id: str, user = Depends(get_current_user)):
+    """Get all roles and members in a group"""
+    user_id = str(user["_id"])
+    
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Build roles structure
+    owner = await db.users.find_one({"_id": ObjectId(group.get("created_by"))})
+    
+    admins = []
+    for admin_id in group.get("admins", []):
+        if admin_id != group.get("created_by"):
+            admin = await db.users.find_one({"_id": ObjectId(admin_id)})
+            if admin:
+                admins.append({
+                    "id": str(admin["_id"]),
+                    "username": admin.get("username", "Unknown"),
+                    "avatar_url": admin.get("avatar_url")
+                })
+    
+    moderators = []
+    for mod_id in group.get("moderators", []):
+        mod = await db.users.find_one({"_id": ObjectId(mod_id)})
+        if mod:
+            moderators.append({
+                "id": str(mod["_id"]),
+                "username": mod.get("username", "Unknown"),
+                "avatar_url": mod.get("avatar_url")
+            })
+    
+    return {
+        "owner": {
+            "id": str(owner["_id"]) if owner else None,
+            "username": owner.get("username", "Unknown") if owner else "Unknown",
+            "avatar_url": owner.get("avatar_url") if owner else None
+        },
+        "admins": admins,
+        "moderators": moderators,
+        "role_definitions": GROUP_ROLES,
+        "your_role": "owner" if group.get("created_by") == user_id else (
+            "admin" if user_id in group.get("admins", []) else (
+                "moderator" if user_id in group.get("moderators", []) else "member"
+            )
+        )
+    }
+
+
+# ==================== PAGE ADMIN ROLES ====================
+
+@router.post("/pages/{page_id}/admins", response_model=dict)
+async def add_page_admin(page_id: str, user_id_to_add: str, user = Depends(get_current_user)):
+    """Add an admin to the page (owner only)"""
+    current_user_id = str(user["_id"])
+    
+    page = await db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    if page.get("created_by") != current_user_id:
+        raise HTTPException(status_code=403, detail="Only the page owner can add admins")
+    
+    await db.pages.update_one(
+        {"_id": ObjectId(page_id)},
+        {"$addToSet": {"admins": user_id_to_add}}
+    )
+    
+    await db.notifications.insert_one({
+        "user_id": user_id_to_add,
+        "type": "page_role",
+        "page_id": page_id,
+        "message": f"You are now an admin of {page['name']}",
+        "read": False,
+        "created_at": datetime.utcnow()
+    })
+    
+    return {"success": True, "message": "Admin added successfully"}
+
+
+@router.delete("/pages/{page_id}/admins/{admin_id}", response_model=dict)
+async def remove_page_admin(page_id: str, admin_id: str, user = Depends(get_current_user)):
+    """Remove an admin from the page (owner only)"""
+    current_user_id = str(user["_id"])
+    
+    page = await db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    if page.get("created_by") != current_user_id:
+        raise HTTPException(status_code=403, detail="Only the page owner can remove admins")
+    
+    await db.pages.update_one(
+        {"_id": ObjectId(page_id)},
+        {"$pull": {"admins": admin_id}}
+    )
+    
+    return {"success": True, "message": "Admin removed"}
 
 
 # ==================== PAGES ====================
