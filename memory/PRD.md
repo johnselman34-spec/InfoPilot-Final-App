@@ -478,6 +478,35 @@ https://infopilot-network.preview.emergentagent.com
 - `DELETE /api/polls/{poll_id}` - Delete poll
 - `PUT /api/polls/{poll_id}/close` - Close poll early
 
+### Tutorials APIs (NEW - January 15, 2026)
+- `GET /api/tutorials` - Get all tutorials (10 tutorials, 6 categories)
+- `GET /api/tutorials/{id}` - Get single tutorial with related
+- `POST /api/tutorials/{id}/progress` - Track user progress
+- `GET /api/tutorials/user/progress` - Get user's tutorial progress
+
+### Rate Limiting APIs (NEW - January 15, 2026)
+- `GET /api/rate-limit/status` - Get rate limit status (auth required)
+- `GET /api/rate-limit/history` - Get usage history
+- `GET /api/rate-limit/admin/overview` - Admin overview (admin only)
+
+### Webhook APIs (NEW - January 15, 2026)
+- `GET /api/webhooks/event-types` - Get available event types
+- `GET /api/webhooks` - Get user's webhooks
+- `POST /api/webhooks` - Create webhook
+- `PUT /api/webhooks/{id}` - Update webhook
+- `DELETE /api/webhooks/{id}` - Delete webhook
+- `POST /api/webhooks/{id}/test` - Test webhook
+- `GET /api/webhooks/{id}/logs` - Get delivery logs
+
+### Partial Admin APIs (NEW - January 15, 2026)
+- `POST /api/social/groups/{id}/moderators` - Add moderator
+- `DELETE /api/social/groups/{id}/moderators/{mod_id}` - Remove moderator
+- `POST /api/social/groups/{id}/admins` - Add admin
+- `DELETE /api/social/groups/{id}/members/{member_id}` - Remove member
+- `GET /api/social/groups/{id}/roles` - Get group roles
+- `POST /api/social/pages/{id}/admins` - Add page admin
+- `DELETE /api/social/pages/{id}/admins/{admin_id}` - Remove page admin
+
 ## Prioritized Backlog
 
 ### P1 (High Priority) - COMPLETED ✅
@@ -490,18 +519,20 @@ https://infopilot-network.preview.emergentagent.com
 - [x] Polls Feature for Groups, Pages, USP
 - [x] Default Admin Friend for new users
 - [x] Push Notifications for DMs
+- [x] Copy to Clipboard (Title always, Protocol for owners)
+- [x] Mobile app wrapper (Capacitor) - Config ready
+- [x] Browser extension (Chrome) - Full implementation
 
 ### P1 (Remaining)
-- [ ] Mobile app wrapper (Capacitor) - Configuration ready
-- [ ] Browser extension (Chrome)
+- [ ] Marketing & SEO optimization (20 ASO/SEO keywords)
 
-### P2 (Medium Priority)
-- [ ] Video tutorials
-- [ ] API rate limiting dashboard
-- [ ] Webhook integrations
-- [ ] Direct Messaging with WebSockets
+### P2 (Medium Priority) - COMPLETED ✅
+- [x] Video tutorials (10 tutorials, 6 categories)
+- [x] API rate limiting dashboard
+- [x] Webhook integrations (Slack/Discord, 8 events)
+- [x] Partial admin roles for Groups/Pages
+- [x] Most Copied Protocols leaderboard
 
 ### P3 (Low Priority)
-- [ ] Browser extension
-- [ ] Slack/Discord integration
-- [ ] AI-generated Email Newsletters
+- [ ] Enhanced promotional copy for "Letters to Evelyn"
+- [ ] Video tutorials with actual YouTube content (placeholder IDs)
