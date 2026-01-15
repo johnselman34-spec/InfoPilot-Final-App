@@ -4,7 +4,7 @@ import { API } from '../utils/api';
 
 const AdminPanel = ({ showToast }) => {
   const { token } = useAuth();
-  const [settings, setSettings] = useState([]);
+  const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('general');
 
@@ -19,7 +19,14 @@ const AdminPanel = ({ showToast }) => {
       });
       if (res.ok) {
         const data = await res.json();
-        setSettings(data);
+        // Handle both array and object responses
+        if (Array.isArray(data)) {
+          const settingsObj = {};
+          data.forEach(s => { settingsObj[s.key] = s.value; });
+          setSettings(settingsObj);
+        } else {
+          setSettings(data || {});
+        }
       }
     } catch (e) {
       console.error('Failed to fetch settings:', e);
@@ -44,7 +51,8 @@ const AdminPanel = ({ showToast }) => {
     }
   };
 
-  const getSetting = (key) => settings.find(s => s.key === key)?.value || '';
+  // Get setting value from object
+  const getSetting = (key) => settings[key] || '';
 
   // Newsletter state
   const [newsletterPreview, setNewsletterPreview] = useState(null);
