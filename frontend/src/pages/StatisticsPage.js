@@ -285,6 +285,11 @@ const StatisticsPage = ({ showToast }) => {
   const [mapMarkers, setMapMarkers] = useState([]);
   const [selectedStatType, setSelectedStatType] = useState(null);
   
+  // Easter Egg Statistics state
+  const [easterEggStats, setEasterEggStats] = useState(null);
+  const [userEasterEggStats, setUserEasterEggStats] = useState(null);
+  const [easterEggLeaderboard, setEasterEggLeaderboard] = useState([]);
+  
   // AI Search state
   const [aiSearchQuery, setAiSearchQuery] = useState('');
   const [aiSearchLoading, setAiSearchLoading] = useState(false);
