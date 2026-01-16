@@ -982,7 +982,7 @@ const AdminPanel = ({ showToast }) => {
           <div>
             <h3 style={{ marginBottom: 20, color: '#f472b6' }}>User Management</h3>
             <p style={{ color: '#a1a1aa', marginBottom: 20 }}>
-              Ban users or manage user accounts from here.
+              View user accounts and toggle admin status. For advanced moderation (ban/mute/delete), use the 🛡️ Moderation tab.
             </p>
             <div className="admin-setting">
               <label>Ban User by ID</label>
@@ -994,7 +994,7 @@ const AdminPanel = ({ showToast }) => {
                     const userId = document.getElementById('ban-user-id').value;
                     if (userId) {
                       try {
-                        await fetch(`${API}/admin/ban-user/${userId}`, {
+                        await fetch(`${API}/admin/users/${userId}/ban`, {
                           method: 'POST',
                           headers: { Authorization: `Bearer ${token}` }
                         });
@@ -1009,7 +1009,22 @@ const AdminPanel = ({ showToast }) => {
                 </button>
               </div>
             </div>
+            <div style={{ 
+              marginTop: 20, 
+              padding: 15, 
+              background: 'rgba(124, 58, 237, 0.1)', 
+              borderRadius: 10, 
+              border: '1px solid rgba(124, 58, 237, 0.3)' 
+            }}>
+              <p style={{ fontSize: '0.85rem', color: '#a78bfa', margin: 0 }}>
+                💡 <strong>Tip:</strong> Use the 🛡️ <strong>Moderation</strong> tab for a better experience with user search, detailed moderation actions, and history tracking.
+              </p>
+            </div>
           </div>
+        )}
+
+        {activeTab === 'moderation' && (
+          <UserModerationAdmin token={token} showToast={showToast} />
         )}
 
         {activeTab === 'content' && (
