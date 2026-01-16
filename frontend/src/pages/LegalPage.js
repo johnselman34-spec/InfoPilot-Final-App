@@ -162,12 +162,39 @@ const LegalPage = ({ showToast }) => {
             <li>Create multiple accounts to abuse free features</li>
           </ul>
           
-          <h3>7. Intellectual Property</h3>
+          <h3>7. Intellectual Property &amp; Copyright Protection</h3>
           <p>
-            7.1. The Service, including its design, features, and technology, is owned by Top Pilot Enterprises.<br/>
-            7.2. "InfoPilot Explorer" and "InfoJet 2.0" are trademarks of Top Pilot Enterprises, Inc.<br/>
+            7.1. The Service, including its design, features, and technology, is owned by Top Pilot Enterprises, Inc.<br/>
+            7.2. "InfoPilot Explorer™" and "InfoJet 2.0™" are registered trademarks of Top Pilot Enterprises, Inc.<br/>
             7.3. Search protocols created by users remain their intellectual property.
           </p>
+          
+          <div style={{
+            margin: '15px 0',
+            padding: 15,
+            background: 'rgba(239, 68, 68, 0.1)',
+            borderRadius: 10,
+            border: '2px solid rgba(239, 68, 68, 0.3)'
+          }}>
+            <h4 style={{ color: '#ef4444', margin: '0 0 10px 0' }}>⚠️ COPYRIGHT NOTICE - DO NOT COPY OR EMULATE</h4>
+            <p style={{ margin: 0, fontSize: '0.85rem' }}>
+              <strong>7.4. ALL SOURCE CODE IS COPYRIGHTED.</strong> The source code, algorithms, proprietary 
+              search technology (InfoJet 2.0), user interface designs, and overall system architecture of 
+              InfoPilot Explorer are protected under United States Copyright Law (17 U.S.C. § 101 et seq.) 
+              and international copyright treaties.<br/><br/>
+              
+              <strong>7.5. PROHIBITION ON EMULATION.</strong> The code, functionality, and unique features 
+              of InfoPilot Explorer may NOT be copied, reproduced, reverse-engineered, emulated, or recreated 
+              by any person, company, or entity without express written permission from Top Pilot Enterprises, Inc.<br/><br/>
+              
+              <strong>7.6. LEGAL CONSEQUENCES.</strong> Unauthorized copying, reproduction, or emulation of 
+              this software may result in civil and criminal penalties, including statutory damages of up to 
+              $150,000 per work infringed, plus attorney's fees and costs.<br/><br/>
+              
+              <strong>7.7. TRADE SECRETS.</strong> The InfoJet 2.0 protocol parsing system, search monetization 
+              methodology, and marketplace architecture are proprietary trade secrets of Top Pilot Enterprises, Inc.
+            </p>
+          </div>
           
           <h3>8. Disclaimers</h3>
           <p>
