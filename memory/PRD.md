@@ -531,6 +531,23 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Images added to BookPromoBanner.js Maestro Bistro section
   - Proper alt tags for accessibility
 
+### Batch 13 - Clean Category Feature ✅ (January 16, 2026)
+- [x] **Clean Category - Bulk Delete Search Results**
+  - New endpoints in `/app/backend/routes/categories.py`:
+    - `GET /api/categories/{id}/results-count` - Returns total, exclusive, shared result counts
+    - `POST /api/categories/{id}/clean?mode=remove` - Removes category tag from results (soft clean)
+    - `POST /api/categories/{id}/clean?mode=delete` - Deletes results ONLY in this category
+    - `POST /api/categories/{id}/clean?mode=delete_all` - Deletes ALL results in category
+  - Settings page Clean Category UI section:
+    - Shows result count badge (e.g., "716 results")
+    - Shows breakdown: "57 exclusive, 659 shared with other categories"
+    - 🔗 **Unlink Results** button - Removes category association only
+    - 🗑️ **Delete Exclusive Only** button - Deletes results only in this category
+    - 💥 **Delete ALL Results** button - Deletes everything (with warning)
+  - Quick clean button (🧹) on category cards for fast access
+  - Confirmation dialogs with result counts
+  - All 15 tests pass (100%)
+
 ### Maps Pricing Decision
 - ✅ **FREE Maps for All Users:**
   - Ultimate Search Page map
