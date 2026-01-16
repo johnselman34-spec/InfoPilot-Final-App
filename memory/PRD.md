@@ -1363,3 +1363,35 @@ All features implemented, tested, and working!
 ### Remaining Items
 - **ML Dependency Constraint:** litellm requires huggingface_hub, tokenizers (BLOCKED - library constraint)
 - **Legacy Chat Routes:** chat.py and messages.py remain for backward compatibility
+
+
+## Update Session - January 16, 2026 (Iteration 39)
+
+### New Features Implemented ✅
+
+#### 1. Admin-Controlled Promotion Message ✅
+- **Location:** Pricing tab in Admin Panel, displays near Upgrade button on Settings page
+- **Settings:**
+  - `show_upgrade_promo` - Toggle to enable/disable message
+  - `upgrade_promo_title` - Customizable title (default: "⚠️ Limited Time Offer!")
+  - `upgrade_promo_message` - Customizable text about business model, costs, etc.
+- **Default Message:** "Pay As You Go pricing is available while supplies last! We are testing our business model..."
+
+#### 2. Search Collation Limit (1-100) ✅
+- **Location:** Admin Panel → General tab → Search & Collation Settings
+- **Range:** 1-100 (changed from 10-200)
+
+#### 3. Group/Page Moderation Powers ✅
+- Group: ban, unban, mute, unmute members
+- Page: ban, unban followers
+- Owners/admins have full control, moderators limited
+
+#### 4. User Agreement & Privacy Policy ✅
+- **Company:** Top Pilot Enterprises, Inc. (Brunswick, Maine)
+- **Endpoints:** `/api/legal/user-agreement`, `/api/legal/privacy-policy`
+- Terms acceptance required during registration
+
+### Testing Results - Iteration 39
+- **Pass Rate:** 100% (15/15 backend tests)
+- **Test Report:** `/app/test_reports/iteration_39.json`
+
