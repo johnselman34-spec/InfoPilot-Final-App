@@ -1173,6 +1173,13 @@ Return ONLY a JSON array of 3 strings, no other text:
 
 
 
+@api_router.get("/search-engines", response_model=dict)
+async def get_search_engines():
+    """Get list of available search engines and their status"""
+    return await ExtendedWebSearchService.get_available_engines()
+
+
+
 @api_router.get("/ultimate-search", response_model=dict)
 async def get_ultimate_search(
     page: int = Query(1, ge=1),
