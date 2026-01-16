@@ -9,7 +9,8 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
   const { token, user, refreshUser } = useAuth();
   const [settings, setSettings] = useState({
     ultimate_search_public: user?.ultimate_search_public || false,
-    friends_visible: user?.friends_visible || false
+    friends_visible: user?.friends_visible || false,
+    content_filter: user?.content_filter || 'strict'
   });
   
   // Password change state
