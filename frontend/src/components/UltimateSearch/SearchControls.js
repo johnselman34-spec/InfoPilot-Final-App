@@ -31,13 +31,66 @@ const SearchControls = ({
   setShowTemplates,
   filterInfo
 }) => {
+  const [searchEngines, setSearchEngines] = useState(null);
+  
+  // Fetch available search engines on mount
+  useEffect(() => {
+    const fetchEngines = async () => {
+      try {
+        const res = await fetch(`${API}/api/search-engines`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchEngines(data);
+        }
+      } catch (e) {
+        console.error('Failed to fetch search engines:', e);
+      }
+    };
+    fetchEngines();
+  }, []);
+
   return (
     <>
+      {/* Search Engines Status */}
+      {searchEngines && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          marginBottom: 10,
+          flexWrap: 'wrap',
+          padding: '8px 12px',
+          background: 'rgba(16, 185, 129, 0.1)',
+          borderRadius: 8,
+          border: '1px solid rgba(16, 185, 129, 0.2)'
+        }}>
+          <span style={{ color: '#10b981', fontSize: '0.8rem', fontWeight: 600 }}>
+            🔍 Search Engines ({searchEngines.total_available} active):
+          </span>
+          {Object.entries(searchEngines.engines).map(([key, engine]) => (
+            <span
+              key={key}
+              style={{
+                fontSize: '0.7rem',
+                padding: '3px 8px',
+                borderRadius: 4,
+                background: engine.available ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                color: engine.available ? '#10b981' : '#ef4444',
+                border: `1px solid ${engine.available ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+              }}
+              title={engine.description}
+            >
+              {engine.available ? '✓' : '✗'} {engine.name}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Search Box */}
       <div className="search-box">
         <input
           className="input-field"
-          placeholder="Enter search query..."
+          placeholder="Enter search query (searches Google, DuckDuckGo, Brave, Yandex)..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && onSearch()}
