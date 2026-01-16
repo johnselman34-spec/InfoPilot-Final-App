@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import { extractHashtags } from '../utils/hashtags';
 import { HashtagDisplay } from '../components/shared';
+import CustomMapStyling from '../components/Map/CustomMapStyling';
 
 // Auto-refresh interval for map (30 seconds)
 const MAP_REFRESH_INTERVAL = 30000;
