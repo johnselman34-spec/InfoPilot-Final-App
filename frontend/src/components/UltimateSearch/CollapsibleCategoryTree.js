@@ -277,7 +277,7 @@ const CollapsibleCategoryTree = ({
       }}>
         {filteredTree.length === 0 && searchFilter ? (
           <div style={{ textAlign: 'center', padding: 20, color: '#a1a1aa' }}>
-            <p style={{ margin: 0 }}>No categories match "{searchFilter}"</p>
+            <p style={{ margin: 0 }}>No categories match &ldquo;{searchFilter}&rdquo;</p>
           </div>
         ) : (
           filteredTree.map(category => (
