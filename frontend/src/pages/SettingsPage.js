@@ -809,7 +809,7 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button 
               className="btn btn-secondary" 
-              onClick={() => fetchLegalDocument('terms')}
+              onClick={() => setShowLegal('terms')}
               style={{ fontSize: '0.85rem' }}
               data-testid="view-terms-btn"
             >
@@ -817,7 +817,7 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
             </button>
             <button 
               className="btn btn-secondary" 
-              onClick={() => fetchLegalDocument('privacy')}
+              onClick={() => setShowLegal('privacy')}
               style={{ fontSize: '0.85rem' }}
               data-testid="view-privacy-btn"
             >
@@ -829,68 +829,18 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
           </p>
         </div>
         
-        {/* Legal Document Modal */}
-        {showLegal && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: 20
-          }}>
-            <div style={{
-              background: '#1a1a2e',
-              borderRadius: 16,
-              padding: 25,
-              maxWidth: 800,
-              maxHeight: '80vh',
-              overflow: 'auto',
-              width: '100%',
-              border: '1px solid rgba(124, 58, 237, 0.3)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <h2 style={{ color: '#f472b6', margin: 0 }}>
-                  {showLegal === 'terms' ? '📋 User Agreement' : '🔒 Privacy Policy'}
-                </h2>
-                <button 
-                  onClick={() => setShowLegal(null)}
-                  style={{
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    border: '1px solid #ef4444',
-                    color: '#ef4444',
-                    padding: '8px 15px',
-                    borderRadius: 8,
-                    cursor: 'pointer'
-                  }}
-                >
-                  ✕ Close
-                </button>
-              </div>
-              <div style={{ 
-                color: '#e4e4e7', 
-                lineHeight: 1.7, 
-                fontSize: '0.9rem',
-                whiteSpace: 'pre-wrap'
-              }}>
-                {legalContent.split('\n').map((line, i) => {
-                  if (line.startsWith('# ')) return <h1 key={i} style={{ color: '#f472b6', marginTop: 20 }}>{line.replace('# ', '')}</h1>;
-                  if (line.startsWith('## ')) return <h2 key={i} style={{ color: '#a78bfa', marginTop: 15, fontSize: '1.2rem' }}>{line.replace('## ', '')}</h2>;
-                  if (line.startsWith('### ')) return <h3 key={i} style={{ color: '#60a5fa', marginTop: 12, fontSize: '1rem' }}>{line.replace('### ', '')}</h3>;
-                  if (line.startsWith('**') && line.endsWith('**')) return <p key={i} style={{ fontWeight: 600 }}>{line.replace(/\*\*/g, '')}</p>;
-                  if (line.startsWith('- ')) return <li key={i} style={{ marginLeft: 20 }}>{line.replace('- ', '')}</li>;
-                  if (line === '---') return <hr key={i} style={{ border: 'none', borderTop: '1px solid rgba(124, 58, 237, 0.3)', margin: '20px 0' }} />;
-                  return <p key={i}>{line}</p>;
-                })}
-              </div>
-            </div>
-          </div>
+        {/* Legal Document Modals - Using dedicated components */}
+        {showLegal === 'terms' && (
+          <UserAgreement onClose={() => setShowLegal(null)} />
         )}
+        {showLegal === 'privacy' && (
+          <PrivacyStatement onClose={() => setShowLegal(null)} />
+        )}
+
+        {/* Easter Egg Collection Stats */}
+        <div style={{ marginTop: 20 }}>
+          <EasterEggStats />
+        </div>
 
         {/* Push Notifications Section */}
         <div style={{ marginTop: 20 }}>
