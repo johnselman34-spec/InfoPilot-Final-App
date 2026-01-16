@@ -165,7 +165,7 @@ const LegalPage = ({ showToast }) => {
           <h3>7. Intellectual Property &amp; Copyright Protection</h3>
           <p>
             7.1. The Service, including its design, features, and technology, is owned by Top Pilot Enterprises, Inc.<br/>
-            7.2. "InfoPilot Explorer™" and "InfoJet 2.0™" are registered trademarks of Top Pilot Enterprises, Inc.<br/>
+            7.2. InfoPilot Explorer™ and InfoJet 2.0™ are registered trademarks of Top Pilot Enterprises, Inc.<br/>
             7.3. Search protocols created by users remain their intellectual property.
           </p>
           
