@@ -1272,9 +1272,14 @@ async def get_page_details(page_id: str, user = Depends(get_current_user_local))
     # Get posts
     posts = await db.page_posts.find({"page_id": page_id}).sort("created_at", -1).limit(50).to_list(50)
     
+    # Bulk fetch all authors to avoid N+1 queries
+    author_ids = list(set([ObjectId(p["author_id"]) for p in posts]))
+    authors_list = await db.users.find({"_id": {"$in": author_ids}}).to_list(len(author_ids)) if author_ids else []
+    authors_map = {str(a["_id"]): a for a in authors_list}
+    
     formatted_posts = []
     for p in posts:
-        author = await db.users.find_one({"_id": ObjectId(p["author_id"])})
+        author = authors_map.get(p["author_id"])
         formatted_posts.append({
             "id": str(p["_id"]),
             "content": p["content"],
