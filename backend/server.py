@@ -1827,6 +1827,115 @@ async def delete_single_result(result_id: str, user = Depends(get_current_user_l
     return {"deleted": True}
 
 
+# ==================== SEARCH RESULT COMMENTS ====================
+
+class SearchResultComment(BaseModel):
+    """Model for creating a comment on a search result"""
+    content: str
+    parent_id: Optional[str] = None  # For nested replies
+
+@api_router.get("/search-results/{result_id}/comments", response_model=dict)
+async def get_search_result_comments(result_id: str, user = Depends(get_optional_user_local)):
+    """Get comments for a search result"""
+    comments = await db.result_comments.find({"result_id": result_id}).sort("created_at", 1).to_list(200)
+    
+    formatted = []
+    for c in comments:
+        author = await db.users.find_one({"_id": ObjectId(c["user_id"])}, {"_id": 0, "username": 1, "avatar_url": 1})
+        formatted.append({
+            "id": str(c["_id"]),
+            "content": c["content"],
+            "author": author or {"username": "Unknown"},
+            "parent_id": c.get("parent_id"),
+            "likes": c.get("likes", 0),
+            "is_mine": user and str(user.get("_id")) == c["user_id"],
+            "created_at": c["created_at"].isoformat() if c.get("created_at") else None
+        })
+    
+    return {"comments": formatted, "count": len(formatted)}
+
+@api_router.post("/search-results/{result_id}/comments", response_model=dict)
+async def create_search_result_comment(result_id: str, comment: SearchResultComment, user = Depends(get_current_user_local)):
+    """Create a comment on a search result"""
+    # Verify result exists
+    result = await db.search_results.find_one({"_id": ObjectId(result_id)})
+    if not result:
+        raise HTTPException(status_code=404, detail="Search result not found")
+    
+    comment_data = {
+        "result_id": result_id,
+        "user_id": str(user["_id"]),
+        "content": comment.content,
+        "parent_id": comment.parent_id,
+        "likes": 0,
+        "created_at": datetime.utcnow()
+    }
+    
+    result_insert = await db.result_comments.insert_one(comment_data)
+    
+    # Update comment count on result
+    await db.search_results.update_one(
+        {"_id": ObjectId(result_id)},
+        {"$inc": {"comment_count": 1}}
+    )
+    
+    return {
+        "id": str(result_insert.inserted_id),
+        "message": "Comment added successfully"
+    }
+
+@api_router.delete("/search-results/{result_id}/comments/{comment_id}", response_model=dict)
+async def delete_search_result_comment(result_id: str, comment_id: str, user = Depends(get_current_user_local)):
+    """Delete a comment on a search result"""
+    result = await db.result_comments.delete_one({
+        "_id": ObjectId(comment_id),
+        "user_id": str(user["_id"])
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Comment not found or not owned by you")
+    
+    # Update comment count on result
+    await db.search_results.update_one(
+        {"_id": ObjectId(result_id)},
+        {"$inc": {"comment_count": -1}}
+    )
+    
+    return {"deleted": True}
+
+@api_router.post("/search-results/{result_id}/comments/{comment_id}/like", response_model=dict)
+async def like_search_result_comment(result_id: str, comment_id: str, user = Depends(get_current_user_local)):
+    """Like/unlike a comment"""
+    user_id = str(user["_id"])
+    
+    # Check if already liked
+    existing_like = await db.comment_likes.find_one({
+        "comment_id": comment_id,
+        "user_id": user_id
+    })
+    
+    if existing_like:
+        # Unlike
+        await db.comment_likes.delete_one({"_id": existing_like["_id"]})
+        await db.result_comments.update_one(
+            {"_id": ObjectId(comment_id)},
+            {"$inc": {"likes": -1}}
+        )
+        return {"liked": False}
+    else:
+        # Like
+        await db.comment_likes.insert_one({
+            "comment_id": comment_id,
+            "user_id": user_id,
+            "created_at": datetime.utcnow()
+        })
+        await db.result_comments.update_one(
+            {"_id": ObjectId(comment_id)},
+            {"$inc": {"likes": 1}}
+        )
+        return {"liked": True}
+
+
 # ==================== PERSONAL REPORT (ORGANIC) ENDPOINTS ====================
 
 class PersonalReportCreate(BaseModel):
