@@ -10,6 +10,13 @@ import CustomMapStyling from '../components/Map/CustomMapStyling';
 // Auto-refresh interval for map (30 seconds)
 const MAP_REFRESH_INTERVAL = 30000;
 
+// Category colors for color-coded dots
+const CATEGORY_COLORS = [
+  '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', 
+  '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6',
+  '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'
+];
+
 const MapPage = ({ showToast, setCurrentPage }) => {
   const { token, user } = useAuth();
   const [mapResults, setMapResults] = useState([]);
@@ -27,6 +34,12 @@ const MapPage = ({ showToast, setCurrentPage }) => {
   const mapContainerRef = useRef(null);
   const refreshIntervalRef = useRef(null);
   
+  // Category filtering state
+  const [categories, setCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [showCategoryFilter, setShowCategoryFilter] = useState(true);
+  const [categoryColorMap, setCategoryColorMap] = useState({});
+  
   // Update container width when ref changes
   useEffect(() => {
     const updateWidth = () => {
@@ -39,12 +52,66 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     return () => window.removeEventListener('resize', updateWidth);
   }, []);
   
+  // Fetch categories
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/categories`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCategories(data || []);
+        // Assign colors to categories
+        const colorMap = {};
+        (data || []).forEach((cat, idx) => {
+          colorMap[cat.name] = CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+        });
+        setCategoryColorMap(colorMap);
+      }
+    } catch (e) {
+      console.error('Failed to fetch categories:', e);
+    }
+  }, [token]);
+  
+  useEffect(() => {
+    if (token) {
+      fetchCategories();
+    }
+  }, [token, fetchCategories]);
+  
   // AI Search state
   const [aiSearchQuery, setAiSearchQuery] = useState('');
   const [aiSearchLoading, setAiSearchLoading] = useState(false);
   const [aiSearchMode, setAiSearchMode] = useState('comprehensive');
   const [dbSearchLoading, setDbSearchLoading] = useState(false);
   const [dbSearchMode, setDbSearchMode] = useState('smart');
+
+  // Toggle category selection
+  const toggleCategory = (categoryName) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(categoryName)) {
+        return prev.filter(c => c !== categoryName);
+      } else {
+        return [...prev, categoryName];
+      }
+    });
+  };
+  
+  // Get color for a result based on its categories
+  const getResultCategoryColor = (result) => {
+    if (result.categories && result.categories.length > 0) {
+      const firstCat = result.categories[0];
+      return categoryColorMap[firstCat] || '#6b7280';
+    }
+    return getMarkerColor(result.article_type);
+  };
+  
+  // Filter map results by selected categories
+  const filteredMapResults = selectedCategories.length > 0
+    ? mapResults.filter(result => 
+        result.categories && result.categories.some(cat => selectedCategories.includes(cat))
+      )
+    : mapResults;
 
   // Known locations for context-based geocoding
   const KNOWN_LOCATIONS = {
