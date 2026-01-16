@@ -640,6 +640,16 @@ const SocialPage = ({ showToast }) => {
                     <>
                       <button className="btn btn-secondary" onClick={() => unfollowPage(page.id)} style={{ flex: 1 }}>Unfollow</button>
                       {page.is_admin && <button className="btn btn-primary" onClick={() => openCreatePollModal('page', page.id)}>📊 Poll</button>}
+                      {(page.is_admin || page.is_owner) && (
+                        <button 
+                          className="btn" 
+                          onClick={() => setModerationTarget({ type: 'page', entity: page })}
+                          style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                          data-testid={`moderate-page-${page.id}`}
+                        >
+                          🛡️ Moderate
+                        </button>
+                      )}
                     </>
                   ) : (
                     <button className="btn btn-primary" onClick={() => followPage(page.id)} style={{ flex: 1, background: 'linear-gradient(135deg, #ec4899, #f472b6)' }}>+ Follow</button>
@@ -649,6 +659,22 @@ const SocialPage = ({ showToast }) => {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Moderation Panel */}
+      {moderationTarget && (
+        <ModerationPanel
+          type={moderationTarget.type}
+          entityId={moderationTarget.entity.id}
+          entityName={moderationTarget.entity.name}
+          token={token}
+          currentUserId={user?.id}
+          isOwner={moderationTarget.entity.is_owner}
+          isAdmin={moderationTarget.entity.is_admin}
+          isModerator={moderationTarget.entity.is_moderator}
+          onClose={() => setModerationTarget(null)}
+          showToast={showToast}
+        />
       )}
 
       {/* Modals */}
