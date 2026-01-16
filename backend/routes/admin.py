@@ -106,6 +106,11 @@ async def init_settings(user = Depends(require_admin)):
         # Daily Laugh Goal Settings
         {"key": "default_daily_laugh_goal", "value": 10, "description": "Default daily laugh goal for new users"},
         {"key": "streak_bonus_multiplier", "value": 1.0, "description": "Multiplier for streak bonuses"},
+        # Unpaid User Price Controls (NEW)
+        {"key": "unpaid_price_control_enabled", "value": False, "description": "Enable price limits for unpaid users"},
+        {"key": "unpaid_max_protocol_price", "value": 5.00, "description": "Max price unpaid users can charge per protocol ($)"},
+        {"key": "unpaid_max_bundle_price", "value": 10.00, "description": "Max price unpaid users can charge per bundle ($)"},
+        {"key": "unpaid_can_sell", "value": True, "description": "Allow unpaid users to sell at all"},
     ]
     
     for setting in default_settings:
