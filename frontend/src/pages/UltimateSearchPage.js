@@ -1112,6 +1112,7 @@ const UltimateSearchPage = ({ showToast }) => {
         user={user}
         onSave={saveProtocol}
         onDelete={deleteCategory}
+        onCleanCategory={cleanCategory}
       />
     </div>
   );
