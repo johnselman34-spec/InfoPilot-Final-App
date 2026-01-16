@@ -511,7 +511,7 @@ const MapPage = ({ showToast, setCurrentPage }) => {
               <div 
                 style={{
                   position: 'absolute',
-                  left: Math.min(hoverPosition.x + 15, mapContainerRef.current?.clientWidth - 320 || 0),
+                  left: Math.min(hoverPosition.x + 15, containerWidth - 320),
                   top: Math.max(hoverPosition.y - 150, 10),
                   width: 300,
                   background: 'rgba(15, 10, 35, 0.98)',
