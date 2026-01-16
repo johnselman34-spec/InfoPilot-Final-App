@@ -1296,27 +1296,40 @@ Return ONLY a JSON array of 3 strings, no other text:
     # Sort by match score (if categorized) or by search engine ranking
     all_results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
     
-    # Store results
+    # Store results - Only auto-collate results that meet threshold
+    auto_collated_count = 0
     for result in all_results[:max_results]:
         existing = await db.search_results.find_one({
             "url": result["url"],
             "user_id": user_id
         })
         
-        category_ids = result.get("category_ids", [])
+        # Only include category_ids if result should be auto-collated
+        should_auto_collate = result.get("should_auto_collate", False)
+        category_ids = result.get("category_ids", []) if should_auto_collate else []
+        
+        if should_auto_collate and category_ids:
+            auto_collated_count += 1
         
         if existing:
+            update_data = {
+                "batch_id": batch_id,
+                "ai_search": True,
+                "updated_at": datetime.utcnow(),
+                "groups_matched": result.get("groups_matched", 0)
+            }
             if category_ids:
                 await db.search_results.update_one(
                     {"_id": existing["_id"]},
                     {
                         "$addToSet": {"category_ids": {"$each": category_ids}},
-                        "$set": {
-                            "batch_id": batch_id,
-                            "ai_search": True,
-                            "updated_at": datetime.utcnow()
-                        }
+                        "$set": update_data
                     }
+                )
+            else:
+                await db.search_results.update_one(
+                    {"_id": existing["_id"]},
+                    {"$set": update_data}
                 )
         else:
             await db.search_results.insert_one({
@@ -1327,10 +1340,12 @@ Return ONLY a JSON array of 3 strings, no other text:
                 "article_type": result.get("article_type", "Unknown"),
                 "root_domain": result.get("root_domain", ""),
                 "match_score": result.get("match_score", 0),
+                "groups_matched": result.get("groups_matched", 0),
                 "category_ids": category_ids,
                 "user_id": user_id,
                 "batch_id": batch_id,
                 "ai_search": True,
+                "auto_collated": should_auto_collate,
                 "search_query": result.get("search_query", original_query),
                 "created_at": datetime.utcnow()
             })
