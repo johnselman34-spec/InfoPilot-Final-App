@@ -260,6 +260,24 @@ const MaestroBistroSection = () => (
         }}>
           "Appropriate & conscientable prices for appropriately & conscientiously AMAZING food!" 🎻
         </div>
+        {/* NEW: Real food photography images */}
+        <div style={{ display: 'flex', gap: 10, marginTop: 15, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <img 
+            src="https://static.prod-images.emergentagent.com/jobs/b9901627-c41f-49f8-a5ec-8ae9029551bf/images/8053964189363913cfd0b52cd33694358d4e8119053ba844d1e6ff0c9914f362.png" 
+            alt="Beef Rouladen" 
+            style={{ width: 100, height: 100, borderRadius: 10, objectFit: 'cover', border: '2px solid #5c3d2e' }}
+          />
+          <img 
+            src="https://static.prod-images.emergentagent.com/jobs/b9901627-c41f-49f8-a5ec-8ae9029551bf/images/4def025127b6d6aac68bef8c5e1794d7666cc08d333de695d1136af7c65c430c.png" 
+            alt="Vegetable Rouladen" 
+            style={{ width: 100, height: 100, borderRadius: 10, objectFit: 'cover', border: '2px solid #10b981' }}
+          />
+          <img 
+            src="https://static.prod-images.emergentagent.com/jobs/b9901627-c41f-49f8-a5ec-8ae9029551bf/images/e939457841b9bd72a9126d807ef823bb1cb64871679f9ade71efab8e5edfd667.png" 
+            alt="Fish Chowder" 
+            style={{ width: 100, height: 100, borderRadius: 10, objectFit: 'cover', border: '2px solid #38bdf8' }}
+          />
+        </div>
       </div>
     </div>
   </div>
