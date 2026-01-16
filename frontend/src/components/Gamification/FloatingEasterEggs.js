@@ -61,7 +61,7 @@ const EGG_REWARDS = [
     '⭐ Premium exclusives at $2.99 perform better than $0.99! Quality matters - ask any pilot!',
     '📈 A/B test your prices - sometimes higher = more perceived value! Like hardcover vs paperback!',
     '🤝 Offer a "Pay What You Want" option - trust builds loyalty! John trusted his readers and they trusted him back!',
-    '🔥 Flash sales (50% off for 24hrs) create urgency! Limited time, like John's limited patience with bad eggs!',
+    '🔥 Flash sales (50% off for 24hrs) create urgency! Limited time, like Johns limited patience with bad eggs!',
     '💎 Create a "Pro Bundle" at $9.99 with your best 10 protocols! The "Full Story" package!',
     '🎁 Holiday specials work wonders - Easter eggs, anyone? 🥚 (Disclaimer: no hallucinations included)',
     '✈️ Price like a pilot: start low to gain altitude, then cruise at premium! 🛫',
