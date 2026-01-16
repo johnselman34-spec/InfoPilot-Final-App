@@ -748,6 +748,107 @@ const AdminPanel = ({ showToast }) => {
               </p>
             </div>
 
+            {/* AI Newsletter Optimization */}
+            <div style={{ 
+              marginBottom: 25, 
+              background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(236, 72, 153, 0.2))', 
+              borderRadius: 15, 
+              padding: 20,
+              border: '2px solid rgba(124, 58, 237, 0.3)'
+            }}>
+              <h4 style={{ 
+                color: '#a78bfa', 
+                marginBottom: 15, 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 10 
+              }}>
+                🤖 AI Schedule Optimization
+                <span style={{ 
+                  fontSize: '0.65rem', 
+                  background: 'linear-gradient(135deg, #7c3aed, #ec4899)', 
+                  padding: '3px 8px', 
+                  borderRadius: 4,
+                  color: '#fff'
+                }}>BETA</span>
+              </h4>
+              
+              <p style={{ color: '#a1a1aa', fontSize: '0.85rem', marginBottom: 15 }}>
+                Let AI analyze your newsletter performance data and recommend optimal send times for maximum engagement and revenue!
+              </p>
+              
+              <button 
+                className="btn btn-primary"
+                onClick={fetchAIOptimization}
+                disabled={aiOptLoading}
+                style={{ 
+                  background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                  marginRight: 10 
+                }}
+                data-testid="ai-optimize-btn"
+              >
+                {aiOptLoading ? '🔄 Analyzing...' : '🧠 Analyze & Optimize'}
+              </button>
+              
+              {aiOptimization && aiOptimization.success && aiOptimization.ai_recommendations && (
+                <button 
+                  className="btn btn-success"
+                  onClick={applyAISchedule}
+                  style={{ background: 'linear-gradient(135deg, #10b981, #06b6d4)' }}
+                  data-testid="apply-ai-schedule-btn"
+                >
+                  ✅ Apply AI Schedule
+                </button>
+              )}
+              
+              {aiOptimization && (
+                <div style={{ 
+                  marginTop: 15, 
+                  padding: 15, 
+                  background: 'rgba(30, 20, 50, 0.5)', 
+                  borderRadius: 10 
+                }}>
+                  {aiOptimization.success && aiOptimization.ai_recommendations ? (
+                    <>
+                      <h5 style={{ color: '#10b981', marginBottom: 10 }}>📊 AI Recommendations:</h5>
+                      <div style={{ display: 'grid', gap: 8 }}>
+                        <div style={{ color: '#fff' }}>
+                          <strong>Morning:</strong> {aiOptimization.ai_recommendations.recommended_morning_time}
+                        </div>
+                        <div style={{ color: '#fff' }}>
+                          <strong>Mid-Morning:</strong> {aiOptimization.ai_recommendations.recommended_midmorning_time}
+                        </div>
+                        <div style={{ color: '#fff' }}>
+                          <strong>Afternoon:</strong> {aiOptimization.ai_recommendations.recommended_afternoon_time}
+                        </div>
+                        {aiOptimization.ai_recommendations.reasoning && (
+                          <div style={{ color: '#a1a1aa', fontSize: '0.85rem', marginTop: 5, fontStyle: 'italic' }}>
+                            💡 {aiOptimization.ai_recommendations.reasoning}
+                          </div>
+                        )}
+                        {aiOptimization.ai_recommendations.expected_improvement && (
+                          <div style={{ color: '#f59e0b', fontSize: '0.9rem', marginTop: 5 }}>
+                            📈 Expected Improvement: {aiOptimization.ai_recommendations.expected_improvement}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : aiOptimization.fallback_recommendation ? (
+                    <>
+                      <h5 style={{ color: '#f59e0b', marginBottom: 10 }}>⚠️ Using Fallback Recommendations:</h5>
+                      <p style={{ color: '#a1a1aa', fontSize: '0.85rem' }}>
+                        {aiOptimization.fallback_recommendation.reason}
+                      </p>
+                    </>
+                  ) : (
+                    <p style={{ color: '#ef4444' }}>
+                      ❌ {aiOptimization.error || 'Failed to generate recommendations'}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Newsletter Preview */}
             {newsletterPreview && (
               <div style={{ marginBottom: 25 }}>
