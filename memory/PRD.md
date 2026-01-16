@@ -1566,3 +1566,69 @@ Frontend:
 - Database search enables searching within collated results
 - Layout stable with Maestro Bistro toggle
 - All tests passing
+
+
+## Update Session - January 16, 2026 (Iteration 45)
+
+### Deep Search & Strict Protocol Matching - COMPLETE ✅
+
+This is a **MAJOR enhancement** to how Search and Collate works. Previously, results were taken from the top of search engine rankings. Now, the system:
+
+#### How Deep Search Works
+1. **Multiple Query Generation:** Instead of 1 search query, generates 5-10 variations from your protocol
+   - First terms from each group
+   - Boosted term combinations
+   - Different term combinations via itertools.product
+   - Quoted exact phrases for multi-word terms
+   - Longest (most specific) terms combined
+
+2. **Multi-Engine Deep Search:** Executes ALL query variations across Google, Brave, DuckDuckGo
+   - Deduplicates results by URL
+   - Tracks which query found each result
+
+3. **STRICT Protocol Matching:** Only accepts results that truly match
+   - Default 70% threshold - result must match 70% of protocol groups
+   - Configurable via Admin Panel (50-100%)
+   - Returns detailed match analysis: groups matched, unmatched, match percentage
+
+#### New API Features
+- **POST /api/collate** - Returns `deep_search_stats`:
+  ```json
+  {
+    "queries_executed": 8,
+    "total_results_found": 156,
+    "passed_strict_matching": 23,
+    "rejected": 133,
+    "match_threshold": "70%"
+  }
+  ```
+
+- **POST /api/auto-categorize** - Same deep search stats + `categories_count` per result
+
+#### New Admin Settings
+| Setting | Default | Range | Description |
+|---------|---------|-------|-------------|
+| search_collate_limit | 100 | 1-200 | Max results per collate |
+| match_threshold | 70 | 50-100 | Minimum % of protocol groups that must match |
+| deep_search_queries | 8 | 3-15 | Number of query variations to generate |
+
+#### Protocol Service Enhancements
+- `generate_deep_search_queries(protocol, max_queries)` - Creates diverse query variations
+- `strict_match_result(result, groups, min_match_percent, fuzzy_threshold)` - Returns (matches, score, details)
+
+### Testing Results - Iteration 45
+- **Backend Tests:** 22/22 passed (100%)
+- **Test Report:** `/app/test_reports/iteration_45.json`
+
+### Files Modified
+```
+Backend:
+- /app/backend/server.py (collate and auto-categorize with deep search)
+- /app/backend/services/protocol_service.py (generate_deep_search_queries, strict_match_result)
+- /app/backend/routes/admin.py (new settings)
+```
+
+### What This Means for Users
+- **Before:** Search returned top-ranked results regardless of protocol relevance
+- **After:** Only results that actually fulfill 70%+ of your protocol requirements are collated
+- **Result:** Much higher quality, truly relevant results that match your research criteria
