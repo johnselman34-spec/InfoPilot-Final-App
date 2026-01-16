@@ -401,12 +401,14 @@ class TestAdminEndpoints:
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
         data = response.json()
         
-        assert isinstance(data, list), "Users should be a list"
-        if len(data) > 0:
-            user = data[0]
+        # API returns {"users": [...]} or direct list
+        users = data.get("users", data) if isinstance(data, dict) else data
+        assert isinstance(users, list), "Users should be a list"
+        if len(users) > 0:
+            user = users[0]
             assert "email" in user or "id" in user, "User should have email or id"
         
-        print(f"✅ Admin users list returned {len(data)} users")
+        print(f"✅ Admin users list returned {len(users)} users")
     
     def test_admin_moderation_actions(self, auth_token):
         """Test admin moderation actions endpoint"""
