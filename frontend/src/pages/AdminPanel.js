@@ -1037,7 +1037,12 @@ const AdminPanel = ({ showToast }) => {
         )}
 
         {activeTab === 'doctype-settings' && (
-          <DoctypeSettingsAdmin showToast={showToast} />
+          <div>
+            <DoctypeSettingsAdmin showToast={showToast} />
+            <div style={{ marginTop: 30 }}>
+              <DoctypeTestingTool showToast={showToast} />
+            </div>
+          </div>
         )}
 
         {activeTab === 'category-analytics' && (
