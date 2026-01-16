@@ -454,6 +454,92 @@ const StatisticsPage = ({ showToast }) => {
   return (
     <div style={{ padding: '20px 0' }} data-testid="statistics-page">
       <HeroBanner funnyMessage={funnyMessage} funnyFact={stats?.funny_fact} />
+      
+      {/* AI Search Section */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(236, 72, 153, 0.15))',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 30,
+        border: '1px solid rgba(124, 58, 237, 0.3)'
+      }}>
+        <h3 style={{ color: '#a78bfa', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+          🤖 AI-Powered Search
+          <span style={{ fontSize: '0.7rem', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', padding: '3px 8px', borderRadius: 6 }}>
+            Search Google, DuckDuckGo, Bing & More
+          </span>
+        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <input
+            type="text"
+            value={aiSearchQuery}
+            onChange={(e) => setAiSearchQuery(e.target.value)}
+            placeholder="Enter search query for AI-powered intelligent search..."
+            style={{
+              flex: 1,
+              minWidth: 250,
+              padding: '12px 15px',
+              background: 'rgba(30, 20, 50, 0.8)',
+              border: '1px solid rgba(124, 58, 237, 0.4)',
+              borderRadius: 10,
+              color: '#fff',
+              fontSize: '1rem'
+            }}
+            onKeyPress={(e) => e.key === 'Enter' && aiSearchFromStats()}
+            data-testid="stats-ai-search-input"
+          />
+          <button
+            onClick={autoCategorizeFroStats}
+            disabled={aiSearchLoading || !aiSearchQuery.trim()}
+            className="btn"
+            style={{
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: '#fff',
+              padding: '12px 20px',
+              fontWeight: 600,
+              opacity: (!aiSearchQuery.trim() || aiSearchLoading) ? 0.5 : 1
+            }}
+            data-testid="stats-auto-categorize-btn"
+          >
+            {aiSearchLoading ? '⏳' : '🎯'} Auto-Categorize All
+          </button>
+          <button
+            onClick={aiSearchFromStats}
+            disabled={aiSearchLoading || !aiSearchQuery.trim()}
+            className="btn"
+            style={{
+              background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+              color: '#fff',
+              padding: '12px 20px',
+              fontWeight: 600,
+              opacity: (!aiSearchQuery.trim() || aiSearchLoading) ? 0.5 : 1
+            }}
+            data-testid="stats-ai-search-btn"
+          >
+            {aiSearchLoading ? '🤖 Searching...' : '🤖 AI Intelligent Search'}
+          </button>
+          <select
+            value={aiSearchMode}
+            onChange={(e) => setAiSearchMode(e.target.value)}
+            style={{
+              background: 'rgba(124, 58, 237, 0.3)',
+              border: '1px solid rgba(124, 58, 237, 0.4)',
+              color: '#a78bfa',
+              padding: '10px 15px',
+              borderRadius: 8,
+              fontSize: '0.9rem'
+            }}
+          >
+            <option value="comprehensive">📊 Comprehensive</option>
+            <option value="news">📰 News Focus</option>
+            <option value="research">🔬 Research Focus</option>
+          </select>
+        </div>
+        <p style={{ color: '#a1a1aa', fontSize: '0.8rem', marginTop: 10, marginBottom: 0 }}>
+          💡 <strong>Auto-Categorize:</strong> One click matches results against ALL your categories. <strong>AI Search:</strong> Uses GPT to expand keywords and searches multiple engines.
+        </p>
+      </div>
+      
       <QuickStatsGrid stats={stats} />
 
       {/* Charts Section */}
