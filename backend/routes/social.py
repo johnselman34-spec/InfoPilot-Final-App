@@ -296,7 +296,9 @@ async def get_groups(user = Depends(get_optional_user)):
             "cover_photo": g.get("cover_photo"),
             "member_count": len(g.get("members", [])),
             "is_member": user and str(user["_id"]) in g.get("members", []),
-            "is_admin": user and str(user["_id"]) == g.get("created_by"),
+            "is_owner": user and str(user["_id"]) == g.get("created_by"),
+            "is_admin": user and str(user["_id"]) in g.get("admins", []),
+            "is_moderator": user and str(user["_id"]) in g.get("moderators", []),
             "is_private": g.get("is_private", False),
             "created_at": g.get("created_at", datetime.utcnow()).isoformat()
         } for g in groups]
