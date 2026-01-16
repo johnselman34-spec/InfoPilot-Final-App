@@ -63,7 +63,7 @@ const LoginPage = ({ onSwitch }) => {
           Continue with Google
         </button>
         <div className="auth-footer">
-          Don't have an account? <a href="#" onClick={(e) => { e.preventDefault(); onSwitch(); }} data-testid="switch-to-register">Sign Up</a>
+          Need an account? <a href="#" onClick={(e) => { e.preventDefault(); onSwitch(); }} data-testid="switch-to-register">Sign Up</a>
         </div>
       </div>
     </div>
