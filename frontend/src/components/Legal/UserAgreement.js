@@ -142,7 +142,7 @@ const UserAgreement = ({ onClose, onAccept }) => {
               Free protocols ($0.00) are permitted and encouraged for building reputation.
             </p>
             <p>
-              <strong>5.3 Payouts:</strong> Earnings are paid via PayPal. Due to PayPal's minimum 
+              <strong>5.3 Payouts:</strong> Earnings are paid via PayPal. Due to PayPal&apos;s minimum 
               transaction requirements ($1.00), earnings below this threshold are accumulated in 
               your wallet until the minimum is reached.
             </p>
