@@ -211,7 +211,7 @@ class TestGroupModeration:
     def test_group(self, admin_token):
         """Create a test group for moderation testing"""
         response = requests.post(
-            f"{BASE_URL}/api/social/groups",
+            f"{BASE_URL}/api/groups",
             headers={
                 "Authorization": f"Bearer {admin_token}",
                 "Content-Type": "application/json"
@@ -247,11 +247,11 @@ class TestGroupModeration:
         return None
     
     def test_ban_member_endpoint_exists(self, admin_token, test_group):
-        """POST /api/social/groups/{group_id}/ban/{member_id} - Endpoint should exist"""
+        """POST /api/groups/{group_id}/ban/{member_id} - Endpoint should exist"""
         group_id = test_group["id"]
         # Try to ban a non-existent member (should return 400 or 404, not 405)
         response = requests.post(
-            f"{BASE_URL}/api/social/groups/{group_id}/ban/nonexistent_id",
+            f"{BASE_URL}/api/groups/{group_id}/ban/nonexistent_id",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         # Should not be 405 Method Not Allowed
@@ -259,30 +259,30 @@ class TestGroupModeration:
         print(f"✅ Ban endpoint exists, returned {response.status_code}")
     
     def test_mute_member_endpoint_exists(self, admin_token, test_group):
-        """POST /api/social/groups/{group_id}/mute/{member_id} - Endpoint should exist"""
+        """POST /api/groups/{group_id}/mute/{member_id} - Endpoint should exist"""
         group_id = test_group["id"]
         response = requests.post(
-            f"{BASE_URL}/api/social/groups/{group_id}/mute/nonexistent_id",
+            f"{BASE_URL}/api/groups/{group_id}/mute/nonexistent_id",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code != 405, "Mute endpoint should exist"
         print(f"✅ Mute endpoint exists, returned {response.status_code}")
     
     def test_unban_member_endpoint_exists(self, admin_token, test_group):
-        """POST /api/social/groups/{group_id}/unban/{member_id} - Endpoint should exist"""
+        """POST /api/groups/{group_id}/unban/{member_id} - Endpoint should exist"""
         group_id = test_group["id"]
         response = requests.post(
-            f"{BASE_URL}/api/social/groups/{group_id}/unban/nonexistent_id",
+            f"{BASE_URL}/api/groups/{group_id}/unban/nonexistent_id",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code != 405, "Unban endpoint should exist"
         print(f"✅ Unban endpoint exists, returned {response.status_code}")
     
     def test_get_banned_members(self, admin_token, test_group):
-        """GET /api/social/groups/{group_id}/banned - Should return banned members list"""
+        """GET /api/groups/{group_id}/banned - Should return banned members list"""
         group_id = test_group["id"]
         response = requests.get(
-            f"{BASE_URL}/api/social/groups/{group_id}/banned",
+            f"{BASE_URL}/api/groups/{group_id}/banned",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200, f"Expected 200, got {response.status_code}"
@@ -309,7 +309,7 @@ class TestPageModeration:
     def test_page(self, admin_token):
         """Create a test page for moderation testing"""
         response = requests.post(
-            f"{BASE_URL}/api/social/pages",
+            f"{BASE_URL}/api/pages",
             headers={
                 "Authorization": f"Bearer {admin_token}",
                 "Content-Type": "application/json"
@@ -324,20 +324,20 @@ class TestPageModeration:
         return response.json()
     
     def test_ban_page_user_endpoint_exists(self, admin_token, test_page):
-        """POST /api/social/pages/{page_id}/ban/{user_id} - Endpoint should exist"""
+        """POST /api/pages/{page_id}/ban/{user_id} - Endpoint should exist"""
         page_id = test_page["id"]
         response = requests.post(
-            f"{BASE_URL}/api/social/pages/{page_id}/ban/nonexistent_id",
+            f"{BASE_URL}/api/pages/{page_id}/ban/nonexistent_id",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code != 405, "Page ban endpoint should exist"
         print(f"✅ Page ban endpoint exists, returned {response.status_code}")
     
     def test_unban_page_user_endpoint_exists(self, admin_token, test_page):
-        """POST /api/social/pages/{page_id}/unban/{user_id} - Endpoint should exist"""
+        """POST /api/pages/{page_id}/unban/{user_id} - Endpoint should exist"""
         page_id = test_page["id"]
         response = requests.post(
-            f"{BASE_URL}/api/social/pages/{page_id}/unban/nonexistent_id",
+            f"{BASE_URL}/api/pages/{page_id}/unban/nonexistent_id",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code != 405, "Page unban endpoint should exist"
