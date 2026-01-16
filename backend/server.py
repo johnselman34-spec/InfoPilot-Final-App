@@ -2381,18 +2381,18 @@ async def get_leaderboard(limit: int = Query(20, ge=1, le=100)):
     leaders = await db.gamification.find().sort("xp", -1).limit(limit).to_list(limit)
     
     # Bulk fetch all users to avoid N+1 queries
-    user_ids = [ObjectId(l["user_id"]) for l in leaders]
+    user_ids = [ObjectId(leader["user_id"]) for leader in leaders]
     users_list = await db.users.find({"_id": {"$in": user_ids}}).to_list(len(user_ids)) if user_ids else []
     users_map = {str(u["_id"]): u for u in users_list}
     
     leaderboard = []
-    for i, l in enumerate(leaders):
-        user = users_map.get(l["user_id"])
+    for i, leader in enumerate(leaders):
+        user = users_map.get(leader["user_id"])
         if user:
-            level_info = calculate_level(l.get("xp", 0))
+            level_info = calculate_level(leader.get("xp", 0))
             leaderboard.append({
                 "rank": i + 1,
-                "user_id": l["user_id"],
+                "user_id": leader["user_id"],
                 "username": user.get("username", "Unknown"),
                 "callsign": user.get("callsign", user.get("username", "Unknown")),
                 "xp": l.get("xp", 0),
