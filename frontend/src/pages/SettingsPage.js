@@ -120,16 +120,25 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
 
   const updateSettings = async () => {
     try {
-      const params = new URLSearchParams();
-      params.append('ultimate_search_public', settings.ultimate_search_public);
-      params.append('friends_visible', settings.friends_visible);
-      
-      await fetch(`${API}/users/settings?${params}`, {
+      const res = await fetch(`${API}/users/settings`, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          ultimate_search_public: settings.ultimate_search_public,
+          friends_visible: settings.friends_visible,
+          content_filter: settings.content_filter
+        })
       });
-      showToast('Settings saved!', 'success');
-      refreshUser();
+      if (res.ok) {
+        showToast('Settings saved!', 'success');
+        refreshUser();
+      } else {
+        const data = await res.json();
+        showToast(data.detail || 'Failed to save settings', 'error');
+      }
     } catch (e) {
       showToast('Failed to save settings', 'error');
     }
