@@ -32,7 +32,10 @@ const CrossSellSection = ({ protocolId, showToast, onAddToCart }) => {
   const { token } = useAuth();
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [funnyMessage, setFunnyMessage] = useState('');
+  // Initialize with stable random message
+  const [funnyMessage, setFunnyMessage] = useState(() => UPSELL_MESSAGES[Math.floor(Math.random() * UPSELL_MESSAGES.length)]);
+  // Stable random discount message
+  const [discountMessage] = useState(() => DISCOUNT_MESSAGES[Math.floor(Math.random() * DISCOUNT_MESSAGES.length)]);
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -43,7 +46,9 @@ const CrossSellSection = ({ protocolId, showToast, onAddToCart }) => {
         if (res.ok) {
           const data = await res.json();
           setRecommendations(data.recommendations || []);
-          setFunnyMessage(data.funny_message || UPSELL_MESSAGES[Math.floor(Math.random() * UPSELL_MESSAGES.length)]);
+          if (data.funny_message) {
+            setFunnyMessage(data.funny_message);
+          }
         }
       } catch (e) {
         console.error('Failed to fetch cross-sell:', e);
