@@ -289,6 +289,8 @@ const StatisticsPage = ({ showToast }) => {
   const [aiSearchQuery, setAiSearchQuery] = useState('');
   const [aiSearchLoading, setAiSearchLoading] = useState(false);
   const [aiSearchMode, setAiSearchMode] = useState('comprehensive');
+  const [dbSearchLoading, setDbSearchLoading] = useState(false);
+  const [dbSearchMode, setDbSearchMode] = useState('smart');
 
   // AI Intelligent Search for Statistics
   const aiSearchFromStats = async () => {
@@ -356,6 +358,40 @@ const StatisticsPage = ({ showToast }) => {
     }
     
     setAiSearchLoading(false);
+  };
+
+  // Database Text Search from Statistics
+  const databaseSearchFromStats = async () => {
+    if (!aiSearchQuery.trim()) {
+      showToast('Please enter a search query', 'error');
+      return;
+    }
+    
+    setDbSearchLoading(true);
+    
+    try {
+      const res = await fetch(`${API}/database-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ 
+          query: aiSearchQuery,
+          mode: dbSearchMode,
+          limit: 100
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`📚 ${data.message}`, 'success');
+      } else {
+        const error = await res.json();
+        showToast(error.detail || 'Database search failed', 'error');
+      }
+    } catch (e) {
+      showToast('Database search failed', 'error');
+    }
+    
+    setDbSearchLoading(false);
   };
 
   useEffect(() => {
