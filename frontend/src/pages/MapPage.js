@@ -17,8 +17,21 @@ const MapPage = ({ showToast, setCurrentPage }) => {
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [containerWidth, setContainerWidth] = useState(800); // Default width
   const mapContainerRef = useRef(null);
   const refreshIntervalRef = useRef(null);
+  
+  // Update container width when ref changes
+  useEffect(() => {
+    const updateWidth = () => {
+      if (mapContainerRef.current) {
+        setContainerWidth(mapContainerRef.current.clientWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
   
   // AI Search state
   const [aiSearchQuery, setAiSearchQuery] = useState('');
