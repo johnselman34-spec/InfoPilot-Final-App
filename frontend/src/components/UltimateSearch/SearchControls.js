@@ -2,18 +2,24 @@ import React from 'react';
 import { Icons } from '../shared';
 
 /**
- * SearchControls - Search input box with collate button and aggregation options
+ * SearchControls - Search input box with collate button, auto-categorize, AI search, and aggregation options
  */
 const SearchControls = ({
   searchQuery,
   setSearchQuery,
   onSearch,
   onCollate,
+  onAutoCategorize,
+  onAISearch,
   loading,
   collateLoading,
+  autoCatLoading,
+  aiSearchLoading,
   selectedCategoriesCount,
   aggregation,
   setAggregation,
+  aiSearchMode,
+  setAiSearchMode,
   showMap,
   setShowMap,
   mapResultsCount,
@@ -29,7 +35,7 @@ const SearchControls = ({
       <div className="search-box">
         <input
           className="input-field"
-          placeholder="Enter search query and click 'Search & Collate'"
+          placeholder="Enter search query..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && onSearch()}
@@ -54,8 +60,82 @@ const SearchControls = ({
           }}
           data-testid="collate-btn"
         >
-          {collateLoading ? '⏳ Collating...' : `🔍 Collate (${selectedCategoriesCount} selected)`}
+          {collateLoading ? '⏳ Collating...' : `🔍 Collate (${selectedCategoriesCount})`}
         </button>
+      </div>
+      
+      {/* NEW: Auto-Categorize and AI Search Buttons */}
+      <div style={{ 
+        display: 'flex', 
+        gap: 10, 
+        marginBottom: 15, 
+        flexWrap: 'wrap',
+        alignItems: 'center'
+      }}>
+        <button
+          className="btn"
+          onClick={onAutoCategorize}
+          disabled={autoCatLoading || !searchQuery.trim()}
+          style={{
+            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+            color: '#fff',
+            padding: '10px 20px',
+            fontWeight: 600,
+            opacity: (!searchQuery.trim() || autoCatLoading) ? 0.5 : 1
+          }}
+          data-testid="auto-categorize-btn"
+          title="One-click: Search and automatically match results against ALL your categories"
+        >
+          {autoCatLoading ? '⏳ Auto-Categorizing...' : '🎯 Auto-Categorize All'}
+        </button>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <button
+            className="btn"
+            onClick={onAISearch}
+            disabled={aiSearchLoading || !searchQuery.trim()}
+            style={{
+              background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+              color: '#fff',
+              padding: '10px 20px',
+              fontWeight: 600,
+              opacity: (!searchQuery.trim() || aiSearchLoading) ? 0.5 : 1
+            }}
+            data-testid="ai-search-btn"
+            title="AI-powered search across Google, DuckDuckGo, Bing with intelligent keyword expansion"
+          >
+            {aiSearchLoading ? '🤖 AI Searching...' : '🤖 AI Intelligent Search'}
+          </button>
+          
+          {/* AI Search Mode Selector */}
+          <select
+            value={aiSearchMode || 'comprehensive'}
+            onChange={(e) => setAiSearchMode && setAiSearchMode(e.target.value)}
+            style={{
+              background: 'rgba(124, 58, 237, 0.2)',
+              border: '1px solid rgba(124, 58, 237, 0.4)',
+              color: '#a78bfa',
+              padding: '8px 12px',
+              borderRadius: 8,
+              fontSize: '0.85rem',
+              cursor: 'pointer'
+            }}
+            data-testid="ai-search-mode"
+          >
+            <option value="comprehensive">📊 Comprehensive</option>
+            <option value="news">📰 News Focus</option>
+            <option value="research">🔬 Research Focus</option>
+          </select>
+        </div>
+        
+        <span style={{ 
+          color: '#a1a1aa', 
+          fontSize: '0.75rem', 
+          marginLeft: 10,
+          maxWidth: 250
+        }}>
+          💡 Auto-Categorize matches ALL categories at once. AI Search uses GPT to expand keywords.
+        </span>
       </div>
 
       {/* Aggregation Options */}
