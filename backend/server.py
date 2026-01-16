@@ -478,7 +478,7 @@ class ExtendedWebSearchService:
     
     @staticmethod
     async def search(query: str, num_results: int = 200) -> List[Dict[str, Any]]:
-        """Aggregate search from multiple sources: Google (SerpAPI), DuckDuckGo, Brave"""
+        """Aggregate search from multiple sources: Google (SerpAPI), Bing, DuckDuckGo, Brave"""
         all_results = []
         seen_urls = set()
         
@@ -486,6 +486,14 @@ class ExtendedWebSearchService:
         if SERPAPI_KEY and SERPAPI_AVAILABLE:
             serp_results = await ExtendedWebSearchService.search_serpapi(query, min(70, num_results))
             for r in serp_results:
+                if r["url"] not in seen_urls:
+                    seen_urls.add(r["url"])
+                    all_results.append(r)
+        
+        # Bing Search (Microsoft's search engine)
+        if BING_API_KEY and len(all_results) < num_results:
+            bing_results = await ExtendedWebSearchService.search_bing(query, min(50, num_results - len(all_results)))
+            for r in bing_results:
                 if r["url"] not in seen_urls:
                     seen_urls.add(r["url"])
                     all_results.append(r)
@@ -526,6 +534,11 @@ class ExtendedWebSearchService:
                     "name": "Google (SerpAPI)",
                     "available": bool(SERPAPI_KEY and SERPAPI_AVAILABLE),
                     "description": "Premium Google search via SerpAPI"
+                },
+                "bing": {
+                    "name": "Bing",
+                    "available": bool(BING_API_KEY),
+                    "description": "Microsoft Bing search engine"
                 },
                 "brave": {
                     "name": "Brave Search",
