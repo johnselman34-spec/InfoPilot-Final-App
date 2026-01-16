@@ -558,6 +558,7 @@ class ExtendedWebSearchService:
             },
             "total_available": sum([
                 bool(SERPAPI_KEY and SERPAPI_AVAILABLE),
+                bool(BING_API_KEY),
                 bool(BRAVE_API_KEY),
                 DDGS_AVAILABLE,
                 True  # Basic always available
