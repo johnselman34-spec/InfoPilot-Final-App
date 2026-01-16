@@ -79,7 +79,7 @@ async def init_settings(user = Depends(require_admin)):
         {"key": "max_search_pages", "value": 99, "description": "Max search pages (1-99)"},
         {"key": "unpaid_max_pages", "value": 1, "description": "Max pages for unpaid users"},
         {"key": "daily_collate_limit", "value": 100, "description": "Max collations per day"},
-        {"key": "search_collate_limit", "value": 100, "description": "Max results per Search & Collate (1-200)"},
+        {"key": "search_collate_limit", "value": 100, "description": "Max results per Search & Collate (1-100)"},
         {"key": "match_threshold", "value": 70, "description": "Protocol match threshold % (50-100) - Higher = stricter matching"},
         {"key": "deep_search_queries", "value": 8, "description": "Number of query variations for deep search (3-15)"},
         {"key": "allow_multiple_categories", "value": True, "description": "Allow assigning to multiple categories"},
@@ -92,6 +92,11 @@ async def init_settings(user = Depends(require_admin)):
         {"key": "paypal_link", "value": PAYPAL_PAYMENT_LINK, "description": "PayPal payment link"},
         {"key": "bundle_of_week_id", "value": "", "description": "Featured Bundle of the Week ID"},
         {"key": "maps_free_for_all", "value": True, "description": "Maps are FREE (no premium gate)"},
+        # Promotional Messages
+        {"key": "upgrade_promo_title", "value": "Limited Time Offer!", "description": "Title for upgrade promotion"},
+        {"key": "upgrade_promo_message", "value": "Pay-as-you-go pricing while supplies last! We're testing our business model - Google Maps API, AI Search subscriptions, and server costs are expensive. Your support keeps InfoPilot running!", "description": "Promotional message near upgrade button"},
+        {"key": "show_cost_disclaimer", "value": True, "description": "Show API cost disclaimer to users"},
+        {"key": "cost_disclaimer_text", "value": "Maintaining this app is expensive - API subscriptions for Google, AI services, and map data cost real money. Thank you for supporting InfoPilot!", "description": "Cost disclaimer text"},
         # Newsletter Time Settings (Admin Controllable)
         {"key": "newsletter_time_1", "value": "05:42", "description": "Newsletter Time 1 (Morning - HH:MM UTC)"},
         {"key": "newsletter_time_2", "value": "08:37", "description": "Newsletter Time 2 (Mid-Morning - HH:MM UTC)"},
