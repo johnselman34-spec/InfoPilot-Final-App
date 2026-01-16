@@ -80,6 +80,10 @@ const MainApp = () => {
         return <SettingsPage showToast={showToast} setCurrentPage={setCurrentPage} />;
       case 'subscribe':
         return <SubscribePage showToast={showToast} onBack={() => setCurrentPage('settings')} />;
+      case 'personal-reports':
+        return <PersonalReportsPage showToast={showToast} onBack={() => setCurrentPage('settings')} />;
+      case 'wallet':
+        return <PayPalWalletPage showToast={showToast} onBack={() => setCurrentPage('settings')} />;
       default:
         return <UltimateSearchPage showToast={showToast} />;
     }
