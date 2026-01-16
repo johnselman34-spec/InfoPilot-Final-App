@@ -101,7 +101,8 @@ const EditCategoryModal = ({
   editPrice,
   setEditPrice,
   user,
-  onSave
+  onSave,
+  onDelete
 }) => {
   if (!editingCategory) return null;
 
