@@ -713,6 +713,176 @@ const StatisticsPage = ({ showToast }) => {
       {/* Poll Statistics */}
       <PollStatsSection userPollStats={userPollStats} pollStats={pollStats} isAdmin={user?.is_admin} />
 
+      {/* Easter Egg Statistics */}
+      {(easterEggStats || userEasterEggStats) && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%)',
+          borderRadius: 20, padding: 25, marginBottom: 30,
+          border: '1px solid rgba(124, 58, 237, 0.3)'
+        }} data-testid="easter-egg-statistics-section">
+          <h2 style={{ color: '#fff', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+            🥚 Easter Egg Hunt Statistics
+            <span style={{ 
+              background: 'linear-gradient(135deg, #f59e0b, #ec4899)', 
+              padding: '4px 12px', 
+              borderRadius: 15, 
+              fontSize: '0.7rem', 
+              fontWeight: 600, 
+              color: '#fff' 
+            }}>
+              FUN ZONE
+            </span>
+          </h2>
+          
+          {/* User's Personal Stats */}
+          {userEasterEggStats && (
+            <div style={{ marginBottom: 25 }}>
+              <h3 style={{ color: '#a78bfa', fontSize: '1rem', marginBottom: 12 }}>🎯 Your Egg Hunting Stats</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+                <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: '12px 15px', textAlign: 'center', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+                  <div style={{ fontSize: '1.3rem', marginBottom: 4 }}>🥚</div>
+                  <div style={{ color: '#10b981', fontSize: '1.4rem', fontWeight: 700 }}>{userEasterEggStats.discoveries?.length || 0}</div>
+                  <div style={{ color: '#a1a1aa', fontSize: '0.75rem' }}>Eggs Caught</div>
+                </div>
+                <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: '12px 15px', textAlign: 'center', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                  <div style={{ fontSize: '1.3rem', marginBottom: 4 }}>⭐</div>
+                  <div style={{ color: '#f59e0b', fontSize: '1.4rem', fontWeight: 700 }}>{userEasterEggStats.total_xp || 0}</div>
+                  <div style={{ color: '#a1a1aa', fontSize: '0.75rem' }}>Total XP</div>
+                </div>
+                <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: '12px 15px', textAlign: 'center', border: '1px solid rgba(236, 72, 153, 0.2)' }}>
+                  <div style={{ fontSize: '1.3rem', marginBottom: 4 }}>🏆</div>
+                  <div style={{ color: '#ec4899', fontSize: '1.4rem', fontWeight: 700 }}>
+                    {userEasterEggStats.discoveries?.length > 10 ? 'Pro Hunter' : 
+                     userEasterEggStats.discoveries?.length > 5 ? 'Egg Collector' : 
+                     userEasterEggStats.discoveries?.length > 0 ? 'Beginner' : 'New Hunter'}
+                  </div>
+                  <div style={{ color: '#a1a1aa', fontSize: '0.75rem' }}>Hunter Rank</div>
+                </div>
+              </div>
+              
+              {/* Types of Eggs Caught */}
+              {userEasterEggStats.discoveries?.length > 0 && (
+                <div style={{ marginTop: 15 }}>
+                  <h4 style={{ color: '#f472b6', fontSize: '0.9rem', marginBottom: 10 }}>Reward Types Collected:</h4>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {['protocol', 'joke', 'pricing', 'motivation', 'fact', 'secret'].map(type => {
+                      const count = userEasterEggStats.discoveries?.filter(d => d.reward_type === type).length || 0;
+                      const typeEmojis = { protocol: '📋', joke: '😂', pricing: '💰', motivation: '💪', fact: '🧠', secret: '🤫' };
+                      const typeLabels = { protocol: 'Protocols', joke: 'Jokes', pricing: 'Pricing Tips', motivation: 'Motivation', fact: 'Fun Facts', secret: 'Secrets' };
+                      return (
+                        <div key={type} style={{
+                          background: count > 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0,0,0,0.2)',
+                          border: count > 0 ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255,255,255,0.1)',
+                          padding: '6px 12px',
+                          borderRadius: 20,
+                          fontSize: '0.8rem',
+                          color: count > 0 ? '#10b981' : '#71717a'
+                        }}>
+                          {typeEmojis[type]} {typeLabels[type]}: {count}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Global Statistics */}
+          {easterEggStats && (
+            <div style={{ borderTop: userEasterEggStats ? '1px solid rgba(255,255,255,0.1)' : 'none', paddingTop: userEasterEggStats ? 20 : 0 }}>
+              <h3 style={{ color: '#f472b6', fontSize: '1rem', marginBottom: 12 }}>🌍 Global Easter Egg Statistics</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+                <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: '12px 15px', textAlign: 'center', border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+                  <div style={{ fontSize: '1.3rem', marginBottom: 4 }}>📊</div>
+                  <div style={{ color: '#8b5cf6', fontSize: '1.4rem', fontWeight: 700 }}>{easterEggStats.total_discoveries || 0}</div>
+                  <div style={{ color: '#a1a1aa', fontSize: '0.75rem' }}>Total Discoveries</div>
+                </div>
+                <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: '12px 15px', textAlign: 'center', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                  <div style={{ fontSize: '1.3rem', marginBottom: 4 }}>🎁</div>
+                  <div style={{ color: '#3b82f6', fontSize: '1.4rem', fontWeight: 700 }}>{easterEggStats.total_eggs_available || 0}</div>
+                  <div style={{ color: '#a1a1aa', fontSize: '0.75rem' }}>Available Eggs</div>
+                </div>
+              </div>
+              
+              {/* Most Discovered & Rarest Eggs */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20, marginTop: 20 }}>
+                {/* Most Discovered */}
+                {easterEggStats.most_discovered?.length > 0 && (
+                  <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: 15, border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                    <h4 style={{ color: '#10b981', fontSize: '0.85rem', marginBottom: 10 }}>🔥 Most Discovered Eggs</h4>
+                    {easterEggStats.most_discovered.slice(0, 3).map((egg, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: idx < 2 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                        <span style={{ color: '#d1d5db', fontSize: '0.85rem' }}>{egg.name}</span>
+                        <span style={{ color: '#10b981', fontWeight: 600, fontSize: '0.9rem' }}>{egg.discovery_count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Rarest Eggs */}
+                {easterEggStats.rarest_eggs?.length > 0 && (
+                  <div style={{ background: 'rgba(0,0,0,0.2)', borderRadius: 12, padding: 15, border: '1px solid rgba(236, 72, 153, 0.2)' }}>
+                    <h4 style={{ color: '#ec4899', fontSize: '0.85rem', marginBottom: 10 }}>💎 Rarest Eggs</h4>
+                    {easterEggStats.rarest_eggs.slice(0, 3).map((egg, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '5px 0', borderBottom: idx < 2 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                        <span style={{ color: '#d1d5db', fontSize: '0.85rem' }}>{egg.name}</span>
+                        <span style={{ color: '#ec4899', fontWeight: 600, fontSize: '0.9rem' }}>{egg.discovery_count}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
+          {/* Egg Hunter Leaderboard */}
+          {easterEggLeaderboard.length > 0 && (
+            <div style={{ marginTop: 20, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20 }}>
+              <h3 style={{ color: '#f59e0b', fontSize: '1rem', marginBottom: 12 }}>🏅 Top Egg Hunters</h3>
+              <div style={{ display: 'grid', gap: 8 }}>
+                {easterEggLeaderboard.slice(0, 5).map((hunter, idx) => (
+                  <div key={idx} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    background: idx === 0 ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(236, 72, 153, 0.1))' : 'rgba(0,0,0,0.2)',
+                    padding: '10px 15px',
+                    borderRadius: 10,
+                    border: `1px solid ${idx === 0 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(255,255,255,0.05)'}`
+                  }}>
+                    <span style={{ 
+                      fontSize: '1.2rem', 
+                      width: 30, 
+                      textAlign: 'center' 
+                    }}>
+                      {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
+                    </span>
+                    <span style={{ flex: 1, color: '#e5e7eb', fontWeight: idx < 3 ? 600 : 400 }}>{hunter.username}</span>
+                    <span style={{ color: '#10b981', fontWeight: 700 }}>{hunter.egg_count} eggs</span>
+                    <span style={{ color: '#f59e0b', fontWeight: 600, fontSize: '0.85rem' }}>{hunter.total_xp} XP</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Fun Tip */}
+          <div style={{ 
+            marginTop: 20, 
+            background: 'rgba(124, 58, 237, 0.1)', 
+            borderRadius: 10, 
+            padding: 12, 
+            border: '1px dashed rgba(124, 58, 237, 0.3)' 
+          }}>
+            <p style={{ color: '#a78bfa', fontSize: '0.85rem', margin: 0, textAlign: 'center' }}>
+              💡 <strong>Tip:</strong> Keep your eyes open for floating Easter eggs across the app! 
+              They contain jokes, protocol ideas, pricing tips, and more inspired by "Letters to Evelyn"! 🥚✨
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Leaderboards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 25, marginBottom: 30 }}>
         <TopSellersLeaderboard 
