@@ -251,7 +251,7 @@ def generate_ab_test_report_html(report_data: dict) -> str:
             
             <!-- CTA -->
             <div style="text-align: center; padding: 0 20px 30px 20px;">
-                <a href="https://infopilot-explorer.preview.emergentagent.com/#admin" 
+                <a href="{os.environ.get('FRONTEND_URL', 'https://infopilot-explorer.preview.emergentagent.com')}/#admin" 
                    style="display: inline-block; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                     View Full Dashboard →
                 </a>
