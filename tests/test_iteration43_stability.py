@@ -241,16 +241,24 @@ class TestChatWebSocketCleanup:
         self.token = login_response.json()["token"]
         self.headers = {"Authorization": f"Bearer {self.token}"}
     
-    def test_chat_conversations_endpoint(self):
-        """Test chat conversations endpoint works"""
-        response = requests.get(f"{BASE_URL}/api/chat/conversations", headers=self.headers)
+    def test_dm_conversations_endpoint(self):
+        """Test DM conversations endpoint works"""
+        response = requests.get(f"{BASE_URL}/api/dm/conversations", headers=self.headers)
         # Should return 200 with conversations list
         assert response.status_code == 200
+        data = response.json()
+        assert "messages" in data or "conversations" in data or isinstance(data, list)
     
-    def test_messages_endpoint(self):
-        """Test messages endpoint works"""
-        response = requests.get(f"{BASE_URL}/api/messages", headers=self.headers)
-        # Should return 200 with messages list
+    def test_unified_chat_overview_endpoint(self):
+        """Test unified chat overview endpoint works"""
+        response = requests.get(f"{BASE_URL}/api/overview", headers=self.headers)
+        # Should return 200 with chat overview
+        assert response.status_code == 200
+    
+    def test_chat_rooms_endpoint(self):
+        """Test chat rooms endpoint works (no /api prefix)"""
+        response = requests.get(f"{BASE_URL}/rooms", headers=self.headers)
+        # Should return 200 with rooms list
         assert response.status_code == 200
 
 
