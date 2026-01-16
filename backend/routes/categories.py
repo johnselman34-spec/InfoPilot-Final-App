@@ -1,7 +1,7 @@
 """
 InfoPilot Explorer - Categories Routes
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from datetime import datetime
 from typing import List
 from bson import ObjectId
