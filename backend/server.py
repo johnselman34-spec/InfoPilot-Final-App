@@ -1572,9 +1572,14 @@ async def get_weekly_leaderboard():
     
     weekly_leaders = await db.xp_history.aggregate(pipeline).to_list(20)
     
+    # Bulk fetch all users to avoid N+1 queries
+    user_ids = [ObjectId(l["_id"]) for l in weekly_leaders]
+    users_list = await db.users.find({"_id": {"$in": user_ids}}).to_list(len(user_ids)) if user_ids else []
+    users_map = {str(u["_id"]): u for u in users_list}
+    
     leaderboard = []
     for i, l in enumerate(weekly_leaders):
-        user = await db.users.find_one({"_id": ObjectId(l["_id"])})
+        user = users_map.get(l["_id"])
         if user:
             leaderboard.append({
                 "rank": i + 1,
@@ -1599,9 +1604,14 @@ async def get_monthly_leaderboard():
     
     monthly_leaders = await db.xp_history.aggregate(pipeline).to_list(20)
     
+    # Bulk fetch all users to avoid N+1 queries
+    user_ids = [ObjectId(l["_id"]) for l in monthly_leaders]
+    users_list = await db.users.find({"_id": {"$in": user_ids}}).to_list(len(user_ids)) if user_ids else []
+    users_map = {str(u["_id"]): u for u in users_list}
+    
     leaderboard = []
     for i, l in enumerate(monthly_leaders):
-        user = await db.users.find_one({"_id": ObjectId(l["_id"])})
+        user = users_map.get(l["_id"])
         if user:
             leaderboard.append({
                 "rank": i + 1,
