@@ -907,6 +907,89 @@ const UltimateSearchPage = ({ showToast }) => {
               💡 Check document types to filter results. Selected categories and document types combine to show matching results below.
             </p>
           </div>
+          
+          {/* Quality Score Filter */}
+          <div style={{
+            marginTop: 15,
+            padding: 15,
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1))',
+            borderRadius: 10,
+            border: '1px solid rgba(16, 185, 129, 0.2)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <h4 style={{ color: '#10b981', margin: 0, fontSize: '0.95rem' }}>
+                📊 Filter by Content Quality
+              </h4>
+              {minQualityScore > 0 && (
+                <button
+                  onClick={() => setMinQualityScore(0)}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: '#f87171',
+                    padding: '4px 12px',
+                    borderRadius: 6,
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                  data-testid="clear-quality-filter"
+                >
+                  Clear Filter
+                </button>
+              )}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              {[
+                { value: 0, label: '📋 Show All', color: '#a1a1aa', desc: 'No filter' },
+                { value: 50, label: '📄 Good+', color: '#f59e0b', desc: 'Score 50+' },
+                { value: 65, label: '✨ High Quality+', color: '#3b82f6', desc: 'Score 65+' },
+                { value: 80, label: '📚 Premium Only', color: '#10b981', desc: 'Score 80+' }
+              ].map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => {
+                    setMinQualityScore(option.value);
+                    if (option.value > 0) setShowFilteredResults(true);
+                  }}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    padding: '10px 16px',
+                    background: minQualityScore === option.value 
+                      ? `${option.color}20` 
+                      : 'rgba(30, 20, 50, 0.5)',
+                    border: minQualityScore === option.value 
+                      ? `2px solid ${option.color}` 
+                      : '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 10,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    minWidth: 100
+                  }}
+                  data-testid={`quality-filter-${option.value}`}
+                >
+                  <span style={{ 
+                    color: minQualityScore === option.value ? option.color : '#e2e8f0',
+                    fontWeight: minQualityScore === option.value ? 700 : 500,
+                    fontSize: '0.85rem'
+                  }}>
+                    {option.label}
+                  </span>
+                  <span style={{ 
+                    color: '#71717a', 
+                    fontSize: '0.7rem',
+                    marginTop: 3
+                  }}>
+                    {option.desc}
+                  </span>
+                </button>
+              ))}
+            </div>
+            <p style={{ color: '#71717a', fontSize: '0.75rem', marginTop: 10 }}>
+              🎯 Filter to show only high-quality, extensively informative content. Premium content has detailed, well-researched information.
+            </p>
+          </div>
         </div>
       )}
       
