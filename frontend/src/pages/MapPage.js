@@ -402,6 +402,66 @@ const MapPage = ({ showToast, setCurrentPage }) => {
         </>
       )}
 
+      {/* Premium Map Export Section */}
+      {mapResults.length > 0 && (
+        <div style={{
+          marginTop: 25,
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(236, 72, 153, 0.15))',
+          borderRadius: 16,
+          padding: 20,
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 15
+        }} data-testid="map-export-section">
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <h3 style={{ color: '#f59e0b', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ 
+                background: 'linear-gradient(135deg, #f59e0b, #ec4899)', 
+                padding: '2px 8px', 
+                borderRadius: 6, 
+                fontSize: '0.65rem', 
+                color: '#fff' 
+              }}>PREMIUM</span>
+              📊 Export Map Data
+            </h3>
+            <p style={{ color: '#a1a1aa', fontSize: '0.85rem', margin: 0 }}>
+              Download your mapped results as CSV or JSON for analysis and research!
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button 
+              onClick={() => exportMapData('csv')}
+              className="btn btn-primary"
+              style={{ 
+                background: 'linear-gradient(135deg, #10b981, #06b6d4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+              data-testid="export-csv-btn"
+            >
+              📄 Export CSV
+            </button>
+            <button 
+              onClick={() => exportMapData('json')}
+              className="btn btn-primary"
+              style={{ 
+                background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+              data-testid="export-json-btn"
+            >
+              📋 Export JSON
+            </button>
+          </div>
+        </div>
+      )}
+
       <p style={{ marginTop: 20, color: '#a1a1aa', fontSize: '0.85rem', textAlign: 'center' }}>
         💡 Hover over markers to preview details. Click any marker to open the article in a new tab!
       </p>
