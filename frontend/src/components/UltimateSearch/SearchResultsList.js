@@ -53,8 +53,40 @@ const SearchResultsList = ({
  * ResultCard - Individual search result card
  */
 const ResultCard = ({ result, onDelete, onReaction, onOpenComments }) => {
+  // Determine content quality badge based on score
+  const qualityScore = result.content_quality_score || 50;
+  const getQualityBadge = () => {
+    if (qualityScore >= 80) return { label: '📚 Premium Content', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)' };
+    if (qualityScore >= 65) return { label: '✨ High Quality', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.15)' };
+    if (qualityScore >= 50) return { label: '📄 Good', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)' };
+    return null; // Don't show badge for lower quality
+  };
+  const badge = getQualityBadge();
+
   return (
     <div className="result-card" style={{ position: 'relative' }}>
+      {/* Content Quality Badge */}
+      {badge && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            background: badge.bg,
+            border: `1px solid ${badge.color}40`,
+            borderRadius: 12,
+            padding: '3px 10px',
+            fontSize: '0.7rem',
+            fontWeight: 600,
+            color: badge.color,
+            zIndex: 1
+          }}
+          title={`Quality Score: ${qualityScore}/100`}
+          data-testid={`quality-badge-${result.id}`}
+        >
+          {badge.label}
+        </div>
+      )}
       {/* Delete button */}
       <button
         onClick={onDelete}
@@ -79,7 +111,7 @@ const ResultCard = ({ result, onDelete, onReaction, onOpenComments }) => {
       >
         ✕
       </button>
-      <h3>
+      <h3 style={{ marginTop: badge ? 28 : 0 }}>
         <a href={result.url} target="_blank" rel="noopener noreferrer">
           {result.title}
         </a>
