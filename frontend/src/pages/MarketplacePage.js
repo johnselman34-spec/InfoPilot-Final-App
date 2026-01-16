@@ -79,9 +79,15 @@ const MarketplacePage = ({ showToast }) => {
   }, [token]);
 
   useEffect(() => {
-    fetchProtocols();
-    fetchCategories();
-    if (token) { fetchPurchases(); fetchDashboard(); }
+    const loadData = async () => {
+      await fetchProtocols();
+      await fetchCategories();
+      if (token) { 
+        await fetchPurchases(); 
+        await fetchDashboard(); 
+      }
+    };
+    loadData();
   }, [fetchProtocols, fetchCategories, fetchPurchases, fetchDashboard, token]);
 
   useEffect(() => {
@@ -278,7 +284,7 @@ const MarketplacePage = ({ showToast }) => {
         <div>
           {purchases.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 40, background: 'rgba(30, 20, 50, 0.5)', borderRadius: 12 }}>
-              <p style={{ color: '#a1a1aa', marginBottom: 15 }}>No purchases yet. Browse FREE to find amazing protocols!</p>
+              <p style={{ color: '#a1a1aa', marginBottom: 15 }}>No purchases yet. Browse FREE to find amazing protocols.</p>
               <button className="btn btn-primary" onClick={() => setActiveTab('browse')}>Browse Protocols</button>
             </div>
           ) : (
@@ -318,7 +324,7 @@ const MarketplacePage = ({ showToast }) => {
               <button className="modal-close" onClick={() => setPurchaseModal(null)}>×</button>
             </div>
             <div style={{ padding: 20 }}>
-              <p style={{ color: '#a1a1aa', marginBottom: 15 }}>Complete your PayPal payment, then click the button below to confirm.</p>
+              <p style={{ color: '#a1a1aa', marginBottom: 15 }}>Complete your PayPal payment, then click the button below.</p>
               <button className="btn btn-primary" onClick={confirmPurchase} style={{ width: '100%' }}>I've Completed Payment</button>
             </div>
           </div>
