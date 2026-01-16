@@ -1,6 +1,7 @@
 /**
  * QualityScoreAnalytics - Admin component for viewing content quality score distribution
  * Shows distribution charts, top domains, improvement opportunities, and trends
+ * Includes Domain Blocklist Management functionality
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -12,6 +13,9 @@ const QualityScoreAnalytics = ({ showToast }) => {
   const { isDarkMode } = useTheme();
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [blockedDomains, setBlockedDomains] = useState([]);
+  const [blockingDomain, setBlockingDomain] = useState(null);
+  const [showBlockedList, setShowBlockedList] = useState(false);
   
   const bgColor = isDarkMode ? 'rgba(15, 10, 35, 0.95)' : 'rgba(255, 255, 255, 0.98)';
   const cardBg = isDarkMode ? 'rgba(30, 20, 50, 0.7)' : 'rgba(248, 250, 252, 0.9)';
