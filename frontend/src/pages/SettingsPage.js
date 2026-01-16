@@ -1132,6 +1132,16 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
               🔒 Privacy Policy
             </button>
           </div>
+          <div style={{ marginTop: 10 }}>
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => setCurrentPage('legal')}
+              style={{ fontSize: '0.85rem', background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(236, 72, 153, 0.3))' }}
+              data-testid="view-full-legal-btn"
+            >
+              📜 View Full Legal Documents Page
+            </button>
+          </div>
           <p style={{ color: '#71717a', fontSize: '0.75rem', marginTop: 10 }}>
             Top Pilot Enterprises, Inc. • Brunswick, Maine
           </p>
