@@ -502,10 +502,10 @@ const StatisticsPage = ({ showToast }) => {
         <h3 style={{ color: '#a78bfa', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
           🤖 AI-Powered Search
           <span style={{ fontSize: '0.7rem', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', padding: '3px 8px', borderRadius: 6 }}>
-            Search Google, DuckDuckGo, Bing & More
+            Search Google, Bing, DuckDuckGo, Brave & More
           </span>
         </h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
           <input
             type="text"
             value={aiSearchQuery}
@@ -537,7 +537,7 @@ const StatisticsPage = ({ showToast }) => {
             }}
             data-testid="stats-auto-categorize-btn"
           >
-            {aiSearchLoading ? '⏳' : '🎯'} Auto-Categorize All
+            {aiSearchLoading ? '⏳' : '🎯'} Search & Auto-Categorize
           </button>
           <button
             onClick={aiSearchFromStats}
@@ -571,8 +571,42 @@ const StatisticsPage = ({ showToast }) => {
             <option value="research">🔬 Research Focus</option>
           </select>
         </div>
+        {/* Database Search Row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            onClick={databaseSearchFromStats}
+            disabled={dbSearchLoading || !aiSearchQuery.trim()}
+            className="btn"
+            style={{
+              background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+              color: '#fff',
+              padding: '12px 20px',
+              fontWeight: 600,
+              opacity: (!aiSearchQuery.trim() || dbSearchLoading) ? 0.5 : 1
+            }}
+            data-testid="stats-database-search-btn"
+          >
+            {dbSearchLoading ? '📚 Searching...' : '📚 Database Text Search'}
+          </button>
+          <select
+            value={dbSearchMode}
+            onChange={(e) => setDbSearchMode(e.target.value)}
+            style={{
+              background: 'rgba(6, 182, 212, 0.3)',
+              border: '1px solid rgba(6, 182, 212, 0.4)',
+              color: '#22d3ee',
+              padding: '10px 15px',
+              borderRadius: 8,
+              fontSize: '0.9rem'
+            }}
+          >
+            <option value="smart">🧠 Smart Match</option>
+            <option value="exact">🎯 Exact Phrase</option>
+            <option value="fuzzy">🔍 Fuzzy Match</option>
+          </select>
+        </div>
         <p style={{ color: '#a1a1aa', fontSize: '0.8rem', marginTop: 10, marginBottom: 0 }}>
-          💡 <strong>Auto-Categorize:</strong> One click matches results against ALL your categories. <strong>AI Search:</strong> Uses GPT to expand keywords and searches Google, DuckDuckGo & Brave.
+          💡 <strong>AI Search:</strong> Searches Google, Bing, DuckDuckGo, Brave with GPT keyword expansion. <strong>Database Search:</strong> Finds content in your already collated results.
         </p>
       </div>
       
