@@ -1259,7 +1259,7 @@ async def create_comment(comment: CommentCreate, user = Depends(get_current_user
 async def react_to_comment(comment_id: str, reaction_type: str, user = Depends(get_current_user)):
     """Add reaction to a comment"""
     if reaction_type not in REACTION_TYPES:
-        raise HTTPException(status_code=400, detail=f"Invalid reaction")
+        raise HTTPException(status_code=400, detail="Invalid reaction")
     
     comment = await db.comments.find_one({"_id": ObjectId(comment_id)})
     if not comment:
