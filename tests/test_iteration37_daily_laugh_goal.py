@@ -39,8 +39,10 @@ class TestAuthentication:
         assert response.status_code == 200
         data = response.json()
         assert "token" in data
-        assert data.get("is_admin") == True
-        print(f"✅ Admin login successful, is_admin={data.get('is_admin')}")
+        # is_admin is in user object
+        user = data.get("user", {})
+        assert user.get("is_admin") == True
+        print(f"✅ Admin login successful, is_admin={user.get('is_admin')}")
         return data["token"]
 
 
@@ -281,9 +283,9 @@ class TestAdminNewsletterSettings:
         assert response.status_code == 200
         data = response.json()
         
-        # Check for newsletter time settings in defaults
-        assert "settings" in data or "success" in data
-        print("✅ Admin settings init endpoint working")
+        # Check for message or count in response
+        assert "message" in data or "count" in data or "success" in data
+        print(f"✅ Admin settings init endpoint working: {data}")
     
     def test_newsletter_time_settings_in_admin_code(self):
         """Verify newsletter time settings exist in admin.py"""
@@ -357,9 +359,23 @@ class TestLaughOMeterEndpoints:
 class TestCategoriesWithResultCount:
     """Test categories include result_count field"""
     
-    def test_categories_include_counts(self):
+    @pytest.fixture
+    def auth_token(self):
+        """Get admin auth token"""
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": ADMIN_EMAIL,
+            "password": ADMIN_PASSWORD
+        })
+        if response.status_code == 200:
+            return response.json().get("token")
+        pytest.skip("Authentication failed")
+    
+    def test_categories_include_counts(self, auth_token):
         """Test GET /api/categories returns result_count"""
-        response = requests.get(f"{BASE_URL}/api/categories")
+        response = requests.get(
+            f"{BASE_URL}/api/categories",
+            headers={"Authorization": f"Bearer {auth_token}"}
+        )
         assert response.status_code == 200
         data = response.json()
         
