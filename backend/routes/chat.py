@@ -141,7 +141,7 @@ async def broadcast_to_room(room_id: str, message: dict, exclude: WebSocket = No
         if connection != exclude:
             try:
                 await connection.send_json(message)
-            except:
+            except Exception:
                 pass
 
 @router.post("/rooms")

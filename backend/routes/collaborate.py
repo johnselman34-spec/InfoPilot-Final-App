@@ -212,7 +212,7 @@ async def get_user_from_token_collab(token: str):
         session = await db.sessions.find_one({"token": token})
         if session:
             return await db.users.find_one({"_id": ObjectId(session.get("user_id"))})
-    except:
+    except Exception:
         pass
     return None
 
@@ -373,7 +373,7 @@ async def broadcast_to_protocol(protocol_id: str, message: dict, exclude: WebSoc
         if ws != exclude:
             try:
                 await ws.send_json(message)
-            except:
+            except Exception:
                 pass
 
 

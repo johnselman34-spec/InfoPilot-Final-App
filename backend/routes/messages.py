@@ -310,7 +310,7 @@ async def send_message(
                     "created_at": datetime.now(timezone.utc).isoformat()
                 }
             })
-        except:
+        except Exception:
             pass
     
     # Create notification
@@ -359,7 +359,7 @@ async def send_typing_indicator(conversation_id: str, user = Depends(get_current
                 "conversation_id": conversation_id,
                 "user_id": user_id
             })
-        except:
+        except Exception:
             pass
     
     return {"success": True}
@@ -393,7 +393,7 @@ async def mark_as_read(conversation_id: str, user = Depends(get_current_user)):
                 "read_by": user_id,
                 "read_at": datetime.now(timezone.utc).isoformat()
             })
-        except:
+        except Exception:
             pass
     
     return {"success": True, "marked_count": result.modified_count}
@@ -425,7 +425,7 @@ async def get_user_from_token_ws(token: str):
         session = await db.sessions.find_one({"token": token})
         if session:
             return await db.users.find_one({"_id": ObjectId(session.get("user_id"))})
-    except:
+    except Exception:
         pass
     return None
 

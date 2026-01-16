@@ -91,7 +91,7 @@ async def track_view(
             session = await db.sessions.find_one({"token": token})
             if session:
                 viewer_id = session.get("user_id")
-        except:
+        except Exception:
             pass
     
     try:

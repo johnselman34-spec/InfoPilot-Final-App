@@ -44,7 +44,7 @@ async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(
     
     try:
         return await get_current_user(credentials)
-    except:
+    except Exception:
         return None
 
 
