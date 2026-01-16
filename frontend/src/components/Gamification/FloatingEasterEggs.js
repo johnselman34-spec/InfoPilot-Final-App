@@ -69,30 +69,30 @@ const EGG_REWARDS = [
   ]},
   
   // Motivational Messages - Survival & Success themed
-  { type: 'motivation', emoji: '💪', title: 'Survivor\'s Wisdom!', rewards: [
+  { type: 'motivation', emoji: '💪', title: "Survivor's Wisdom!", rewards: [
     '🌟 Every search brings you closer to knowledge - keep exploring! John searched for answers and found fame!',
-    '🚀 You're building something incredible, one protocol at a time! Like John built his book, one letter at a time!',
+    "🚀 You're building something incredible, one protocol at a time! Like John built his book, one letter at a time!",
     '🏆 Winners are just losers who tried one more time! John tried one more flight after every setback!',
-    '💫 Your curiosity today shapes tomorrow's breakthroughs! John's curiosity about Evelyn shaped a bestseller!',
-    '🎯 Focus + Consistency = Unstoppable! Even military-grade obstacles couldn't stop John!',
-    '⚡ The best time to start was yesterday. The second best time is NOW! John didn't wait to write his story!',
+    "💫 Your curiosity today shapes tomorrow's breakthroughs! John's curiosity about Evelyn shaped a bestseller!",
+    "🎯 Focus + Consistency = Unstoppable! Even military-grade obstacles couldn't stop John!",
+    "⚡ The best time to start was yesterday. The second best time is NOW! John didn't wait to write his story!",
     '🌈 After every storm comes a rainbow! After every bad egg comes... well, a book deal apparently! 📚',
-    '🔥 You survived 100% of your worst days. John survived worse - you've got this! 💪',
-    '✈️ Like a pilot, keep your eyes on the horizon. The turbulence doesn't last forever! 🛫',
-    '📖 Your story isn't over yet. John's best chapters came AFTER his worst days! 🌟',
+    "🔥 You survived 100% of your worst days. John survived worse - you've got this! 💪",
+    "✈️ Like a pilot, keep your eyes on the horizon. The turbulence doesn't last forever! 🛫",
+    "📖 Your story isn't over yet. John's best chapters came AFTER his worst days! 🌟",
   ]},
   
   // Fun Facts - Aviation & Literary themed
   { type: 'fact', emoji: '🧠', title: 'Did You Know?', rewards: [
-    '✈️ Naval aviators like John Selman's father flew the legendary A-4 Skyhawk - one of the most agile jets ever made!',
+    "✈️ Naval aviators like John Selman's father flew the legendary A-4 Skyhawk - one of the most agile jets ever made!",
     '📚 "Letters to Evelyn" received 5 stars from Readers Favorite - a prestigious book review platform!',
-    '🛫 The T-34C Turbomentor (John's training aircraft in Roswell) has trained thousands of Navy pilots since 1977!',
+    "🛫 The T-34C Turbomentor (John's training aircraft in Roswell) has trained thousands of Navy pilots since 1977!",
     '🌍 Honey never spoils - archaeologists found 3000-year-old honey still edible! (Much safer than some eggs...)',
-    '💜 The USS Enterprise (where John served) was the world's first nuclear-powered aircraft carrier!',
-    '🐙 Octopuses have three hearts and blue blood - almost as mysterious as John's journey!',
-    '⚡ A bolt of lightning is 5x hotter than the surface of the sun - almost as hot as this app's features!',
+    "💜 The USS Enterprise (where John served) was the world's first nuclear-powered aircraft carrier!",
+    "🐙 Octopuses have three hearts and blue blood - almost as mysterious as John's journey!",
+    "⚡ A bolt of lightning is 5x hotter than the surface of the sun - almost as hot as this app's features!",
     '🦋 Butterflies taste with their feet - probably a safer way to test food than what John experienced!',
-    '📱 The first mobile phone call was made in 1973 - the same decade John's father was flying!',
+    "📱 The first mobile phone call was made in 1973 - the same decade John's father was flying!",
     '🎬 John Selman went from Navy pilot to movie producer - talk about a plot twist! 🎥',
   ]},
   
