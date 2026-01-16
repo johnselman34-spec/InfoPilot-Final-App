@@ -1035,14 +1035,24 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
                 result.get("title", ""), result.get("content", "")
             )
             result["root_domain"] = WebSearchService.extract_root_domain(result.get("url", ""))
+            # Calculate content quality score for prioritizing valuable content
+            result["content_quality_score"] = ArticleClassifier.calculate_content_quality_score(
+                result.get("title", ""),
+                result.get("snippet", result.get("content", "")),
+                result.get("url", "")
+            )
             matched_results.append(result)
         else:
             rejected_count += 1
     
     logger.info(f"Deep Collate: {len(matched_results)} results passed strict matching, {rejected_count} rejected")
     
-    # Sort by match score (highest first)
-    matched_results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+    # Sort by combined score: 60% match_score + 40% content_quality_score
+    # This prioritizes valuable, extensive content while still considering match relevance
+    matched_results.sort(
+        key=lambda x: (x.get("match_score", 0) * 0.6) + (x.get("content_quality_score", 50) * 0.4),
+        reverse=True
+    )
     
     # Apply collate limit
     matched_results = matched_results[:collate_limit]
