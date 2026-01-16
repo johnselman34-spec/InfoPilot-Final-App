@@ -3291,7 +3291,31 @@ async def init_admin_settings():
         {"key": "unpaid_max_protocol_price_enabled", "value": False},  # Feature toggle (off by default)
         # Document Type Protocol Controls
         {"key": "protocol_controls_enabled", "value": True},
-        {"key": "allowed_document_types", "value": ["News Article", "Blog Post", "Academic Paper", "Wiki", "Forum", "Government", "Video", "Personal Report"]},
+        {"key": "allowed_document_types", "value": ["News Article", "Blog Post", "Academic Paper", "Wiki", "Forum", "Government", "Video", "Personal Report", "Informative Ph.D", "InfoPilot Exclusive", "Personal Report (Organic)", "Personal Report (Collected)"]},
+        # Newsletter Timing (tri-weekly by default)
+        {"key": "newsletter_enabled", "value": True},
+        {"key": "newsletter_time_1", "value": "05:46"},  # 5:46 AM
+        {"key": "newsletter_time_2", "value": "09:42"},  # 9:42 AM
+        {"key": "newsletter_time_3", "value": "16:20"},  # 4:20 PM
+        {"key": "newsletter_ai_optimize", "value": True},  # AI-optimized send times
+        # Collation Settings
+        {"key": "collation_limit_per_search", "value": 40},  # Default 40 results per Search & Collate
+        {"key": "collation_limit_min", "value": 1},
+        {"key": "collation_limit_max", "value": 100},
+        {"key": "auto_categorize_multiple", "value": True},  # Allow multiple category assignment
+        # Document Type Protocol Scripts (InfoJet 2.0 format)
+        {"key": "protocol_informative_phd", "value": "(Ph.D. or PhD or D.Phil. or Dr.) & (research or study or findings)"},
+        {"key": "protocol_informative", "value": "(there are or there is) & (may have or might have or that are) & (this kind or these kinds or this type or these types or it is) & (is easily or of each or less than the or more than or greater than or is more or is less) & (it is)"},
+        {"key": "protocol_news_article", "value": "(news or story or breaking) & (reported or announced or revealed)"},
+        {"key": "protocol_blog", "value": "(blog or blogger or blogging) & (post or article or opinion)"},
+        {"key": "protocol_forum", "value": "(forum or thread or discussion or reply)"},
+        {"key": "protocol_personal_report_collected", "value": "(I or my or me) & (believe or think or feel or experienced)"},
+        # Pay-As-You-Go Promotion Message
+        {"key": "paygo_promo_message", "value": "Pay-as-you-go promotion available while supplies last! We're testing our business model sustainability."},
+        {"key": "paygo_promo_enabled", "value": True},
+        # Minimum Payment (PayPal requirement)
+        {"key": "minimum_payment", "value": 1.00},
+        {"key": "admin_commission_percent", "value": 15},  # 15% to admin
     ]
     
     for setting in default_settings:
