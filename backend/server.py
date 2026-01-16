@@ -2752,6 +2752,109 @@ async def get_unread_count(user = Depends(get_current_user_local)):
     
     return {"count": count}
 
+# ============== THEME PRESETS ==============
+
+class ThemePreset(BaseModel):
+    """Model for creating a theme preset"""
+    name: str
+    is_dark: bool = True
+    accent_color: str = "purple"
+    description: Optional[str] = ""
+    is_public: bool = False
+
+@api_router.get("/theme-presets", response_model=dict)
+async def get_theme_presets(user = Depends(get_optional_user_local)):
+    """Get public theme presets and user's own presets"""
+    public_presets = await db.theme_presets.find({"is_public": True}).sort("likes", -1).to_list(50)
+    
+    user_presets = []
+    if user:
+        user_presets = await db.theme_presets.find({"user_id": str(user["_id"])}).to_list(50)
+    
+    def format_preset(p):
+        return {
+            "id": str(p["_id"]),
+            "name": p["name"],
+            "is_dark": p.get("is_dark", True),
+            "accent_color": p.get("accent_color", "purple"),
+            "description": p.get("description", ""),
+            "is_public": p.get("is_public", False),
+            "likes": p.get("likes", 0),
+            "author": p.get("author_name", "Anonymous"),
+            "is_mine": user and str(user.get("_id")) == p.get("user_id"),
+            "created_at": p.get("created_at", datetime.utcnow()).isoformat()
+        }
+    
+    return {
+        "public_presets": [format_preset(p) for p in public_presets],
+        "my_presets": [format_preset(p) for p in user_presets]
+    }
+
+@api_router.post("/theme-presets", response_model=dict)
+async def create_theme_preset(preset: ThemePreset, user = Depends(get_current_user_local)):
+    """Create a new theme preset"""
+    preset_data = {
+        "user_id": str(user["_id"]),
+        "author_name": user.get("username", "Anonymous"),
+        "name": preset.name,
+        "is_dark": preset.is_dark,
+        "accent_color": preset.accent_color,
+        "description": preset.description,
+        "is_public": preset.is_public,
+        "likes": 0,
+        "created_at": datetime.utcnow()
+    }
+    
+    result = await db.theme_presets.insert_one(preset_data)
+    
+    return {
+        "id": str(result.inserted_id),
+        "message": "Theme preset created successfully"
+    }
+
+@api_router.post("/theme-presets/{preset_id}/like", response_model=dict)
+async def like_theme_preset(preset_id: str, user = Depends(get_current_user_local)):
+    """Like/unlike a theme preset"""
+    user_id = str(user["_id"])
+    
+    # Check if already liked
+    existing = await db.theme_preset_likes.find_one({
+        "preset_id": preset_id,
+        "user_id": user_id
+    })
+    
+    if existing:
+        await db.theme_preset_likes.delete_one({"_id": existing["_id"]})
+        await db.theme_presets.update_one(
+            {"_id": ObjectId(preset_id)},
+            {"$inc": {"likes": -1}}
+        )
+        return {"liked": False}
+    else:
+        await db.theme_preset_likes.insert_one({
+            "preset_id": preset_id,
+            "user_id": user_id,
+            "created_at": datetime.utcnow()
+        })
+        await db.theme_presets.update_one(
+            {"_id": ObjectId(preset_id)},
+            {"$inc": {"likes": 1}}
+        )
+        return {"liked": True}
+
+@api_router.delete("/theme-presets/{preset_id}", response_model=dict)
+async def delete_theme_preset(preset_id: str, user = Depends(get_current_user_local)):
+    """Delete a theme preset"""
+    result = await db.theme_presets.delete_one({
+        "_id": ObjectId(preset_id),
+        "user_id": str(user["_id"])
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Preset not found or not owned by you")
+    
+    return {"deleted": True}
+
 # ============== USER PROFILE ENDPOINTS ==============
 
 @api_router.get("/users/{user_id}/profile", response_model=dict)
