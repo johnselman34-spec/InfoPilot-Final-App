@@ -257,9 +257,11 @@ class TestChatWebSocketCleanup:
     
     def test_unified_chat_overview_endpoint(self):
         """Test unified chat overview endpoint works"""
-        response = requests.get(f"{BASE_URL}/api/overview", headers=self.headers)
+        response = requests.get(f"{BASE_URL}/api/unified-chat/overview", headers=self.headers)
         # Should return 200 with chat overview
         assert response.status_code == 200
+        data = response.json()
+        assert data.get("success") == True
     
     def test_chat_rooms_endpoint(self):
         """Test chat rooms endpoint works (no /api prefix)"""
