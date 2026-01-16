@@ -537,4 +537,287 @@ export const EasterEggStats = () => {
   );
 };
 
+// Reward History Component - Shows all collected rewards with share functionality
+export const EasterEggRewardHistory = () => {
+  const [rewards, setRewards] = useState(() => {
+    const cached = localStorage.getItem('easterEggRewards');
+    return cached ? JSON.parse(cached) : [];
+  });
+  const [filter, setFilter] = useState('all');
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareReward, setShareReward] = useState(null);
+  
+  // Save reward to history
+  const saveReward = (reward) => {
+    const newRewards = [...rewards, { ...reward, timestamp: new Date().toISOString(), id: Date.now() }];
+    setRewards(newRewards);
+    localStorage.setItem('easterEggRewards', JSON.stringify(newRewards.slice(-100))); // Keep last 100
+  };
+  
+  // Filter rewards by type
+  const filteredRewards = filter === 'all' 
+    ? rewards 
+    : rewards.filter(r => r.type === filter);
+  
+  // Share to social media
+  const shareToSocial = (platform, reward) => {
+    const text = encodeURIComponent(`🥚 I caught an Easter Egg on InfoPilot Explorer!\n\n"${reward.content.substring(0, 100)}..."\n\n#InfoPilot #EasterEgg`);
+    const url = encodeURIComponent('https://infopilot.com');
+    
+    const urls = {
+      twitter: `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`,
+    };
+    
+    window.open(urls[platform], '_blank', 'width=600,height=400');
+    setShowShareModal(false);
+  };
+  
+  // Copy reward to clipboard
+  const copyReward = (content) => {
+    navigator.clipboard.writeText(content);
+  };
+  
+  const typeEmojis = {
+    protocol: '📋',
+    joke: '😂',
+    pricing: '💰',
+    motivation: '💪',
+    fact: '🧠',
+    secret: '🤫'
+  };
+  
+  const typeLabels = {
+    protocol: 'Protocol Ideas',
+    joke: 'Jokes',
+    pricing: 'Pricing Tips',
+    motivation: 'Motivation',
+    fact: 'Fun Facts',
+    secret: 'Secrets'
+  };
+  
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.1))',
+      borderRadius: 16,
+      padding: 20,
+      border: '1px solid rgba(124, 58, 237, 0.3)',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
+        <h3 style={{ color: '#f472b6', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+          🎁 Reward Collection ({rewards.length})
+        </h3>
+        
+        {/* Filter buttons */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setFilter('all')}
+            style={{
+              background: filter === 'all' ? 'rgba(124, 58, 237, 0.3)' : 'rgba(0,0,0,0.2)',
+              color: filter === 'all' ? '#a78bfa' : '#71717a',
+              border: 'none',
+              padding: '5px 12px',
+              borderRadius: 15,
+              fontSize: '0.75rem',
+              cursor: 'pointer'
+            }}
+          >
+            All
+          </button>
+          {Object.entries(typeLabels).map(([type, label]) => (
+            <button
+              key={type}
+              onClick={() => setFilter(type)}
+              style={{
+                background: filter === type ? 'rgba(124, 58, 237, 0.3)' : 'rgba(0,0,0,0.2)',
+                color: filter === type ? '#a78bfa' : '#71717a',
+                border: 'none',
+                padding: '5px 12px',
+                borderRadius: 15,
+                fontSize: '0.75rem',
+                cursor: 'pointer'
+              }}
+            >
+              {typeEmojis[type]} {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {filteredRewards.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 30, color: '#71717a' }}>
+          <div style={{ fontSize: '3rem', marginBottom: 10 }}>🥚</div>
+          <p>No rewards collected yet. Catch some eggs!</p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 12, maxHeight: 400, overflowY: 'auto' }}>
+          {filteredRewards.slice().reverse().map((reward, idx) => (
+            <div 
+              key={reward.id || idx}
+              style={{
+                background: 'rgba(0,0,0,0.3)',
+                borderRadius: 10,
+                padding: 15,
+                border: '1px solid rgba(124, 58, 237, 0.2)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: '1.2rem' }}>{typeEmojis[reward.type]}</span>
+                    <span style={{ color: '#f472b6', fontWeight: 600, fontSize: '0.9rem' }}>
+                      {reward.title}
+                    </span>
+                    <span style={{
+                      background: 'rgba(16, 185, 129, 0.2)',
+                      color: '#10b981',
+                      padding: '2px 8px',
+                      borderRadius: 10,
+                      fontSize: '0.7rem'
+                    }}>
+                      +{reward.xp} XP
+                    </span>
+                  </div>
+                  <p style={{ 
+                    color: '#d1d5db', 
+                    fontSize: '0.85rem', 
+                    margin: 0, 
+                    lineHeight: 1.5,
+                    fontFamily: reward.type === 'protocol' ? 'monospace' : 'inherit'
+                  }}>
+                    {reward.content}
+                  </p>
+                  {reward.timestamp && (
+                    <div style={{ color: '#71717a', fontSize: '0.7rem', marginTop: 8 }}>
+                      Caught: {new Date(reward.timestamp).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Action buttons */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <button
+                    onClick={() => copyReward(reward.content)}
+                    style={{
+                      background: 'rgba(124, 58, 237, 0.2)',
+                      border: 'none',
+                      color: '#a78bfa',
+                      padding: '5px 10px',
+                      borderRadius: 5,
+                      fontSize: '0.7rem',
+                      cursor: 'pointer'
+                    }}
+                    title="Copy to clipboard"
+                  >
+                    📋 Copy
+                  </button>
+                  <button
+                    onClick={() => { setShareReward(reward); setShowShareModal(true); }}
+                    style={{
+                      background: 'rgba(236, 72, 153, 0.2)',
+                      border: 'none',
+                      color: '#f472b6',
+                      padding: '5px 10px',
+                      borderRadius: 5,
+                      fontSize: '0.7rem',
+                      cursor: 'pointer'
+                    }}
+                    title="Share to social media"
+                  >
+                    📤 Share
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Share Modal */}
+      {showShareModal && shareReward && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10002
+        }} onClick={() => setShowShareModal(false)}>
+          <div style={{
+            background: 'linear-gradient(135deg, #2d1f4e, #1a1035)',
+            borderRadius: 16,
+            padding: 25,
+            maxWidth: 400,
+            width: '90%',
+            border: '2px solid rgba(124, 58, 237, 0.4)'
+          }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ color: '#f472b6', marginTop: 0 }}>📤 Share Your Reward!</h3>
+            
+            <div style={{ 
+              background: 'rgba(0,0,0,0.3)', 
+              borderRadius: 10, 
+              padding: 15, 
+              marginBottom: 20 
+            }}>
+              <p style={{ color: '#d1d5db', fontSize: '0.85rem', margin: 0 }}>
+                {shareReward.content.substring(0, 150)}...
+              </p>
+            </div>
+            
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => shareToSocial('twitter', shareReward)}
+                style={{
+                  flex: 1,
+                  background: '#1DA1F2',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                🐦 Twitter
+              </button>
+              <button
+                onClick={() => shareToSocial('facebook', shareReward)}
+                style={{
+                  flex: 1,
+                  background: '#4267B2',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                📘 Facebook
+              </button>
+            </div>
+            
+            <button
+              onClick={() => setShowShareModal(false)}
+              style={{
+                width: '100%',
+                marginTop: 15,
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.2)',
+                color: '#a1a1aa',
+                padding: '10px',
+                borderRadius: 8,
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default FloatingEasterEggsController;
