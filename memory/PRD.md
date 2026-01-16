@@ -527,7 +527,7 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Generated 3 high-quality food photography images:
     - Beef Rouladen: Dark brown beef rolls with bacon, dijon mustard, noodles, dark gravy, peas & carrots
     - Vegetable Rouladen: Vegetarian German cuisine with same gravy and sides
-    - Fish Chowder: Maine-style creamy chowder with white fish, potatoes, bacon, onions
+    - Fish Chowder: Maine-style creamy chowder with white fish, red potatoes, bacon, yellow onions
   - Images added to BookPromoBanner.js Maestro Bistro section
   - Proper alt tags for accessibility
 
