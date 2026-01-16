@@ -106,7 +106,7 @@ const ThemePresetGallery = ({ showToast, onClose }) => {
     if (!window.confirm('Delete this preset?')) return;
 
     try {
-      const res = await fetch(`${API}/api/theme-presets/${presetId}`, {
+      const res = await fetch(`${API}/theme-presets/${presetId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
