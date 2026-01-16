@@ -394,53 +394,97 @@ const PersonalReportsPage = ({ showToast, onBack }) => {
                 </select>
               </div>
               
-              {/* Image */}
+              {/* Images - Up to 3 */}
               <div>
                 <label style={{ color: '#a1a1aa', fontSize: '0.85rem', marginBottom: 5, display: 'block' }}>
-                  Image (1 per report, max 6.9MB)
+                  Images ({imagePreviews.length}/3, max 6.9MB each)
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  style={{ 
-                    background: 'rgba(30, 20, 50, 0.5)', 
-                    border: '1px solid rgba(124, 58, 237, 0.3)',
-                    borderRadius: 8,
-                    padding: 10,
-                    color: '#e5e7eb',
-                    width: '100%'
-                  }}
-                  data-testid="report-image-input"
-                />
-                {imagePreview && (
-                  <div style={{ marginTop: 10 }}>
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      style={{ 
-                        maxWidth: 200, 
-                        maxHeight: 150, 
+                {imagePreviews.length < 3 && (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageChange}
+                    style={{ 
+                      background: 'rgba(30, 20, 50, 0.5)', 
+                      border: '1px solid rgba(124, 58, 237, 0.3)',
+                      borderRadius: 8,
+                      padding: 10,
+                      color: '#e5e7eb',
+                      width: '100%'
+                    }}
+                    data-testid="report-image-input"
+                  />
+                )}
+                {imagePreviews.length >= 3 && (
+                  <p style={{ color: '#f59e0b', fontSize: '0.85rem' }}>
+                    ✓ Maximum 3 images reached. Remove one to add a new image.
+                  </p>
+                )}
+                
+                {/* Image Previews Grid */}
+                {imagePreviews.length > 0 && (
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(3, 1fr)', 
+                    gap: 10, 
+                    marginTop: 15 
+                  }}>
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} style={{ 
+                        position: 'relative',
+                        border: '2px solid rgba(124, 58, 237, 0.3)',
                         borderRadius: 8,
-                        border: '2px solid rgba(124, 58, 237, 0.3)'
-                      }} 
-                    />
-                    <button
-                      type="button"
-                      onClick={() => { setImage(null); setImagePreview(null); }}
-                      style={{
-                        background: 'rgba(239, 68, 68, 0.2)',
-                        border: '1px solid #ef4444',
-                        color: '#ef4444',
-                        padding: '4px 10px',
-                        borderRadius: 6,
-                        fontSize: '0.75rem',
-                        marginLeft: 10,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Remove
-                    </button>
+                        overflow: 'hidden'
+                      }}>
+                        <img 
+                          src={preview.startsWith('blob:') ? preview : `${API}${preview}`} 
+                          alt={`Preview ${index + 1}`} 
+                          style={{ 
+                            width: '100%', 
+                            height: 100, 
+                            objectFit: 'cover'
+                          }} 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          style={{
+                            position: 'absolute',
+                            top: 4,
+                            right: 4,
+                            background: 'rgba(239, 68, 68, 0.9)',
+                            border: 'none',
+                            color: '#fff',
+                            width: 24,
+                            height: 24,
+                            borderRadius: '50%',
+                            fontSize: '0.9rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          title="Remove image"
+                          data-testid={`remove-image-${index}`}
+                        >
+                          ×
+                        </button>
+                        <div style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          background: 'rgba(0,0,0,0.7)',
+                          color: '#fff',
+                          fontSize: '0.7rem',
+                          padding: '2px 6px',
+                          textAlign: 'center'
+                        }}>
+                          Image {index + 1}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
