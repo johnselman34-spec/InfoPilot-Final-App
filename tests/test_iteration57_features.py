@@ -295,7 +295,7 @@ class TestProtocolValidation:
     def test_validate_protocol(self):
         """Test protocol validation endpoint"""
         response = requests.post(
-            f"{BASE_URL}/api/validate-protocol",
+            f"{BASE_URL}/api/protocol/validate",
             json={"protocol": "(word1 or word2) & (word3 or word4)+"}
         )
         assert response.status_code == 200
