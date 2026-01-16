@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API } from '../../utils/api';
 
@@ -9,14 +9,7 @@ const ProtocolAnalyticsDashboard = ({ showToast }) => {
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState(30);
 
-  useEffect(() => {
-    if (token) {
-      fetchAnalytics();
-      fetchForecast();
-    }
-  }, [token, selectedPeriod]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       const res = await fetch(`${API}/protocol-analytics/my-protocols?days=${selectedPeriod}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -29,9 +22,9 @@ const ProtocolAnalyticsDashboard = ({ showToast }) => {
       console.error('Failed to fetch analytics:', e);
     }
     setLoading(false);
-  };
+  }, [token, selectedPeriod]);
 
-  const fetchForecast = async () => {
+  const fetchForecast = useCallback(async () => {
     try {
       const res = await fetch(`${API}/protocol-analytics/my-forecast?days=${selectedPeriod}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -43,7 +36,14 @@ const ProtocolAnalyticsDashboard = ({ showToast }) => {
     } catch (e) {
       console.error('Failed to fetch forecast:', e);
     }
-  };
+  }, [token, selectedPeriod]);
+
+  useEffect(() => {
+    if (token) {
+      fetchAnalytics();
+      fetchForecast();
+    }
+  }, [token, fetchAnalytics, fetchForecast]);
 
   if (loading) {
     return (
