@@ -2395,7 +2395,7 @@ async def get_leaderboard(limit: int = Query(20, ge=1, le=100)):
                 "user_id": leader["user_id"],
                 "username": user.get("username", "Unknown"),
                 "callsign": user.get("callsign", user.get("username", "Unknown")),
-                "xp": l.get("xp", 0),
+                "xp": leader.get("xp", 0),
                 "level": level_info["level"]
             })
     
