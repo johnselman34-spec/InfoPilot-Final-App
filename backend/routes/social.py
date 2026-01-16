@@ -967,6 +967,32 @@ async def get_page(page_id: str, user = Depends(get_optional_user)):
         raise HTTPException(status_code=404, detail="Page not found")
     
     owner = await db.users.find_one({"_id": ObjectId(page["created_by"])})
+    user_id_str = str(user["_id"]) if user else None
+    
+    # Get followers as members for moderation
+    members = []
+    for follower_id in page.get("followers", [])[:50]:
+        follower = await db.users.find_one({"_id": ObjectId(follower_id)})
+        if follower:
+            members.append({
+                "id": str(follower["_id"]),
+                "user_id": follower_id,
+                "username": follower.get("username", "Unknown"),
+                "email": follower.get("email", ""),
+                "is_owner": follower_id == page.get("created_by"),
+                "is_admin": follower_id in page.get("admins", []) or follower_id == page.get("created_by")
+            })
+    
+    # Get banned users details
+    banned_users = []
+    for banned in page.get("banned_users", []):
+        banned_user = await db.users.find_one({"_id": ObjectId(banned.get("user_id"))})
+        banned_users.append({
+            "user_id": banned.get("user_id"),
+            "username": banned_user.get("username", "Unknown") if banned_user else "Unknown",
+            "reason": banned.get("reason", ""),
+            "banned_at": banned.get("banned_at")
+        })
     
     return {
         "id": str(page["_id"]),
@@ -976,8 +1002,11 @@ async def get_page(page_id: str, user = Depends(get_optional_user)):
         "cover_photo": page.get("cover_photo"),
         "profile_photo": page.get("profile_photo"),
         "follower_count": len(page.get("followers", [])),
-        "is_following": user and str(user["_id"]) in page.get("followers", []),
-        "is_admin": user and str(user["_id"]) == page.get("created_by"),
+        "members": members,
+        "banned_users": banned_users,
+        "is_following": user and user_id_str in page.get("followers", []),
+        "is_owner": user and user_id_str == page.get("created_by"),
+        "is_admin": user and (user_id_str == page.get("created_by") or user_id_str in page.get("admins", [])),
         "owner_name": owner.get("username", "Unknown") if owner else "Unknown",
         "created_at": page.get("created_at", datetime.utcnow()).isoformat()
     }
