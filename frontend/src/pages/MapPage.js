@@ -37,6 +37,8 @@ const MapPage = ({ showToast, setCurrentPage }) => {
   const [aiSearchQuery, setAiSearchQuery] = useState('');
   const [aiSearchLoading, setAiSearchLoading] = useState(false);
   const [aiSearchMode, setAiSearchMode] = useState('comprehensive');
+  const [dbSearchLoading, setDbSearchLoading] = useState(false);
+  const [dbSearchMode, setDbSearchMode] = useState('smart');
 
   // Known locations for context-based geocoding
   const KNOWN_LOCATIONS = {
