@@ -838,6 +838,203 @@ async def get_my_protocols(user = Depends(get_current_user)):
     return result
 
 
+@router.get("/performance-insights")
+async def get_performance_insights(user = Depends(get_current_user)):
+    """
+    Get performance insights for protocol creators - trending data and engagement metrics.
+    Shows week-over-week changes to help creators understand their protocol performance.
+    """
+    user_id = str(user["_id"])
+    now = datetime.utcnow()
+    one_week_ago = now - timedelta(days=7)
+    two_weeks_ago = now - timedelta(days=14)
+    one_month_ago = now - timedelta(days=30)
+    
+    # Get user's protocols
+    protocols = await db.marketplace_protocols.find({"creator_id": user_id}).to_list(1000)
+    
+    if not protocols:
+        return {
+            "has_protocols": False,
+            "total_protocols": 0,
+            "insights": [],
+            "overall_trend": "neutral",
+            "message": "List your first protocol to start earning!"
+        }
+    
+    protocol_ids = [str(p["_id"]) for p in protocols]
+    
+    # Get this week's analytics
+    this_week_views = await db.protocol_analytics.count_documents({
+        "protocol_id": {"$in": protocol_ids},
+        "event_type": "view",
+        "timestamp": {"$gte": one_week_ago}
+    })
+    
+    this_week_copies = await db.protocol_analytics.count_documents({
+        "protocol_id": {"$in": protocol_ids},
+        "event_type": "copy",
+        "timestamp": {"$gte": one_week_ago}
+    })
+    
+    this_week_purchases = await db.protocol_analytics.count_documents({
+        "protocol_id": {"$in": protocol_ids},
+        "event_type": "purchase",
+        "timestamp": {"$gte": one_week_ago}
+    })
+    
+    # Get last week's analytics (for comparison)
+    last_week_views = await db.protocol_analytics.count_documents({
+        "protocol_id": {"$in": protocol_ids},
+        "event_type": "view",
+        "timestamp": {"$gte": two_weeks_ago, "$lt": one_week_ago}
+    })
+    
+    last_week_copies = await db.protocol_analytics.count_documents({
+        "protocol_id": {"$in": protocol_ids},
+        "event_type": "copy",
+        "timestamp": {"$gte": two_weeks_ago, "$lt": one_week_ago}
+    })
+    
+    last_week_purchases = await db.protocol_analytics.count_documents({
+        "protocol_id": {"$in": protocol_ids},
+        "event_type": "purchase",
+        "timestamp": {"$gte": two_weeks_ago, "$lt": one_week_ago}
+    })
+    
+    # Calculate percentage changes
+    def calc_change(current, previous):
+        if previous == 0:
+            return 100 if current > 0 else 0
+        return round(((current - previous) / previous) * 100, 1)
+    
+    views_change = calc_change(this_week_views, last_week_views)
+    copies_change = calc_change(this_week_copies, last_week_copies)
+    purchases_change = calc_change(this_week_purchases, last_week_purchases)
+    
+    # Generate insights
+    insights = []
+    
+    # Views insight
+    if views_change > 0:
+        insights.append({
+            "type": "views",
+            "icon": "📈",
+            "message": f"Your protocol views are up {views_change}% this week!",
+            "trend": "up",
+            "value": this_week_views,
+            "change": views_change
+        })
+    elif views_change < 0:
+        insights.append({
+            "type": "views",
+            "icon": "📉",
+            "message": f"Views are down {abs(views_change)}% - try sharing on social media!",
+            "trend": "down",
+            "value": this_week_views,
+            "change": views_change
+        })
+    else:
+        insights.append({
+            "type": "views",
+            "icon": "👀",
+            "message": f"{this_week_views} views this week - keep it up!",
+            "trend": "neutral",
+            "value": this_week_views,
+            "change": 0
+        })
+    
+    # Copies insight
+    if copies_change > 0:
+        insights.append({
+            "type": "copies",
+            "icon": "📋",
+            "message": f"Protocol copies increased by {copies_change}%!",
+            "trend": "up",
+            "value": this_week_copies,
+            "change": copies_change
+        })
+    
+    # Purchases insight
+    if this_week_purchases > 0:
+        insights.append({
+            "type": "purchases",
+            "icon": "💰",
+            "message": f"{this_week_purchases} purchases this week - you're earning!",
+            "trend": "up",
+            "value": this_week_purchases,
+            "change": purchases_change
+        })
+    
+    # Total earnings this month
+    monthly_earnings_pipeline = [
+        {"$match": {
+            "protocol_id": {"$in": protocol_ids},
+            "event_type": "purchase",
+            "timestamp": {"$gte": one_month_ago}
+        }},
+        {"$group": {
+            "_id": None,
+            "total": {"$sum": "$amount"}
+        }}
+    ]
+    earnings_result = await db.protocol_analytics.aggregate(monthly_earnings_pipeline).to_list(1)
+    monthly_earnings = earnings_result[0]["total"] if earnings_result else 0
+    
+    if monthly_earnings > 0:
+        insights.append({
+            "type": "earnings",
+            "icon": "🤑",
+            "message": f"${monthly_earnings:.2f} earned this month!",
+            "trend": "up",
+            "value": monthly_earnings,
+            "change": 0
+        })
+    
+    # Top performing protocol
+    top_protocol = max(protocols, key=lambda p: p.get("total_sales", 0), default=None)
+    if top_protocol and top_protocol.get("total_sales", 0) > 0:
+        insights.append({
+            "type": "top_performer",
+            "icon": "🏆",
+            "message": f"'{top_protocol['name']}' is your top seller with {top_protocol['total_sales']} sales!",
+            "trend": "up",
+            "value": top_protocol.get("total_sales", 0),
+            "change": 0
+        })
+    
+    # Calculate overall trend
+    total_positive = sum(1 for i in insights if i["trend"] == "up")
+    total_negative = sum(1 for i in insights if i["trend"] == "down")
+    overall_trend = "up" if total_positive > total_negative else ("down" if total_negative > total_positive else "neutral")
+    
+    return {
+        "has_protocols": True,
+        "total_protocols": len(protocols),
+        "insights": insights,
+        "overall_trend": overall_trend,
+        "stats": {
+            "this_week": {
+                "views": this_week_views,
+                "copies": this_week_copies,
+                "purchases": this_week_purchases
+            },
+            "last_week": {
+                "views": last_week_views,
+                "copies": last_week_copies,
+                "purchases": last_week_purchases
+            },
+            "changes": {
+                "views": views_change,
+                "copies": copies_change,
+                "purchases": purchases_change
+            }
+        },
+        "monthly_earnings": monthly_earnings,
+        "last_updated": now.isoformat()
+    }
+
+
 # ==================== SUBSCRIPTION ====================
 
 @router.post("/subscription", response_model=dict)
