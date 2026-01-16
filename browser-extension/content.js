@@ -60,7 +60,7 @@ document.addEventListener('mouseup', (e) => {
     `;
     
     floatingButton.addEventListener('click', () => {
-      const API_BASE = 'https://searchmaster-6.preview.emergentagent.com';
+      const API_BASE = 'https://project-finale-6.preview.emergentagent.com';
       window.open(`${API_BASE}/search?q=${encodeURIComponent(selection)}&source=extension`, '_blank');
       floatingButton.remove();
       floatingButton = null;

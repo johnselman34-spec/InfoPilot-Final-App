@@ -1,7 +1,7 @@
 // InfoJet - Popup Script
 // Handles the main extension popup functionality
 
-const API_BASE = 'https://searchmaster-6.preview.emergentagent.com/api';
+const API_BASE = 'https://project-finale-6.preview.emergentagent.com/api';
 
 // State
 let selectedProtocol = null;
