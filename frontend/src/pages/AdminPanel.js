@@ -1552,7 +1552,7 @@ const EmailReportsTab = ({ token, showToast }) => {
               1. Go to <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" style={{ color: '#3b82f6' }}>myaccount.google.com/security</a><br/>
               2. Enable 2-Step Verification if not already enabled<br/>
               3. Go to <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" style={{ color: '#3b82f6' }}>App Passwords</a><br/>
-              4. Create a new app password for "Mail" → "Other (InfoPilot)"<br/>
+              4. Create a new app password for Mail → Other (InfoPilot)<br/>
               5. Copy the 16-character password and update the backend .env file
             </p>
           </div>
