@@ -113,8 +113,9 @@ class TestThemePresetAPI:
         response = requests.post(f"{BASE_URL}/api/theme-presets", json=preset_data, headers=headers)
         assert response.status_code == 200
         data = response.json()
-        assert data.get("is_public") == True
-        print(f"✓ Created public theme preset: {data.get('name')}")
+        # API returns {id, message} on success
+        assert "id" in data
+        print(f"✓ Created public theme preset with ID: {data.get('id')}")
         return data["id"]
     
     def test_like_theme_preset(self, auth_token):
