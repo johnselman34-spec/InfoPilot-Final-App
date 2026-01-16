@@ -567,6 +567,219 @@ async def update_unpaid_price_controls(data: dict, user = Depends(require_admin)
     }
 
 
+# ==================== GLOBAL PRICE CONTROLS ====================
+
+@router.get("/global-price-controls", response_model=dict)
+async def get_global_price_controls(user = Depends(require_admin)):
+    """
+    Get global price control settings (applies to ALL users).
+    """
+    keys = ["global_price_control_enabled", "global_max_protocol_price", 
+            "global_max_bundle_price", "global_min_protocol_price"]
+    
+    settings = {}
+    defaults = {
+        "global_price_control_enabled": False,
+        "global_max_protocol_price": 99.99,
+        "global_max_bundle_price": 199.99,
+        "global_min_protocol_price": 0.00
+    }
+    
+    for key in keys:
+        setting = await db.settings.find_one({"key": key})
+        if setting:
+            settings[key] = setting.get("value")
+        else:
+            settings[key] = defaults.get(key)
+    
+    return {
+        "settings": settings,
+        "description": {
+            "global_price_control_enabled": "Master toggle for global price controls (applies to EVERYONE)",
+            "global_max_protocol_price": "Maximum price ANY user can charge per protocol",
+            "global_max_bundle_price": "Maximum price ANY user can charge per bundle",
+            "global_min_protocol_price": "Minimum price for protocols (0 = free allowed)"
+        }
+    }
+
+
+@router.put("/global-price-controls", response_model=dict)
+async def update_global_price_controls(data: dict, user = Depends(require_admin)):
+    """
+    Update global price control settings (applies to ALL users).
+    """
+    allowed_keys = ["global_price_control_enabled", "global_max_protocol_price", 
+                    "global_max_bundle_price", "global_min_protocol_price"]
+    
+    updated = []
+    
+    for key in allowed_keys:
+        if key in data:
+            value = data[key]
+            
+            # Validate price values
+            if key in ["global_max_protocol_price", "global_max_bundle_price", "global_min_protocol_price"]:
+                try:
+                    value = float(value)
+                    if value < 0:
+                        raise HTTPException(status_code=400, detail=f"{key} must be >= 0")
+                    if value > 999.99:
+                        raise HTTPException(status_code=400, detail=f"{key} must be <= 999.99")
+                except (ValueError, TypeError):
+                    raise HTTPException(status_code=400, detail=f"{key} must be a valid number")
+            
+            await db.settings.update_one(
+                {"key": key},
+                {"$set": {"value": value, "updated_at": datetime.utcnow()}},
+                upsert=True
+            )
+            updated.append({"key": key, "value": value})
+    
+    # Log the change
+    await db.admin_audit_log.insert_one({
+        "action": "update_global_price_controls",
+        "admin_id": str(user["_id"]),
+        "admin_email": user.get("email"),
+        "changes": updated,
+        "created_at": datetime.utcnow()
+    })
+    
+    return {
+        "success": True,
+        "message": "Global price controls updated",
+        "updated": updated
+    }
+
+
+# ==================== DOCUMENT TYPE CLASSIFICATION SETTINGS ====================
+
+@router.get("/doctype-settings", response_model=dict)
+async def get_doctype_settings(user = Depends(require_admin)):
+    """
+    Get document type classification settings (Admin controllable protocols).
+    """
+    keys = [
+        "doctype_phd_min_words", "doctype_phd_keyword_count", "doctype_phd_protocol",
+        "doctype_informative_protocol", "doctype_news_protocol", "doctype_news_min_instances",
+        "doctype_blog_protocol", "doctype_blog_min_instances", "doctype_forum_protocol",
+        "doctype_personal_collected_protocol", "doctype_personal_min_i_count",
+        "doctype_personal_min_paragraph_words", "doctype_auto_categorize"
+    ]
+    
+    defaults = {
+        "doctype_phd_min_words": 1500,
+        "doctype_phd_keyword_count": 3,
+        "doctype_phd_protocol": "(Ph.D. or PhD or D.Phil. or Dr.)",
+        "doctype_informative_protocol": "(there are or there is) & (may have or might have or that are) & (this kind or these kinds or this type or these types or it is) & (is easily or of each or less than the or more than or greater than or is more or is less) & (it is)",
+        "doctype_news_protocol": "(news) & (news or story or news story) & (news or story or news story)",
+        "doctype_news_min_instances": 3,
+        "doctype_blog_protocol": "(blog)",
+        "doctype_blog_min_instances": 3,
+        "doctype_forum_protocol": "(forum)",
+        "doctype_personal_collected_protocol": "(I)",
+        "doctype_personal_min_i_count": 3,
+        "doctype_personal_min_paragraph_words": 75,
+        "doctype_auto_categorize": True
+    }
+    
+    settings = {}
+    for key in keys:
+        setting = await db.settings.find_one({"key": key})
+        if setting:
+            settings[key] = setting.get("value")
+        else:
+            settings[key] = defaults.get(key)
+    
+    return {
+        "settings": settings,
+        "document_types": [
+            {"type": "PhD Informative", "description": "Academic content by credentialed professionals (Ph.D., D.Phil., Dr.)"},
+            {"type": "Informative", "description": "Educational content meeting informative protocol criteria"},
+            {"type": "InfoPilot Exclusive", "description": "Content written by InfoPilot writers (no rules)"},
+            {"type": "InfoBook Exclusive", "description": "Content written by InfoBook writers (no rules)"},
+            {"type": "News Article", "description": "Current events and journalism (default fallback)"},
+            {"type": "Blog Post", "description": "Personal blogs and opinion pieces"},
+            {"type": "Forum", "description": "Discussion boards (forum in title)"},
+            {"type": "Personal Report (Organic)", "description": "First-hand reports written by members"},
+            {"type": "Personal Report (Collected)", "description": "Extracted personal narratives from articles"},
+            {"type": "Academic Paper", "description": "Scholarly research (.edu, journal, research)"},
+            {"type": "Government", "description": "Official government documents (.gov)"},
+            {"type": "Wiki", "description": "Wikipedia and wiki-based content"},
+            {"type": "Video", "description": "Video content (YouTube, Vimeo)"},
+            {"type": "PDF Document", "description": "PDF files"},
+            {"type": "Webpage", "description": "General web pages (catch-all)"}
+        ],
+        "description": {
+            "doctype_phd_min_words": "Minimum word count for PhD classification",
+            "doctype_phd_keyword_count": "Minimum PhD keyword occurrences (Ph.D., PhD, D.Phil., Dr.)",
+            "doctype_phd_protocol": "Protocol for detecting PhD credentials",
+            "doctype_informative_protocol": "Protocol for detecting Informative articles",
+            "doctype_news_protocol": "Protocol for detecting News Articles",
+            "doctype_news_min_instances": "Minimum protocol matches for News classification",
+            "doctype_blog_protocol": "Protocol for detecting Blog posts (must be in title)",
+            "doctype_blog_min_instances": "Minimum 'blog' instances (1 must be in title)",
+            "doctype_forum_protocol": "Protocol for detecting Forums (must be in title)",
+            "doctype_personal_collected_protocol": "Protocol for detecting Personal Reports",
+            "doctype_personal_min_i_count": "Minimum 'I' occurrences outside quotes",
+            "doctype_personal_min_paragraph_words": "Minimum words in paragraph for Personal Report",
+            "doctype_auto_categorize": "Auto-categorize search results by document type"
+        }
+    }
+
+
+@router.put("/doctype-settings", response_model=dict)
+async def update_doctype_settings(data: dict, user = Depends(require_admin)):
+    """
+    Update document type classification settings.
+    """
+    allowed_keys = [
+        "doctype_phd_min_words", "doctype_phd_keyword_count", "doctype_phd_protocol",
+        "doctype_informative_protocol", "doctype_news_protocol", "doctype_news_min_instances",
+        "doctype_blog_protocol", "doctype_blog_min_instances", "doctype_forum_protocol",
+        "doctype_personal_collected_protocol", "doctype_personal_min_i_count",
+        "doctype_personal_min_paragraph_words", "doctype_auto_categorize"
+    ]
+    
+    updated = []
+    
+    for key in allowed_keys:
+        if key in data:
+            value = data[key]
+            
+            # Validate numeric values
+            if key in ["doctype_phd_min_words", "doctype_phd_keyword_count", 
+                       "doctype_news_min_instances", "doctype_blog_min_instances",
+                       "doctype_personal_min_i_count", "doctype_personal_min_paragraph_words"]:
+                try:
+                    value = int(value)
+                    if value < 1:
+                        raise HTTPException(status_code=400, detail=f"{key} must be >= 1")
+                except (ValueError, TypeError):
+                    raise HTTPException(status_code=400, detail=f"{key} must be a valid integer")
+            
+            await db.settings.update_one(
+                {"key": key},
+                {"$set": {"value": value, "updated_at": datetime.utcnow()}},
+                upsert=True
+            )
+            updated.append({"key": key, "value": value})
+    
+    # Log the change
+    await db.admin_audit_log.insert_one({
+        "action": "update_doctype_settings",
+        "admin_id": str(user["_id"]),
+        "admin_email": user.get("email"),
+        "changes": updated,
+        "created_at": datetime.utcnow()
+    })
+    
+    return {
+        "success": True,
+        "message": "Document type classification settings updated",
+        "updated": updated
+    }
+
+
 async def validate_listing_price(user: dict, price: float, is_bundle: bool = False) -> tuple:
     """
     Validate if a user can list at the given price.
