@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
  * Collapsible Category Tree Component
  * Displays categories in a hierarchical tree with +/- expansion buttons
  * Shows result counts in parentheses next to each category
+ * Includes Quick Search filter to find categories by name
  */
 const CollapsibleCategoryTree = ({
   categories,
@@ -19,6 +20,8 @@ const CollapsibleCategoryTree = ({
 }) => {
   // Track which categories are expanded
   const [expandedCategories, setExpandedCategories] = useState(new Set());
+  // Quick search filter
+  const [searchFilter, setSearchFilter] = useState('');
 
   // Build hierarchy from flat category list
   const categoryTree = useMemo(() => {
@@ -52,6 +55,31 @@ const CollapsibleCategoryTree = ({
     
     return roots;
   }, [categories]);
+
+  // Filter categories by search term (include parents of matching children)
+  const filteredTree = useMemo(() => {
+    if (!searchFilter.trim()) return categoryTree;
+    
+    const searchLower = searchFilter.toLowerCase();
+    
+    const filterNode = (node) => {
+      const nameMatches = (node.name || '').toLowerCase().includes(searchLower);
+      
+      // Recursively filter children
+      const filteredChildren = (node.children || [])
+        .map(child => filterNode(child))
+        .filter(child => child !== null);
+      
+      // Include node if name matches OR any children match
+      if (nameMatches || filteredChildren.length > 0) {
+        return { ...node, children: filteredChildren };
+      }
+      
+      return null;
+    };
+    
+    return categoryTree.map(root => filterNode(root)).filter(node => node !== null);
+  }, [categoryTree, searchFilter]);
 
   // Calculate total result count for a category including all descendants
   const getTotalResultCount = (category) => {
@@ -89,7 +117,7 @@ const CollapsibleCategoryTree = ({
         }
       });
     };
-    addIds(categoryTree);
+    addIds(filteredTree);
     setExpandedCategories(allIds);
   };
 
