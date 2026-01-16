@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme, ThemeToggle } from '../../contexts/ThemeContext';
+import { ThemePresetGallery, ThemePreviewMode } from '../Theme';
 import Icons from './Icons';
 import NotificationBell from './NotificationBell';
 
@@ -8,6 +9,8 @@ const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
   const { user, logout } = useAuth();
   const { isDarkMode } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showThemeGallery, setShowThemeGallery] = useState(false);
+  const [showThemePreview, setShowThemePreview] = useState(false);
 
   const navItems = [
     { id: 'search', label: 'Ultimate Search', icon: Icons.Search },
