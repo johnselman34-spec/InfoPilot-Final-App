@@ -140,22 +140,6 @@ const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
           </div>
         </nav>
         
-        {/* Theme Gallery Modal */}
-        {showThemeGallery && (
-          <ThemePresetGallery 
-            showToast={showToast} 
-            onClose={() => setShowThemeGallery(false)} 
-          />
-        )}
-        
-        {/* Theme Preview Modal */}
-        {showThemePreview && (
-          <ThemePreviewMode 
-            showToast={showToast} 
-            onClose={() => setShowThemePreview(false)} 
-          />
-        )}
-
         {/* Book Promo - Enhanced */}
         <div style={{ marginTop: 20, padding: 15, background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(124, 58, 237, 0.25))', borderRadius: 12, border: '2px solid rgba(236, 72, 153, 0.5)' }}>
           <div style={{ fontSize: '0.85rem', color: '#fbbf24', fontWeight: 800, marginBottom: 8, textAlign: 'center' }}>
