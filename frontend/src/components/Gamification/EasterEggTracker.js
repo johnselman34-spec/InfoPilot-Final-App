@@ -449,7 +449,8 @@ export const triggerEasterEggDiscovery = async (eggId, token, trigger = 'automat
         window.dispatchEvent(new CustomEvent('easterEggDiscovered', { 
           detail: { egg: data.egg } 
         }));
-        showToast(data.message, 'success');
+        // Use console.log instead of showToast since it's not available here
+        console.log('🥚 Easter egg discovered:', data.message);
       }
       return data;
     }
