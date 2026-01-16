@@ -8,6 +8,7 @@ from typing import Optional
 from collections import defaultdict
 import time
 
+from bson import ObjectId
 from config import db, logger
 from routes.auth import get_current_user, get_optional_user
 

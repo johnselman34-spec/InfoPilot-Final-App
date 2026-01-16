@@ -51,9 +51,9 @@ InfoPilot Explorer is your ultimate search companion. Here's how to get started:
 - 📊 Check the Statistics page to see community trends
 - 🏆 Earn achievements by using different features!
         """,
-        "video_url": None, "video_id": None, "image_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800",
-        "video_url": None,  # YouTube URL - to be added by admin
-        "video_id": None,   # YouTube video ID - to be added by admin
+        "video_url": None,
+        "video_id": None,
+        "image_url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800",
         "duration": "5 min read",
         "category": "basics",
         "order": 1
