@@ -1632,3 +1632,47 @@ Backend:
 - **Before:** Search returned top-ranked results regardless of protocol relevance
 - **After:** Only results that actually fulfill 70%+ of your protocol requirements are collated
 - **Result:** Much higher quality, truly relevant results that match your research criteria
+
+
+## Update Session - January 16, 2026 (Iteration 46)
+
+### Protocol "and" Support & Maestro Bistro Update ✅
+
+#### Protocol Parser Enhancement
+- **"and" now accepted as "&"** - Both work identically for connecting groups
+- Case-insensitive: `and`, `AND`, `And` all work the same
+- Updated `parse_protocol()` to normalize "and" → "&" before parsing
+- Updated `validate_protocol()` to recognize "and" as valid operator
+
+#### UI Updates
+- **Create Category Modal:** Added Protocol Syntax Help box showing:
+  - `or` - Separate alternatives within a group
+  - `&` or `and` - Connect groups (both work!)
+  - `+` - Boost priority
+  - `^` - Exclude matches
+  - Example with "and" syntax
+  
+- **Edit Category Modal:** Same Protocol Syntax Help box added
+
+#### Maestro Bistro Advertisement Update
+- **Darker color scheme:** Background changed from light brown to deep mahogany
+- **Enhanced dish icon:** CSS-based illustration showing:
+  - Dark brown bowl
+  - Beef Rouladen with dark brown/red gravy
+  - Golden egg noodles
+  - Green peas
+  - Orange carrot slices
+- **Updated menu descriptions:**
+  - "Tender beef with dark brown gravy, egg noodles, peas & carrots"
+  - "Fresh vegetables in savory gravy"
+- **Each dish has a colored circle indicator:** brown for beef, green for vegetable, blue for fish
+
+### Files Modified
+```
+Backend:
+- /app/backend/services/protocol_service.py (parse_protocol with "and" support)
+
+Frontend:
+- /app/frontend/src/components/UltimateSearch/CategoryModals.js (Protocol Syntax Help)
+- /app/frontend/src/components/shared/BookPromoBanner.js (Maestro Bistro design)
+```
