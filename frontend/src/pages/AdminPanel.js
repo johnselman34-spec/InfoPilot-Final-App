@@ -1029,6 +1029,14 @@ const AdminPanel = ({ showToast }) => {
           <UserModerationAdmin token={token} showToast={showToast} />
         )}
 
+        {activeTab === 'price-controls' && (
+          <UnpaidPriceControlsAdmin token={token} showToast={showToast} />
+        )}
+
+        {activeTab === 'category-analytics' && (
+          <CategoryAnalyticsDashboard token={token} showToast={showToast} />
+        )}
+
         {activeTab === 'content' && (
           <div>
             <h3 style={{ marginBottom: 20, color: '#f472b6' }}>Content Moderation</h3>
