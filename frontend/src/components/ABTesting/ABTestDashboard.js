@@ -19,10 +19,6 @@ const ABTestDashboard = ({ showToast }) => {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState(30);
 
-  useEffect(() => {
-    fetchDashboard();
-  }, [period]);
-
   const fetchDashboard = async () => {
     setLoading(true);
     try {
@@ -38,6 +34,11 @@ const ABTestDashboard = ({ showToast }) => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period]);
 
   const fetchTestResults = async (testName) => {
     try {
