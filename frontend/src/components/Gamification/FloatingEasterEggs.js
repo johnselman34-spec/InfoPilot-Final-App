@@ -53,6 +53,23 @@ const EGG_REWARDS = [
     "🏆 'Letters to Evelyn' has 19 five-star reviews. My stepmother has zero. The scoreboard doesn't lie, folks! Read it on Amazon - $2.99 for the ebook, $17.90 for revenge in hardcover! 📚",
     "👽 During my 10-month trip (courtesy of Stepmother Airlines), I saw UFOs, talked to God, and met my soulmate Evelyn in visions. Best involuntary vacation EVER! Check readersfavorite.com! ⭐",
     "🎬 From Navy pilot dreams ✈️ to stepmother's poison scheme 🍳 to 10 months of cosmic visions 👽 to bestselling author 📚 to movie producer 🎥 - and people say MY life is unbelievable. IT'S ALL IN THE BOOK! 🏆",
+    "🥚 January 3rd, 2000: Stepmother makes me breakfast. 2026: I have a bestseller, a movie deal, and THIS APP. Who's the scrambled one now? 🍳➡️📚➡️🎬➡️💰",
+    "🎪 My stepmother tried to send me on a permanent vacation. I came back with frequent flyer miles, alien contacts, and a book deal. WORST. MURDER ATTEMPT. EVER. 😂",
+    "💊 People ask how I survived 2.5 ounces of military-grade drugs. I tell them: 'The same way I survived Navy training - pure spite and a really good story idea!' ✈️📖",
+    "🧠 My stepmother wanted to mess with my mind. Little did she know, my mind was already messed up enough to become a WRITER. Joke's on you, Carol! 📝🤣",
+    "🎰 My stepmother played Russian roulette with my breakfast. Plot twist: The chamber was loaded with CREATIVITY. Now I'm rich and she's... well, we don't talk anymore. 💰",
+    "⚡ Electric shock therapy has NOTHING on my stepmother's cooking. At least the hospital bills were cheaper! 🏥😂",
+    "🎭 Method actors prepare for years. My stepmother gave me a 10-month immersive experience FOR FREE. Method? Nah, that's COMMITMENT! 🎬",
+    "🍳 My stepmother's signature dish: Eggs Benedict Arnold. The secret ingredient? Betrayal! And approximately 2.5 ounces of 'special seasoning.' 👨‍🍳",
+  ]},
+  
+  // Map & Statistics Instructions - Easy to understand
+  { type: 'instructions', emoji: '🗺️', title: '📍 How to Use the Map & Stats!', rewards: [
+    '🗺️ ULTIMATE SEARCH MAP:\n1. Check category boxes on the left\n2. Watch dots appear on the map!\n3. Each color = different category\n4. Click dots to see article details\n5. Zoom with +/- or scroll wheel',
+    '📊 STATISTICS SCREEN:\n1. See ALL users\' results worldwide\n2. Check user checkboxes to filter\n3. Category checkboxes filter further\n4. Export data with Premium\n5. Track your LaughOMeter stats here!',
+    '🎯 MAP VIEW TIPS:\n1. Use AI Search bar at top\n2. Filter by document type (News, Blog, etc.)\n3. Color legend shows what each dot means\n4. Click "Customize" for premium map styles\n5. Export map data (Premium feature)',
+    '🔍 SEARCH & COLLATE:\n1. Enter your protocol in categories\n2. Click "Search & Collate"\n3. Results auto-categorize!\n4. Multiple categories can match\n5. Dots appear on map automatically',
+    '📈 PRO TIP - CATEGORIES:\n1. Create parent categories first\n2. Add sub-categories underneath\n3. Each can have its own protocol\n4. Results count shown in (parentheses)\n5. Edit/Delete from Settings too!',
   ]},
   
   // Protocol Pricing Ideas - ENHANCED with specific recommendations
