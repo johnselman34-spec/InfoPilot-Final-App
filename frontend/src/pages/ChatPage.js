@@ -80,9 +80,14 @@ const ChatPage = ({ showToast }) => {
   useEffect(() => {
     fetchRooms();
     fetchOnlineUsers();
+    fetchUnifiedOverview();
     const interval = setInterval(fetchOnlineUsers, 30000);
-    return () => clearInterval(interval);
-  }, [fetchRooms, fetchOnlineUsers]);
+    const overviewInterval = setInterval(fetchUnifiedOverview, 60000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(overviewInterval);
+    };
+  }, [fetchRooms, fetchOnlineUsers, fetchUnifiedOverview]);
 
   useEffect(() => {
     if (activeRoom) {
