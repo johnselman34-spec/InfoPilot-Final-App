@@ -332,13 +332,13 @@ async def export_categories(format: str = "json", user = Depends(get_current_use
         return StreamingResponse(
             io.BytesIO(output.getvalue().encode()),
             media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=infopilot_categories.csv"}
+            headers={"Content-Disposition": "attachment; filename=infopilot_categories.csv"}
         )
     
     return StreamingResponse(
         io.BytesIO(json.dumps(data, indent=2).encode()),
         media_type="application/json",
-        headers={"Content-Disposition": f"attachment; filename=infopilot_categories.json"}
+        headers={"Content-Disposition": "attachment; filename=infopilot_categories.json"}
     )
 
 
