@@ -13,3 +13,4 @@ export { default as PollCard, CreatePollModal } from './PollCard';
 export { default as CopyButton, ProtocolCopyButtons } from './CopyButton';
 export { default as AISuggestions } from './AISuggestions';
 export { default as YouTubePlayer, VideoUrlInput } from './YouTubePlayer';
+export { default as UpgradePromoBanner } from './UpgradePromoBanner';
