@@ -125,9 +125,10 @@ const ChatPage = ({ showToast }) => {
   }, [token, user?.id, showToast]);
 
   useEffect(() => {
-    fetchRooms();
-    fetchOnlineUsers();
-    fetchUnifiedOverview();
+    const loadInitial = async () => {
+      await Promise.all([fetchRooms(), fetchOnlineUsers(), fetchUnifiedOverview()]);
+    };
+    loadInitial();
     const interval = setInterval(fetchOnlineUsers, 30000);
     const overviewInterval = setInterval(fetchUnifiedOverview, 60000);
     return () => {
@@ -138,8 +139,11 @@ const ChatPage = ({ showToast }) => {
 
   useEffect(() => {
     if (activeRoom) {
-      fetchMessages(activeRoom.id);
-      connectWebSocket(activeRoom.id);
+      const loadRoom = async () => {
+        await fetchMessages(activeRoom.id);
+        connectWebSocket(activeRoom.id);
+      };
+      loadRoom();
     }
     return () => {
       if (wsRef.current) {
