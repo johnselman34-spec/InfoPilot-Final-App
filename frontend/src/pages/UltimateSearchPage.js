@@ -572,6 +572,29 @@ const UltimateSearchPage = ({ showToast }) => {
     }
   };
 
+  // Clean category (remove all results associated with the category)
+  const cleanCategory = async (categoryId) => {
+    try {
+      const res = await fetch(`${API}/categories/${categoryId}/clean`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(data.message || 'Category cleaned successfully!', 'success');
+        setEditingCategory(null);
+        fetchSearchResults();
+        triggerMapRefresh();
+      } else {
+        const data = await res.json();
+        showToast(data.detail || 'Failed to clean category', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to clean category', 'error');
+    }
+  };
+
   const toggleCategorySelection = (catId) => {
     setSelectedCategories(prev => 
       prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
