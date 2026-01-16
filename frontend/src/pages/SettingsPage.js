@@ -614,6 +614,118 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
                           </button>
                         </div>
                         
+                        {/* Clean Category Section */}
+                        <div style={{
+                          marginTop: 15,
+                          padding: 12,
+                          background: 'rgba(245, 158, 11, 0.1)',
+                          border: '1px solid rgba(245, 158, 11, 0.3)',
+                          borderRadius: 8
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                            <p style={{ color: '#f59e0b', fontSize: '0.85rem', margin: 0, fontWeight: 600 }}>
+                              🧹 Clean Category Results
+                            </p>
+                            {categoryResultsCount && (
+                              <span style={{ 
+                                fontSize: '0.75rem', 
+                                color: '#fbbf24',
+                                background: 'rgba(245, 158, 11, 0.2)',
+                                padding: '3px 8px',
+                                borderRadius: 4
+                              }}>
+                                {categoryResultsCount.total_results} results
+                              </span>
+                            )}
+                          </div>
+                          
+                          {categoryResultsCount && categoryResultsCount.total_results > 0 ? (
+                            <>
+                              <p style={{ color: '#a1a1aa', fontSize: '0.75rem', margin: '0 0 10px 0' }}>
+                                {categoryResultsCount.exclusive_results} exclusive, {categoryResultsCount.shared_results} shared with other categories
+                              </p>
+                              
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                <button
+                                  onClick={() => cleanCategory(editingCategory.id, 'remove')}
+                                  disabled={cleaningCategory}
+                                  style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    background: 'rgba(59, 130, 246, 0.2)',
+                                    border: '1px solid rgba(59, 130, 246, 0.4)',
+                                    borderRadius: 6,
+                                    color: '#3b82f6',
+                                    cursor: cleaningCategory ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.8rem',
+                                    textAlign: 'left'
+                                  }}
+                                  data-testid="clean-category-remove-btn"
+                                >
+                                  🔗 <strong>Unlink Results</strong>
+                                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#93c5fd', marginTop: 2 }}>
+                                    Remove category tag only (keeps results in other categories)
+                                  </span>
+                                </button>
+                                
+                                <button
+                                  onClick={() => cleanCategory(editingCategory.id, 'delete')}
+                                  disabled={cleaningCategory}
+                                  style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    background: 'rgba(245, 158, 11, 0.2)',
+                                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                                    borderRadius: 6,
+                                    color: '#f59e0b',
+                                    cursor: cleaningCategory ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.8rem',
+                                    textAlign: 'left'
+                                  }}
+                                  data-testid="clean-category-delete-btn"
+                                >
+                                  🗑️ <strong>Delete Exclusive Only</strong>
+                                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#fcd34d', marginTop: 2 }}>
+                                    Delete {categoryResultsCount.exclusive_results} results only in this category
+                                  </span>
+                                </button>
+                                
+                                <button
+                                  onClick={() => cleanCategory(editingCategory.id, 'delete_all')}
+                                  disabled={cleaningCategory}
+                                  style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    background: 'rgba(239, 68, 68, 0.2)',
+                                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                                    borderRadius: 6,
+                                    color: '#ef4444',
+                                    cursor: cleaningCategory ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.8rem',
+                                    textAlign: 'left'
+                                  }}
+                                  data-testid="clean-category-delete-all-btn"
+                                >
+                                  💥 <strong>Delete ALL Results</strong>
+                                  <span style={{ display: 'block', fontSize: '0.7rem', color: '#fca5a5', marginTop: 2 }}>
+                                    Delete all {categoryResultsCount.total_results} results (cannot be undone!)
+                                  </span>
+                                </button>
+                              </div>
+                              
+                              {cleaningCategory && (
+                                <p style={{ color: '#fbbf24', fontSize: '0.75rem', marginTop: 10, textAlign: 'center' }}>
+                                  ⏳ Cleaning in progress...
+                                </p>
+                              )}
+                            </>
+                          ) : (
+                            <p style={{ color: '#71717a', fontSize: '0.8rem', margin: 0 }}>
+                              No search results in this category to clean.
+                            </p>
+                          )}
+                        </div>
+                        
                         {/* Delete Section */}
                         <div style={{
                           marginTop: 15,
