@@ -62,7 +62,7 @@ const DailyLaughGoal = ({ compact = false }) => {
   const handleSetGoal = async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${API}/gamification/daily-laugh-goal/set`, {
+      const res = await fetch(`${API}/api/gamification/daily-laugh-goal/set`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
