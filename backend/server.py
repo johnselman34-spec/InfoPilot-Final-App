@@ -568,6 +568,48 @@ class ExtendedWebSearchService:
         logger.info(f"Total search results from all engines: {len(all_results)}")
         return all_results[:num_results]
 
+    @staticmethod
+    async def get_available_engines() -> dict:
+        """Return status of all available search engines"""
+        return {
+            "engines": {
+                "serpapi": {
+                    "name": "Google (SerpAPI)",
+                    "available": bool(SERPAPI_KEY and SERPAPI_AVAILABLE),
+                    "description": "Premium Google search via SerpAPI"
+                },
+                "brave": {
+                    "name": "Brave Search",
+                    "available": bool(BRAVE_API_KEY),
+                    "description": "Privacy-focused search engine"
+                },
+                "yandex": {
+                    "name": "Yandex",
+                    "available": bool(YANDEX_API_KEY and YANDEX_FOLDER_ID),
+                    "description": "Russian and international search"
+                },
+                "duckduckgo": {
+                    "name": "DuckDuckGo",
+                    "available": DDGS_AVAILABLE,
+                    "description": "Privacy-focused, no API key required"
+                },
+                "basic": {
+                    "name": "Basic Web Search",
+                    "available": True,
+                    "description": "Fallback web scraping"
+                }
+            },
+            "total_available": sum([
+                bool(SERPAPI_KEY and SERPAPI_AVAILABLE),
+                bool(BRAVE_API_KEY),
+                bool(YANDEX_API_KEY and YANDEX_FOLDER_ID),
+                DDGS_AVAILABLE,
+                True  # Basic always available
+            ])
+        }
+
+
+
 # ============== ARTICLE CLASSIFIER ==============
 
 class ArticleClassifier:
