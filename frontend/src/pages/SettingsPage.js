@@ -588,6 +588,116 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
                   )}
                 </div>
               )}
+              
+              {/* Import/Export Section */}
+              {showCategoryManager && categories.length > 0 && (
+                <div style={{
+                  marginTop: 20,
+                  padding: 15,
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  borderRadius: 10,
+                  border: '1px solid rgba(59, 130, 246, 0.3)'
+                }}>
+                  <h4 style={{ color: '#3b82f6', margin: '0 0 15px 0' }}>📦 Import / Export</h4>
+                  
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 15 }}>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(`${API}/category-transfer/export/download`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                          });
+                          if (res.ok) {
+                            const blob = await res.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `infopilot_categories_${new Date().toISOString().split('T')[0]}.json`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            window.URL.revokeObjectURL(url);
+                            showToast('Categories exported!', 'success');
+                          }
+                        } catch (e) {
+                          showToast('Export failed', 'error');
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        minWidth: 120,
+                        padding: '10px 16px',
+                        background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                        border: 'none',
+                        borderRadius: 8,
+                        color: '#fff',
+                        cursor: 'pointer',
+                        fontWeight: 600
+                      }}
+                      data-testid="export-categories-btn"
+                    >
+                      📥 Export JSON
+                    </button>
+                    
+                    <label
+                      style={{
+                        flex: 1,
+                        minWidth: 120,
+                        padding: '10px 16px',
+                        background: 'rgba(16, 185, 129, 0.2)',
+                        border: '1px solid rgba(16, 185, 129, 0.5)',
+                        borderRadius: 8,
+                        color: '#10b981',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        textAlign: 'center'
+                      }}
+                    >
+                      📤 Import JSON
+                      <input
+                        type="file"
+                        accept=".json"
+                        style={{ display: 'none' }}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          
+                          try {
+                            const content = await file.text();
+                            const data = JSON.parse(content);
+                            
+                            const res = await fetch(`${API}/category-transfer/import?merge_strategy=merge`, {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token}`
+                              },
+                              body: JSON.stringify(data)
+                            });
+                            
+                            const result = await res.json();
+                            
+                            if (res.ok) {
+                              showToast(result.message || 'Import successful!', 'success');
+                              fetchCategories();
+                            } else {
+                              showToast(result.detail || 'Import failed', 'error');
+                            }
+                          } catch (err) {
+                            showToast('Invalid JSON file', 'error');
+                          }
+                          e.target.value = '';
+                        }}
+                        data-testid="import-categories-input"
+                      />
+                    </label>
+                  </div>
+                  
+                  <p style={{ color: '#71717a', fontSize: '0.75rem', margin: 0 }}>
+                    💡 Export your categories to share with others or backup. Import will merge with existing categories.
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
