@@ -1622,5 +1622,4 @@ async def sync_public_categories_to_marketplace(user = Depends(get_current_user)
     }
 
 
-# Import timedelta at the top
-from datetime import timedelta
+ 
