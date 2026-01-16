@@ -86,6 +86,8 @@ const MainApp = () => {
         return <PersonalReportsPage showToast={showToast} onBack={() => setCurrentPage('settings')} />;
       case 'wallet':
         return <PayPalWalletPage showToast={showToast} onBack={() => setCurrentPage('settings')} />;
+      case 'legal':
+        return <LegalPage showToast={showToast} />;
       default:
         return <UltimateSearchPage showToast={showToast} />;
     }
