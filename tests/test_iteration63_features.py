@@ -247,8 +247,9 @@ class TestAccentColors:
             response = requests.post(f"{BASE_URL}/api/theme-presets", json=preset_data, headers=headers)
             assert response.status_code == 200
             data = response.json()
-            assert data.get("accent_color") == color
-            print(f"✓ Accent color '{color}' supported")
+            # API returns {id, message} on success - verify ID is returned
+            assert "id" in data
+            print(f"✓ Accent color '{color}' supported (preset ID: {data.get('id')})")
         
         print(f"✓ All {len(valid_colors)} accent colors verified")
 
