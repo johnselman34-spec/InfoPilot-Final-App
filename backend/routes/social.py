@@ -1174,7 +1174,7 @@ async def delete_post(post_id: str, user = Depends(get_current_user)):
             filepath = os.path.join(UPLOAD_DIR, filename)
             if os.path.exists(filepath):
                 os.remove(filepath)
-        except:
+        except Exception:
             pass
     
     # Delete comments
