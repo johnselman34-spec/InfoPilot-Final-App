@@ -162,6 +162,74 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     showToast(`📊 Exported ${exportData.length} results as ${format.toUpperCase()}!`, 'success');
   };
 
+  // AI Intelligent Search for Map
+  const aiSearchForMap = async () => {
+    if (!aiSearchQuery.trim()) {
+      showToast('Please enter a search query', 'error');
+      return;
+    }
+    
+    setAiSearchLoading(true);
+    
+    try {
+      const res = await fetch(`${API}/ai-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ 
+          query: aiSearchQuery,
+          mode: aiSearchMode,
+          auto_categorize: true
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`🤖 ${data.message}`, 'success');
+        // Refresh map to show new results
+        fetchMapResults(true);
+      } else {
+        const error = await res.json();
+        showToast(error.detail || 'AI Search failed', 'error');
+      }
+    } catch (e) {
+      showToast('AI Search failed', 'error');
+    }
+    
+    setAiSearchLoading(false);
+  };
+
+  // Auto-Categorize Search for Map
+  const autoCategorizeSearc = async () => {
+    if (!aiSearchQuery.trim()) {
+      showToast('Please enter a search query', 'error');
+      return;
+    }
+    
+    setAiSearchLoading(true);
+    
+    try {
+      const res = await fetch(`${API}/auto-categorize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ query: aiSearchQuery })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`🎯 ${data.message}`, 'success');
+        // Refresh map to show new results
+        fetchMapResults(true);
+      } else {
+        const error = await res.json();
+        showToast(error.detail || 'Auto-categorization failed', 'error');
+      }
+    } catch (e) {
+      showToast('Auto-categorization failed', 'error');
+    }
+    
+    setAiSearchLoading(false);
+  };
+
   useEffect(() => {
     fetchMapResults();
   }, [fetchMapResults]);
