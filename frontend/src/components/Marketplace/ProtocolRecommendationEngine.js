@@ -110,12 +110,19 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
   }, [userProtocols]);
   
   useEffect(() => {
-    fetchUserProtocols().then(() => setLoading(false));
+    const loadData = async () => {
+      await fetchUserProtocols();
+      setLoading(false);
+    };
+    loadData();
   }, [fetchUserProtocols]);
   
   useEffect(() => {
-    generateAiInsights();
-  }, [generateAiInsights]);
+    // Generate insights when userProtocols changes
+    if (!loading) {
+      generateAiInsights();
+    }
+  }, [generateAiInsights, loading]);
   
   // Get recommendations for selected category
   const currentRecommendations = AI_PROTOCOL_TEMPLATES.find(t => t.category === selectedCategory)?.protocols || [];
