@@ -24,6 +24,16 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
   // Legal documents state
   const [showLegal, setShowLegal] = useState(null);
   const [legalContent, setLegalContent] = useState('');
+  
+  // Category Management state
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [editCategoryName, setEditCategoryName] = useState('');
+  const [editProtocol, setEditProtocol] = useState('');
+  const [editIsPublic, setEditIsPublic] = useState(false);
+  const [editPrice, setEditPrice] = useState('');
 
   // Check if user has password on mount
   useEffect(() => {
@@ -40,6 +50,31 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
     };
     checkPassword();
   }, [token]);
+  
+  // Fetch categories
+  const fetchCategories = async () => {
+    setCategoriesLoading(true);
+    try {
+      const res = await fetch(`${API}/categories`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCategories(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch categories');
+    }
+    setCategoriesLoading(false);
+  };
+  
+  // Fetch categories when showing manager
+  useEffect(() => {
+    if (showCategoryManager) {
+      fetchCategories();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCategoryManager]);
   
   // Fetch admin promo settings
   useEffect(() => {
@@ -140,6 +175,155 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
       showToast('Failed to change password', 'error');
     }
     setPasswordLoading(false);
+  };
+  
+  // Category Management Functions
+  const handleEditCategory = (cat) => {
+    setEditingCategory(cat);
+    setEditCategoryName(cat.name);
+    setEditProtocol(cat.protocol || '');
+    setEditIsPublic(cat.is_public || false);
+    setEditPrice(cat.price || '');
+  };
+  
+  const saveCategory = async () => {
+    if (!editingCategory) return;
+    
+    try {
+      const res = await fetch(`${API}/categories/${editingCategory.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: editCategoryName,
+          protocol: editProtocol,
+          is_public: editIsPublic,
+          price: editPrice ? parseFloat(editPrice) : 0
+        })
+      });
+      
+      if (res.ok) {
+        showToast('Category updated successfully!', 'success');
+        setEditingCategory(null);
+        fetchCategories();
+      } else {
+        const data = await res.json();
+        showToast(data.detail || 'Failed to update category', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to update category', 'error');
+    }
+  };
+  
+  const deleteCategory = async (categoryId) => {
+    const cat = categories.find(c => c.id === categoryId);
+    const childCount = categories.filter(c => c.parent_id === categoryId).length;
+    
+    const confirmMsg = childCount > 0 
+      ? `Delete "${cat?.name}" and its ${childCount} sub-categor${childCount === 1 ? 'y' : 'ies'}? This cannot be undone!`
+      : `Delete "${cat?.name}"? This cannot be undone!`;
+    
+    if (!window.confirm(confirmMsg)) return;
+    
+    try {
+      const res = await fetch(`${API}/categories/${categoryId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        showToast('Category deleted successfully!', 'success');
+        setEditingCategory(null);
+        fetchCategories();
+      } else {
+        const data = await res.json();
+        showToast(data.detail || 'Failed to delete category', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to delete category', 'error');
+    }
+  };
+  
+  // Build category tree with indentation
+  const buildCategoryTree = (cats, parentId = null, level = 0) => {
+    return cats
+      .filter(cat => cat.parent_id === parentId)
+      .map(cat => {
+        const childCount = cats.filter(c => c.parent_id === cat.id).length;
+        return (
+          <div key={cat.id}>
+            <div
+              style={{
+                padding: '10px 12px',
+                marginLeft: level * 20,
+                marginBottom: 6,
+                background: editingCategory?.id === cat.id 
+                  ? 'rgba(124, 58, 237, 0.2)' 
+                  : 'rgba(30, 20, 50, 0.4)',
+                borderRadius: 8,
+                border: editingCategory?.id === cat.id 
+                  ? '1px solid rgba(124, 58, 237, 0.5)' 
+                  : '1px solid rgba(255,255,255,0.05)',
+                cursor: 'pointer'
+              }}
+              onClick={() => handleEditCategory(cat)}
+              data-testid={`settings-category-${cat.id}`}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ 
+                    color: cat.is_public ? '#10b981' : '#e2e8f0',
+                    fontWeight: 500
+                  }}>
+                    {cat.name}
+                  </span>
+                  {childCount > 0 && (
+                    <span style={{ fontSize: '0.7rem', color: '#a78bfa', background: 'rgba(124, 58, 237, 0.2)', padding: '2px 6px', borderRadius: 4 }}>
+                      {childCount} sub
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {cat.is_public && (
+                    <span style={{ fontSize: '0.65rem', color: '#10b981', padding: '2px 6px', background: 'rgba(16,185,129,0.2)', borderRadius: 4 }}>
+                      Public
+                    </span>
+                  )}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteCategory(cat.id); }}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.2)',
+                      border: '1px solid rgba(239, 68, 68, 0.3)',
+                      color: '#ef4444',
+                      padding: '4px 8px',
+                      borderRadius: 4,
+                      fontSize: '0.7rem',
+                      cursor: 'pointer'
+                    }}
+                    data-testid={`delete-category-settings-${cat.id}`}
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+              {cat.protocol && (
+                <div style={{ 
+                  fontSize: '0.7rem', 
+                  color: '#71717a', 
+                  marginTop: 4, 
+                  fontFamily: 'monospace',
+                  wordBreak: 'break-all'
+                }}>
+                  {cat.protocol.length > 50 ? cat.protocol.substring(0, 50) + '...' : cat.protocol}
+                </div>
+              )}
+            </div>
+            {buildCategoryTree(cats, cat.id, level + 1)}
+          </div>
+        );
+      });
   };
 
   return (
