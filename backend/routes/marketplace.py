@@ -813,6 +813,31 @@ async def get_seller_dashboard(user = Depends(get_current_user)):
     }
 
 
+@router.get("/my-protocols", response_model=dict)
+async def get_my_protocols(user = Depends(get_current_user)):
+    """Get all protocols created by the current user for the ProtocolRecommendationEngine"""
+    user_id = str(user["_id"])
+    
+    # Get all protocols by this user
+    protocols = await db.marketplace_protocols.find({"creator_id": user_id}).to_list(1000)
+    
+    result = []
+    for p in protocols:
+        result.append({
+            "id": str(p["_id"]),
+            "name": p.get("name", ""),
+            "description": p.get("description", ""),
+            "price": p.get("price", 0),
+            "category": p.get("category", "General"),
+            "total_sales": p.get("total_sales", 0),
+            "rating": p.get("rating", 0),
+            "status": p.get("status", "active"),
+            "created_at": p.get("created_at", datetime.utcnow()).isoformat()
+        })
+    
+    return result
+
+
 # ==================== SUBSCRIPTION ====================
 
 @router.post("/subscription", response_model=dict)
