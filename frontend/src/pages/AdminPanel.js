@@ -70,6 +70,59 @@ const AdminPanel = ({ showToast }) => {
     last_scheduled_send: null
   });
   const [testEmail, setTestEmail] = useState('');
+  
+  // AI Newsletter Optimization state
+  const [aiOptimization, setAiOptimization] = useState(null);
+  const [aiOptLoading, setAiOptLoading] = useState(false);
+
+  const fetchAIOptimization = async () => {
+    setAiOptLoading(true);
+    try {
+      const res = await fetch(`${API}/api/admin/newsletter/ai-optimize`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiOptimization(data);
+        if (data.success) {
+          showToast('🤖 AI optimization analysis complete!', 'success');
+        }
+      }
+    } catch (e) {
+      console.error('AI optimization fetch failed:', e);
+    }
+    setAiOptLoading(false);
+  };
+
+  const applyAISchedule = async () => {
+    if (!aiOptimization?.ai_recommendations) {
+      showToast('No AI recommendations available', 'error');
+      return;
+    }
+    
+    try {
+      const res = await fetch(`${API}/api/admin/newsletter/apply-ai-schedule`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ recommendations: aiOptimization.ai_recommendations })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          showToast('🤖 AI-optimized schedule applied!', 'success');
+          fetchNewsletterSchedule();
+        } else {
+          showToast(data.error || 'Failed to apply schedule', 'error');
+        }
+      }
+    } catch (e) {
+      showToast('Error applying AI schedule', 'error');
+    }
+  };
 
   const generateNewsletter = async () => {
     setNewsletterLoading(true);
