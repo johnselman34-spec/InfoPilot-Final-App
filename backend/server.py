@@ -1047,9 +1047,10 @@ async def auto_categorize_search(request: dict, user = Depends(get_current_user_
             "snippet": r.get("snippet", ""),
             "article_type": r.get("article_type", "Unknown"),
             "root_domain": r.get("root_domain", ""),
-            "match_score": r.get("match_score", 0),
+            "match_score": round(r.get("match_score", 0) * 100, 1),  # Convert to percentage
             "categories": r.get("categories", []),
-            "category_ids": r.get("category_ids", [])
+            "category_ids": r.get("category_ids", []),
+            "categories_count": len(r.get("categories", []))
         })
     
     # Build category summary
@@ -1065,7 +1066,14 @@ async def auto_categorize_search(request: dict, user = Depends(get_current_user_
         "categories_matched": len(category_matches),
         "category_summary": categories_summary,
         "batch_id": batch_id,
-        "message": f"Auto-categorized {len(formatted)} results across {len(category_matches)} categories!"
+        "deep_search_stats": {
+            "queries_executed": len(all_search_queries),
+            "total_results_found": len(all_raw_results),
+            "passed_strict_matching": len(matched_results),
+            "rejected": rejected_count,
+            "match_threshold": f"{match_threshold}%"
+        },
+        "message": f"🎯 Deep Auto-Categorize: {len(formatted)} high-quality results across {len(category_matches)} categories (from {len(all_raw_results)} searched)"
     }
 
 
