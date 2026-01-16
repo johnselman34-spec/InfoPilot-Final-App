@@ -350,7 +350,7 @@ const ProtocolShareCard = ({ protocol, showToast }) => {
               textAlign: 'center'
             }}>
               <p style={{ color: '#f472b6', margin: 0, fontSize: '0.8rem' }}>
-                📚 While you're sharing, check out <strong>"Letters to Evelyn"</strong> by John Selman!
+                📚 While sharing, check out Letters to Evelyn by John Selman!
                 <br />
                 <a 
                   href="https://www.amazon.com/Letters-Evelyn-John-Selman/dp/B0F3XFG14J/" 
