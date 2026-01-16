@@ -32,6 +32,7 @@ import StatisticsPage from './pages/StatisticsPage';
 import TutorialsPage from './pages/TutorialsPage';
 import PersonalReportsPage from './pages/PersonalReportsPage';
 import PayPalWalletPage from './pages/PayPalWalletPage';
+import LegalPage from './pages/LegalPage';
 
 // Fix Leaflet default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
