@@ -626,6 +626,61 @@ const AdminPanel = ({ showToast }) => {
                 style={{ width: 300 }}
               />
             </div>
+            
+            {/* Promotion Message for Users */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15))',
+              borderRadius: 12,
+              padding: 20,
+              marginTop: 25,
+              marginBottom: 25,
+              border: '2px solid rgba(245, 158, 11, 0.3)'
+            }}>
+              <h4 style={{ color: '#f59e0b', margin: '0 0 15px 0' }}>📢 Promotion Message (Shown Near Upgrade Button)</h4>
+              
+              <div className="admin-setting">
+                <label>Enable Promotion Message</label>
+                <input
+                  type="checkbox"
+                  checked={getSetting('show_upgrade_promo') !== false}
+                  onChange={(e) => updateSetting('show_upgrade_promo', e.target.checked)}
+                  style={{ width: 20, height: 20, accentColor: '#f59e0b' }}
+                />
+              </div>
+              
+              <div className="admin-setting">
+                <label>Promotion Title</label>
+                <input
+                  type="text"
+                  defaultValue={getSetting('upgrade_promo_title') || '⚠️ Limited Time Offer!'}
+                  onBlur={(e) => updateSetting('upgrade_promo_title', e.target.value)}
+                  style={{ width: '100%' }}
+                  placeholder="e.g., ⚠️ Limited Time Offer!"
+                />
+              </div>
+              
+              <div className="admin-setting">
+                <label>Promotion Message</label>
+                <textarea
+                  defaultValue={getSetting('upgrade_promo_message') || 'Pay As You Go pricing is available while supplies last! We are testing our business model to see if we can sustain this incredible platform. Google Maps API keys and AI Search subscriptions are expensive - your support helps keep InfoPilot running!'}
+                  onBlur={(e) => updateSetting('upgrade_promo_message', e.target.value)}
+                  style={{ width: '100%', minHeight: 100, resize: 'vertical' }}
+                  placeholder="Enter your promotional message..."
+                />
+              </div>
+              
+              <div style={{
+                background: 'rgba(0,0,0,0.3)',
+                borderRadius: 8,
+                padding: 12,
+                marginTop: 10
+              }}>
+                <p style={{ color: '#fbbf24', margin: 0, fontSize: '0.85rem' }}>
+                  💡 <strong>Preview:</strong> This message will appear near the Upgrade/Pay As You Go button to inform users about your business model and costs.
+                </p>
+              </div>
+            </div>
+            
             <div style={{ marginTop: 20, padding: 15, background: 'rgba(16, 185, 129, 0.1)', borderRadius: 10, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
               <p style={{ fontSize: '0.85rem', color: '#10b981' }}>
                 💡 Tips:<br/>
