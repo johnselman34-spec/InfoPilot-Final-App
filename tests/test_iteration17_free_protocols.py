@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://admin-search-hub-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://deep-search-app.preview.emergentagent.com')
 
 # Test credentials
 ADMIN_EMAIL = "jjspilot24@gmail.com"
