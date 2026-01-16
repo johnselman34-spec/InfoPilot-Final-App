@@ -138,8 +138,9 @@ class TestThemePresetAPI:
         like_response = requests.post(f"{BASE_URL}/api/theme-presets/{preset_id}/like", headers=headers)
         assert like_response.status_code == 200
         like_data = like_response.json()
-        assert "likes" in like_data
-        print(f"✓ Liked theme preset: {like_data.get('likes')} likes")
+        # API returns {liked: true/false} to indicate toggle state
+        assert "liked" in like_data
+        print(f"✓ Toggled like on theme preset: liked={like_data.get('liked')}")
     
     def test_delete_theme_preset(self, auth_token):
         """Test DELETE /api/theme-presets/{id} - delete own preset"""
