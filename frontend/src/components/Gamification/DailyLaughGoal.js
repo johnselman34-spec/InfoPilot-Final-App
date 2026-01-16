@@ -41,7 +41,7 @@ const DailyLaughGoal = ({ compact = false }) => {
   const fetchGoalData = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${API}/gamification/daily-laugh-goal`, {
+      const res = await fetch(`${API}/api/gamification/daily-laugh-goal`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
