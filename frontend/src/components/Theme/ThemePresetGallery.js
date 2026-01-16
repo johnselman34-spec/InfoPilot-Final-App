@@ -89,7 +89,7 @@ const ThemePresetGallery = ({ showToast, onClose }) => {
     }
 
     try {
-      const res = await fetch(`${API}/api/theme-presets/${presetId}/like`, {
+      const res = await fetch(`${API}/theme-presets/${presetId}/like`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
