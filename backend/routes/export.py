@@ -173,10 +173,10 @@ async def export_all_data(
     # Marketplace Listings
     listings = await db.marketplace_protocols.find({"creator_id": user_id}).to_list(500)
     export_data["marketplace"]["listings"] = [{
-        "id": str(l["_id"]),
-        "name": l["name"],
-        "description": l["description"],
-        "protocol": l["protocol"],
+        "id": str(listing["_id"]),
+        "name": listing["name"],
+        "description": listing["description"],
+        "protocol": listing["protocol"],
         "price": listing["price"],
         "total_sales": listing.get("total_sales", 0),
         "total_earnings": listing.get("creator_earnings", 0),
