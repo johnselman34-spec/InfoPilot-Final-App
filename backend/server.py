@@ -661,6 +661,81 @@ class ArticleClassifier:
         return matches
     
     @classmethod
+    def calculate_content_quality_score(cls, title: str, snippet: str, url: str = "") -> float:
+        """
+        Calculate a content quality score (0-100) to prioritize valuable, informative content.
+        Higher scores indicate more extensive, well-written, informative content.
+        
+        Scoring factors:
+        - Length of content (longer = more informative)
+        - Presence of authoritative domains
+        - Keywords indicating research/informative content
+        - Structure indicators (numbers, statistics, quotes)
+        """
+        score = 50.0  # Base score
+        
+        full_text = f"{title} {snippet}".lower()
+        text_length = len(full_text)
+        
+        # Length bonus (up to +20 points)
+        if text_length > 500:
+            score += 20
+        elif text_length > 300:
+            score += 15
+        elif text_length > 150:
+            score += 10
+        elif text_length > 75:
+            score += 5
+        
+        # Authoritative domain bonus (+10 points)
+        authoritative_domains = [
+            '.edu', '.gov', '.org', 'nature.com', 'science.org', 'springer.com',
+            'pubmed', 'ncbi.nlm.nih.gov', 'reuters.com', 'apnews.com', 'bbc.com',
+            'nytimes.com', 'washingtonpost.com', 'research', 'academic', 'journal',
+            'harvard', 'stanford', 'mit.edu', 'oxford', 'cambridge'
+        ]
+        url_lower = url.lower()
+        if any(domain in url_lower for domain in authoritative_domains):
+            score += 10
+        
+        # Research/informative keyword bonus (+15 points max)
+        informative_keywords = [
+            'study', 'research', 'analysis', 'report', 'findings', 'data',
+            'evidence', 'conclusion', 'methodology', 'experiment', 'results',
+            'statistics', 'survey', 'investigation', 'peer-reviewed', 'published',
+            'according to', 'experts say', 'scientists', 'researchers',
+            'comprehensive', 'in-depth', 'detailed', 'extensive', 'thorough'
+        ]
+        keyword_matches = sum(1 for kw in informative_keywords if kw in full_text)
+        score += min(15, keyword_matches * 3)
+        
+        # Structure indicators bonus (+10 points max)
+        # Numbers/statistics suggest data-driven content
+        number_count = len(re.findall(r'\d+(?:\.\d+)?%?', full_text))
+        if number_count >= 5:
+            score += 10
+        elif number_count >= 3:
+            score += 7
+        elif number_count >= 1:
+            score += 3
+        
+        # Credibility indicators (+5 points max)
+        credibility_terms = ['dr.', 'ph.d', 'professor', 'expert', 'official', 'confirmed']
+        if any(term in full_text for term in credibility_terms):
+            score += 5
+        
+        # Penalty for clickbait/low-quality indicators (-10 points max)
+        clickbait_terms = [
+            'you won\'t believe', 'shocking', 'click here', 'free money',
+            'miracle', 'secret revealed', 'one weird trick', 'doctors hate'
+        ]
+        if any(term in full_text for term in clickbait_terms):
+            score -= 10
+        
+        # Ensure score is between 0-100
+        return max(0, min(100, score))
+    
+    @classmethod
     def _count_i_outside_quotes(cls, text: str) -> tuple:
         """
         Count 'I' occurrences outside quotations and find longest paragraph with them.
