@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API } from '../../utils/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 
@@ -11,11 +11,7 @@ const RevenueForecastAdmin = ({ token, showToast }) => {
   const [forecast, setForecast] = useState(null);
   const [generating, setGenerating] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const summaryRes = await fetch(`${API}/revenue-forecast/summary`, {
@@ -29,7 +25,11 @@ const RevenueForecastAdmin = ({ token, showToast }) => {
       console.error('Failed to fetch revenue data:', e);
     }
     setLoading(false);
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const generateForecast = async () => {
     setGenerating(true);
