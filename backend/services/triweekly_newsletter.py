@@ -256,7 +256,7 @@ async def generate_triweekly_newsletter(time_slot: str = "morning") -> tuple[str
         
         <!-- CTA -->
         <div style="text-align:center;margin:25px 0;">
-            <a href="https://search-comments.preview.emergentagent.com/" 
+            <a href="https://insightshare-app.preview.emergentagent.com/" 
                style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#ec4899 100%);color:white;text-decoration:none;padding:15px 35px;border-radius:30px;font-weight:bold;font-size:16px;">
                 🔍 Start Searching Now!
             </a>
@@ -279,8 +279,8 @@ async def generate_triweekly_newsletter(time_slot: str = "morning") -> tuple[str
             </p>
             <p style="color:#52525b;font-size:10px;margin:10px 0 0 0;">
                 You're receiving this tri-weekly newsletter because you're awesome!<br/>
-                <a href="https://search-comments.preview.emergentagent.com/#settings" style="color:#7c3aed;">Manage preferences</a> | 
-                <a href="https://search-comments.preview.emergentagent.com/api/newsletter/unsubscribe" style="color:#7c3aed;">Unsubscribe</a>
+                <a href="https://insightshare-app.preview.emergentagent.com/#settings" style="color:#7c3aed;">Manage preferences</a> | 
+                <a href="https://insightshare-app.preview.emergentagent.com/api/newsletter/unsubscribe" style="color:#7c3aed;">Unsubscribe</a>
             </p>
         </div>
     </div>

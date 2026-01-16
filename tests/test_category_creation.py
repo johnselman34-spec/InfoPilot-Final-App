@@ -8,7 +8,7 @@ import requests
 import os
 import uuid
 
-BASE_URL = "https://search-comments.preview.emergentagent.com"
+BASE_URL = "https://insightshare-app.preview.emergentagent.com"
 
 # Test credentials
 ADMIN_EMAIL = "john@infojet.com"

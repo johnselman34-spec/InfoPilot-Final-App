@@ -5,7 +5,7 @@ Iteration 53 - Testing New Features:
 3. Personal Report (Organic) CRUD endpoints
 4. Quick Category Search filter in CollapsibleCategoryTree
 
-Backend URL: https://search-comments.preview.emergentagent.com
+Backend URL: https://insightshare-app.preview.emergentagent.com
 Admin credentials: jjspilot24@gmail.com / InfoPilot2024!
 """
 
@@ -15,7 +15,7 @@ import os
 import time
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://search-comments.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://insightshare-app.preview.emergentagent.com').rstrip('/')
 
 
 class TestHealthAndBasics:
