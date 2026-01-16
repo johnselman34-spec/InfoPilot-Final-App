@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import DailyLaughGoal from '../components/Gamification/DailyLaughGoal';
 import { LaughOMeterWidget, BadgeShowcase } from '../components/Gamification/LaughOMeter';
+import { EasterEggTracker } from '../components/Gamification/EasterEggTracker';
 
 const AchievementsPage = ({ showToast }) => {
   const { token, user } = useAuth();
