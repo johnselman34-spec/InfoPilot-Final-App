@@ -373,13 +373,13 @@ async def export_search_results(
         return StreamingResponse(
             io.BytesIO(output.getvalue().encode()),
             media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=infopilot_search_results.csv"}
+            headers={"Content-Disposition": "attachment; filename=infopilot_search_results.csv"}
         )
     
     return StreamingResponse(
         io.BytesIO(json.dumps(data, indent=2, default=str).encode()),
         media_type="application/json",
-        headers={"Content-Disposition": f"attachment; filename=infopilot_search_results.json"}
+        headers={"Content-Disposition": "attachment; filename=infopilot_search_results.json"}
     )
 
 
