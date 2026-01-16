@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
+import { UserAgreement, PrivacyStatement } from '../components/Legal';
 
 const RegisterPage = ({ onSwitch }) => {
   const { register } = useAuth();
