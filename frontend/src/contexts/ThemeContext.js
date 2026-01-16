@@ -145,8 +145,8 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-// Theme Toggle Button Component (combines dark mode + accent color)
-export const ThemeToggle = ({ compact = false, showColorPicker = false }) => {
+// Theme Toggle Button Component (combines dark mode + accent color + gallery)
+export const ThemeToggle = ({ compact = false, showColorPicker = false, onOpenGallery, onOpenPreview }) => {
   const { isDarkMode, toggleDarkMode, accentColor, changeAccentColor, accentColors, currentAccent } = useTheme();
   const [showColors, setShowColors] = useState(false);
   
