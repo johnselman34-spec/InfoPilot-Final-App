@@ -795,11 +795,11 @@ const MapPage = ({ showToast, setCurrentPage }) => {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 url={mapStyle.tileUrl || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
               />
-              {mapResults.slice(0, 50).map((result, idx) => (
+              {filteredMapResults.slice(0, 50).map((result, idx) => (
                 <Marker
                   key={result.id || `marker-${idx}`}
                   position={[result.latitude, result.longitude]}
-                  icon={createCustomIcon(getMarkerColor(result.article_type))}
+                  icon={createCustomIcon(selectedCategories.length > 0 ? getResultCategoryColor(result) : getMarkerColor(result.article_type))}
                   eventHandlers={{
                     click: () => handleMarkerClick(result),
                     mouseover: (e) => handleMarkerHover(result, e),
