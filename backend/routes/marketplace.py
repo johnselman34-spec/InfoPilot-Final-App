@@ -1037,7 +1037,7 @@ async def get_payout_batch(user = Depends(get_current_user)):
     # Find all users ready for payout
     ready_users = await db.users.find({
         "accumulated_earnings": {"$gte": PAYPAL_MIN_PAYOUT},
-        "paypal_email": {"$exists": True, "$ne": None, "$ne": ""}
+        "paypal_email": {"$exists": True, "$nin": [None, ""]}
     }).to_list(1000)
     
     batch = []
