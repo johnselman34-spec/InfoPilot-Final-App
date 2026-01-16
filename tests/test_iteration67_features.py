@@ -226,19 +226,30 @@ class TestSettingsEndpoints:
             return response.json().get("token")
         pytest.skip("Authentication failed")
     
-    def test_get_user_settings(self, auth_token):
-        """Test getting user settings"""
+    @pytest.fixture
+    def user_id(self, auth_token):
+        """Get user ID from auth response"""
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": ADMIN_EMAIL,
+            "password": ADMIN_PASSWORD
+        })
+        if response.status_code == 200:
+            return response.json().get("user", {}).get("id")
+        pytest.skip("Could not get user ID")
+    
+    def test_get_user_profile(self, auth_token, user_id):
+        """Test getting user profile"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.get(f"{BASE_URL}/api/users/me", headers=headers)
+        response = requests.get(f"{BASE_URL}/api/users/{user_id}/profile", headers=headers)
         assert response.status_code == 200
         data = response.json()
-        print(f"✓ User settings endpoint working")
+        print(f"✓ User profile endpoint working: {data.get('username')}")
     
     def test_update_user_settings(self, auth_token):
         """Test updating user settings"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.put(f"{BASE_URL}/api/users/me", headers=headers, json={
-            "bio": "Test bio update from iteration 67"
+        response = requests.put(f"{BASE_URL}/api/users/settings", headers=headers, json={
+            "content_filter": "moderate"
         })
         assert response.status_code == 200
         print(f"✓ User settings update working")
