@@ -28,7 +28,7 @@ async def send_dm_push_notification(recipient_id: str, sender_name: str, message
         import json
         
         VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")
-        VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "BNbxGYNMhEIi9RHkdj8mOJQq2X3e5_gYpLMgYbZ3Y4qLk_ZMHR8f_4T_Kp0vKqZJhJxN0TqB5Fq8K4LfWqRd9Hs")
+        # VAPID_PUBLIC_KEY used by client, private key used for signing
         VAPID_CLAIMS = {"sub": "mailto:admin@infopilot.com"}
         
         # Get user's push subscription
