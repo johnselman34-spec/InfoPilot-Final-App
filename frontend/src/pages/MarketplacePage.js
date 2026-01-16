@@ -5,24 +5,16 @@ import { Icons, ProtocolCopyButtons, AISuggestions } from '../components/shared'
 import ProtocolAnalyticsDashboard from '../components/Admin/ProtocolAnalyticsDashboard';
 import ProtocolBundlesSection from '../components/Marketplace/ProtocolBundlesSection';
 import BundleOfTheWeek from '../components/Marketplace/BundleOfTheWeek';
-// Import refactored components from Marketplace library
+// Import shared constants and reusable components from Marketplace library
 import { 
   FREE_MESSAGES, 
   CATEGORY_COLORS, 
   LOCATIONS,
-  FreeBanner, 
-  WorldWideMap, 
-  CategoryTree,
-  RevenueInfo,
-  ProtocolCard, 
-  CategoryFilter, 
-  ProtocolStats 
+  FreeBanner,
+  RevenueInfo
 } from '../components/Marketplace/MarketplaceComponents';
-import SellForm from '../components/Marketplace/SellForm';
-import SellerDashboard from '../components/Marketplace/SellerDashboard';
 
-// Main Component
-const MarketplacePage = ({ showToast }) => {
+// Local sub-components (keeping inline for now - these have specific behavior for this page)
   const { token, user } = useAuth();
   const [protocols, setProtocols] = useState([]);
   const [loading, setLoading] = useState(true);
