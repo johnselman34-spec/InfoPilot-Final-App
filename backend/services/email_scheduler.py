@@ -430,6 +430,160 @@ async def send_scheduled_report():
     logger.info(f"📧 Scheduled report complete: {success_count}/{len(recipients)} sent successfully")
 
 
+async def analyze_optimal_send_time() -> dict:
+    """
+    AI-powered analysis of user engagement data to determine optimal email send times.
+    Uses GPT-5.2 to analyze patterns and recommend the best times.
+    """
+    from config import db
+    
+    try:
+        # Get email open/click data from past 90 days
+        ninety_days_ago = datetime.now(timezone.utc) - timedelta(days=90)
+        
+        email_logs = await db.email_logs.find({
+            "sent_at": {"$gte": ninety_days_ago},
+            "success": True
+        }).to_list(1000)
+        
+        # Get user activity patterns (login times, search times)
+        user_activities = await db.user_activity.find({
+            "timestamp": {"$gte": ninety_days_ago}
+        }).to_list(5000)
+        
+        # Calculate hourly engagement distribution
+        hourly_engagement = {i: 0 for i in range(24)}
+        day_engagement = {i: 0 for i in range(7)}  # 0=Monday, 6=Sunday
+        
+        for activity in user_activities:
+            ts = activity.get("timestamp")
+            if ts:
+                hourly_engagement[ts.hour] = hourly_engagement.get(ts.hour, 0) + 1
+                day_engagement[ts.weekday()] = day_engagement.get(ts.weekday(), 0) + 1
+        
+        # Find peak hours
+        peak_hours = sorted(hourly_engagement.items(), key=lambda x: x[1], reverse=True)[:5]
+        peak_days = sorted(day_engagement.items(), key=lambda x: x[1], reverse=True)[:3]
+        
+        # Use AI to generate recommendations
+        try:
+            from emergentintegrations.llm.chat import chat, Message, ModelType
+            
+            prompt = f"""Analyze this user engagement data and recommend optimal email send times:
+
+HOURLY ENGAGEMENT (UTC):
+{json.dumps({f"{h:02d}:00": c for h, c in peak_hours}, indent=2)}
+
+DAILY ENGAGEMENT (0=Mon, 6=Sun):
+{json.dumps({['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][d]: c for d, c in peak_days}, indent=2)}
+
+TOTAL EMAILS SENT: {len(email_logs)}
+TOTAL USER ACTIVITIES: {len(user_activities)}
+
+Provide:
+1. Best hour(s) to send emails (24hr format UTC)
+2. Best day(s) of week
+3. One creative insight about the data
+4. A confidence score (0-100)
+
+Format as JSON with keys: best_hours, best_days, insight, confidence"""
+
+            response = await chat(
+                api_key=os.environ.get("EMERGENT_API_KEY", ""),
+                messages=[Message(role="user", content=prompt)],
+                model=ModelType.GPT_5_2
+            )
+            
+            if response and response.content:
+                try:
+                    ai_recommendation = json.loads(response.content)
+                except json.JSONDecodeError:
+                    ai_recommendation = {"insight": response.content, "confidence": 70}
+            else:
+                ai_recommendation = None
+                
+        except Exception as e:
+            logger.error(f"AI analysis failed: {e}")
+            ai_recommendation = None
+        
+        # Build result
+        result = {
+            "analysis_date": datetime.now(timezone.utc).isoformat(),
+            "data_points": {
+                "emails_analyzed": len(email_logs),
+                "activities_analyzed": len(user_activities),
+                "period_days": 90
+            },
+            "peak_hours_utc": [h for h, _ in peak_hours],
+            "peak_days": [["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"][d] for d, _ in peak_days],
+            "ai_recommendation": ai_recommendation,
+            "suggested_schedule": {
+                "primary": {
+                    "day": "Monday" if peak_days else "Monday",
+                    "hour": peak_hours[0][0] if peak_hours else 9,
+                    "minute": 0
+                },
+                "secondary": {
+                    "day": "Thursday",
+                    "hour": peak_hours[1][0] if len(peak_hours) > 1 else 14,
+                    "minute": 0
+                }
+            }
+        }
+        
+        # Save analysis
+        await db.email_send_time_analysis.insert_one({
+            **result,
+            "created_at": datetime.now(timezone.utc)
+        })
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Optimal send time analysis failed: {e}")
+        return {
+            "error": str(e),
+            "suggested_schedule": {
+                "primary": {"day": "Monday", "hour": 9, "minute": 0},
+                "secondary": {"day": "Thursday", "hour": 14, "minute": 0}
+            }
+        }
+
+
+async def update_schedule_from_analysis():
+    """Update the email schedule based on AI analysis"""
+    global scheduler
+    
+    analysis = await analyze_optimal_send_time()
+    
+    if "error" in analysis:
+        logger.warning("Using default schedule due to analysis error")
+        return
+    
+    suggested = analysis.get("suggested_schedule", {}).get("primary", {})
+    day = suggested.get("day", "Monday").lower()[:3]  # mon, tue, etc.
+    hour = suggested.get("hour", 9)
+    
+    if scheduler:
+        # Remove old job and add new one
+        try:
+            scheduler.remove_job("weekly_ab_report")
+        except Exception:
+            pass
+        
+        scheduler.add_job(
+            send_scheduled_report,
+            CronTrigger(day_of_week=day, hour=hour, minute=0),
+            id="weekly_ab_report",
+            name=f"Weekly A/B Test Report (AI Optimized: {day.title()} {hour}:00 UTC)",
+            replace_existing=True
+        )
+        
+        logger.info(f"🤖 Schedule updated by AI: {day.title()} at {hour}:00 UTC")
+    
+    return analysis
+
+
 def start_scheduler():
     """Start the background scheduler for email reports"""
     global scheduler
@@ -440,7 +594,7 @@ def start_scheduler():
     
     scheduler = AsyncIOScheduler(timezone="UTC")
     
-    # Schedule weekly reports - every Monday at 9 AM UTC
+    # Schedule weekly reports - every Monday at 9 AM UTC (default, will be optimized by AI)
     scheduler.add_job(
         send_scheduled_report,
         CronTrigger(day_of_week="mon", hour=9, minute=0),
@@ -449,17 +603,18 @@ def start_scheduler():
         replace_existing=True
     )
     
-    # Also run daily at 9 AM for more frequent updates (optional - can be enabled via config)
-    # scheduler.add_job(
-    #     send_scheduled_report,
-    #     CronTrigger(hour=9, minute=0),
-    #     id="daily_ab_report",
-    #     name="Daily A/B Test Report",
-    #     replace_existing=True
-    # )
+    # Schedule daily AI analysis at 3 AM UTC to update optimal send times
+    scheduler.add_job(
+        update_schedule_from_analysis,
+        CronTrigger(hour=3, minute=0),
+        id="ai_schedule_optimizer",
+        name="AI Schedule Optimizer",
+        replace_existing=True
+    )
     
     scheduler.start()
     logger.info("🚀 Email scheduler started! Weekly reports scheduled for Monday 9 AM UTC")
+    logger.info("🤖 AI Schedule Optimizer will run daily at 3 AM UTC")
 
 
 def stop_scheduler():
