@@ -6,6 +6,7 @@ import NotificationBell from './NotificationBell';
 
 const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
   const { user, logout } = useAuth();
+  const { isDarkMode } = useDarkMode();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
@@ -124,6 +125,11 @@ const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
           <div className="sidebar-nav-item" onClick={logout} style={{ marginTop: 'auto' }} data-testid="logout-btn">
             <Icons.LogOut />
             Logout
+          </div>
+          
+          {/* Dark Mode Toggle */}
+          <div style={{ padding: '10px 0', borderTop: '1px solid rgba(124, 58, 237, 0.2)', marginTop: 10 }}>
+            <DarkModeToggle />
           </div>
         </nav>
 
