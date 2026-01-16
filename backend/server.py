@@ -1361,21 +1361,24 @@ Return ONLY a JSON array of 3 strings, no other text:
             "article_type": r.get("article_type", "Unknown"),
             "root_domain": r.get("root_domain", ""),
             "match_score": r.get("match_score", 0),
+            "groups_matched": r.get("groups_matched", 0),
             "categories": r.get("categories", []),
             "category_ids": r.get("category_ids", []),
+            "auto_collated": r.get("should_auto_collate", False),
             "search_engine": r.get("source", "multi-engine")
         })
     
     return {
         "results": formatted,
         "total": len(formatted),
+        "auto_collated_count": auto_collated_count,
         "original_query": original_query,
         "expanded_queries": expanded_queries,
         "ai_suggestions": ai_suggestions,
         "batch_id": batch_id,
         "search_mode": search_mode,
         "auto_categorized": auto_categorize,
-        "message": f"🤖 AI Search found {len(formatted)} results using {len(expanded_queries)} optimized queries!"
+        "message": f"🤖 AI Search found {len(formatted)} results, auto-collated {auto_collated_count} to categories!"
     }
 
 
