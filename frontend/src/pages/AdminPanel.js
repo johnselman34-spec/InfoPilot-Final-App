@@ -1384,7 +1384,7 @@ const EmailReportsTab = ({ token, showToast }) => {
   const [preview, setPreview] = useState(null);
   const [testRecipient, setTestRecipient] = useState('jjspilot24@gmail.com');
 
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     try {
       const res = await fetch(`${API}/email-reports/status`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -1404,9 +1404,9 @@ const EmailReportsTab = ({ token, showToast }) => {
     } catch (e) {
       console.error('Failed to fetch email status:', e);
     }
-  };
+  }, [token]);
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       const res = await fetch(`${API}/email-reports/history`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -1418,7 +1418,7 @@ const EmailReportsTab = ({ token, showToast }) => {
     } catch (e) {
       console.error('Failed to fetch email history:', e);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     const loadData = async () => {
