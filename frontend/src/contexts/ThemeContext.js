@@ -298,6 +298,56 @@ export const ThemeToggle = ({ compact = false, showColorPicker = false, onOpenGa
           )}
         </div>
       )}
+      
+      {/* Theme Gallery & Preview Buttons */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        {onOpenGallery && (
+          <button
+            onClick={onOpenGallery}
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              padding: '8px 12px',
+              background: `linear-gradient(135deg, ${currentAccent.hover}, ${currentAccent.hover})`,
+              border: `1px solid ${currentAccent.border}`,
+              borderRadius: 8,
+              cursor: 'pointer',
+              color: currentAccent.primary,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+            }}
+            data-testid="open-theme-gallery"
+          >
+            🎨 Gallery
+          </button>
+        )}
+        {onOpenPreview && (
+          <button
+            onClick={onOpenPreview}
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+              padding: '8px 12px',
+              background: `linear-gradient(135deg, ${currentAccent.hover}, ${currentAccent.hover})`,
+              border: `1px solid ${currentAccent.border}`,
+              borderRadius: 8,
+              cursor: 'pointer',
+              color: currentAccent.primary,
+              fontSize: '0.75rem',
+              fontWeight: 600,
+            }}
+            data-testid="open-theme-preview"
+          >
+            👁️ Preview
+          </button>
+        )}
+      </div>
     </div>
   );
 };
