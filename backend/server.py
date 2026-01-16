@@ -2913,6 +2913,7 @@ async def update_user_settings(
     ultimate_search_public: Optional[bool] = Body(None),
     friends_visible: Optional[bool] = Body(None),
     callsign: Optional[str] = Body(None),
+    content_filter: Optional[str] = Body(None),  # "strict", "moderate", "off"
     user = Depends(get_current_user_local)
 ):
     """Update user settings"""
@@ -2924,6 +2925,8 @@ async def update_user_settings(
         update_data["friends_visible"] = friends_visible
     if callsign is not None:
         update_data["callsign"] = callsign
+    if content_filter is not None and content_filter in ["strict", "moderate", "off"]:
+        update_data["content_filter"] = content_filter
     
     if update_data:
         await db.users.update_one({"_id": user["_id"]}, {"$set": update_data})
