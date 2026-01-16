@@ -165,24 +165,24 @@ class TestAuthenticationAndCategories:
         """Test updating a category"""
         headers = {"Authorization": f"Bearer {auth_token}"}
         
-        # First create a category
+        # First create a category with proper protocol format
         create_response = requests.post(f"{BASE_URL}/api/categories", 
                                        headers=headers, 
                                        json={
                                            "name": "TEST_Update_Category",
-                                           "protocol": "test update",
+                                           "protocol": "(test or update)",
                                            "is_public": False
                                        })
         
         if create_response.status_code not in [200, 201]:
-            pytest.skip("Could not create category for update test")
+            pytest.skip(f"Could not create category for update test: {create_response.text}")
         
         category_id = create_response.json().get("id") or create_response.json().get("_id")
         
         # Update the category
         update_data = {
             "name": "TEST_Updated_Category_Name",
-            "protocol": "(updated OR test) & protocol",
+            "protocol": "(updated or test)",
             "is_public": True,
             "price": 0
         }
