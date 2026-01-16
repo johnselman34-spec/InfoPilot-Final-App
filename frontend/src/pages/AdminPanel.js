@@ -275,14 +275,14 @@ const AdminPanel = ({ showToast }) => {
       </div>
       <div className="admin-panel-content">
         <div className="tabs">
-          {['general', 'search', 'pricing', 'newsletter', 'users', 'moderation', 'price-controls', 'doctype-settings', 'category-analytics', 'clean-categories', 'content', 'polls', 'ab-testing', 'optimizer', 'forecast', 'protocol-forecast', 'email-reports', 'tutorials'].map(tab => (
+          {['general', 'search', 'pricing', 'newsletter', 'users', 'moderation', 'price-controls', 'doctype-settings', 'category-analytics', 'quality-analytics', 'clean-categories', 'content', 'polls', 'ab-testing', 'optimizer', 'forecast', 'protocol-forecast', 'email-reports', 'tutorials'].map(tab => (
             <div
               key={tab}
               className={`tab ${activeTab === tab ? 'active' : ''}`}
               onClick={() => setActiveTab(tab)}
               data-testid={`admin-tab-${tab}`}
             >
-              {tab === 'ab-testing' ? 'A/B Testing' : tab === 'email-reports' ? 'Email Reports' : tab === 'tutorials' ? '🎬 Tutorials' : tab === 'optimizer' ? '🤖 Optimizer' : tab === 'forecast' ? '📈 Forecast' : tab === 'protocol-forecast' ? '🔮 Protocol Forecast' : tab === 'moderation' ? '🛡️ Moderation' : tab === 'price-controls' ? '💰 Price Controls' : tab === 'doctype-settings' ? '📄 Doc Types' : tab === 'category-analytics' ? '📊 Cat Analytics' : tab === 'clean-categories' ? '🧹 Clean' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'ab-testing' ? 'A/B Testing' : tab === 'email-reports' ? 'Email Reports' : tab === 'tutorials' ? '🎬 Tutorials' : tab === 'optimizer' ? '🤖 Optimizer' : tab === 'forecast' ? '📈 Forecast' : tab === 'protocol-forecast' ? '🔮 Protocol Forecast' : tab === 'moderation' ? '🛡️ Moderation' : tab === 'price-controls' ? '💰 Price Controls' : tab === 'doctype-settings' ? '📄 Doc Types' : tab === 'category-analytics' ? '📊 Cat Analytics' : tab === 'quality-analytics' ? '📊 Quality' : tab === 'clean-categories' ? '🧹 Clean' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </div>
           ))}
         </div>
