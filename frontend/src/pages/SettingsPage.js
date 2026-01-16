@@ -182,12 +182,67 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
   };
   
   // Category Management Functions
-  const handleEditCategory = (cat) => {
+  const handleEditCategory = async (cat) => {
     setEditingCategory(cat);
     setEditCategoryName(cat.name);
     setEditProtocol(cat.protocol || '');
     setEditIsPublic(cat.is_public || false);
     setEditPrice(cat.price || '');
+    setCategoryResultsCount(null);
+    
+    // Fetch results count for this category
+    try {
+      const res = await fetch(`${API}/categories/${cat.id}/results-count`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCategoryResultsCount(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch category results count');
+    }
+  };
+  
+  // Clean category - delete all search results from a category
+  const cleanCategory = async (categoryId, mode = 'remove') => {
+    const modeMessages = {
+      'remove': 'remove the category tag from all results (results will remain in other categories)',
+      'delete': 'delete results ONLY in this category (keeps results that are in multiple categories)',
+      'delete_all': 'DELETE ALL results associated with this category (cannot be undone!)'
+    };
+    
+    const confirmMessage = `Are you sure you want to ${modeMessages[mode]}?\n\n` +
+      (categoryResultsCount ? `This will affect ${categoryResultsCount.total_results} search results.` : '');
+    
+    if (!window.confirm(confirmMessage)) return;
+    
+    setCleaningCategory(true);
+    try {
+      const res = await fetch(`${API}/categories/${categoryId}/clean?mode=${mode}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(data.message, 'success');
+        // Refresh category results count
+        const countRes = await fetch(`${API}/categories/${categoryId}/results-count`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (countRes.ok) {
+          setCategoryResultsCount(await countRes.json());
+        }
+        fetchCategories();
+      } else {
+        const data = await res.json();
+        showToast(data.detail || 'Failed to clean category', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to clean category', 'error');
+    }
+    setCleaningCategory(false);
   };
   
   const saveCategory = async () => {
