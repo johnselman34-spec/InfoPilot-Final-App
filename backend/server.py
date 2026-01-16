@@ -1269,6 +1269,12 @@ async def auto_categorize_search(request: dict, user = Depends(get_current_user_
                 result.get("title", ""), result.get("content", "")
             )
             result["root_domain"] = WebSearchService.extract_root_domain(result.get("url", ""))
+            # Calculate content quality score for prioritizing valuable content
+            result["content_quality_score"] = ArticleClassifier.calculate_content_quality_score(
+                result.get("title", ""),
+                result.get("snippet", result.get("content", "")),
+                result.get("url", "")
+            )
             result["categories"] = result_categories
             result["category_ids"] = result_category_ids
             result["match_details_list"] = match_details_list
@@ -1278,8 +1284,12 @@ async def auto_categorize_search(request: dict, user = Depends(get_current_user_
     
     logger.info(f"Auto-Categorize: {len(matched_results)} results matched categories, {rejected_count} rejected")
     
-    # Sort by score
-    matched_results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+    # Sort by combined score: 60% match_score + 40% content_quality_score
+    # This prioritizes valuable, extensive content while still considering match relevance
+    matched_results.sort(
+        key=lambda x: (x.get("match_score", 0) * 0.6) + (x.get("content_quality_score", 50) * 0.4),
+        reverse=True
+    )
     
     # Apply limit
     matched_results = matched_results[:collate_limit]
