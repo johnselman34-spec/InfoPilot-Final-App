@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API } from '../../utils/api';
 
 const MarketplaceProtocolForecast = ({ token, showToast }) => {
@@ -6,14 +6,7 @@ const MarketplaceProtocolForecast = ({ token, showToast }) => {
   const [topCreators, setTopCreators] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (token) {
-      fetchForecast();
-      fetchTopCreators();
-    }
-  }, [token]);
-
-  const fetchForecast = async () => {
+  const fetchForecast = useCallback(async () => {
     try {
       const res = await fetch(`${API}/protocol-analytics/admin/marketplace-forecast`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -26,9 +19,9 @@ const MarketplaceProtocolForecast = ({ token, showToast }) => {
       console.error('Failed to fetch forecast:', e);
     }
     setLoading(false);
-  };
+  }, [token]);
 
-  const fetchTopCreators = async () => {
+  const fetchTopCreators = useCallback(async () => {
     try {
       const res = await fetch(`${API}/protocol-analytics/admin/top-creators?limit=10`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -40,7 +33,14 @@ const MarketplaceProtocolForecast = ({ token, showToast }) => {
     } catch (e) {
       console.error('Failed to fetch top creators:', e);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
+      fetchForecast();
+      fetchTopCreators();
+    }
+  }, [token, fetchForecast, fetchTopCreators]);
 
   if (loading) {
     return (
