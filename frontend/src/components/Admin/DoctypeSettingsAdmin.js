@@ -283,7 +283,7 @@ const DoctypeSettingsAdmin = ({ showToast }) => {
             </div>
           </div>
           <p style={{ color: '#71717a', fontSize: '0.75rem', marginTop: 10 }}>
-            Rule: Must contain 'blog' {settings.doctype_blog_min_instances || 3}+ times, with at least 1 in the title
+            Rule: Must contain &apos;blog&apos; {settings.doctype_blog_min_instances || 3}+ times, with at least 1 in the title
           </p>
         </DocumentTypeCard>
         
