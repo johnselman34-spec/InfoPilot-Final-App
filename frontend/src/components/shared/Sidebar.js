@@ -6,7 +6,7 @@ import NotificationBell from './NotificationBell';
 
 const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
   const { user, logout } = useAuth();
-  const { isDarkMode } = useDarkMode();
+  const { isDarkMode } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
