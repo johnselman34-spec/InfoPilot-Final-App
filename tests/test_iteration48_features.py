@@ -201,17 +201,17 @@ class TestAuthenticationAndCategories:
         """Test deleting a category"""
         headers = {"Authorization": f"Bearer {auth_token}"}
         
-        # First create a category to delete
+        # First create a category to delete with proper protocol format
         create_response = requests.post(f"{BASE_URL}/api/categories", 
                                        headers=headers, 
                                        json={
                                            "name": "TEST_Delete_Category",
-                                           "protocol": "test delete",
+                                           "protocol": "(test or delete)",
                                            "is_public": False
                                        })
         
         if create_response.status_code not in [200, 201]:
-            pytest.skip("Could not create category for delete test")
+            pytest.skip(f"Could not create category for delete test: {create_response.text}")
         
         category_id = create_response.json().get("id") or create_response.json().get("_id")
         
