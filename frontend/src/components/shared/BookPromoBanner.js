@@ -273,8 +273,8 @@ const MaestroBistroSection = () => (
             style={{ width: 100, height: 100, borderRadius: 10, objectFit: 'cover', border: '2px solid #10b981' }}
           />
           <img 
-            src="https://static.prod-images.emergentagent.com/jobs/b9901627-c41f-49f8-a5ec-8ae9029551bf/images/e939457841b9bd72a9126d807ef823bb1cb64871679f9ade71efab8e5edfd667.png" 
-            alt="Fish Chowder" 
+            src="https://static.prod-images.emergentagent.com/jobs/b9901627-c41f-49f8-a5ec-8ae9029551bf/images/21731046688629d8674f306fdedabb0c12b0d652fd365d2c4031948b7fd640d9.png" 
+            alt="Fish Chowder with Red Potatoes" 
             style={{ width: 100, height: 100, borderRadius: 10, objectFit: 'cover', border: '2px solid #38bdf8' }}
           />
         </div>
