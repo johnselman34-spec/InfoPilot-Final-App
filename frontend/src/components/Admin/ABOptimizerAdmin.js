@@ -21,10 +21,6 @@ const ABOptimizerAdmin = ({ token, showToast }) => {
     notify_on_optimization: true
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     setLoading(true);
     try {
