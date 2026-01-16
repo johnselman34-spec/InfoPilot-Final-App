@@ -107,10 +107,14 @@ const UltimateSearchPage = ({ showToast }) => {
     return categoryColors[index % categoryColors.length];
   }, [categories, categoryColors]);
 
-  // Results with location data for map
+  // Results with location data for map - ONLY show logged-in user's results
   const mapResults = useMemo(() => {
-    return searchResults.filter(r => r.latitude && r.longitude);
-  }, [searchResults]);
+    const userId = user?.id || user?._id;
+    return searchResults.filter(r => 
+      r.latitude && r.longitude && 
+      r.user_id === userId // Only show current user's results on USP map
+    );
+  }, [searchResults, user]);
   
   // Filtered results based on category and document type selections
   const filteredResults = useMemo(() => {
