@@ -415,6 +415,68 @@ class ExtendedWebSearchService:
         return results
     
     @staticmethod
+    async def search_bing(query: str, num_results: int = 50) -> List[Dict[str, Any]]:
+        """Use Bing Web Search API"""
+        results = []
+        
+        if not BING_API_KEY:
+            return results
+        
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                headers = {
+                    "Ocp-Apim-Subscription-Key": BING_API_KEY
+                }
+                params = {
+                    "q": query,
+                    "count": min(num_results, 50),
+                    "offset": 0,
+                    "mkt": "en-US",
+                    "safesearch": "Moderate"
+                }
+                
+                response = await client.get(
+                    "https://api.bing.microsoft.com/v7.0/search",
+                    headers=headers,
+                    params=params
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    web_pages = data.get("webPages", {}).get("value", [])
+                    
+                    for r in web_pages:
+                        url = r.get("url", "")
+                        if not url:
+                            continue
+                        
+                        try:
+                            parsed = urllib.parse.urlparse(url)
+                            root_domain = parsed.netloc
+                        except Exception:
+                            root_domain = ""
+                        
+                        results.append({
+                            "url": url,
+                            "title": r.get("name", ""),
+                            "snippet": r.get("snippet", ""),
+                            "content": r.get("snippet", ""),
+                            "root_domain": root_domain,
+                            "source": "bing",
+                            "date_published": r.get("dateLastCrawled", "")
+                        })
+                    
+                    logger.info(f"Bing Search returned {len(results)} results")
+                else:
+                    error_text = response.text
+                    logger.warning(f"Bing Search API error: {response.status_code} - {error_text}")
+                        
+        except Exception as e:
+            logger.error(f"Bing Search error: {e}")
+        
+        return results
+    
+    @staticmethod
     async def search(query: str, num_results: int = 200) -> List[Dict[str, Any]]:
         """Aggregate search from multiple sources: Google (SerpAPI), DuckDuckGo, Brave"""
         all_results = []
