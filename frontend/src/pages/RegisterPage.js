@@ -171,67 +171,12 @@ const RegisterPage = ({ onSwitch }) => {
           Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); onSwitch(); }} data-testid="switch-to-login">Sign In</a>
         </div>
         
-        {/* Legal Document Modal */}
-        {showTerms && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.9)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: 20
-          }}>
-            <div style={{
-              background: '#1a1a2e',
-              borderRadius: 16,
-              padding: 25,
-              maxWidth: 700,
-              maxHeight: '80vh',
-              overflow: 'auto',
-              width: '100%',
-              border: '1px solid rgba(124, 58, 237, 0.3)'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <h2 style={{ color: '#f472b6', margin: 0, fontSize: '1.2rem' }}>
-                  {showTerms === 'terms' ? '📋 User Agreement' : '🔒 Privacy Policy'}
-                </h2>
-                <button 
-                  onClick={() => setShowTerms(null)}
-                  style={{
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    border: '1px solid #ef4444',
-                    color: '#ef4444',
-                    padding: '6px 12px',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    fontSize: '0.9rem'
-                  }}
-                >
-                  ✕ Close
-                </button>
-              </div>
-              <div style={{ 
-                color: '#e4e4e7', 
-                lineHeight: 1.6, 
-                fontSize: '0.85rem',
-                whiteSpace: 'pre-wrap'
-              }}>
-                {termsContent.split('\n').map((line, i) => {
-                  if (line.startsWith('# ')) return <h1 key={i} style={{ color: '#f472b6', marginTop: 15, fontSize: '1.3rem' }}>{line.replace('# ', '')}</h1>;
-                  if (line.startsWith('## ')) return <h2 key={i} style={{ color: '#a78bfa', marginTop: 12, fontSize: '1.1rem' }}>{line.replace('## ', '')}</h2>;
-                  if (line.startsWith('### ')) return <h3 key={i} style={{ color: '#60a5fa', marginTop: 10, fontSize: '0.95rem' }}>{line.replace('### ', '')}</h3>;
-                  if (line.startsWith('- ')) return <li key={i} style={{ marginLeft: 15 }}>{line.replace('- ', '')}</li>;
-                  if (line === '---') return <hr key={i} style={{ border: 'none', borderTop: '1px solid rgba(124, 58, 237, 0.3)', margin: '15px 0' }} />;
-                  return <p key={i}>{line}</p>;
-                })}
-              </div>
-            </div>
-          </div>
+        {/* Legal Document Modals - Using dedicated components */}
+        {showTerms === 'terms' && (
+          <UserAgreement onClose={() => setShowTerms(null)} />
+        )}
+        {showTerms === 'privacy' && (
+          <PrivacyStatement onClose={() => setShowTerms(null)} />
         )}
       </div>
     </div>
