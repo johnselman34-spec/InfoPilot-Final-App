@@ -1023,6 +1023,173 @@ async def update_paypal_email(data: dict, user = Depends(get_current_user)):
     return {"success": True, "message": "PayPal email updated"}
 
 
+# ==================== BATCH PAYOUT SYSTEM ====================
+
+@router.get("/admin/payout-batch", response_model=dict)
+async def get_payout_batch(user = Depends(get_current_user)):
+    """
+    Get a batch of users ready for payout (admin only).
+    Batches users with accumulated earnings >= $1.00 for efficient PayPal mass pay.
+    """
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Find all users ready for payout
+    ready_users = await db.users.find({
+        "accumulated_earnings": {"$gte": PAYPAL_MIN_PAYOUT},
+        "paypal_email": {"$exists": True, "$ne": None, "$ne": ""}
+    }).to_list(1000)
+    
+    batch = []
+    total_amount = 0
+    
+    for u in ready_users:
+        amount = u.get("accumulated_earnings", 0)
+        batch.append({
+            "user_id": str(u["_id"]),
+            "email": u.get("email"),
+            "paypal_email": u.get("paypal_email", u.get("email")),
+            "username": u.get("username", u.get("callsign", "Unknown")),
+            "amount": round(amount, 2)
+        })
+        total_amount += amount
+    
+    # Generate batch ID
+    batch_id = f"BATCH_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+    
+    return {
+        "batch_id": batch_id,
+        "users": batch,
+        "total_users": len(batch),
+        "total_amount": round(total_amount, 2),
+        "min_payout_threshold": PAYPAL_MIN_PAYOUT,
+        "created_at": datetime.utcnow().isoformat()
+    }
+
+
+@router.post("/admin/process-batch-payout", response_model=dict)
+async def process_batch_payout(data: dict, user = Depends(get_current_user)):
+    """
+    Process a batch payout (admin only).
+    Marks all users in the batch as paid and resets their accumulated earnings.
+    """
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    batch_id = data.get("batch_id")
+    paypal_batch_id = data.get("paypal_batch_id")  # PayPal's batch transaction ID
+    user_ids = data.get("user_ids", [])
+    
+    if not user_ids:
+        raise HTTPException(status_code=400, detail="No users in batch")
+    
+    processed = []
+    errors = []
+    total_amount = 0
+    
+    for uid in user_ids:
+        try:
+            target_user = await db.users.find_one({"_id": ObjectId(uid)})
+            if not target_user:
+                errors.append({"user_id": uid, "error": "User not found"})
+                continue
+            
+            amount = target_user.get("accumulated_earnings", 0)
+            
+            if amount < PAYPAL_MIN_PAYOUT:
+                errors.append({"user_id": uid, "error": f"Below minimum: ${amount:.2f}"})
+                continue
+            
+            # Record payout
+            payout_record = {
+                "user_id": uid,
+                "amount": amount,
+                "paypal_batch_id": paypal_batch_id,
+                "internal_batch_id": batch_id,
+                "processed_by": str(user["_id"]),
+                "status": "completed",
+                "payout_type": "batch",
+                "created_at": datetime.utcnow()
+            }
+            
+            await db.payouts.insert_one(payout_record)
+            
+            # Reset accumulated earnings
+            await db.users.update_one(
+                {"_id": ObjectId(uid)},
+                {"$set": {"accumulated_earnings": 0}}
+            )
+            
+            # Update payout ledger
+            await db.payout_ledger.update_many(
+                {"creator_id": uid, "status": "accumulated"},
+                {"$set": {"status": "paid", "paid_at": datetime.utcnow(), "batch_id": batch_id}}
+            )
+            
+            processed.append({
+                "user_id": uid,
+                "amount": amount,
+                "paypal_email": target_user.get("paypal_email", target_user.get("email"))
+            })
+            total_amount += amount
+            
+        except Exception as e:
+            errors.append({"user_id": uid, "error": str(e)})
+    
+    return {
+        "success": True,
+        "batch_id": batch_id,
+        "paypal_batch_id": paypal_batch_id,
+        "processed": processed,
+        "processed_count": len(processed),
+        "total_amount": round(total_amount, 2),
+        "errors": errors,
+        "error_count": len(errors)
+    }
+
+
+@router.get("/admin/payout-settings", response_model=dict)
+async def get_payout_settings(user = Depends(get_current_user)):
+    """Get payout configuration settings (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    settings = await db.app_settings.find_one({"key": "payout_settings"})
+    
+    default_settings = {
+        "min_payout_threshold": PAYPAL_MIN_PAYOUT,
+        "auto_payout_enabled": False,
+        "auto_payout_day": "friday",  # Day of week for auto payouts
+        "auto_payout_hour": 14,  # 2 PM UTC
+        "batch_limit": 100  # Max users per batch
+    }
+    
+    if settings:
+        default_settings.update(settings)
+    
+    return default_settings
+
+
+@router.put("/admin/payout-settings", response_model=dict)
+async def update_payout_settings(data: dict, user = Depends(get_current_user)):
+    """Update payout configuration settings (admin only)"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    allowed_keys = ["auto_payout_enabled", "auto_payout_day", "auto_payout_hour", "batch_limit"]
+    update_data = {k: v for k, v in data.items() if k in allowed_keys}
+    update_data["key"] = "payout_settings"
+    update_data["updated_at"] = datetime.utcnow()
+    
+    await db.app_settings.update_one(
+        {"key": "payout_settings"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    return {"success": True, "message": "Payout settings updated", "settings": update_data}
+
+
 # ==================== MAP DATA ====================
 
 @router.get("/map-data", response_model=dict)
