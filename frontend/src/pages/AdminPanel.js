@@ -13,10 +13,6 @@ const AdminPanel = ({ showToast }) => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('general');
 
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
   const fetchSettings = async () => {
     try {
       const res = await fetch(`${API}/admin/settings`, {
@@ -38,6 +34,11 @@ const AdminPanel = ({ showToast }) => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateSetting = async (key, value) => {
     try {
