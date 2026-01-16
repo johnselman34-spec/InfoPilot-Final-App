@@ -579,14 +579,16 @@ class TestOverallStability:
             return response.json().get("token")
         pytest.skip("Admin login failed")
     
-    def test_statistics_endpoint(self, admin_token):
-        """Test statistics endpoint"""
+    def test_statistics_overview_endpoint(self, admin_token):
+        """Test statistics overview endpoint"""
         response = requests.get(
-            f"{BASE_URL}/api/statistics",
+            f"{BASE_URL}/api/statistics/overview",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
-        print("✅ GET /api/statistics - working")
+        data = response.json()
+        assert "total_users" in data or "total_categories" in data
+        print("✅ GET /api/statistics/overview - working")
     
     def test_marketplace_endpoint(self, admin_token):
         """Test marketplace endpoint"""
@@ -597,14 +599,14 @@ class TestOverallStability:
         assert response.status_code == 200
         print("✅ GET /api/marketplace/protocols - working")
     
-    def test_search_results_endpoint(self, admin_token):
-        """Test search results endpoint"""
+    def test_export_search_results_endpoint(self, admin_token):
+        """Test export search results endpoint"""
         response = requests.get(
-            f"{BASE_URL}/api/search-results",
+            f"{BASE_URL}/api/export/search-results",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
-        print("✅ GET /api/search-results - working")
+        print("✅ GET /api/export/search-results - working")
     
     def test_personal_reports_endpoint(self, admin_token):
         """Test personal reports endpoint"""
@@ -614,6 +616,15 @@ class TestOverallStability:
         )
         assert response.status_code == 200
         print("✅ GET /api/personal-reports - working")
+    
+    def test_categories_endpoint(self, admin_token):
+        """Test categories endpoint"""
+        response = requests.get(
+            f"{BASE_URL}/api/categories",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert response.status_code == 200
+        print("✅ GET /api/categories - working")
 
 
 if __name__ == "__main__":
