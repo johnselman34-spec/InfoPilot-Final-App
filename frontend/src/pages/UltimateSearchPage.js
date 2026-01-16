@@ -78,6 +78,9 @@ const UltimateSearchPage = ({ showToast }) => {
   const [selectedDocTypes, setSelectedDocTypes] = useState([]);
   const [showFilteredResults, setShowFilteredResults] = useState(false);
   
+  // Quality Score Filtering state
+  const [minQualityScore, setMinQualityScore] = useState(0); // 0 = show all, 50 = Good+, 65 = High Quality+, 80 = Premium only
+  
   // Available document types
   const documentTypes = useMemo(() => [
     { id: 'PhD Informative', name: 'PhD Informative', color: '#8b5cf6' },
