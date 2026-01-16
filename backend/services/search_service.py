@@ -230,5 +230,5 @@ class WebSearchService:
             if domain.startswith('www.'):
                 domain = domain[4:]
             return domain
-        except:
+        except Exception:
             return ""

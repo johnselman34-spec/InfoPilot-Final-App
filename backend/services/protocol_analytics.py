@@ -260,7 +260,7 @@ async def get_marketplace_protocol_forecast() -> Dict:
     
     try:
         top_protocols = await db.marketplace_protocols.aggregate(pipeline).to_list(20)
-    except:
+    except Exception:
         top_protocols = []
     
     # Calculate trends

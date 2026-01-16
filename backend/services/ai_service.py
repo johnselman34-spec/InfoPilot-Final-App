@@ -85,7 +85,7 @@ Format as JSON with keys: subject_line, opening, featured_protocol, book_promo, 
                 json_end = response.rfind('}') + 1
                 if json_start >= 0 and json_end > json_start:
                     return json.loads(response[json_start:json_end])
-            except:
+            except Exception:
                 pass
             
             return {

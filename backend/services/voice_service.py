@@ -82,7 +82,7 @@ class VoiceService:
                 # Cleanup temp file
                 try:
                     os.unlink(temp_path)
-                except:
+                except Exception:
                     pass
                     
         except Exception as e:

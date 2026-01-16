@@ -124,7 +124,7 @@ class LocationService:
                 lon = float(coord_match.group(2))
                 if -90 <= lat <= 90 and -180 <= lon <= 180:
                     return (lat, lon)
-            except:
+            except Exception:
                 pass
         
         # Search for known locations (longest match first)
