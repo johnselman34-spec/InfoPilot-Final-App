@@ -1560,7 +1560,8 @@ Return ONLY a JSON array of 3 strings, no other text:
                 "batch_id": batch_id,
                 "ai_search": True,
                 "updated_at": datetime.utcnow(),
-                "groups_matched": result.get("groups_matched", 0)
+                "groups_matched": result.get("groups_matched", 0),
+                "content_quality_score": result.get("content_quality_score", 50)
             }
             if category_ids:
                 await db.search_results.update_one(
@@ -1584,6 +1585,7 @@ Return ONLY a JSON array of 3 strings, no other text:
                 "article_type": result.get("article_type", "Unknown"),
                 "root_domain": result.get("root_domain", ""),
                 "match_score": result.get("match_score", 0),
+                "content_quality_score": result.get("content_quality_score", 50),
                 "groups_matched": result.get("groups_matched", 0),
                 "category_ids": category_ids,
                 "user_id": user_id,
