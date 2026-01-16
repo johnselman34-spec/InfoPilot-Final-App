@@ -247,6 +247,8 @@ const SocialPage = ({ showToast }) => {
   const [polls, setPolls] = useState({});
   const [showCreatePollModal, setShowCreatePollModal] = useState(false);
   const [pollContext, setPollContext] = useState({ type: null, id: null });
+  // Moderation state
+  const [moderationTarget, setModerationTarget] = useState(null); // { type: 'group'|'page', entity: {...} }
 
   // Fetch functions
   const fetchFeed = useCallback(async () => {
