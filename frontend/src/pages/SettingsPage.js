@@ -36,6 +36,8 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
   const [editProtocol, setEditProtocol] = useState('');
   const [editIsPublic, setEditIsPublic] = useState(false);
   const [editPrice, setEditPrice] = useState('');
+  const [cleaningCategory, setCleaningCategory] = useState(false);
+  const [categoryResultsCount, setCategoryResultsCount] = useState(null);
 
   // Check if user has password on mount
   useEffect(() => {
