@@ -274,10 +274,13 @@ class TestAppStability:
         assert login_response.status_code == 200
         token = login_response.json()["token"]
         
-        # Make authenticated request
+        # Make authenticated request - use theme-presets endpoint which exists
         headers = {"Authorization": f"Bearer {token}"}
-        profile_response = requests.get(f"{BASE_URL}/api/users/me", headers=headers)
-        assert profile_response.status_code == 200
+        presets_response = requests.get(f"{BASE_URL}/api/theme-presets", headers=headers)
+        assert presets_response.status_code == 200
+        data = presets_response.json()
+        assert "public_presets" in data
+        assert "my_presets" in data
         
         print("✓ Auth flow stable")
 
