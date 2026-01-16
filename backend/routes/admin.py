@@ -150,6 +150,208 @@ async def toggle_admin(user_id: str, user = Depends(require_admin)):
     return {"success": True, "is_admin": new_status}
 
 
+# ==================== ADMIN MODERATION ====================
+
+@router.post("/users/{user_id}/ban", response_model=dict)
+async def admin_ban_user(user_id: str, data: dict = {}, admin = Depends(require_admin)):
+    """Admin: Ban a user from the entire platform"""
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    reason = data.get("reason", "Violation of User Agreement")
+    personal_note = data.get("personal_note", "")
+    
+    # Update user status
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "is_banned": True,
+            "banned_at": datetime.utcnow(),
+            "banned_by": str(admin["_id"]),
+            "ban_reason": reason,
+            "ban_note": personal_note
+        }}
+    )
+    
+    # Remove from all groups
+    await db.groups.update_many(
+        {"members": user_id},
+        {"$pull": {"members": user_id, "admins": user_id, "moderators": user_id}}
+    )
+    
+    # Remove from all pages
+    await db.pages.update_many(
+        {"followers": user_id},
+        {"$pull": {"followers": user_id, "admins": user_id}}
+    )
+    
+    # Log the action
+    await db.admin_actions.insert_one({
+        "action": "ban_user",
+        "target_user_id": user_id,
+        "target_username": target_user.get("username"),
+        "admin_id": str(admin["_id"]),
+        "admin_username": admin.get("username"),
+        "reason": reason,
+        "personal_note": personal_note,
+        "created_at": datetime.utcnow()
+    })
+    
+    return {
+        "success": True,
+        "message": f"User {target_user.get('username')} has been banned from the platform",
+        "reason": reason
+    }
+
+
+@router.post("/users/{user_id}/unban", response_model=dict)
+async def admin_unban_user(user_id: str, admin = Depends(require_admin)):
+    """Admin: Unban a user"""
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"is_banned": False}, "$unset": {"banned_at": "", "banned_by": "", "ban_reason": "", "ban_note": ""}}
+    )
+    
+    await db.admin_actions.insert_one({
+        "action": "unban_user",
+        "target_user_id": user_id,
+        "target_username": target_user.get("username"),
+        "admin_id": str(admin["_id"]),
+        "admin_username": admin.get("username"),
+        "created_at": datetime.utcnow()
+    })
+    
+    return {"success": True, "message": f"User {target_user.get('username')} has been unbanned"}
+
+
+@router.post("/users/{user_id}/mute", response_model=dict)
+async def admin_mute_user(user_id: str, data: dict = {}, admin = Depends(require_admin)):
+    """Admin: Mute a user platform-wide (can't post, comment, or chat)"""
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    duration_hours = data.get("duration_hours", 24)
+    reason = data.get("reason", "")
+    personal_note = data.get("personal_note", "")
+    
+    muted_until = datetime.utcnow() + timedelta(hours=duration_hours)
+    
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "is_muted": True,
+            "muted_until": muted_until,
+            "muted_by": str(admin["_id"]),
+            "mute_reason": reason,
+            "mute_note": personal_note
+        }}
+    )
+    
+    await db.admin_actions.insert_one({
+        "action": "mute_user",
+        "target_user_id": user_id,
+        "target_username": target_user.get("username"),
+        "admin_id": str(admin["_id"]),
+        "admin_username": admin.get("username"),
+        "duration_hours": duration_hours,
+        "muted_until": muted_until,
+        "reason": reason,
+        "personal_note": personal_note,
+        "created_at": datetime.utcnow()
+    })
+    
+    return {
+        "success": True,
+        "message": f"User {target_user.get('username')} has been muted for {duration_hours} hours",
+        "muted_until": muted_until.isoformat()
+    }
+
+
+@router.post("/users/{user_id}/unmute", response_model=dict)
+async def admin_unmute_user(user_id: str, admin = Depends(require_admin)):
+    """Admin: Unmute a user"""
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"is_muted": False}, "$unset": {"muted_until": "", "muted_by": "", "mute_reason": "", "mute_note": ""}}
+    )
+    
+    return {"success": True, "message": f"User {target_user.get('username')} has been unmuted"}
+
+
+@router.delete("/users/{user_id}", response_model=dict)
+async def admin_delete_user(user_id: str, data: dict = {}, admin = Depends(require_admin)):
+    """Admin: Delete a user and all their data"""
+    target_user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if target_user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Cannot delete admin users")
+    
+    reason = data.get("reason", "Account removed")
+    personal_note = data.get("personal_note", "")
+    
+    # Log before deletion
+    await db.admin_actions.insert_one({
+        "action": "delete_user",
+        "target_user_id": user_id,
+        "target_username": target_user.get("username"),
+        "target_email": target_user.get("email"),
+        "admin_id": str(admin["_id"]),
+        "admin_username": admin.get("username"),
+        "reason": reason,
+        "personal_note": personal_note,
+        "created_at": datetime.utcnow()
+    })
+    
+    # Remove from groups and pages
+    await db.groups.update_many({}, {"$pull": {"members": user_id, "admins": user_id, "moderators": user_id}})
+    await db.pages.update_many({}, {"$pull": {"followers": user_id, "admins": user_id}})
+    
+    # Delete user's content
+    await db.search_results.delete_many({"user_id": user_id})
+    await db.categories.delete_many({"user_id": user_id})
+    await db.posts.delete_many({"user_id": user_id})
+    
+    # Finally delete the user
+    await db.users.delete_one({"_id": ObjectId(user_id)})
+    
+    return {
+        "success": True,
+        "message": f"User {target_user.get('username')} and all their data have been deleted",
+        "reason": reason
+    }
+
+
+@router.get("/moderation/actions", response_model=dict)
+async def get_moderation_actions(limit: int = 50, admin = Depends(require_admin)):
+    """Get recent admin moderation actions"""
+    actions = await db.admin_actions.find().sort("created_at", -1).limit(limit).to_list(limit)
+    
+    return {
+        "actions": [{
+            "id": str(a["_id"]),
+            "action": a.get("action"),
+            "target_user_id": a.get("target_user_id"),
+            "target_username": a.get("target_username"),
+            "admin_username": a.get("admin_username"),
+            "reason": a.get("reason", ""),
+            "personal_note": a.get("personal_note", ""),
+            "created_at": a.get("created_at").isoformat() if a.get("created_at") else None
+        } for a in actions]
+    }
+
+
 # ==================== NEWSLETTER ====================
 
 @router.post("/newsletter/generate", response_model=dict)
