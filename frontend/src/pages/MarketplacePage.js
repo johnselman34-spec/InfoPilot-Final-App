@@ -5,62 +5,21 @@ import { Icons, ProtocolCopyButtons, AISuggestions } from '../components/shared'
 import ProtocolAnalyticsDashboard from '../components/Admin/ProtocolAnalyticsDashboard';
 import ProtocolBundlesSection from '../components/Marketplace/ProtocolBundlesSection';
 import BundleOfTheWeek from '../components/Marketplace/BundleOfTheWeek';
+// Import refactored components
+import { 
+  FREE_MESSAGES, 
+  CATEGORY_COLORS, 
+  LOCATIONS,
+  FreeBanner, 
+  WorldWideMap, 
+  ProtocolCard, 
+  CategoryFilter, 
+  ProtocolStats 
+} from '../components/Marketplace/MarketplaceComponents';
+import SellForm from '../components/Marketplace/SellForm';
+import SellerDashboard from '../components/Marketplace/SellerDashboard';
 
-// Constants - HILARIOUS FREE MESSAGES 🎉
-const FREE_MESSAGES = [
-  "💸 100% FREE - Your wallet just did a happy dance!",
-  "🎉 ABSOLUTELY FREE - Even your piggy bank is celebrating!",
-  "🚀 FREE AS A BIRD - Fly high without spending a dime!",
-  "💰 ZERO DOLLARS - Math doesn't get easier than this!",
-  "🎁 FREE FOREVER - Like a gift that keeps on giving!",
-  "🤑 SO FREE it should be illegal (but it's not, we checked)!",
-  "🎪 FREE! FREE! FREE! - Now say it three times fast!",
-  "💎 FREE - Worth its weight in gold (gold weighs a lot)!",
-  "🌈 FREE at the end of every rainbow!",
-  "🎯 FREE - Hitting your budget where it counts!",
-];
-
-const CATEGORY_COLORS = {
-  'General': '#7c3aed', 'News & Media': '#f59e0b', 'Technology': '#3b82f6',
-  'Science & Research': '#10b981', 'Business & Finance': '#ef4444',
-  'Entertainment': '#f472b6', 'Sports': '#06b6d4', 'Health & Medicine': '#84cc16'
-};
-
-const LOCATIONS = [
-  { lat: 40.7128, lng: -74.0060, city: 'New York' },
-  { lat: 34.0522, lng: -118.2437, city: 'Los Angeles' },
-  { lat: 51.5074, lng: -0.1278, city: 'London' },
-  { lat: 48.8566, lng: 2.3522, city: 'Paris' },
-  { lat: 35.6762, lng: 139.6503, city: 'Tokyo' },
-  { lat: -33.8688, lng: 151.2093, city: 'Sydney' },
-  { lat: 43.9108, lng: -69.9669, city: 'Brunswick, ME' },
-  { lat: 55.7558, lng: 37.6173, city: 'Moscow' },
-  { lat: 19.4326, lng: -99.1332, city: 'Mexico City' },
-  { lat: -23.5505, lng: -46.6333, city: 'São Paulo' },
-];
-
-// Sub-components
-const FreeBanner = ({ message }) => (
-  <div style={{
-    background: 'linear-gradient(135deg, #10b981, #059669, #047857)',
-    padding: 20, textAlign: 'center', borderRadius: '12px 12px 0 0',
-    position: 'relative', overflow: 'hidden'
-  }}>
-    <div style={{
-      position: 'absolute', inset: 0,
-      background: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)'
-    }} />
-    <h1 style={{ color: '#fff', fontSize: '2rem', fontWeight: 900, margin: 0, textShadow: '2px 2px 4px rgba(0,0,0,0.3)', position: 'relative' }}>
-      🆓 COMPLETELY FREE TO USE! 🆓
-    </h1>
-    <p style={{ color: '#d1fae5', margin: '10px 0 0 0', fontSize: '1.1rem', position: 'relative' }}>{message}</p>
-    <div style={{ marginTop: 15, display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap', position: 'relative' }}>
-      {['Browse FREE', 'Search FREE', 'Create Categories FREE', 'Earn Money Selling!'].map((text, i) => (
-        <span key={i} style={{ color: '#fff', fontSize: '0.9rem' }}>✓ {text}</span>
-      ))}
-    </div>
-  </div>
-);
+// Marketplace Page - Using refactored components from MarketplaceComponents.js
 
 const WorldWideMap = ({ protocols, categories, selectedCategories, onSelectAll, onDeselectAll }) => {
   const filteredProtocols = protocols.filter(p => selectedCategories.length === 0 || selectedCategories.includes(p.category));
