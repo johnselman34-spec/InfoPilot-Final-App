@@ -19,6 +19,11 @@ const MapPage = ({ showToast, setCurrentPage }) => {
   const [lastUpdate, setLastUpdate] = useState(null);
   const mapContainerRef = useRef(null);
   const refreshIntervalRef = useRef(null);
+  
+  // AI Search state
+  const [aiSearchQuery, setAiSearchQuery] = useState('');
+  const [aiSearchLoading, setAiSearchLoading] = useState(false);
+  const [aiSearchMode, setAiSearchMode] = useState('comprehensive');
 
   // Known locations for context-based geocoding
   const KNOWN_LOCATIONS = {
