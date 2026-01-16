@@ -6,6 +6,7 @@ import './i18n'; // i18n multi-language support
 
 // Import refactored modules
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { DarkModeProvider, useDarkMode } from './contexts/DarkModeContext';
 import { Toast, Sidebar, QuoteOfTheDay, BookPromoBanner } from './components/shared';
 import { LaughProvider } from './components/Gamification/LaughOMeter';
 import { FloatingEasterEggsController } from './components/Gamification/FloatingEasterEggs';
@@ -118,9 +119,11 @@ function App() {
 
   return (
     <AuthProvider>
-      <LaughProvider>
-        <AppContent authMode={authMode} setAuthMode={setAuthMode} />
-      </LaughProvider>
+      <DarkModeProvider>
+        <LaughProvider>
+          <AppContent authMode={authMode} setAuthMode={setAuthMode} />
+        </LaughProvider>
+      </DarkModeProvider>
     </AuthProvider>
   );
 }
