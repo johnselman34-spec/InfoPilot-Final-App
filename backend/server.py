@@ -4359,6 +4359,145 @@ async def get_search_trends(days: int = Query(7, ge=1, le=30), user = Depends(ge
         "trends": [{"date": t["_id"], "searches": t["count"]} for t in trends]
     }
 
+
+@api_router.get("/analytics/quality-scores")
+async def get_quality_score_analytics(user = Depends(get_current_user_local)):
+    """
+    Get quality score analytics showing distribution of content quality scores.
+    Admin only endpoint for content curation insights.
+    """
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get total results count
+    total_results = await db.search_results.count_documents({})
+    
+    # Get distribution by quality score ranges
+    quality_ranges = [
+        {"name": "Premium", "emoji": "📚", "min": 80, "max": 100, "color": "#10b981"},
+        {"name": "High Quality", "emoji": "✨", "min": 65, "max": 79, "color": "#3b82f6"},
+        {"name": "Good", "emoji": "📄", "min": 50, "max": 64, "color": "#f59e0b"},
+        {"name": "Below Average", "emoji": "📝", "min": 25, "max": 49, "color": "#f97316"},
+        {"name": "Low Quality", "emoji": "⚠️", "min": 0, "max": 24, "color": "#ef4444"}
+    ]
+    
+    distribution = []
+    for range_info in quality_ranges:
+        count = await db.search_results.count_documents({
+            "content_quality_score": {"$gte": range_info["min"], "$lte": range_info["max"]}
+        })
+        # Also count results without a score (default to 50)
+        if range_info["min"] <= 50 <= range_info["max"]:
+            no_score_count = await db.search_results.count_documents({
+                "content_quality_score": {"$exists": False}
+            })
+            count += no_score_count
+        
+        percentage = round((count / total_results * 100), 1) if total_results > 0 else 0
+        distribution.append({
+            "name": range_info["name"],
+            "emoji": range_info["emoji"],
+            "min_score": range_info["min"],
+            "max_score": range_info["max"],
+            "color": range_info["color"],
+            "count": count,
+            "percentage": percentage
+        })
+    
+    # Get average quality score
+    avg_pipeline = [
+        {"$match": {"content_quality_score": {"$exists": True}}},
+        {"$group": {"_id": None, "avg_score": {"$avg": "$content_quality_score"}}}
+    ]
+    avg_result = await db.search_results.aggregate(avg_pipeline).to_list(1)
+    avg_score = round(avg_result[0]["avg_score"], 1) if avg_result else 50.0
+    
+    # Get top domains by quality score
+    top_domains_pipeline = [
+        {"$match": {"content_quality_score": {"$exists": True}, "root_domain": {"$exists": True, "$ne": ""}}},
+        {"$group": {
+            "_id": "$root_domain",
+            "avg_score": {"$avg": "$content_quality_score"},
+            "count": {"$sum": 1}
+        }},
+        {"$match": {"count": {"$gte": 3}}},  # At least 3 results from domain
+        {"$sort": {"avg_score": -1}},
+        {"$limit": 10}
+    ]
+    top_domains = await db.search_results.aggregate(top_domains_pipeline).to_list(10)
+    
+    # Get bottom domains (for improvement opportunities)
+    bottom_domains_pipeline = [
+        {"$match": {"content_quality_score": {"$exists": True}, "root_domain": {"$exists": True, "$ne": ""}}},
+        {"$group": {
+            "_id": "$root_domain",
+            "avg_score": {"$avg": "$content_quality_score"},
+            "count": {"$sum": 1}
+        }},
+        {"$match": {"count": {"$gte": 3}}},
+        {"$sort": {"avg_score": 1}},
+        {"$limit": 10}
+    ]
+    bottom_domains = await db.search_results.aggregate(bottom_domains_pipeline).to_list(10)
+    
+    # Get quality score trend over time (last 7 days)
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    trend_pipeline = [
+        {"$match": {
+            "created_at": {"$gte": seven_days_ago},
+            "content_quality_score": {"$exists": True}
+        }},
+        {"$group": {
+            "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+            "avg_score": {"$avg": "$content_quality_score"},
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"_id": 1}}
+    ]
+    quality_trend = await db.search_results.aggregate(trend_pipeline).to_list(7)
+    
+    # Get article type quality breakdown
+    article_type_pipeline = [
+        {"$match": {"content_quality_score": {"$exists": True}}},
+        {"$group": {
+            "_id": "$article_type",
+            "avg_score": {"$avg": "$content_quality_score"},
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"avg_score": -1}},
+        {"$limit": 10}
+    ]
+    article_type_quality = await db.search_results.aggregate(article_type_pipeline).to_list(10)
+    
+    return {
+        "total_results": total_results,
+        "average_score": avg_score,
+        "distribution": distribution,
+        "top_quality_domains": [
+            {"domain": d["_id"], "avg_score": round(d["avg_score"], 1), "count": d["count"]}
+            for d in top_domains
+        ],
+        "improvement_opportunities": [
+            {"domain": d["_id"], "avg_score": round(d["avg_score"], 1), "count": d["count"]}
+            for d in bottom_domains
+        ],
+        "quality_trend": [
+            {"date": t["_id"], "avg_score": round(t["avg_score"], 1), "count": t["count"]}
+            for t in quality_trend
+        ],
+        "article_type_quality": [
+            {"type": a["_id"] or "Unknown", "avg_score": round(a["avg_score"], 1), "count": a["count"]}
+            for a in article_type_quality
+        ],
+        "insights": {
+            "premium_percentage": distribution[0]["percentage"] if distribution else 0,
+            "high_quality_percentage": distribution[0]["percentage"] + distribution[1]["percentage"] if len(distribution) >= 2 else 0,
+            "needs_improvement_count": sum(d["count"] for d in distribution if d["min_score"] < 50)
+        },
+        "last_updated": datetime.utcnow().isoformat()
+    }
+
+
 # ============== PROTOCOL TEMPLATES ==============
 
 @api_router.get("/protocol-templates")
