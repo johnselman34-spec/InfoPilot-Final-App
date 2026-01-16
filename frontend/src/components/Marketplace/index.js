@@ -8,6 +8,7 @@ export { default as ProtocolShareCard } from './ProtocolShareCard';
 export { default as BundleOfTheWeek } from './BundleOfTheWeek';
 export { default as ProtocolBundlesSection } from './ProtocolBundlesSection';
 export { default as CrossSellSection } from './CrossSellSection';
+export { default as PerformanceInsights } from './PerformanceInsights';
 
 // Shared utilities and smaller components
 export {
