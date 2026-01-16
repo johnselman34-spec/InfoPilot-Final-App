@@ -204,7 +204,9 @@ class TestThemePresets:
         response = requests.get(f"{BASE_URL}/api/theme-presets", headers=self.headers)
         assert response.status_code == 200, f"Failed to get theme presets: {response.text}"
         data = response.json()
-        assert isinstance(data, list), "Theme presets should be a list"
+        # API returns dict with my_presets and public_presets
+        assert isinstance(data, dict), "Theme presets should be a dict"
+        assert "my_presets" in data or "public_presets" in data, "Should have my_presets or public_presets"
 
 
 class TestMapPageAPIs:
