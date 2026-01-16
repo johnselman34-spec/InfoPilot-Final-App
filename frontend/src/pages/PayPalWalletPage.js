@@ -291,7 +291,7 @@ const PayPalWalletPage = ({ showToast, onBack }) => {
             </button>
           </div>
           <p style={{ color: '#71717a', fontSize: '0.8rem', marginTop: 10, marginBottom: 0 }}>
-            This is where your payouts will be sent. Make sure it's a valid PayPal account!
+            This is where your payouts will be sent. Make sure it&apos;s a valid PayPal account!
           </p>
         </div>
         
@@ -311,7 +311,7 @@ const PayPalWalletPage = ({ showToast, onBack }) => {
           {wallet?.pending_balance >= minPayout ? (
             <>
               <h3 style={{ color: '#10b981', marginTop: 0 }}>
-                🎉 You're eligible for a payout!
+                🎉 You&apos;re eligible for a payout!
               </h3>
               <button
                 className="btn btn-primary"
@@ -336,7 +336,7 @@ const PayPalWalletPage = ({ showToast, onBack }) => {
                 You need ${(minPayout - (wallet?.pending_balance || 0)).toFixed(2)} more to request a payout.
               </p>
               <p style={{ color: '#71717a', fontSize: '0.85rem', margin: 0 }}>
-                Due to PayPal's minimum transaction requirements, we accumulate earnings until they reach ${minPayout.toFixed(2)}.
+                Due to PayPal&apos;s minimum transaction requirements, we accumulate earnings until they reach ${minPayout.toFixed(2)}.
               </p>
             </>
           )}
@@ -351,9 +351,9 @@ const PayPalWalletPage = ({ showToast, onBack }) => {
           border: '1px solid rgba(245, 158, 11, 0.3)'
         }}>
           <p style={{ color: '#f59e0b', margin: 0, fontSize: '0.9rem' }}>
-            <strong>💡 How Payouts Work:</strong> Due to PayPal's $1.00 minimum transaction requirement, 
+            <strong>💡 How Payouts Work:</strong> Due to PayPal&apos;s $1.00 minimum transaction requirement, 
             your earnings are accumulated in your wallet until they reach the minimum threshold. 
-            Once you're eligible, you can request a payout anytime. Payments typically process within 3-5 business days.
+            Once you&apos;re eligible, you can request a payout anytime. Payments typically process within 3-5 business days.
           </p>
         </div>
         
