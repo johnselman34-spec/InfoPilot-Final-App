@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
+import DailyLaughGoal from '../components/Gamification/DailyLaughGoal';
+import { LaughOMeterWidget, BadgeShowcase } from '../components/Gamification/LaughOMeter';
 
 const AchievementsPage = ({ showToast }) => {
   const { token, user } = useAuth();
