@@ -1189,7 +1189,9 @@ async def get_payout_settings(user = Depends(get_current_user)):
     }
     
     if settings:
-        default_settings.update(settings)
+        # Exclude MongoDB _id from response
+        settings_dict = {k: v for k, v in settings.items() if k != "_id"}
+        default_settings.update(settings_dict)
     
     return default_settings
 
