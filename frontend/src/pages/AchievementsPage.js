@@ -4,6 +4,7 @@ import { API } from '../utils/api';
 import DailyLaughGoal from '../components/Gamification/DailyLaughGoal';
 import { LaughOMeterWidget, BadgeShowcase } from '../components/Gamification/LaughOMeter';
 import { EasterEggTracker } from '../components/Gamification/EasterEggTracker';
+import PersonalReportBadges from '../components/Gamification/PersonalReportBadges';
 
 const AchievementsPage = ({ showToast }) => {
   const { token, user } = useAuth();
