@@ -3286,6 +3286,12 @@ async def init_admin_settings():
         {"key": "phd_keyword_count", "value": 3},
         {"key": "tutorial_video_url", "value": ""},
         {"key": "paypal_link", "value": PAYPAL_PAYMENT_LINK},
+        # Admin Price Controls
+        {"key": "unpaid_max_protocol_price", "value": 0},  # 0 = disabled (no limit), >0 = max price unpaid users can set
+        {"key": "unpaid_max_protocol_price_enabled", "value": False},  # Feature toggle (off by default)
+        # Document Type Protocol Controls
+        {"key": "protocol_controls_enabled", "value": True},
+        {"key": "allowed_document_types", "value": ["News Article", "Blog Post", "Academic Paper", "Wiki", "Forum", "Government", "Video", "Personal Report"]},
     ]
     
     for setting in default_settings:
