@@ -202,7 +202,7 @@ const UserAgreement = ({ onClose, onAccept }) => {
           
           <Section title="10. Disclaimers">
             <p>
-              THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. WE DO NOT GUARANTEE 
+              THE SERVICE IS PROVIDED &ldquo;AS IS&rdquo; WITHOUT WARRANTIES OF ANY KIND. WE DO NOT GUARANTEE 
               THE ACCURACY, COMPLETENESS, OR USEFULNESS OF ANY SEARCH RESULTS OR CONTENT.
             </p>
             <p>
