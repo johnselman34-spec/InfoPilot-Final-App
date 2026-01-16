@@ -1,7 +1,7 @@
 /**
  * Personal Reports Page
  * Allows users to create, edit, and manage their organic personal reports
- * Each report can have a topic, content, one image, and location
+ * Each report can have a topic, content, up to 3 images (max 6.9MB each), and location
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,8 +21,9 @@ const PersonalReportsPage = ({ showToast, onBack }) => {
   const [content, setContent] = useState('');
   const [location, setLocation] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [images, setImages] = useState([]);  // Array of files
+  const [imagePreviews, setImagePreviews] = useState([]);  // Array of preview URLs
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
   // Fetch user's personal reports
