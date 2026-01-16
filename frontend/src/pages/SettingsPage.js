@@ -246,12 +246,23 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
     }
   };
   
+  // Get level label for display
+  const getLevelLabel = (level) => {
+    if (level === 0) return 'Category';
+    if (level === 1) return 'Sub-category';
+    if (level === 2) return 'Sub-sub-category';
+    return `L${level} Sub-category`;
+  };
+  
   // Build category tree with indentation
   const buildCategoryTree = (cats, parentId = null, level = 0) => {
     return cats
       .filter(cat => cat.parent_id === parentId)
       .map(cat => {
         const childCount = cats.filter(c => c.parent_id === cat.id).length;
+        const levelColors = ['#f472b6', '#a78bfa', '#3b82f6', '#10b981', '#f59e0b'];
+        const levelColor = levelColors[Math.min(level, levelColors.length - 1)];
+        
         return (
           <div key={cat.id}>
             <div
@@ -266,6 +277,7 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
                 border: editingCategory?.id === cat.id 
                   ? '1px solid rgba(124, 58, 237, 0.5)' 
                   : '1px solid rgba(255,255,255,0.05)',
+                borderLeft: `3px solid ${levelColor}`,
                 cursor: 'pointer'
               }}
               onClick={() => handleEditCategory(cat)}
@@ -277,6 +289,7 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
                     color: cat.is_public ? '#10b981' : '#e2e8f0',
                     fontWeight: 500
                   }}>
+                    {level > 0 && <span style={{ color: levelColor, marginRight: 5 }}>{'└'.repeat(1)}</span>}
                     {cat.name}
                   </span>
                   {childCount > 0 && (
