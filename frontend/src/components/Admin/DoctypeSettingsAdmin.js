@@ -339,7 +339,7 @@ const DoctypeSettingsAdmin = ({ showToast }) => {
             </div>
             <div>
               <label style={{ color: '#a1a1aa', fontSize: '0.8rem', display: 'block', marginBottom: 5 }}>
-                Min 'I' Count (outside quotes)
+                Min &apos;I&apos; Count (outside quotes)
               </label>
               <input
                 type="number"
