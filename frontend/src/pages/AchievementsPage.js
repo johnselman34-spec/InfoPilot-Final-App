@@ -551,6 +551,9 @@ const AchievementsPage = ({ showToast }) => {
           📖 Unlock the Book Achievement - Only $2.99!
         </button>
       </div>
+      
+      {/* Easter Egg Tracker */}
+      {token && <EasterEggTracker />}
     </div>
   );
 };
