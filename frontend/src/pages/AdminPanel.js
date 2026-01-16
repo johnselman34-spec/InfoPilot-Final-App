@@ -371,6 +371,113 @@ const AdminPanel = ({ showToast }) => {
               </div>
             </div>
             
+            {/* Newsletter Time Settings */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.15))',
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 25,
+              border: '1px solid rgba(16, 185, 129, 0.3)'
+            }}>
+              <h4 style={{ color: '#10b981', margin: '0 0 15px 0' }}>📬 Newsletter Schedule (UTC)</h4>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 15 }}>
+                <div className="admin-setting">
+                  <label>🌅 Morning</label>
+                  <input
+                    type="time"
+                    defaultValue={getSetting('newsletter_time_1') || '05:42'}
+                    onBlur={(e) => updateSetting('newsletter_time_1', e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+                <div className="admin-setting">
+                  <label>☀️ Mid-Morning</label>
+                  <input
+                    type="time"
+                    defaultValue={getSetting('newsletter_time_2') || '08:37'}
+                    onBlur={(e) => updateSetting('newsletter_time_2', e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+                <div className="admin-setting">
+                  <label>🌆 Afternoon</label>
+                  <input
+                    type="time"
+                    defaultValue={getSetting('newsletter_time_3') || '16:41'}
+                    onBlur={(e) => updateSetting('newsletter_time_3', e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              </div>
+              
+              <div className="admin-setting" style={{ display: 'flex', alignItems: 'center', gap: 15, marginTop: 15 }}>
+                <label style={{ margin: 0 }}>🤖 AI-Optimized Timing</label>
+                <input
+                  type="checkbox"
+                  checked={getSetting('newsletter_ai_optimization') !== false}
+                  onChange={(e) => updateSetting('newsletter_ai_optimization', e.target.checked)}
+                  style={{ width: 20, height: 20, accentColor: '#10b981' }}
+                />
+                <span style={{ color: getSetting('newsletter_ai_optimization') !== false ? '#10b981' : '#ef4444', fontSize: '0.9rem' }}>
+                  {getSetting('newsletter_ai_optimization') !== false ? '✅ AI will optimize for max engagement' : '❌ Using manual times'}
+                </span>
+              </div>
+              
+              <div style={{
+                background: 'rgba(0,0,0,0.3)',
+                borderRadius: 8,
+                padding: 12,
+                marginTop: 15
+              }}>
+                <p style={{ color: '#6ee7b7', margin: 0, fontSize: '0.85rem' }}>
+                  💡 <strong>Current Schedule:</strong> Newsletters send at 5:42 AM, 8:37 AM, and 4:41 PM UTC daily. Enable AI optimization to let the system find the best times for maximum engagement and revenue!
+                </p>
+              </div>
+            </div>
+            
+            {/* Daily Laugh Goal Settings */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.15))',
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 25,
+              border: '1px solid rgba(251, 191, 36, 0.3)'
+            }}>
+              <h4 style={{ color: '#fbbf24', margin: '0 0 15px 0' }}>🎯 Daily Laugh Goal Settings</h4>
+              
+              <div className="admin-setting">
+                <label>Default Daily Goal (new users)</label>
+                <input
+                  type="number"
+                  min="5"
+                  max="50"
+                  defaultValue={getSetting('default_daily_laugh_goal') || 10}
+                  onBlur={(e) => updateSetting('default_daily_laugh_goal', Math.min(50, Math.max(5, parseInt(e.target.value))))}
+                  style={{ width: 100 }}
+                />
+                <small style={{ color: '#a1a1aa', display: 'block', marginTop: 5 }}>
+                  Default number of laughs per day for new users (5-50)
+                </small>
+              </div>
+              
+              <div className="admin-setting">
+                <label>Streak Bonus Multiplier</label>
+                <input
+                  type="number"
+                  min="0.5"
+                  max="5"
+                  step="0.1"
+                  defaultValue={getSetting('streak_bonus_multiplier') || 1.0}
+                  onBlur={(e) => updateSetting('streak_bonus_multiplier', parseFloat(e.target.value))}
+                  style={{ width: 100 }}
+                />
+                <small style={{ color: '#a1a1aa', display: 'block', marginTop: 5 }}>
+                  Multiplier for streak XP bonuses (1.0 = normal, 2.0 = double)
+                </small>
+              </div>
+            </div>
+            
             {/* Other Settings */}
             <div className="admin-setting">
               <label>Tutorial Video URL</label>
