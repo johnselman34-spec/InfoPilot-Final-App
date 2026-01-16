@@ -226,17 +226,17 @@ class TestAuthenticationAndCategories:
         """Test cascade delete - deleting parent removes children"""
         headers = {"Authorization": f"Bearer {auth_token}"}
         
-        # Create parent category
+        # Create parent category with proper protocol format
         parent_response = requests.post(f"{BASE_URL}/api/categories", 
                                        headers=headers, 
                                        json={
                                            "name": "TEST_Parent_Cascade",
-                                           "protocol": "parent cascade test",
+                                           "protocol": "(parent or cascade)",
                                            "is_public": False
                                        })
         
         if parent_response.status_code not in [200, 201]:
-            pytest.skip("Could not create parent category")
+            pytest.skip(f"Could not create parent category: {parent_response.text}")
         
         parent_id = parent_response.json().get("id") or parent_response.json().get("_id")
         
@@ -245,7 +245,7 @@ class TestAuthenticationAndCategories:
                                       headers=headers, 
                                       json={
                                           "name": "TEST_Child_Cascade",
-                                          "protocol": "child cascade test",
+                                          "protocol": "(child or cascade)",
                                           "parent_id": parent_id,
                                           "is_public": False
                                       })
