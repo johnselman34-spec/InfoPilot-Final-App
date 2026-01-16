@@ -201,7 +201,7 @@ const AdminPanel = ({ showToast }) => {
     setNewsletterLoading(false);
   };
 
-  const fetchNewsletterHistory = async () => {
+  const fetchNewsletterHistory = useCallback(async () => {
     try {
       const res = await fetch(`${API}/newsletter/history`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -213,9 +213,9 @@ const AdminPanel = ({ showToast }) => {
     } catch (e) {
       console.error('Failed to fetch newsletter history');
     }
-  };
+  }, [token]);
 
-  const fetchNewsletterSchedule = async () => {
+  const fetchNewsletterSchedule = useCallback(async () => {
     try {
       const res = await fetch(`${API}/newsletter/schedule`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -227,7 +227,7 @@ const AdminPanel = ({ showToast }) => {
     } catch (e) {
       console.error('Failed to fetch newsletter schedule');
     }
-  };
+  }, [token]);
 
   const saveNewsletterSchedule = async () => {
     try {
