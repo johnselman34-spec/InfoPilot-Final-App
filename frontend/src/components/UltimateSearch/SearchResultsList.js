@@ -52,7 +52,7 @@ const SearchResultsList = ({
 /**
  * ResultCard - Individual search result card
  */
-const ResultCard = ({ result, onDelete, onReaction }) => {
+const ResultCard = ({ result, onDelete, onReaction, onOpenComments }) => {
   return (
     <div className="result-card" style={{ position: 'relative' }}>
       {/* Delete button */}
@@ -96,7 +96,7 @@ const ResultCard = ({ result, onDelete, onReaction }) => {
       </div>
       {/* Hashtags */}
       <HashtagDisplay hashtags={extractHashtags(result.title, result.snippet, result.article_type)} />
-      <div className="reactions-bar">
+      <div className="reactions-bar" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 5 }}>
         {['Like', 'Love', 'Funny', 'Sad', 'Best'].map(reaction => (
           <button
             key={reaction}
@@ -111,6 +111,21 @@ const ResultCard = ({ result, onDelete, onReaction }) => {
             {reaction}
           </button>
         ))}
+        {/* Comments Button */}
+        <button
+          onClick={onOpenComments}
+          className="reaction-btn"
+          style={{
+            background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(236, 72, 153, 0.2))',
+            border: '1px solid rgba(124, 58, 237, 0.3)',
+            color: '#a78bfa',
+            marginLeft: 'auto'
+          }}
+          data-testid={`open-comments-${result.id}`}
+          title="View and add comments"
+        >
+          💬 Comments
+        </button>
       </div>
     </div>
   );
