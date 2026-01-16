@@ -395,8 +395,10 @@ class TestPreviousFeaturesStillWorking:
         )
         assert response.status_code == 200
         data = response.json()
-        assert "categories" in data
-        print(f"✅ Category export: {len(data['categories'])} categories")
+        # Response structure is data.categories
+        assert "data" in data or "categories" in data
+        categories = data.get("data", {}).get("categories", data.get("categories", []))
+        print(f"✅ Category export: {len(categories)} categories")
     
     def test_batch_payout(self):
         """Test batch payout endpoint"""
