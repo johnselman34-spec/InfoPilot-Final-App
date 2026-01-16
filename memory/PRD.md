@@ -580,6 +580,65 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Eggs visible across all pages
   - Reward popup with XP and copy/share functionality
 
+### Batch 15 - Theme & Comments Integration ✅ (January 16, 2026)
+- [x] **Search Result Comments UI Integration**
+  - Comments button (💬) on every search result card in UltimateSearchPage
+  - `SearchResultComments.js` slide-in panel from right
+  - Comment threads with nested replies
+  - Like/Delete/Reply actions
+  - Real-time comment count display
+  - data-testid="open-comments-{id}", "comments-panel", "new-comment-input"
+- [x] **Content Filtering UI in Settings**
+  - 3-tier content filtering: Strict (default), Moderate, Off (Adult Content)
+  - data-testid="content-filter-section", "content-filter-strict/moderate/off"
+  - Adult content warning when "Off" selected
+  - Allows research on sexual positions, techniques, supplements, devices, technology
+  - Backend API: `PUT /api/users/settings` with `content_filter` field
+- [x] **Map Category Filtering with Color-Coded Dots**
+  - Category filter section with checkboxes on MapPage
+  - 16 unique colors assigned to categories (CATEGORY_COLORS array)
+  - Color-coded dots appear next to category names showing result counts
+  - Filter multiple categories simultaneously
+  - Expand/Collapse toggle for category section
+  - Clear All button to reset filters
+  - data-testid="category-filter-section", "category-filter-{name}", "clear-category-filter"
+- [x] **Category Filtered Results Panel (Bottom-Center)**
+  - When categories are selected, filtered results appear in dedicated panel
+  - Shows category badges, article types, locations, hashtags
+  - Color-coded result borders matching category colors
+  - Hover effects with glow matching category color
+  - data-testid="category-filtered-results", "filtered-map-result-{idx}"
+- [x] **Enhanced Easter Egg Jokes (Letters to Evelyn by John Selman)**
+  - 16 extremely funny jokes with irreverent humor about:
+    - Stepmother poisoning with military-grade interrogation drugs
+    - 10-month hallucination "trip" leading to bestseller
+    - Navy pilot career jealousy (A-4 Skyhawks, USS Enterprise)
+    - "Superman" to "Trash-O" callsign evolution
+    - Revenge through success: book → movie → fame
+  - Protocol Script Recommendations with specific examples:
+    - Aviation, Memoir, Research, Health, Finance, Book, Travel, Supernatural, Entertainment, Legal protocols
+    - Each includes Script Tips for optimal results
+  - Protocol Pricing Suggestions with strategies:
+    - FREE tier, Budget ($0.99-$1.99), Mid-Tier ($2.99-$4.99), Premium ($5.99-$9.99)
+    - Bundle strategies, Flash sales, Pay-What-You-Want, A/B testing
+  - Amazon links: amazon.com search "Letters to Evelyn by John Selman"
+  - Readers' Favorite link: readersfavorite.com/book-review/letters-to-evelyn
+- [x] **Theme Preset Gallery & Preview Verified Working**
+  - Gallery button in sidebar opens modal with Browse/My Presets/Create tabs
+  - Preview button shows split-screen Dark/Light mode comparison
+  - 6 accent color options in each mode
+  - Save custom presets with name and description
+- [x] **Clean Category Button in Edit Category Modal**
+  - Added to EditCategoryModal (CategoryModals.js)
+  - 3 cleaning modes: Unlink Results, Delete Exclusive Only, Delete ALL Results
+  - Confirmation dialogs with result counts
+  - data-testid="clean-category-btn"
+- [x] **Admin Price Controls Backend Settings**
+  - `unpaid_max_protocol_price` - Max price unpaid users can charge (0 = disabled)
+  - `unpaid_max_protocol_price_enabled` - Feature toggle (OFF by default)
+  - `protocol_controls_enabled` - Document type protocol controls
+  - `allowed_document_types` - List of allowed document types
+
 ### Maps Pricing Decision
 - ✅ **FREE Maps for All Users:**
   - Ultimate Search Page map
