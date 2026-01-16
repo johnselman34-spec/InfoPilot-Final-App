@@ -404,6 +404,7 @@ const StatisticsPage = ({ showToast }) => {
     fetchLeaderboards();
     fetchMostCopied();
     fetchPollStatistics();
+    fetchEasterEggStatistics();
   }, []);
 
   const fetchPollStatistics = async () => {
