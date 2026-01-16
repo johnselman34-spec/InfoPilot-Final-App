@@ -813,7 +813,7 @@ async def get_seller_dashboard(user = Depends(get_current_user)):
     }
 
 
-@router.get("/my-protocols", response_model=dict)
+@router.get("/my-protocols")
 async def get_my_protocols(user = Depends(get_current_user)):
     """Get all protocols created by the current user for the ProtocolRecommendationEngine"""
     user_id = str(user["_id"])
