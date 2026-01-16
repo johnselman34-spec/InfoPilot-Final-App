@@ -383,38 +383,71 @@ const EditCategoryModal = ({
               border: '1px solid rgba(239, 68, 68, 0.3)',
               borderRadius: 10
             }}>
-              <h4 style={{ color: '#ef4444', margin: '0 0 10px 0', fontSize: '0.9rem' }}>
-                🗑️ Delete Category
-              </h4>
-              <p style={{ color: '#a1a1aa', fontSize: '0.8rem', margin: '0 0 10px 0' }}>
-                Permanently delete this category and all its sub-categories. This action cannot be undone.
-                {editingCategory.subcategory_count > 0 && (
-                  <span style={{ display: 'block', color: '#fbbf24', marginTop: 5 }}>
-                    ⚠️ Warning: This will also delete {editingCategory.subcategory_count} sub-categor{editingCategory.subcategory_count === 1 ? 'y' : 'ies'}!
-                  </span>
-                )}
-              </p>
-              <button
-                onClick={() => {
-                  if (window.confirm(`Delete "${editingCategory.name}" and all its sub-categories? This cannot be undone!`)) {
-                    onDelete(editingCategory.id);
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '10px 16px',
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  border: '1px solid rgba(239, 68, 68, 0.5)',
-                  borderRadius: 8,
-                  color: '#ef4444',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-                data-testid="delete-category-btn"
-              >
-                🗑️ Delete Category
-              </button>
+              {/* Clean Category Button */}
+              <div style={{ marginBottom: 15 }}>
+                <h4 style={{ color: '#f59e0b', margin: '0 0 10px 0', fontSize: '0.9rem' }}>
+                  🧹 Clean Category (Delete All Results)
+                </h4>
+                <p style={{ color: '#a1a1aa', fontSize: '0.8rem', margin: '0 0 10px 0' }}>
+                  Remove all search results associated with this category. The category itself will remain.
+                </p>
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Remove all search results from "${editingCategory.name}"? This will delete all results associated with this category. This cannot be undone!`)) {
+                      onCleanCategory && onCleanCategory(editingCategory.id);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    background: 'rgba(245, 158, 11, 0.2)',
+                    border: '1px solid rgba(245, 158, 11, 0.5)',
+                    borderRadius: 8,
+                    color: '#f59e0b',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  data-testid="clean-category-btn"
+                >
+                  🧹 Clean Category (Remove All Results)
+                </button>
+              </div>
+              
+              <div style={{ borderTop: '1px solid rgba(239, 68, 68, 0.3)', paddingTop: 15 }}>
+                <h4 style={{ color: '#ef4444', margin: '0 0 10px 0', fontSize: '0.9rem' }}>
+                  🗑️ Delete Category
+                </h4>
+                <p style={{ color: '#a1a1aa', fontSize: '0.8rem', margin: '0 0 10px 0' }}>
+                  Permanently delete this category and all its sub-categories. This action cannot be undone.
+                  {editingCategory.subcategory_count > 0 && (
+                    <span style={{ display: 'block', color: '#fbbf24', marginTop: 5 }}>
+                      ⚠️ Warning: This will also delete {editingCategory.subcategory_count} sub-categor{editingCategory.subcategory_count === 1 ? 'y' : 'ies'}!
+                    </span>
+                  )}
+                </p>
+                <button
+                  onClick={() => {
+                    if (window.confirm(`Delete "${editingCategory.name}" and all its sub-categories? This cannot be undone!`)) {
+                      onDelete(editingCategory.id);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 16px',
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    border: '1px solid rgba(239, 68, 68, 0.5)',
+                    borderRadius: 8,
+                    color: '#ef4444',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  data-testid="delete-category-btn"
+                >
+                  🗑️ Delete Category
+                </button>
+              </div>
             </div>
           )}
         </div>
