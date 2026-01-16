@@ -758,7 +758,6 @@ class ArticleClassifier:
             return "Informative"
         
         # 5. PERSONAL REPORT (Collected) - 'I' outside quotes in paragraph with min words
-        personal_protocol = settings.get("doctype_personal_collected_protocol", "(I)")
         min_i_count = settings.get("doctype_personal_min_i_count", 3)
         min_para_words = settings.get("doctype_personal_min_paragraph_words", 75)
         
