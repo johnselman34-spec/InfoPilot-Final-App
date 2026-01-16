@@ -570,35 +570,91 @@ class ExtendedWebSearchService:
 # ============== ARTICLE CLASSIFIER ==============
 
 class ArticleClassifier:
-    """Classify articles based on content"""
+    """
+    Classify articles based on content with expanded document types.
     
-    INFORMATIVE_PROTOCOL = "(there are or there is) & (may have or might have or that are) & (this kind or these kinds or this type or these types or it is) & (is easily or of each or less than the or more than or greater than or is more or is less) & (it is)"
-    PHD_KEYWORDS = ["ph.d.", "phd", "d.phil.", "dr."]
+    Supported Types:
+    - PhD Informative: Academic content by credentialed professionals
+    - Personal Report (Organic): First-hand personal accounts
+    - Personal Report (Collected): Aggregated personal reports
+    - News Article: Current events and journalism
+    - Academic Paper: Scholarly research
+    - Government: Official government documents
+    - Wiki: Wikipedia and wiki-based content  
+    - Blog Post: Personal blogs and opinion pieces
+    - Forum: Discussion boards
+    - Video: Video content
+    - PDF Document: PDF files
+    - MS Word Document: Word documents
+    - Webpage: General web pages
+    """
+    
+    PHD_INDICATORS = ['ph.d.', 'phd', 'd.phil.', 'dr.', 'professor', 'research by',
+                      'peer-reviewed', 'peer reviewed', 'published in', 'journal of',
+                      'university study', 'clinical study', 'scientific study']
+    PERSONAL_INDICATORS = ['my experience', 'i personally', 'in my opinion', 'my story',
+                           'first-hand', 'firsthand', 'personal account', 'i found that',
+                           'i discovered', 'my journey', 'my review', 'personal report']
+    COLLECTED_INDICATORS = ['collected', 'compilation', 'aggregated', 'curated',
+                            'testimonials', 'user reports', 'customer experiences',
+                            'reviews collected', 'gathered from', 'roundup']
     
     @classmethod
-    def classify(cls, title: str, content: str) -> str:
-        """Classify article type"""
-        if not content:
-            return "News Article"
+    def classify(cls, title: str, content: str, url: str = "") -> str:
+        """Classify article type based on content analysis"""
+        if not content and not title:
+            return "Webpage"
         
-        content_lower = content.lower()
         title_lower = title.lower() if title else ""
-        word_count = len(content.split())
+        content_lower = content.lower()[:1500] if content else ""
+        url_lower = url.lower() if url else ""
+        combined = f"{title_lower} {content_lower} {url_lower}"
         
+        # PhD Informative - academic credentialed content
+        phd_count = sum(1 for ind in cls.PHD_INDICATORS if ind in combined)
+        word_count = len(content.split()) if content else 0
+        
+        if phd_count >= 2 or (phd_count >= 1 and word_count >= 1500):
+            return "PhD Informative"
+        
+        # Personal Report detection
+        personal_count = sum(1 for ind in cls.PERSONAL_INDICATORS if ind in combined)
+        collected_count = sum(1 for ind in cls.COLLECTED_INDICATORS if ind in combined)
+        
+        if collected_count >= 2 or (collected_count >= 1 and personal_count >= 1):
+            return "Personal Report (Collected)"
+        if personal_count >= 2:
+            return "Personal Report (Organic)"
+        
+        # URL-based classification
+        if any(x in url_lower for x in ['wikipedia.org', 'wiki']):
+            return 'Wiki'
+        if any(x in url_lower for x in ['youtube.com', 'vimeo.com', 'video', 'dailymotion']):
+            return 'Video'
+        if any(x in url_lower for x in ['.gov', 'government']):
+            return 'Government'
+        if any(x in url_lower for x in ['.edu', 'academic', 'journal', 'research', 'scholar', 'arxiv', 'pubmed']):
+            return 'Academic Paper'
+        if any(x in url_lower for x in ['forum', 'reddit.com', 'quora.com', 'stackexchange', 'stackoverflow']):
+            return 'Forum'
+        if any(x in url_lower for x in ['blog', 'medium.com', 'wordpress', 'substack']):
+            return 'Blog Post'
+        if any(x in url_lower for x in ['.pdf']):
+            return 'PDF Document'
+        if any(x in url_lower for x in ['.doc', '.docx']):
+            return 'MS Word Document'
+        
+        # Content-based classification
         if "forum" in title_lower:
             return "Forum"
-        
         if content_lower.count("blog") >= 3 and "blog" in title_lower:
-            return "Blog"
-        
-        phd_count = sum(content_lower.count(kw) for kw in cls.PHD_KEYWORDS)
-        if phd_count >= 3 and word_count >= 1500:
-            return "Informative Ph.D."
-        
+            return "Blog Post"
+        if any(x in combined for x in ['breaking news', 'latest news', 'news article', 'reported today']):
+            return "News Article"
         if content_lower.count("news") >= 3:
             return "News Article"
         
-        return "News Article"
+        return "Webpage"
 
 # ============== PAYMENT ENDPOINTS ==============
 
