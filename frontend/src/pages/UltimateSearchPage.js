@@ -244,6 +244,99 @@ const UltimateSearchPage = ({ showToast }) => {
     setLoading(false);
   };
 
+  // AUTO-CATEGORIZE: One-click search that matches against ALL categories
+  const [autoCatLoading, setAutoCatLoading] = useState(false);
+  const autoCategorizeSearc = async () => {
+    if (!searchQuery.trim()) {
+      showToast('Please enter a search query', 'error');
+      return;
+    }
+    
+    setAutoCatLoading(true);
+    const startTime = Date.now();
+    
+    try {
+      const res = await fetch(`${API}/auto-categorize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ query: searchQuery })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        setLastBatchId(data.batch_id);
+        
+        // Auto-select categories that matched
+        if (data.category_summary && data.category_summary.length > 0) {
+          const matchedCategoryIds = data.category_summary.map(c => c.id);
+          setSelectedCategories(matchedCategoryIds);
+        }
+        
+        showToast(`🎯 ${data.message} (${totalTime}s)`, 'success');
+        fetchSearchResults();
+        fetchBatches();
+        triggerMapRefresh();
+      } else {
+        const error = await res.json();
+        showToast(error.detail || 'Auto-categorization failed', 'error');
+      }
+    } catch (e) {
+      showToast('Auto-categorization failed', 'error');
+    }
+    
+    setAutoCatLoading(false);
+  };
+
+  // AI INTELLIGENT SEARCH
+  const [aiSearchLoading, setAiSearchLoading] = useState(false);
+  const [aiSearchMode, setAiSearchMode] = useState('comprehensive');
+  
+  const aiIntelligentSearch = async () => {
+    if (!searchQuery.trim()) {
+      showToast('Please enter a search query', 'error');
+      return;
+    }
+    
+    setAiSearchLoading(true);
+    const startTime = Date.now();
+    
+    try {
+      const res = await fetch(`${API}/ai-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ 
+          query: searchQuery,
+          mode: aiSearchMode,
+          auto_categorize: true
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        setLastBatchId(data.batch_id);
+        
+        // Show AI suggestions if available
+        if (data.ai_suggestions && data.ai_suggestions.length > 0) {
+          console.log('AI Expanded Queries:', data.expanded_queries);
+        }
+        
+        showToast(`🤖 ${data.message} (${totalTime}s)`, 'success');
+        fetchSearchResults();
+        fetchBatches();
+        triggerMapRefresh();
+      } else {
+        const error = await res.json();
+        showToast(error.detail || 'AI Search failed', 'error');
+      }
+    } catch (e) {
+      showToast('AI Search failed', 'error');
+    }
+    
+    setAiSearchLoading(false);
+  };
+
   const collateWithCategories = async () => {
     if (selectedCategories.length === 0) {
       showToast('Please select at least one category to collate', 'error');
