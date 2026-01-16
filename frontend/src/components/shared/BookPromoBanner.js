@@ -91,57 +91,127 @@ const TopPilotBanner = () => (
 // Maestro Bistro Promo Section
 const MaestroBistroSection = () => (
   <div style={{
-    background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.3), rgba(101, 67, 33, 0.4))',
+    background: 'linear-gradient(135deg, rgba(69, 26, 3, 0.5), rgba(101, 47, 23, 0.5))',
     padding: 20,
     borderRadius: 15,
-    border: '2px solid rgba(210, 105, 30, 0.5)',
+    border: '2px solid rgba(139, 69, 19, 0.6)',
     marginTop: 15
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 15, flexWrap: 'wrap' }}>
+      {/* Beef Rouladen Dish Icon - Dark bowl with gravy, noodles, peas, carrots */}
       <div style={{
-        fontSize: '3rem',
-        background: 'linear-gradient(135deg, #d97706, #f59e0b)',
+        width: 85,
+        height: 85,
         borderRadius: '50%',
-        width: 70,
-        height: 70,
+        background: 'linear-gradient(180deg, #3d2817 0%, #2a1810 50%, #1f120c 100%)',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        boxShadow: 'inset 0 -8px 20px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.5)',
+        position: 'relative',
+        overflow: 'hidden',
+        border: '3px solid #5c3d2e'
       }}>
-        🍲
+        {/* Dark brown/red gravy base */}
+        <div style={{
+          position: 'absolute',
+          bottom: 10,
+          width: '75%',
+          height: '55%',
+          background: 'linear-gradient(180deg, #6b3a1f 0%, #4a2512 50%, #321509 100%)',
+          borderRadius: '50% 50% 45% 45%',
+          boxShadow: 'inset 0 2px 8px rgba(180, 90, 40, 0.4)'
+        }}/>
+        {/* Beef Rouladen - dark with gravy */}
+        <div style={{
+          position: 'absolute',
+          bottom: 18,
+          left: '25%',
+          width: 32,
+          height: 18,
+          background: 'linear-gradient(135deg, #5c2d0e 0%, #3d1f0a 50%, #2d1608 100%)',
+          borderRadius: '40% 40% 35% 35%',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.5), inset 0 1px 2px rgba(139,69,19,0.3)',
+          border: '1px solid #6b3a1f'
+        }}/>
+        {/* Noodles - golden egg noodles */}
+        <div style={{
+          position: 'absolute',
+          bottom: 15,
+          right: '20%',
+          width: 25,
+          height: 20,
+          background: 'linear-gradient(135deg, #d4a84b 0%, #b8923c 100%)',
+          borderRadius: '30%',
+          opacity: 0.9
+        }}/>
+        {/* Peas - green dots */}
+        <div style={{ position: 'absolute', bottom: 22, left: '18%', width: 6, height: 6, background: '#3d7a3d', borderRadius: '50%' }}/>
+        <div style={{ position: 'absolute', bottom: 28, left: '22%', width: 5, height: 5, background: '#4a8f4a', borderRadius: '50%' }}/>
+        <div style={{ position: 'absolute', bottom: 20, left: '28%', width: 5, height: 5, background: '#3d7a3d', borderRadius: '50%' }}/>
+        {/* Carrots - orange slices */}
+        <div style={{ position: 'absolute', bottom: 25, right: '18%', width: 8, height: 5, background: '#d97706', borderRadius: '40%' }}/>
+        <div style={{ position: 'absolute', bottom: 19, right: '24%', width: 7, height: 5, background: '#ea8d1c', borderRadius: '40%' }}/>
       </div>
+      
       <div style={{ flex: 1, minWidth: 200 }}>
         <h3 style={{
           fontSize: '1.4rem',
           fontWeight: 800,
-          color: '#f59e0b',
-          marginBottom: 5
+          color: '#d97706',
+          marginBottom: 5,
+          textShadow: '0 1px 2px rgba(0,0,0,0.5)'
         }}>
           MAESTRO BISTRO
         </h3>
-        <div style={{ color: '#fcd34d', fontSize: '0.9rem', marginBottom: 8 }}>
+        <div style={{ color: '#fbbf24', fontSize: '0.9rem', marginBottom: 8 }}>
           🏪 On the Mall • Brunswick, Maine
         </div>
-        <div style={{ color: '#fff', fontSize: '0.85rem', lineHeight: 1.5 }}>
-          <div style={{ marginBottom: 5 }}>
-            🥩 <strong style={{ color: '#f59e0b' }}>deLectaBLe Beef Rouladen</strong> - Evenly spiced perfection
+        <div style={{ color: '#fff', fontSize: '0.85rem', lineHeight: 1.6 }}>
+          <div style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ 
+              display: 'inline-block', 
+              width: 22, 
+              height: 22, 
+              background: 'linear-gradient(135deg, #6b3a1f, #4a2512)',
+              borderRadius: '50%',
+              boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.5)'
+            }}/>
+            <span><strong style={{ color: '#d97706' }}>deLectaBLe Beef Rouladen</strong> - Tender beef with dark brown gravy, egg noodles, peas & carrots</span>
           </div>
-          <div style={{ marginBottom: 5 }}>
-            🥬 <strong style={{ color: '#10b981' }}>Beef Rouladen with Vegetables and Carrots</strong> - It's German Cuisine! (Yes, really!)
+          <div style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ 
+              display: 'inline-block', 
+              width: 22, 
+              height: 22, 
+              background: 'linear-gradient(135deg, #4a7a4a, #3d6b3d)',
+              borderRadius: '50%',
+              boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.4)'
+            }}/>
+            <span><strong style={{ color: '#10b981' }}>Vegetable Rouladen</strong> - Fresh vegetables in savory gravy - It's German Cuisine!</span>
           </div>
-          <div>
-            🐟 <strong style={{ color: '#38bdf8' }}>Fresh Fish Chowder</strong> - Maine's finest catch
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ 
+              display: 'inline-block', 
+              width: 22, 
+              height: 22, 
+              background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
+              borderRadius: '50%',
+              boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.3)'
+            }}/>
+            <span><strong style={{ color: '#38bdf8' }}>Fresh Fish Chowder</strong> - Maine's finest catch</span>
           </div>
         </div>
         <div style={{
           marginTop: 12,
           padding: '8px 15px',
-          background: 'rgba(251, 191, 36, 0.2)',
+          background: 'rgba(139, 69, 19, 0.3)',
           borderRadius: 10,
           color: '#fbbf24',
           fontSize: '0.8rem',
           fontStyle: 'italic',
-          fontWeight: 600
+          fontWeight: 600,
+          border: '1px solid rgba(210, 105, 30, 0.4)'
         }}>
           "Appropriate & conscientable prices for appropriately & conscientiously AMAZING food!" 🎻
         </div>
