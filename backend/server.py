@@ -343,6 +343,183 @@ class ExtendedWebSearchService:
         return results
     
     @staticmethod
+    async def search_brave(query: str, num_results: int = 20) -> List[Dict[str, Any]]:
+        """Use Brave Search API for privacy-focused search results"""
+        results = []
+        
+        if not BRAVE_API_KEY:
+            return results
+        
+        try:
+            import aiohttp
+            
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    "Accept": "application/json",
+                    "X-Subscription-Token": BRAVE_API_KEY
+                }
+                params = {
+                    "q": query,
+                    "count": min(num_results, 20),  # Brave API max is 20 per request
+                    "search_lang": "en",
+                    "country": "us",
+                    "safesearch": "moderate",
+                    "text_decorations": False,
+                    "extra_snippets": True
+                }
+                
+                async with session.get(
+                    "https://api.search.brave.com/res/v1/web/search",
+                    headers=headers,
+                    params=params
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        web_results = data.get("web", {}).get("results", [])
+                        for r in web_results:
+                            url = r.get("url", "")
+                            if not url:
+                                continue
+                            
+                            try:
+                                parsed = urllib.parse.urlparse(url)
+                                root_domain = parsed.netloc
+                            except Exception:
+                                root_domain = ""
+                            
+                            # Combine main snippet with extra snippets
+                            snippet = r.get("description", "")
+                            extra_snippets = r.get("extra_snippets", [])
+                            if extra_snippets:
+                                snippet += " " + " ".join(extra_snippets[:2])
+                            
+                            results.append({
+                                "url": url,
+                                "title": r.get("title", ""),
+                                "snippet": snippet,
+                                "content": snippet,
+                                "root_domain": root_domain,
+                                "source": "brave",
+                                "age": r.get("age", ""),
+                                "language": r.get("language", "en")
+                            })
+                        
+                        logger.info(f"Brave Search returned {len(results)} results")
+                    else:
+                        error_text = await response.text()
+                        logger.warning(f"Brave Search API error: {response.status} - {error_text}")
+                        
+        except Exception as e:
+            logger.error(f"Brave Search error: {e}")
+        
+        return results
+    
+    @staticmethod
+    async def search_yandex(query: str, num_results: int = 10) -> List[Dict[str, Any]]:
+        """Use Yandex Search API for Russian and international search results"""
+        results = []
+        
+        if not YANDEX_API_KEY or not YANDEX_FOLDER_ID:
+            return results
+        
+        try:
+            import aiohttp
+            
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    "Authorization": f"Api-Key {YANDEX_API_KEY}",
+                    "Content-Type": "application/json"
+                }
+                
+                # Yandex Search API uses XML by default, but we can parse it
+                # Using the synchronous endpoint for simplicity
+                params = {
+                    "folderid": YANDEX_FOLDER_ID,
+                    "apikey": YANDEX_API_KEY,
+                    "query": query,
+                    "lr": "84",  # Language region (84 = USA)
+                    "l10n": "en",
+                    "sortby": "rlv",  # Relevance
+                    "filter": "moderate",
+                    "maxpassages": 3,
+                    "groupby": f"attr=d.mode=deep.groups-on-page={num_results}.docs-in-group=1"
+                }
+                
+                # Try the REST API endpoint
+                api_url = "https://yandex.com/search/xml"
+                
+                async with session.get(api_url, params=params) as response:
+                    if response.status == 200:
+                        # Parse XML response
+                        import xml.etree.ElementTree as ET
+                        xml_text = await response.text()
+                        
+                        try:
+                            root = ET.fromstring(xml_text)
+                            
+                            # Find all doc elements
+                            for group in root.findall(".//group"):
+                                doc = group.find("doc")
+                                if doc is None:
+                                    continue
+                                
+                                url_elem = doc.find("url")
+                                title_elem = doc.find("title")
+                                snippet_elem = doc.find("headline")
+                                
+                                if url_elem is None:
+                                    continue
+                                
+                                url = url_elem.text or ""
+                                if not url:
+                                    continue
+                                
+                                try:
+                                    parsed = urllib.parse.urlparse(url)
+                                    root_domain = parsed.netloc
+                                except Exception:
+                                    root_domain = ""
+                                
+                                # Clean up title (remove XML tags)
+                                title = ""
+                                if title_elem is not None:
+                                    title = "".join(title_elem.itertext())
+                                
+                                snippet = ""
+                                if snippet_elem is not None:
+                                    snippet = "".join(snippet_elem.itertext())
+                                
+                                # Also try passages
+                                passages = doc.findall(".//passage")
+                                if passages:
+                                    passage_texts = ["".join(p.itertext()) for p in passages]
+                                    if passage_texts:
+                                        snippet = " ".join(passage_texts[:2])
+                                
+                                results.append({
+                                    "url": url,
+                                    "title": title,
+                                    "snippet": snippet,
+                                    "content": snippet,
+                                    "root_domain": root_domain,
+                                    "source": "yandex"
+                                })
+                            
+                            logger.info(f"Yandex Search returned {len(results)} results")
+                            
+                        except ET.ParseError as e:
+                            logger.warning(f"Yandex XML parse error: {e}")
+                    else:
+                        error_text = await response.text()
+                        logger.warning(f"Yandex Search API error: {response.status} - {error_text[:200]}")
+                        
+        except Exception as e:
+            logger.error(f"Yandex Search error: {e}")
+        
+        return results
+    
+    @staticmethod
     async def search(query: str, num_results: int = 200) -> List[Dict[str, Any]]:
         """Aggregate search from multiple sources"""
         all_results = []
