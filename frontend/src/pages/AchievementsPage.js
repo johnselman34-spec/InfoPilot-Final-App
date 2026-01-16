@@ -144,6 +144,20 @@ const AchievementsPage = ({ showToast }) => {
           Collect badges, climb leaderboards, and prove you&apos;re the ultimate InfoPilot!
         </p>
         
+        {/* Laugh-O-Meter and Daily Goal - NEW! */}
+        {token && (
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+            gap: 20,
+            marginBottom: 25,
+            textAlign: 'left'
+          }}>
+            <DailyLaughGoal />
+            <LaughOMeterWidget />
+          </div>
+        )}
+        
         {/* User Stats */}
         {token && (
           <div style={{ display: 'flex', justifyContent: 'center', gap: 30, flexWrap: 'wrap' }}>
