@@ -401,9 +401,35 @@ const MapPage = ({ showToast, setCurrentPage }) => {
                 Last: {lastUpdate.toLocaleTimeString()}
               </span>
             )}
+            <button
+              onClick={() => setShowMapStyling(!showMapStyling)}
+              className="btn btn-secondary"
+              style={{ 
+                padding: '4px 12px', 
+                fontSize: '0.8rem',
+                background: showMapStyling ? 'linear-gradient(135deg, #7c3aed, #3b82f6)' : undefined
+              }}
+              data-testid="toggle-map-styling-btn"
+            >
+              🎨 {showMapStyling ? 'Hide Styling' : 'Map Style'}
+            </button>
           </div>
         </div>
       </div>
+      
+      {/* Custom Map Styling Panel */}
+      {showMapStyling && (
+        <div style={{ marginBottom: 15 }}>
+          <CustomMapStyling 
+            onStyleChange={(style) => {
+              setMapStyle(style);
+              localStorage.setItem('mapStylePreferences', JSON.stringify(style));
+            }}
+            currentStyle={mapStyle}
+            showToast={showToast}
+          />
+        </div>
+      )}
       
       {/* AI Search Section */}
       <div style={{ 
