@@ -208,7 +208,8 @@ const AdminPanel = ({ showToast }) => {
       });
       if (res.ok) {
         const data = await res.json();
-        setNewsletterHistory(data);
+        // Handle both array and {history: [...]} response formats
+        setNewsletterHistory(Array.isArray(data) ? data : (data.history || []));
       }
     } catch (e) {
       console.error('Failed to fetch newsletter history');
