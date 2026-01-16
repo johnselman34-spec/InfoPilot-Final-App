@@ -282,8 +282,6 @@ const CollapsibleCategoryTree = ({
         ) : (
           filteredTree.map(category => (
             <CategoryTreeNode
-          filteredTree.map(category => (
-            <CategoryTreeNode
               key={category.id || category._id}
               category={category}
               level={0}
