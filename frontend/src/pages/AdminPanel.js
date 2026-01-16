@@ -1425,7 +1425,7 @@ const EmailReportsTab = ({ token, showToast }) => {
       setLoading(false);
     };
     loadData();
-  }, []);
+  }, [fetchStatus, fetchHistory]);
 
   const saveConfig = async () => {
     try {
