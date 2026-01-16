@@ -90,6 +90,14 @@ async def init_settings(user = Depends(require_admin)):
         {"key": "paypal_link", "value": PAYPAL_PAYMENT_LINK, "description": "PayPal payment link"},
         {"key": "bundle_of_week_id", "value": "", "description": "Featured Bundle of the Week ID"},
         {"key": "maps_free_for_all", "value": True, "description": "Maps are FREE (no premium gate)"},
+        # Newsletter Time Settings (Admin Controllable)
+        {"key": "newsletter_time_1", "value": "05:42", "description": "Newsletter Time 1 (Morning - HH:MM UTC)"},
+        {"key": "newsletter_time_2", "value": "08:37", "description": "Newsletter Time 2 (Mid-Morning - HH:MM UTC)"},
+        {"key": "newsletter_time_3", "value": "16:41", "description": "Newsletter Time 3 (Afternoon - HH:MM UTC)"},
+        {"key": "newsletter_ai_optimization", "value": True, "description": "AI-optimized newsletter timing for max revenue"},
+        # Daily Laugh Goal Settings
+        {"key": "default_daily_laugh_goal", "value": 10, "description": "Default daily laugh goal for new users"},
+        {"key": "streak_bonus_multiplier", "value": 1.0, "description": "Multiplier for streak bonuses"},
     ]
     
     for setting in default_settings:
