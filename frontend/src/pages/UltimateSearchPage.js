@@ -527,7 +527,7 @@ const UltimateSearchPage = ({ showToast }) => {
     <div>
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="card-header">
-          <h2>{user?.username}'s Ultimate Search Page</h2>
+          <h2>{user?.username}&apos;s Ultimate Search Page</h2>
           <button className="btn btn-primary" onClick={() => setShowCategoryModal(true)}>
             <Icons.Plus /> New Category
           </button>
