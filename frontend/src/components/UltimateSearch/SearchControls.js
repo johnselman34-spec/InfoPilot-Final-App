@@ -187,9 +187,9 @@ const SearchControls = ({
           color: '#a1a1aa', 
           fontSize: '0.75rem', 
           marginLeft: 10,
-          maxWidth: 250
+          maxWidth: 300
         }}>
-          💡 Auto-Categorize matches ALL categories at once. AI Search uses GPT to expand keywords.
+          💡 Auto-Categorize matches ALL categories. AI Search uses GPT + Google, DuckDuckGo, Brave & Yandex.
         </span>
       </div>
 
