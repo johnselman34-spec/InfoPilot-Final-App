@@ -6,7 +6,7 @@ import './i18n'; // i18n multi-language support
 
 // Import refactored modules
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { DarkModeProvider, useDarkMode } from './contexts/DarkModeContext';
+import { ThemeProvider, useTheme, ThemeToggle } from './contexts/ThemeContext';
 import { Toast, Sidebar, QuoteOfTheDay, BookPromoBanner } from './components/shared';
 import { LaughProvider } from './components/Gamification/LaughOMeter';
 import { FloatingEasterEggsController } from './components/Gamification/FloatingEasterEggs';
