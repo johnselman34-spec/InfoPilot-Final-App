@@ -727,7 +727,6 @@ class ArticleClassifier:
             return "Forum"
         
         # 2. BLOG - Must contain 'blog' N times, one in title
-        blog_protocol = settings.get("doctype_blog_protocol", "(blog)")
         blog_min = settings.get("doctype_blog_min_instances", 3)
         blog_count = combined.count("blog")
         if blog_count >= blog_min and "blog" in title_lower:
