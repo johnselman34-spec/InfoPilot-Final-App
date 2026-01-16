@@ -552,24 +552,47 @@ const PersonalReportsPage = ({ showToast, onBack }) => {
                 data-testid={`report-card-${report.id}`}
               >
                 <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                  {/* Image */}
-                  {report.image_url && (
-                    <img 
-                      src={report.image_url} 
-                      alt={report.title}
-                      style={{
-                        width: 150,
-                        height: 100,
-                        objectFit: 'cover',
-                        borderRadius: 8
-                      }}
-                    />
+                  {/* Images - Display multiple */}
+                  {(report.image_urls?.length > 0 || report.image_url) && (
+                    <div style={{ 
+                      display: 'flex', 
+                      gap: 8, 
+                      flexWrap: 'wrap',
+                      maxWidth: 250
+                    }}>
+                      {(report.image_urls || [report.image_url]).filter(Boolean).map((imgUrl, imgIdx) => (
+                        <img 
+                          key={imgIdx}
+                          src={imgUrl.startsWith('/') ? `${API}${imgUrl}` : imgUrl} 
+                          alt={`${report.title} - ${imgIdx + 1}`}
+                          style={{
+                            width: report.image_urls?.length > 1 ? 75 : 150,
+                            height: report.image_urls?.length > 1 ? 60 : 100,
+                            objectFit: 'cover',
+                            borderRadius: 8,
+                            border: '1px solid rgba(124, 58, 237, 0.3)'
+                          }}
+                        />
+                      ))}
+                    </div>
                   )}
                   
                   {/* Content */}
                   <div style={{ flex: 1, minWidth: 200 }}>
                     <h4 style={{ color: '#f472b6', margin: '0 0 8px 0' }}>
                       {report.title}
+                      {report.image_urls?.length > 1 && (
+                        <span style={{
+                          marginLeft: 8,
+                          fontSize: '0.7rem',
+                          background: 'rgba(16, 185, 129, 0.2)',
+                          color: '#10b981',
+                          padding: '2px 6px',
+                          borderRadius: 8
+                        }}>
+                          📷 {report.image_urls.length}
+                        </span>
+                      )}
                     </h4>
                     
                     {report.topic && (
