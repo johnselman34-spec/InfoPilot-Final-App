@@ -875,55 +875,163 @@ const MapPage = ({ showToast, setCurrentPage }) => {
             )}
           </div>
 
-          {/* Results list with hashtags */}
-          <div style={{ marginTop: 20 }}>
-            <h3 style={{ color: '#f472b6', marginBottom: 15 }}>📍 Mapped Results ({mapResults.length})</h3>
+          {/* Category Filtered Results - Shows at bottom-center when categories are selected */}
+          {selectedCategories.length > 0 && (
             <div style={{ 
-              display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: 12, maxHeight: 400, overflowY: 'auto'
-            }}>
-              {mapResults.slice(0, 20).map((result, idx) => (
-                <div 
-                  key={result.id || `result-${idx}`}
-                  data-testid={`map-result-${idx}`}
-                  style={{
-                    padding: 12,
-                    background: 'rgba(30, 20, 50, 0.5)',
-                    borderRadius: 10,
-                    border: '1px solid rgba(124, 58, 237, 0.2)',
-                    cursor: 'pointer', transition: 'all 0.2s'
-                  }}
-                  onClick={() => window.open(result.url, '_blank', 'noopener,noreferrer')}
-                  onMouseEnter={(e) => e.currentTarget.style.borderColor = getMarkerColor(result.article_type)}
-                  onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.2)'}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                    <div style={{
-                      width: 10, height: 10, borderRadius: '50%',
-                      background: getMarkerColor(result.article_type),
-                      boxShadow: `0 0 6px ${getMarkerColor(result.article_type)}`
-                    }} />
-                    <span style={{ color: getMarkerColor(result.article_type), fontSize: '0.7rem', fontWeight: 600 }}>
-                      {result.article_type}
-                    </span>
-                    {result.extractedPlace && (
-                      <span style={{ color: '#10b981', fontSize: '0.65rem', marginLeft: 'auto' }}>
-                        📍 {result.extractedPlace.charAt(0).toUpperCase() + result.extractedPlace.slice(1)}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.85rem', marginBottom: 5, lineHeight: 1.3 }}>
-                    {result.title?.substring(0, 60) || 'Untitled'}...
-                  </div>
-                  <p style={{ color: '#a1a1aa', fontSize: '0.75rem', margin: '0 0 8px 0', lineHeight: 1.4 }}>
-                    {result.snippet?.substring(0, 80) || ''}...
-                  </p>
-                  {/* Hashtags */}
-                  {result.hashtags && <HashtagDisplay hashtags={result.hashtags} small={true} />}
-                </div>
-              ))}
+              marginTop: 20,
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1))',
+              borderRadius: 16,
+              padding: 20,
+              border: '2px solid rgba(16, 185, 129, 0.4)',
+              boxShadow: '0 4px 20px rgba(16, 185, 129, 0.2)'
+            }} data-testid="category-filtered-results">
+              <h3 style={{ color: '#10b981', marginBottom: 15, display: 'flex', alignItems: 'center', gap: 10 }}>
+                🏷️ Category Results ({filteredMapResults.length})
+                <span style={{ 
+                  fontSize: '0.75rem', 
+                  background: 'rgba(16, 185, 129, 0.2)', 
+                  padding: '3px 10px', 
+                  borderRadius: 20 
+                }}>
+                  {selectedCategories.join(', ')}
+                </span>
+              </h3>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 12, 
+                maxHeight: 350, 
+                overflowY: 'auto'
+              }}>
+                {filteredMapResults.slice(0, 30).map((result, idx) => {
+                  const resultColor = getResultCategoryColor(result);
+                  return (
+                    <div 
+                      key={result.id || `filtered-result-${idx}`}
+                      data-testid={`filtered-map-result-${idx}`}
+                      style={{
+                        padding: 12,
+                        background: 'rgba(15, 10, 35, 0.8)',
+                        borderRadius: 10,
+                        border: `2px solid ${resultColor}40`,
+                        cursor: 'pointer', 
+                        transition: 'all 0.2s',
+                        position: 'relative'
+                      }}
+                      onClick={() => window.open(result.url, '_blank', 'noopener,noreferrer')}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = resultColor;
+                        e.currentTarget.style.boxShadow = `0 0 15px ${resultColor}40`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = `${resultColor}40`;
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      {/* Category badges */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+                        {result.categories?.map((cat, catIdx) => (
+                          <span 
+                            key={catIdx}
+                            style={{
+                              background: categoryColorMap[cat] || '#6b7280',
+                              padding: '2px 8px',
+                              borderRadius: 10,
+                              fontSize: '0.65rem',
+                              fontWeight: 600,
+                              color: '#fff'
+                            }}
+                          >
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                        <div style={{
+                          width: 10, height: 10, borderRadius: '50%',
+                          background: resultColor,
+                          boxShadow: `0 0 8px ${resultColor}`
+                        }} />
+                        <span style={{ color: resultColor, fontSize: '0.7rem', fontWeight: 600 }}>
+                          {result.article_type}
+                        </span>
+                        {result.extractedPlace && (
+                          <span style={{ color: '#10b981', fontSize: '0.65rem', marginLeft: 'auto' }}>
+                            📍 {result.extractedPlace}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.85rem', marginBottom: 5, lineHeight: 1.3 }}>
+                        {result.title?.substring(0, 60) || 'Untitled'}...
+                      </div>
+                      <p style={{ color: '#a1a1aa', fontSize: '0.75rem', margin: '0 0 8px 0', lineHeight: 1.4 }}>
+                        {result.snippet?.substring(0, 80) || ''}...
+                      </p>
+                      {/* Hashtags */}
+                      {result.hashtags && <HashtagDisplay hashtags={result.hashtags} small={true} />}
+                    </div>
+                  );
+                })}
+              </div>
+              {filteredMapResults.length === 0 && (
+                <p style={{ color: '#71717a', textAlign: 'center', padding: 20 }}>
+                  No results found for selected categories. Try selecting different categories or add more results!
+                </p>
+              )}
             </div>
-          </div>
+          )}
+
+          {/* Results list with hashtags - shows all when no category filter */}
+          {selectedCategories.length === 0 && (
+            <div style={{ marginTop: 20 }}>
+              <h3 style={{ color: '#f472b6', marginBottom: 15 }}>📍 Mapped Results ({mapResults.length})</h3>
+              <div style={{ 
+                display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gap: 12, maxHeight: 400, overflowY: 'auto'
+              }}>
+                {mapResults.slice(0, 20).map((result, idx) => (
+                  <div 
+                    key={result.id || `result-${idx}`}
+                    data-testid={`map-result-${idx}`}
+                    style={{
+                      padding: 12,
+                      background: 'rgba(30, 20, 50, 0.5)',
+                      borderRadius: 10,
+                      border: '1px solid rgba(124, 58, 237, 0.2)',
+                      cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                    onClick={() => window.open(result.url, '_blank', 'noopener,noreferrer')}
+                    onMouseEnter={(e) => e.currentTarget.style.borderColor = getMarkerColor(result.article_type)}
+                    onMouseLeave={(e) => e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.2)'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <div style={{
+                        width: 10, height: 10, borderRadius: '50%',
+                        background: getMarkerColor(result.article_type),
+                        boxShadow: `0 0 6px ${getMarkerColor(result.article_type)}`
+                      }} />
+                      <span style={{ color: getMarkerColor(result.article_type), fontSize: '0.7rem', fontWeight: 600 }}>
+                        {result.article_type}
+                      </span>
+                      {result.extractedPlace && (
+                        <span style={{ color: '#10b981', fontSize: '0.65rem', marginLeft: 'auto' }}>
+                          📍 {result.extractedPlace.charAt(0).toUpperCase() + result.extractedPlace.slice(1)}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.85rem', marginBottom: 5, lineHeight: 1.3 }}>
+                      {result.title?.substring(0, 60) || 'Untitled'}...
+                    </div>
+                    <p style={{ color: '#a1a1aa', fontSize: '0.75rem', margin: '0 0 8px 0', lineHeight: 1.4 }}>
+                      {result.snippet?.substring(0, 80) || ''}...
+                    </p>
+                    {/* Hashtags */}
+                    {result.hashtags && <HashtagDisplay hashtags={result.hashtags} small={true} />}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </>
       )}
 
