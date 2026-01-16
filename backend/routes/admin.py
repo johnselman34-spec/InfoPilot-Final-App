@@ -131,6 +131,10 @@ async def init_settings(user = Depends(require_admin)):
         {"key": "doctype_personal_min_i_count", "value": 3, "description": "Min 'I' occurrences outside quotes"},
         {"key": "doctype_personal_min_paragraph_words", "value": 75, "description": "Min words in paragraph for Personal Report"},
         {"key": "doctype_auto_categorize", "value": True, "description": "Auto-categorize by document type"},
+        # PayPal Wallet Settings
+        {"key": "paypal_min_payout", "value": 1.00, "description": "Minimum payout threshold ($)"},
+        {"key": "paypal_auto_payout", "value": False, "description": "Auto-process payouts when threshold reached"},
+        {"key": "paypal_payout_schedule", "value": "weekly", "description": "Payout schedule: daily, weekly, monthly"},
     ]
     
     for setting in default_settings:
