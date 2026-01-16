@@ -371,6 +371,117 @@ const InfoPilotSection = () => (
         </div>
       </div>
     </div>
+    
+    {/* IT'S A BEAR - Marketplace Power Section */}
+    <div style={{
+      marginTop: 20,
+      padding: 20,
+      background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.3), rgba(101, 67, 33, 0.4))',
+      borderRadius: 15,
+      border: '3px solid rgba(139, 69, 19, 0.6)',
+      position: 'relative',
+      overflow: 'hidden'
+    }} data-testid="its-a-bear-section">
+      {/* Bear paw prints background */}
+      <div style={{
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        opacity: 0.15,
+        fontSize: '4rem',
+        transform: 'rotate(15deg)'
+      }}>
+        🐻
+      </div>
+      
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 15,
+          marginBottom: 15
+        }}>
+          <span style={{ fontSize: '3rem' }}>🐻</span>
+          <div>
+            <div style={{
+              fontSize: '0.85rem',
+              color: '#d4a574',
+              fontWeight: 600,
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
+              marginBottom: 5
+            }}>
+              THE INFOPILOT MARKETPLACE
+            </div>
+            <div style={{
+              fontSize: '2rem',
+              fontWeight: 900,
+              background: 'linear-gradient(135deg, #cd853f, #daa520, #b8860b)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '3px'
+            }}>
+              IT'S A BEAR.
+            </div>
+          </div>
+        </div>
+        
+        <p style={{
+          color: '#e8d5b7',
+          fontSize: '0.95rem',
+          lineHeight: 1.7,
+          marginBottom: 15
+        }}>
+          <strong style={{ color: '#daa520' }}>The most POWERFUL search protocol marketplace in existence.</strong>{' '}
+          Like a Kodiak bear in the app market, InfoPilot Explorer is an <em>apex predator</em>—
+          massive in capability, fierce in functionality, and absolutely unstoppable. 
+          Other apps? <span style={{ color: '#f87171' }}>Salmon swimming upstream.</span>
+        </p>
+        
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: 12,
+          marginBottom: 15
+        }}>
+          <div style={{ textAlign: 'center', padding: 10, background: 'rgba(0,0,0,0.2)', borderRadius: 10 }}>
+            <div style={{ color: '#daa520', fontSize: '1.5rem', fontWeight: 900 }}>∞</div>
+            <div style={{ color: '#d4a574', fontSize: '0.75rem' }}>Unlimited Protocols</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: 10, background: 'rgba(0,0,0,0.2)', borderRadius: 10 }}>
+            <div style={{ color: '#daa520', fontSize: '1.5rem', fontWeight: 900 }}>🌍</div>
+            <div style={{ color: '#d4a574', fontSize: '0.75rem' }}>Global Reach</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: 10, background: 'rgba(0,0,0,0.2)', borderRadius: 10 }}>
+            <div style={{ color: '#daa520', fontSize: '1.5rem', fontWeight: 900 }}>AI</div>
+            <div style={{ color: '#d4a574', fontSize: '0.75rem' }}>Powered Search</div>
+          </div>
+          <div style={{ textAlign: 'center', padding: 10, background: 'rgba(0,0,0,0.2)', borderRadius: 10 }}>
+            <div style={{ color: '#daa520', fontSize: '1.5rem', fontWeight: 900 }}>💰</div>
+            <div style={{ color: '#d4a574', fontSize: '0.75rem' }}>Earn Revenue</div>
+          </div>
+        </div>
+        
+        <div style={{
+          background: 'rgba(218, 165, 32, 0.2)',
+          borderRadius: 10,
+          padding: 12,
+          border: '1px solid rgba(218, 165, 32, 0.4)'
+        }}>
+          <p style={{
+            color: '#fbbf24',
+            fontSize: '0.85rem',
+            margin: 0,
+            fontStyle: 'italic',
+            textAlign: 'center'
+          }}>
+            "Other apps nibble at the edges. InfoPilot? It devours the competition whole."
+            <br />
+            <span style={{ fontSize: '0.75rem', color: '#d4a574' }}>— A very wise bear 🐻</span>
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 );
 
