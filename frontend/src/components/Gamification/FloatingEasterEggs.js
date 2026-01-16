@@ -499,12 +499,10 @@ export const FloatingEasterEggsController = ({ enabled = true, frequency = 30000
 
 // Export stats component for settings/profile pages
 export const EasterEggStats = () => {
-  const [stats, setStats] = useState({ caught: 0, total: 0, rewards: [] });
-  
-  useEffect(() => {
+  const [stats, setStats] = useState(() => {
     const cached = localStorage.getItem('easterEggStats');
-    if (cached) setStats(JSON.parse(cached));
-  }, []);
+    return cached ? JSON.parse(cached) : { caught: 0, total: 0, rewards: [] };
+  });
   
   return (
     <div style={{
