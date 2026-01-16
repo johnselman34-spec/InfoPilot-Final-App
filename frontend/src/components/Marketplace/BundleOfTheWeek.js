@@ -24,13 +24,11 @@ const BundleOfTheWeek = ({ showToast }) => {
   const { token } = useAuth();
   const [featured, setFeatured] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tagline, setTagline] = useState('');
+  // Initialize tagline with a random value (stable across re-renders)
+  const [tagline] = useState(() => FUNNY_TAGLINES[Math.floor(Math.random() * FUNNY_TAGLINES.length)]);
   const [purchasing, setPurchasing] = useState(false);
 
   useEffect(() => {
-    // Set random tagline
-    setTagline(FUNNY_TAGLINES[Math.floor(Math.random() * FUNNY_TAGLINES.length)]);
-    
     // Fetch featured bundle
     const fetchFeatured = async () => {
       try {
