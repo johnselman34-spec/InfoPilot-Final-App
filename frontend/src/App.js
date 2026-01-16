@@ -119,11 +119,11 @@ function App() {
 
   return (
     <AuthProvider>
-      <DarkModeProvider>
+      <ThemeProvider>
         <LaughProvider>
           <AppContent authMode={authMode} setAuthMode={setAuthMode} />
         </LaughProvider>
-      </DarkModeProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }
