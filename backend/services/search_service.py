@@ -198,27 +198,75 @@ class WebSearchService:
     
     @staticmethod
     def classify_article_type(url: str, title: str, content: str = "") -> str:
-        """Classify the type of article based on URL and content"""
+        """
+        Classify the type of article based on URL and content.
+        
+        Document Types:
+        - PhD Informative: Academic content written/reviewed by PhD holders
+        - Personal Report (Organic): First-hand accounts and personal experiences
+        - Personal Report (Collected): Aggregated/curated personal reports
+        - News Article: Current events and journalism
+        - Academic Paper: Scholarly research and publications
+        - Government: Official government documents
+        - Wiki: Wikipedia and wiki-based content
+        - Blog Post: Personal blogs and opinion pieces
+        - Forum: Discussion boards and Q&A sites
+        - Video: Video content
+        - Webpage: General web pages
+        """
         url_lower = url.lower()
         title_lower = title.lower()
-        combined = f"{url_lower} {title_lower} {content.lower()[:500]}"
+        content_lower = content.lower()[:1000] if content else ""
+        combined = f"{url_lower} {title_lower} {content_lower}"
         
+        # PhD Informative detection - academic credentialed content
+        phd_indicators = ['ph.d.', 'phd', 'd.phil.', 'dr.', 'professor', 'research by', 
+                         'peer-reviewed', 'peer reviewed', 'published in', 'journal of',
+                         'university study', 'clinical study', 'scientific study']
+        phd_count = sum(1 for ind in phd_indicators if ind in combined)
+        if phd_count >= 2:
+            return 'PhD Informative'
+        
+        # Personal Report detection
+        personal_indicators = ['my experience', 'i personally', 'in my opinion', 'my story',
+                              'first-hand', 'firsthand', 'personal account', 'i found that',
+                              'i discovered', 'my journey', 'my review', 'personal report']
+        personal_count = sum(1 for ind in personal_indicators if ind in combined)
+        
+        # Collected/Aggregated report detection
+        collected_indicators = ['collected', 'compilation', 'aggregated', 'curated',
+                               'testimonials', 'user reports', 'customer experiences',
+                               'reviews collected', 'gathered from', 'roundup']
+        collected_count = sum(1 for ind in collected_indicators if ind in combined)
+        
+        if collected_count >= 2 or (collected_count >= 1 and personal_count >= 1):
+            return 'Personal Report (Collected)'
+        if personal_count >= 2:
+            return 'Personal Report (Organic)'
+        
+        # Standard classifications
         if any(x in url_lower for x in ['wikipedia.org', 'wiki']):
             return 'Wiki'
-        elif any(x in url_lower for x in ['youtube.com', 'vimeo.com', 'video']):
+        elif any(x in url_lower for x in ['youtube.com', 'vimeo.com', 'video', 'dailymotion']):
             return 'Video'
         elif any(x in url_lower for x in ['.gov', 'government']):
             return 'Government'
-        elif any(x in url_lower for x in ['.edu', 'academic', 'journal', 'research', 'scholar']):
+        elif any(x in url_lower for x in ['.edu', 'academic', 'journal', 'research', 'scholar', 'arxiv', 'pubmed']):
             return 'Academic Paper'
-        elif any(x in url_lower for x in ['forum', 'reddit.com', 'quora.com', 'stackexchange']):
+        elif any(x in url_lower for x in ['forum', 'reddit.com', 'quora.com', 'stackexchange', 'stackoverflow']):
             return 'Forum'
-        elif any(x in url_lower for x in ['blog', 'medium.com', 'wordpress']):
+        elif any(x in url_lower for x in ['blog', 'medium.com', 'wordpress', 'substack']):
             return 'Blog Post'
-        elif any(x in combined for x in ['news', 'article', 'report', 'breaking']):
+        elif any(x in combined for x in ['breaking news', 'latest news', 'news article', 'reported today']):
+            return 'News Article'
+        elif any(x in url_lower for x in ['.pdf']):
+            return 'PDF Document'
+        elif any(x in url_lower for x in ['.doc', '.docx']):
+            return 'MS Word Document'
+        elif any(x in combined for x in ['news', 'article', 'report']):
             return 'News Article'
         else:
-            return 'Unknown'
+            return 'Webpage'
     
     @staticmethod
     def extract_root_domain(url: str) -> str:
