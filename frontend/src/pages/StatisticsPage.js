@@ -420,6 +420,30 @@ const StatisticsPage = ({ showToast }) => {
     } catch (error) { console.error('Failed to fetch poll statistics:', error); }
   };
 
+  const fetchEasterEggStatistics = async () => {
+    try {
+      // Fetch global stats
+      const globalRes = await fetch(`${API}/easter-eggs/stats`);
+      if (globalRes.ok) setEasterEggStats(await globalRes.json());
+      
+      // Fetch leaderboard
+      const leaderboardRes = await fetch(`${API}/easter-eggs/leaderboard`);
+      if (leaderboardRes.ok) {
+        const data = await leaderboardRes.json();
+        setEasterEggLeaderboard(data.leaderboard || []);
+      }
+      
+      // Fetch user's personal stats if logged in
+      if (token) {
+        const userRes = await fetch(`${API}/easter-eggs/my-discoveries`, { headers: { Authorization: `Bearer ${token}` } });
+        if (userRes.ok) {
+          const data = await userRes.json();
+          setUserEasterEggStats(data);
+        }
+      }
+    } catch (error) { console.error('Failed to fetch Easter egg statistics:', error); }
+  };
+
   const fetchMostCopied = async () => {
     try {
       const res = await fetch(`${API}/statistics/most-copied`);
