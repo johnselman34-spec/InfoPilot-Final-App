@@ -1032,7 +1032,11 @@ const AdminPanel = ({ showToast }) => {
         )}
 
         {activeTab === 'price-controls' && (
-          <UnpaidPriceControlsAdmin token={token} showToast={showToast} />
+          <PriceControlsAdmin showToast={showToast} />
+        )}
+
+        {activeTab === 'doctype-settings' && (
+          <DoctypeSettingsAdmin showToast={showToast} />
         )}
 
         {activeTab === 'category-analytics' && (
