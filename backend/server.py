@@ -1826,6 +1826,7 @@ async def get_ultimate_search(
             "root_domain": r.get("root_domain", ""),
             "categories": category_names,
             "match_score": r.get("match_score", 0),
+            "content_quality_score": r.get("content_quality_score", 50),
             "latitude": r.get("latitude"),
             "longitude": r.get("longitude"),
             "created_at": r.get("created_at", datetime.utcnow()).isoformat()
