@@ -975,9 +975,9 @@ const AdminPanel = ({ showToast }) => {
             <div style={{ marginTop: 25, padding: 15, background: 'rgba(236, 72, 153, 0.1)', borderRadius: 10, border: '1px solid rgba(236, 72, 153, 0.3)' }}>
               <p style={{ fontSize: '0.85rem', color: '#f472b6' }}>
                 💡 Newsletter promotes:<br/>
-                • "Letters to Evelyn" by John Selman - $2.99 on Amazon (19 Five-Star Reviews!)<br/>
+                • Letters to Evelyn by John Selman - $2.99 on Amazon (19 Five-Star Reviews!)<br/>
                 • InfoPilot Premium subscriptions - Pay what you want!<br/>
-                • Uses AI to create funny, engaging content with your book's actual reviews!<br/>
+                • Uses AI to create funny, engaging content with your book actual reviews!<br/>
                 • Includes your book advertisement images with rotating selection!
               </p>
             </div>
