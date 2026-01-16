@@ -169,6 +169,22 @@ const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
           </a>
         </div>
       </div>
+
+      {/* Theme Gallery Modal */}
+      {showThemeGallery && (
+        <ThemePresetGallery 
+          showToast={showToast} 
+          onClose={() => setShowThemeGallery(false)} 
+        />
+      )}
+      
+      {/* Theme Preview Modal */}
+      {showThemePreview && (
+        <ThemePreviewMode 
+          showToast={showToast} 
+          onClose={() => setShowThemePreview(false)} 
+        />
+      )}
     </>
   );
 };
