@@ -288,11 +288,31 @@ const QualityScoreAnalytics = ({ showToast }) => {
           )}
         </div>
         
-        {/* Improvement Opportunities */}
+        {/* Improvement Opportunities with Block Buttons */}
         <div style={{ background: cardBg, borderRadius: 12, padding: 20 }}>
-          <h3 style={{ color: '#ef4444', margin: '0 0 15px 0', fontSize: '1rem' }}>
-            ⚠️ Improvement Opportunities
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+            <h3 style={{ color: '#ef4444', margin: 0, fontSize: '1rem' }}>
+              ⚠️ Improvement Opportunities
+            </h3>
+            {analytics.improvement_opportunities?.length > 0 && (
+              <button
+                onClick={handleBlockAllLowQuality}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#ef4444',
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+                data-testid="block-all-low-quality"
+              >
+                🚫 Block All ({analytics.improvement_opportunities.length})
+              </button>
+            )}
+          </div>
           {analytics.improvement_opportunities?.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {analytics.improvement_opportunities.map((domain, idx) => (
@@ -301,9 +321,26 @@ const QualityScoreAnalytics = ({ showToast }) => {
                     <span style={{ color: '#f97316', fontWeight: 700, width: 24 }}>#{idx + 1}</span>
                     <span style={{ color: textColor, fontSize: '0.9rem' }}>{domain.domain}</span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ color: '#ef4444', fontWeight: 600 }}>{domain.avg_score}</span>
-                    <span style={{ color: mutedColor, fontSize: '0.75rem' }}>({domain.count} results)</span>
+                    <span style={{ color: mutedColor, fontSize: '0.75rem' }}>({domain.count})</span>
+                    <button
+                      onClick={() => handleBlockDomain(domain.domain, domain.avg_score, domain.count)}
+                      disabled={blockingDomain === domain.domain}
+                      style={{
+                        background: blockingDomain === domain.domain ? 'rgba(156, 163, 175, 0.3)' : 'rgba(239, 68, 68, 0.3)',
+                        border: 'none',
+                        color: '#fff',
+                        padding: '4px 8px',
+                        borderRadius: 6,
+                        fontSize: '0.7rem',
+                        cursor: blockingDomain === domain.domain ? 'wait' : 'pointer',
+                        fontWeight: 600
+                      }}
+                      data-testid={`block-domain-${domain.domain}`}
+                    >
+                      {blockingDomain === domain.domain ? '...' : '🚫'}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -312,6 +349,63 @@ const QualityScoreAnalytics = ({ showToast }) => {
             <p style={{ color: mutedColor, margin: 0, fontSize: '0.9rem' }}>All content meets quality standards!</p>
           )}
         </div>
+      </div>
+      
+      {/* Blocked Domains Section */}
+      <div style={{ background: cardBg, borderRadius: 12, padding: 20, marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+          <h3 style={{ color: '#f97316', margin: 0, fontSize: '1rem' }}>
+            🚫 Blocked Domains ({blockedDomains.length})
+          </h3>
+          <button
+            onClick={() => setShowBlockedList(!showBlockedList)}
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(249, 115, 22, 0.4)',
+              color: '#f97316',
+              padding: '6px 12px',
+              borderRadius: 8,
+              fontSize: '0.8rem',
+              cursor: 'pointer'
+            }}
+          >
+            {showBlockedList ? 'Hide' : 'Show'} List
+          </button>
+        </div>
+        
+        {showBlockedList && blockedDomains.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 300, overflowY: 'auto' }}>
+            {blockedDomains.map((domain, idx) => (
+              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: 'rgba(249, 115, 22, 0.1)', borderRadius: 8 }}>
+                <div>
+                  <span style={{ color: textColor, fontSize: '0.9rem' }}>{domain.domain}</span>
+                  <span style={{ color: mutedColor, fontSize: '0.75rem', marginLeft: 10 }}>
+                    Score: {domain.avg_score} | {domain.result_count} removed
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleUnblockDomain(domain.domain)}
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.3)',
+                    border: 'none',
+                    color: '#10b981',
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    fontWeight: 600
+                  }}
+                >
+                  Unblock
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {showBlockedList && blockedDomains.length === 0 && (
+          <p style={{ color: mutedColor, margin: 0, fontSize: '0.9rem' }}>No domains blocked yet.</p>
+        )}
       </div>
       
       {/* Article Type Quality */}
