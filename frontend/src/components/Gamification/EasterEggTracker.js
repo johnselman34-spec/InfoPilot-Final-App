@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { API, showToast } from '../../utils/api';
+import { API } from '../../utils/api';
 
 // Rarity colors
 const RARITY_COLORS = {
