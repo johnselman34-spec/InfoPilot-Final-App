@@ -1,7 +1,7 @@
 // InfoJet - Popup Script
 // Handles the main extension popup functionality
 
-const API_BASE = 'https://deep-search-app.preview.emergentagent.com/api';
+const API_BASE = 'https://categoryhub.preview.emergentagent.com/api';
 
 // State
 let selectedProtocol = null;

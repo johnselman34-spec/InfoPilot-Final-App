@@ -17,7 +17,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://deep-search-app.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://categoryhub.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 ADMIN_EMAIL = "jjspilot24@gmail.com"

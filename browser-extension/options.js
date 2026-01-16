@@ -1,6 +1,6 @@
 // InfoJet - Options Page Script
 
-const API_BASE = 'https://deep-search-app.preview.emergentagent.com/api';
+const API_BASE = 'https://categoryhub.preview.emergentagent.com/api';
 
 // DOM Elements
 const accountEmail = document.getElementById('account-email');
