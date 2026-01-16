@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API } from '../../utils/api';
 
 /**
@@ -21,7 +21,7 @@ const ABOptimizerAdmin = ({ token, showToast }) => {
     notify_on_optimization: true
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [statusRes, analysesRes, historyRes] = await Promise.all([
@@ -54,12 +54,11 @@ const ABOptimizerAdmin = ({ token, showToast }) => {
       console.error('Failed to fetch optimizer data:', e);
     }
     setLoading(false);
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchData]);
 
   const toggleOptimizer = async () => {
     const endpoint = status?.enabled ? 'disable' : 'enable';
