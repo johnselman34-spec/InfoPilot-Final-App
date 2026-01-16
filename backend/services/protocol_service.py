@@ -78,7 +78,8 @@ class ProtocolParser:
             return False, "Protocol must contain at least one group: (word1 or word2)"
         
         # Check for operators (case-insensitive OR)
-        has_and = '&' in protocol
+        # Accept both "&" and "and" (case-insensitive) as group separators
+        has_and = '&' in protocol or bool(re.search(r'\s+and\s+', protocol, re.IGNORECASE))
         has_or = bool(re.search(r'\bor\b', protocol, re.IGNORECASE))
         
         if not has_or:
