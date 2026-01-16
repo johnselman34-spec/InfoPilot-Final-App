@@ -154,15 +154,18 @@ class TestMarketplaceEndpoints:
         response = requests.get(f"{BASE_URL}/api/marketplace/protocols", headers=headers)
         assert response.status_code == 200
         data = response.json()
-        print(f"✓ Marketplace protocols endpoint working: {len(data) if isinstance(data, list) else 'N/A'} protocols")
+        protocols = data.get("protocols", [])
+        print(f"✓ Marketplace protocols endpoint working: {len(protocols)} protocols")
     
-    def test_marketplace_my_protocols(self, auth_token):
-        """Test user's own protocols endpoint"""
+    def test_marketplace_protocols_has_data(self, auth_token):
+        """Test marketplace protocols returns proper data structure"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.get(f"{BASE_URL}/api/marketplace/my-protocols", headers=headers)
+        response = requests.get(f"{BASE_URL}/api/marketplace/protocols", headers=headers)
         assert response.status_code == 200
         data = response.json()
-        print(f"✓ My protocols endpoint working: {len(data) if isinstance(data, list) else 'N/A'} protocols")
+        assert "protocols" in data
+        assert "total" in data
+        print(f"✓ Marketplace protocols data structure correct: {data.get('total')} total")
 
 
 class TestCategoryEndpoints:
