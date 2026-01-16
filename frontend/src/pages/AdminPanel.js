@@ -9,6 +9,8 @@ import MarketplaceProtocolForecast from '../components/Admin/MarketplaceProtocol
 import UserModerationAdmin from '../components/Admin/UserModerationAdmin';
 import CategoryAnalyticsDashboard from '../components/Admin/CategoryAnalyticsDashboard';
 import UnpaidPriceControlsAdmin from '../components/Admin/UnpaidPriceControlsAdmin';
+import PriceControlsAdmin from '../components/Admin/PriceControlsAdmin';
+import DoctypeSettingsAdmin from '../components/Admin/DoctypeSettingsAdmin';
 
 const AdminPanel = ({ showToast }) => {
   const { token } = useAuth();
