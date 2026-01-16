@@ -88,8 +88,8 @@ const LegalPage = ({ showToast }) => {
           
           <h3>1. Acceptance of Terms</h3>
           <p>
-            By accessing or using InfoPilot Explorer ("the Service"), operated by Top Pilot Enterprises, Inc. 
-            ("Company," "we," "us," or "our"), you agree to be bound by these Terms of Service. If you do not 
+            By accessing or using InfoPilot Explorer (the Service), operated by Top Pilot Enterprises, Inc. 
+            (Company, we, us, or our), you agree to be bound by these Terms of Service. If you do not 
             agree to all terms, you may not use the Service.
           </p>
           
