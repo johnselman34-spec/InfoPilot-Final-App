@@ -336,15 +336,42 @@ async def get_group(group_id: str, user = Depends(get_optional_user)):
     
     # Get member details
     members = []
+    user_id_str = str(user["_id"]) if user else None
     for member_id in group.get("members", [])[:20]:
         member = await db.users.find_one({"_id": ObjectId(member_id)})
         if member:
             members.append({
                 "id": str(member["_id"]),
+                "user_id": member_id,
                 "username": member.get("username", "Unknown"),
+                "email": member.get("email", ""),
                 "avatar_url": member.get("avatar_url"),
-                "is_admin": member_id in group.get("admins", [])
+                "is_owner": member_id == group.get("created_by"),
+                "is_admin": member_id in group.get("admins", []),
+                "is_moderator": member_id in group.get("moderators", [])
             })
+    
+    # Get banned members details
+    banned_members = []
+    for banned in group.get("banned_members", []):
+        banned_user = await db.users.find_one({"_id": ObjectId(banned.get("user_id"))})
+        banned_members.append({
+            "user_id": banned.get("user_id"),
+            "username": banned_user.get("username", "Unknown") if banned_user else "Unknown",
+            "reason": banned.get("reason", ""),
+            "banned_at": banned.get("banned_at"),
+            "banned_by": banned.get("banned_by")
+        })
+    
+    # Get muted members details
+    muted_members = []
+    for muted in group.get("muted_members", []):
+        muted_user = await db.users.find_one({"_id": ObjectId(muted.get("user_id"))})
+        muted_members.append({
+            "user_id": muted.get("user_id"),
+            "username": muted_user.get("username", "Unknown") if muted_user else "Unknown",
+            "muted_until": muted.get("muted_until")
+        })
     
     return {
         "id": str(group["_id"]),
@@ -353,8 +380,12 @@ async def get_group(group_id: str, user = Depends(get_optional_user)):
         "cover_photo": group.get("cover_photo"),
         "member_count": len(group.get("members", [])),
         "members": members,
-        "is_member": user and str(user["_id"]) in group.get("members", []),
-        "is_admin": user and str(user["_id"]) in group.get("admins", []),
+        "banned_members": banned_members,
+        "muted_members": muted_members,
+        "is_member": user and user_id_str in group.get("members", []),
+        "is_owner": user and user_id_str == group.get("created_by"),
+        "is_admin": user and user_id_str in group.get("admins", []),
+        "is_moderator": user and user_id_str in group.get("moderators", []),
         "is_private": group.get("is_private", False),
         "created_at": group.get("created_at", datetime.utcnow()).isoformat()
     }
