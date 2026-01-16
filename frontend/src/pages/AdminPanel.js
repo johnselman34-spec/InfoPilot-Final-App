@@ -11,6 +11,7 @@ import CategoryAnalyticsDashboard from '../components/Admin/CategoryAnalyticsDas
 import UnpaidPriceControlsAdmin from '../components/Admin/UnpaidPriceControlsAdmin';
 import PriceControlsAdmin from '../components/Admin/PriceControlsAdmin';
 import DoctypeSettingsAdmin from '../components/Admin/DoctypeSettingsAdmin';
+import DoctypeTestingTool from '../components/Admin/DoctypeTestingTool';
 
 const AdminPanel = ({ showToast }) => {
   const { token } = useAuth();
