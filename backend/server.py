@@ -3884,9 +3884,9 @@ async def get_newsletter_history(credentials: HTTPAuthorizationCredentials = Dep
     
     return {
         "history": [{
-            "sent_at": h["sent_at"].isoformat(),
+            "sent_at": h.get("sent_at", datetime.utcnow()).isoformat() if h.get("sent_at") else datetime.utcnow().isoformat(),
             "recipient_count": h.get("recipient_count", 0)
-        } for h in history]
+        } for h in history if h]
     }
 
 @api_router.get("/newsletter/schedule")
