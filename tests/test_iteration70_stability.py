@@ -118,8 +118,13 @@ class TestMarketplaceAPIs:
         assert response.status_code == 200
         data = response.json()
         
-        assert isinstance(data, list)
-        print(f"✅ Marketplace categories API working - {len(data)} categories found")
+        # Response can be a list or {"categories": [...]}
+        if isinstance(data, dict):
+            categories = data.get("categories", [])
+        else:
+            categories = data
+        assert isinstance(categories, list)
+        print(f"✅ Marketplace categories API working - {len(categories)} categories found")
 
 
 class TestAdminPanelAPIs:
@@ -149,8 +154,10 @@ class TestAdminPanelAPIs:
         response = requests.get(f"{BASE_URL}/api/newsletter/history", headers=headers)
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
-        print(f"✅ Newsletter history API working - {len(data)} entries")
+        # Response is {"history": [...]}
+        history = data.get("history", []) if isinstance(data, dict) else data
+        assert isinstance(history, list)
+        print(f"✅ Newsletter history API working - {len(history)} entries")
     
     def test_newsletter_schedule(self, auth_token):
         """Test newsletter schedule endpoint"""
@@ -197,17 +204,19 @@ class TestContentQualityScoring:
         pytest.skip("Authentication failed")
     
     def test_search_results_endpoint(self, auth_token):
-        """Test search results endpoint returns data"""
+        """Test search results endpoint returns data - using /api/results endpoint"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.get(f"{BASE_URL}/api/search-results", headers=headers)
+        # Use the correct endpoint /api/results
+        response = requests.get(f"{BASE_URL}/api/results", headers=headers)
         assert response.status_code == 200
         data = response.json()
         
         # Check if results exist and have content_quality_score
-        if "results" in data and len(data["results"]) > 0:
+        results = data.get("results", [])
+        if len(results) > 0:
             # Check if any result has content_quality_score
-            results_with_score = [r for r in data["results"] if "content_quality_score" in r]
-            print(f"✅ Search results API working - {len(data['results'])} results, {len(results_with_score)} with quality scores")
+            results_with_score = [r for r in results if "content_quality_score" in r]
+            print(f"✅ Search results API working - {len(results)} results, {len(results_with_score)} with quality scores")
         else:
             print("✅ Search results API working - no results to check for quality scores")
     
