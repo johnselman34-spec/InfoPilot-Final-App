@@ -403,13 +403,19 @@ const ProtocolBundlesSection = ({ showToast }) => {
   }, [token]);
 
   useEffect(() => {
-    fetchBundles();
+    const loadBundles = async () => {
+      await fetchBundles();
+    };
+    loadBundles();
   }, [fetchBundles]);
 
   useEffect(() => {
-    if (token && activeView === 'create') {
-      fetchUserProtocols();
-    }
+    const loadUserProtocols = async () => {
+      if (token && activeView === 'create') {
+        await fetchUserProtocols();
+      }
+    };
+    loadUserProtocols();
   }, [token, activeView, fetchUserProtocols]);
 
   const handleCreateBundle = async (bundleData) => {
