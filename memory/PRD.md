@@ -639,6 +639,47 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - `protocol_controls_enabled` - Document type protocol controls
   - `allowed_document_types` - List of allowed document types
 
+### Batch 16 - Legal, Admin Settings & Stability ✅ (January 16, 2026)
+- [x] **Legal Page with User Agreement & Privacy Policy**
+  - Complete professional legal documents for Top Pilot Enterprises, Inc.
+  - 3 tabs: Terms of Service, Privacy Policy, Acceptable Use
+  - Accessible from Settings page and via navigation
+  - data-testid="legal-tab-terms", "legal-tab-privacy", "legal-tab-acceptable"
+  - Backend endpoints: /api/legal/user-agreement, /api/legal/privacy-policy, /api/legal/terms-summary
+- [x] **Protocol Sharing Social Cards**
+  - New `ProtocolShareCard.js` component for social media sharing
+  - Share to Twitter, Facebook, LinkedIn, Email
+  - Beautiful preview card with protocol details
+  - Funny share messages inspired by Letters to Evelyn
+  - Copy link functionality
+- [x] **Category Result Counts in Parentheses**
+  - Result counts shown next to every category name: "Category Name (5)"
+  - Green color for categories with results, gray for empty
+  - Visible on Ultimate Search page category tree
+- [x] **Admin Settings Expansion**
+  - Newsletter timing: tri-weekly at 5:46 AM, 9:42 AM, 4:20 PM
+  - Newsletter AI optimization toggle
+  - Collation limits: 40 results per Search & Collate (adjustable 1-100)
+  - Document Type Protocol Scripts (InfoJet 2.0 format for each type)
+  - Pay-As-You-Go promotion message control
+  - Minimum payment ($1.00 PayPal requirement)
+  - Admin commission (15%)
+- [x] **Document Type Protocol Controls**
+  - Informative Ph.D: (Ph.D. or PhD or D.Phil. or Dr.) & (research or study)
+  - Informative: Complex protocol for educational content
+  - News Article: (news or story or breaking) & (reported or announced)
+  - Blog: (blog or blogger or blogging) & (post or article)
+  - Forum: (forum or thread or discussion or reply)
+  - Personal Report (Collected): (I or my or me) & (believe or think or feel)
+- [x] **LaughOMeter Integration**
+  - Already integrated via `LaughProvider` in App.js
+  - Easter Eggs use `useLaugh()` hook for XP tracking
+  - Stats displayed on Statistics page
+  - Badges: Egg Hunter, Night Owl Giggler, Early Bird Smiler, etc.
+- [x] **Testing Verification**
+  - Iteration 65: 18/18 backend tests passed
+  - All frontend features verified via Playwright
+
 ### Maps Pricing Decision
 - ✅ **FREE Maps for All Users:**
   - Ultimate Search Page map
