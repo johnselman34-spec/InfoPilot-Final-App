@@ -1011,22 +1011,34 @@ const UltimateSearchPage = ({ showToast }) => {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 20 }}>
-        {/* Categories Sidebar */}
+      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 20 }}>
+        {/* Categories Sidebar - Collapsible Tree View */}
         <div className="card">
-          <h3 style={{ marginBottom: 15, color: '#f472b6' }}>Categories</h3>
-          <div className="categories-tree">
-            {categories.length === 0 ? (
-              <p style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>No categories yet. Create one to start organizing your searches!</p>
-            ) : (
-              buildCategoryTree(categories)
-            )}
-          </div>
-          {selectedCategories.length > 0 && (
-            <button className="btn btn-secondary" style={{ marginTop: 15, width: '100%' }} onClick={() => setSelectedCategories([])}>
-              Clear Selection ({selectedCategories.length})
-            </button>
-          )}
+          <h3 style={{ marginBottom: 15, color: '#f472b6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>📂 My Categories</span>
+            <span style={{ fontSize: '0.75rem', color: '#a1a1aa', fontWeight: 'normal' }}>
+              {categories.filter(c => c.user_id === user?.id).length} categories
+            </span>
+          </h3>
+          
+          {/* Collapsible Category Tree */}
+          <CollapsibleCategoryTree
+            categories={categories}
+            selectedCategories={selectedCategories}
+            onToggleSelect={toggleCategorySelection}
+            onSelectAll={() => setSelectedCategories(categories.map(c => c.id))}
+            onDeselectAll={() => setSelectedCategories([])}
+            onEdit={(cat) => {
+              setEditingCategory(cat);
+              setEditCategoryName(cat.name || '');
+              setEditProtocol(cat.protocol || '');
+              setEditIsPublic(cat.is_public || false);
+              setEditPrice(cat.price ? cat.price.toString() : '');
+            }}
+            onDelete={(catId) => deleteCategory(catId)}
+            isOwner={true}
+            compact={false}
+          />
         </div>
 
         {/* Batch Manager */}
