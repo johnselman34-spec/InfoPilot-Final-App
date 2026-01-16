@@ -1676,3 +1676,74 @@ Frontend:
 - /app/frontend/src/components/UltimateSearch/CategoryModals.js (Protocol Syntax Help)
 - /app/frontend/src/components/shared/BookPromoBanner.js (Maestro Bistro design)
 ```
+
+
+## Update Session - January 16, 2026 (Iteration 46 - Comprehensive Update)
+
+### All Features Implemented ✅
+
+#### 1. Admin Promotional Messages (Near Upgrade Button)
+- **Settings Added:**
+  - `upgrade_promo_title` - Customizable title (default: "Limited Time Offer!")
+  - `upgrade_promo_message` - Customizable message explaining API costs
+  - `show_cost_disclaimer` - Toggle to show/hide disclaimer
+  - `cost_disclaimer_text` - Customizable cost explanation
+- **Default Message:** "Pay-as-you-go pricing while supplies last! We're testing our business model - Google Maps API, AI Search subscriptions, and server costs are expensive. Your support keeps InfoPilot running!"
+
+#### 2. Admin App-Wide Moderation with Personal Notes
+- **New Endpoints:**
+  - `POST /api/admin/users/{id}/ban` - Ban user with reason & personal_note
+  - `POST /api/admin/users/{id}/unban` - Unban user
+  - `POST /api/admin/users/{id}/mute` - Mute user with duration_hours & note
+  - `POST /api/admin/users/{id}/unmute` - Unmute user
+  - `DELETE /api/admin/users/{id}` - Delete user with reason & note
+  - `GET /api/admin/moderation/actions` - View action history
+- **Features:**
+  - Personal note option for goodbye messages or explaining terms
+  - Automatic removal from all groups/pages on ban
+  - Full action logging with timestamps
+
+#### 3. Enhanced Maestro Bistro Food Imagery
+- **Beef Rouladen Bowl (CSS illustration):**
+  - Dark brown beef rolls with visible bacon stripe
+  - Dijon mustard hint inside
+  - Rich reddish-brown gravy pool
+  - Golden egg noodles with gravy drizzle
+  - Green peas scattered
+  - Orange carrot slices
+- **Fish Chowder Bowl (CSS illustration):**
+  - Creamy white chowder base
+  - White fish chunks
+  - Potato chunks
+  - Bacon bits
+  - Yellow onion pieces
+
+#### 4. Search Collate Limit (1-100)
+- Setting: `search_collate_limit` (default: 100, range: 1-100)
+- Controls maximum results returned per Search & Collate operation
+
+#### 5. All Previous Features Verified Working
+- User Agreement & Privacy Policy accessible in Settings
+- Page/Group creator moderation (boot/ban/mute)
+- Auto-categorize with checkbox marking
+- AI Intelligent Search & Database Text Search buttons
+- Deep search with strict protocol matching
+- Protocol "and" = "&" parsing
+
+### Bug Fixed
+- `SettingsPage.js`: Fixed duplicate `/api` prefix in legal document fetch URL
+
+### Testing Results - Iteration 46
+- **Backend Tests:** 13/13 passed (100%)
+- **Frontend Tests:** All UI features verified
+- **Test Report:** `/app/test_reports/iteration_46.json`
+
+### Files Modified
+```
+Backend:
+- /app/backend/routes/admin.py (promotional settings, admin moderation endpoints)
+
+Frontend:
+- /app/frontend/src/pages/SettingsPage.js (legal URL fix)
+- /app/frontend/src/components/shared/BookPromoBanner.js (detailed food imagery)
+```
