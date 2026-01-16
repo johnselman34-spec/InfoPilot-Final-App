@@ -608,16 +608,6 @@ async def get_category_analytics(
     category_results = await db.search_results.aggregate(pipeline).to_list(100)
     results_by_category = {r["_id"]: r for r in category_results}
     
-    # Get protocol match rates
-    match_pipeline = [
-        {"$match": {"created_at": {"$gte": cutoff}}},
-        {"$group": {
-            "_id": "$category_id",
-            "total_matches": {"$sum": 1},
-            "avg_match_score": {"$avg": "$match_score"}
-        }}
-    ]
-    
     # Build category analytics
     analytics = []
     total_results = 0
