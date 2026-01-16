@@ -218,6 +218,151 @@ ACHIEVEMENTS = {
         "category": "consistency",
         "points": 100,
         "requirement": {"type": "login_streak", "value": 30}
+    },
+    
+    # Document Classification Achievements
+    "first_personal_report": {
+        "id": "first_personal_report",
+        "name": "Storyteller 📝",
+        "description": "Created your first Personal Report (Organic)",
+        "icon": "📝",
+        "category": "content",
+        "points": 25,
+        "requirement": {"type": "personal_report_count", "value": 1}
+    },
+    "personal_reports_10": {
+        "id": "personal_reports_10",
+        "name": "Prolific Writer ✍️",
+        "description": "Created 10 Personal Reports - Your voice matters!",
+        "icon": "✍️",
+        "category": "content",
+        "points": 75,
+        "requirement": {"type": "personal_report_count", "value": 10}
+    },
+    "phd_finder": {
+        "id": "phd_finder",
+        "name": "Academic Hunter 🎓",
+        "description": "Found 10 PhD Informative articles",
+        "icon": "🎓",
+        "category": "search",
+        "points": 50,
+        "requirement": {"type": "phd_articles_found", "value": 10}
+    },
+    "news_junkie": {
+        "id": "news_junkie",
+        "name": "News Junkie 📰",
+        "description": "Collected 50 News Articles",
+        "icon": "📰",
+        "category": "search",
+        "points": 40,
+        "requirement": {"type": "news_articles_found", "value": 50}
+    },
+    
+    # Map & Location Achievements
+    "first_location": {
+        "id": "first_location",
+        "name": "Cartographer 🗺️",
+        "description": "Added your first geotagged result",
+        "icon": "🗺️",
+        "category": "map",
+        "points": 20,
+        "requirement": {"type": "geotagged_count", "value": 1}
+    },
+    "world_traveler": {
+        "id": "world_traveler",
+        "name": "World Traveler 🌍",
+        "description": "Results from 5 different countries!",
+        "icon": "🌍",
+        "category": "map",
+        "points": 75,
+        "requirement": {"type": "countries_count", "value": 5}
+    },
+    "globe_trotter": {
+        "id": "globe_trotter",
+        "name": "Globe Trotter ✈️",
+        "description": "Results from 10 different countries - You're everywhere!",
+        "icon": "✈️",
+        "category": "map",
+        "points": 150,
+        "requirement": {"type": "countries_count", "value": 10}
+    },
+    
+    # Collection Achievements
+    "collector_100": {
+        "id": "collector_100",
+        "name": "Collector 📦",
+        "description": "Collected 100 search results",
+        "icon": "📦",
+        "category": "collection",
+        "points": 50,
+        "requirement": {"type": "result_count", "value": 100}
+    },
+    "collector_500": {
+        "id": "collector_500",
+        "name": "Archivist 🏛️",
+        "description": "Collected 500 search results - Building a library!",
+        "icon": "🏛️",
+        "category": "collection",
+        "points": 150,
+        "requirement": {"type": "result_count", "value": 500}
+    },
+    "collector_1000": {
+        "id": "collector_1000",
+        "name": "Knowledge Keeper 📜",
+        "description": "Collected 1000 search results - Legendary!",
+        "icon": "📜",
+        "category": "collection",
+        "points": 300,
+        "requirement": {"type": "result_count", "value": 1000}
+    },
+    
+    # Premium/Subscription Achievements  
+    "premium_member": {
+        "id": "premium_member",
+        "name": "Premium Pioneer 💎",
+        "description": "Upgraded to Premium membership",
+        "icon": "💎",
+        "category": "special",
+        "points": 50,
+        "requirement": {"type": "special", "value": "premium_upgrade"}
+    },
+    "annual_subscriber": {
+        "id": "annual_subscriber",
+        "name": "Committed Fan 🌟",
+        "description": "Subscribed for a full year - We appreciate you!",
+        "icon": "🌟",
+        "category": "special",
+        "points": 200,
+        "requirement": {"type": "special", "value": "annual_subscription"}
+    },
+    
+    # Fun/Easter Egg Achievements
+    "midnight_owl": {
+        "id": "midnight_owl",
+        "name": "Night Owl 🦉",
+        "description": "Searched between midnight and 4 AM",
+        "icon": "🦉",
+        "category": "fun",
+        "points": 15,
+        "requirement": {"type": "special", "value": "midnight_search"}
+    },
+    "early_bird": {
+        "id": "early_bird",
+        "name": "Early Bird 🐦",
+        "description": "Searched before 6 AM - Rise and shine!",
+        "icon": "🐦",
+        "category": "fun",
+        "points": 15,
+        "requirement": {"type": "special", "value": "early_search"}
+    },
+    "weekend_warrior": {
+        "id": "weekend_warrior",
+        "name": "Weekend Warrior ⚔️",
+        "description": "Active on both Saturday and Sunday",
+        "icon": "⚔️",
+        "category": "fun",
+        "points": 20,
+        "requirement": {"type": "special", "value": "weekend_activity"}
     }
 }
 
