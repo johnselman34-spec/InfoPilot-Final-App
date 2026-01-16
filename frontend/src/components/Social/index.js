@@ -7,3 +7,5 @@ export {
   GroupCard,
   PageCard
 } from './SocialComponents';
+
+export { default as ModerationPanel } from './ModerationPanel';
