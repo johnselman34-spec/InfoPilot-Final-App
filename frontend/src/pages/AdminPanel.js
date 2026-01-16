@@ -1054,6 +1054,10 @@ const AdminPanel = ({ showToast }) => {
           <CategoryAnalyticsDashboard token={token} showToast={showToast} />
         )}
 
+        {activeTab === 'quality-analytics' && (
+          <QualityScoreAnalytics showToast={showToast} />
+        )}
+
         {activeTab === 'content' && (
           <div>
             <h3 style={{ marginBottom: 20, color: '#f472b6' }}>Content Moderation</h3>
