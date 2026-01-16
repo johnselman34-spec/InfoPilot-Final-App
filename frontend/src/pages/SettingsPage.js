@@ -377,6 +377,198 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
           <p><strong>Status:</strong> {user?.is_admin ? 'Admin' : (user?.is_paid ? 'Premium' : 'Free')}</p>
         </div>
 
+        {/* Category Management Section */}
+        <div style={{ padding: 20, background: 'rgba(30, 20, 50, 0.5)', borderRadius: 10 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showCategoryManager ? 15 : 0 }}>
+            <h3 style={{ color: '#a78bfa', margin: 0 }}>
+              📂 Category Management
+            </h3>
+            <button 
+              className="btn btn-secondary"
+              onClick={() => setShowCategoryManager(!showCategoryManager)}
+              style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+              data-testid="toggle-category-manager-btn"
+            >
+              {showCategoryManager ? 'Hide' : 'Manage Categories'}
+            </button>
+          </div>
+          
+          {!showCategoryManager && (
+            <p style={{ fontSize: '0.85rem', color: '#a1a1aa', marginTop: 10 }}>
+              View, edit, and delete your categories and sub-categories here.
+            </p>
+          )}
+          
+          {showCategoryManager && (
+            <div>
+              {categoriesLoading ? (
+                <div style={{ textAlign: 'center', padding: 20, color: '#a1a1aa' }}>
+                  Loading categories...
+                </div>
+              ) : categories.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: 20 }}>
+                  <p style={{ color: '#a1a1aa' }}>No categories yet.</p>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => setCurrentPage('ultimate-search')}
+                    style={{ marginTop: 10 }}
+                  >
+                    Go to Ultimate Search to create categories
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: editingCategory ? '1fr 1fr' : '1fr', gap: 20 }}>
+                  {/* Category Tree */}
+                  <div style={{ 
+                    maxHeight: 400, 
+                    overflowY: 'auto',
+                    padding: 10,
+                    background: 'rgba(0,0,0,0.2)',
+                    borderRadius: 8
+                  }}>
+                    <p style={{ fontSize: '0.75rem', color: '#a1a1aa', marginBottom: 10 }}>
+                      Click a category to edit • {categories.length} total
+                    </p>
+                    {buildCategoryTree(categories)}
+                  </div>
+                  
+                  {/* Edit Panel */}
+                  {editingCategory && (
+                    <div style={{
+                      padding: 15,
+                      background: 'rgba(124, 58, 237, 0.1)',
+                      borderRadius: 10,
+                      border: '1px solid rgba(124, 58, 237, 0.3)'
+                    }}>
+                      <h4 style={{ color: '#f472b6', margin: '0 0 15px 0' }}>
+                        ✏️ Edit: {editingCategory.name}
+                      </h4>
+                      
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                        <div>
+                          <label style={{ color: '#a78bfa', fontSize: '0.85rem', display: 'block', marginBottom: 5 }}>
+                            Category Name
+                          </label>
+                          <input
+                            type="text"
+                            value={editCategoryName}
+                            onChange={(e) => setEditCategoryName(e.target.value)}
+                            className="input"
+                            placeholder="Category name"
+                            data-testid="edit-category-name-settings"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label style={{ color: '#a78bfa', fontSize: '0.85rem', display: 'block', marginBottom: 5 }}>
+                            Protocol
+                          </label>
+                          <textarea
+                            value={editProtocol}
+                            onChange={(e) => setEditProtocol(e.target.value)}
+                            placeholder="(term1 or term2) & (term3 or term4)"
+                            rows={3}
+                            style={{
+                              width: '100%',
+                              padding: 10,
+                              borderRadius: 8,
+                              border: '1px solid rgba(124, 58, 237, 0.3)',
+                              background: 'rgba(30, 20, 50, 0.5)',
+                              color: '#fff',
+                              fontFamily: 'monospace',
+                              fontSize: '0.85rem',
+                              resize: 'vertical'
+                            }}
+                            data-testid="edit-protocol-settings"
+                          />
+                          <p style={{ fontSize: '0.7rem', color: '#71717a', marginTop: 5 }}>
+                            Tip: Use "and" or "&" between groups. Use "or" within groups.
+                          </p>
+                        </div>
+                        
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={editIsPublic}
+                            onChange={(e) => setEditIsPublic(e.target.checked)}
+                          />
+                          <span style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>
+                            Make this category public
+                          </span>
+                        </label>
+                        
+                        {editIsPublic && (
+                          <div>
+                            <label style={{ color: '#a78bfa', fontSize: '0.85rem', display: 'block', marginBottom: 5 }}>
+                              Price (USD) - Leave empty for free
+                            </label>
+                            <input
+                              type="number"
+                              value={editPrice}
+                              onChange={(e) => setEditPrice(e.target.value)}
+                              className="input"
+                              placeholder="0.00"
+                              min="0"
+                              step="0.01"
+                            />
+                          </div>
+                        )}
+                        
+                        <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                          <button
+                            className="btn btn-secondary"
+                            onClick={() => setEditingCategory(null)}
+                            style={{ flex: 1 }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            className="btn btn-primary"
+                            onClick={saveCategory}
+                            style={{ flex: 1 }}
+                            data-testid="save-category-settings-btn"
+                          >
+                            Save Changes
+                          </button>
+                        </div>
+                        
+                        {/* Delete Section */}
+                        <div style={{
+                          marginTop: 15,
+                          padding: 12,
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          borderRadius: 8
+                        }}>
+                          <p style={{ color: '#ef4444', fontSize: '0.8rem', margin: '0 0 10px 0' }}>
+                            🗑️ Delete this category permanently
+                          </p>
+                          <button
+                            onClick={() => deleteCategory(editingCategory.id)}
+                            style={{
+                              width: '100%',
+                              padding: '8px 16px',
+                              background: 'rgba(239, 68, 68, 0.2)',
+                              border: '1px solid rgba(239, 68, 68, 0.5)',
+                              borderRadius: 6,
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                              fontWeight: 600
+                            }}
+                            data-testid="delete-category-confirm-btn"
+                          >
+                            Delete Category
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Password Change Section */}
         <div style={{ padding: 20, background: 'rgba(30, 20, 50, 0.5)', borderRadius: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showPasswordSection ? 15 : 0 }}>
