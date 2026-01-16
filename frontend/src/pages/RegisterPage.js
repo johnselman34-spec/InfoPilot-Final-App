@@ -12,7 +12,6 @@ const RegisterPage = ({ onSwitch }) => {
   const [loading, setLoading] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showTerms, setShowTerms] = useState(null);
-  const [termsContent, setTermsContent] = useState('');
   const [termsSummary, setTermsSummary] = useState('');
 
   // Fetch terms summary on mount
@@ -25,7 +24,8 @@ const RegisterPage = ({ onSwitch }) => {
           setTermsSummary(data.summary);
         }
       } catch (e) {
-        console.error('Failed to fetch terms summary');
+        // Fallback summary
+        setTermsSummary('By creating an account, you agree to our terms of service and privacy policy. We protect your data and never sell it to third parties.');
       }
     };
     fetchTermsSummary();
