@@ -147,8 +147,13 @@ const UltimateSearchPage = ({ showToast }) => {
       results = results.filter(r => selectedDocTypes.includes(r.article_type));
     }
     
+    // Filter by minimum quality score
+    if (minQualityScore > 0) {
+      results = results.filter(r => (r.content_quality_score || 50) >= minQualityScore);
+    }
+    
     return results;
-  }, [searchResults, selectedCategories, selectedDocTypes, categories, aggregation]);
+  }, [searchResults, selectedCategories, selectedDocTypes, categories, aggregation, minQualityScore]);
   
   // Toggle document type selection
   const toggleDocType = (docType) => {
