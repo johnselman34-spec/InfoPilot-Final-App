@@ -409,10 +409,10 @@ const CommunityLeaderboard = ({ showToast }) => {
           FIRST IN FLIGHT WITH SEARCH MONETIZATION
         </h3>
         <p style={{ color: textColor, margin: '0 0 15px 0', fontSize: '0.95rem', lineHeight: 1.6 }}>
-          So much time is spent searching for valuable information. <strong>Why can't it be worth anything?</strong>
+          So much time is spent searching for valuable information. <strong>Why not make it worth something?</strong>
         </p>
         <p style={{ color: mutedColor, margin: 0, fontSize: '0.9rem', fontStyle: 'italic' }}>
-          If it's valuable to businesses, then it should be valuable to <span style={{ color: '#10b981', fontWeight: 700 }}>YOU!</span>
+          If it is valuable to businesses, then it should be valuable to <span style={{ color: '#10b981', fontWeight: 700 }}>YOU!</span>
         </p>
         <div style={{
           marginTop: 15,

@@ -89,7 +89,7 @@ const SellForm = ({ newProtocol, setNewProtocol, onSubmit, adminPercent }) => (
         borderRadius: 10, border: '1px solid rgba(251, 191, 36, 0.3)' 
       }}>
         <p style={{ color: '#fbbf24', fontSize: '0.9rem', margin: 0 }}>
-          💵 You'll earn: <strong>${((newProtocol.price || 0.99) * (100 - adminPercent) / 100).toFixed(2)}</strong> per sale
+          💵 You will earn: <strong>${((newProtocol.price || 0.99) * (100 - adminPercent) / 100).toFixed(2)}</strong> per sale
         </p>
       </div>
       
