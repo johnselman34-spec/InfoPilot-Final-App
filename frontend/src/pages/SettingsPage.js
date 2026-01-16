@@ -837,9 +837,50 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
           <PrivacyStatement onClose={() => setShowLegal(null)} />
         )}
 
+        {/* Quick Links Section */}
+        <div style={{ marginTop: 20, padding: 20, background: 'rgba(39, 39, 42, 0.5)', borderRadius: 10 }}>
+          <h3 style={{ marginBottom: 15, color: '#a1a1aa', fontSize: '1rem' }}>🚀 Quick Links</h3>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => setCurrentPage('personal-reports')}
+              style={{ fontSize: '0.85rem' }}
+              data-testid="go-to-personal-reports-btn"
+            >
+              📝 My Personal Reports
+            </button>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => setCurrentPage('wallet')}
+              style={{ fontSize: '0.85rem', background: 'linear-gradient(135deg, #0070ba, #003087)' }}
+              data-testid="go-to-wallet-btn"
+            >
+              💰 PayPal Wallet & Payouts
+            </button>
+            <button 
+              className="btn btn-secondary" 
+              onClick={() => setCurrentPage('subscribe')}
+              style={{ fontSize: '0.85rem' }}
+              data-testid="go-to-subscribe-btn"
+            >
+              ⭐ Upgrade Subscription
+            </button>
+          </div>
+        </div>
+
+        {/* Upgrade Subscription Promo */}
+        <div style={{ marginTop: 20 }}>
+          <UpgradePromoBanner />
+        </div>
+
         {/* Easter Egg Collection Stats */}
         <div style={{ marginTop: 20 }}>
           <EasterEggStats />
+        </div>
+
+        {/* Easter Egg Reward History */}
+        <div style={{ marginTop: 20 }}>
+          <EasterEggRewardHistory />
         </div>
 
         {/* Push Notifications Section */}
