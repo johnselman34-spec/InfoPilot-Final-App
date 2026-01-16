@@ -780,6 +780,253 @@ async def update_doctype_settings(data: dict, user = Depends(require_admin)):
     }
 
 
+# ==================== BULK DOCUMENT TYPE TESTING ====================
+
+@router.post("/doctype-test", response_model=dict)
+async def test_document_classification(
+    data: dict,
+    user = Depends(require_admin)
+):
+    """
+    Test document classification with sample text.
+    Paste sample text and see which document type it classifies as.
+    Helps verify InfoJet 2.0 protocols before production use.
+    """
+    title = data.get("title", "")
+    content = data.get("content", "")
+    url = data.get("url", "")
+    
+    if not content and not title:
+        raise HTTPException(status_code=400, detail="Please provide title and/or content to test")
+    
+    # Import ArticleClassifier from server
+    from server import ArticleClassifier
+    
+    # Get current settings
+    settings = await ArticleClassifier.get_settings()
+    
+    # Classify the document
+    doc_type = ArticleClassifier.classify(title, content, url, settings)
+    
+    # Provide detailed analysis
+    combined = f"{title.lower() if title else ''} {content.lower() if content else ''}"
+    word_count = len(content.split()) if content else 0
+    
+    # Check which protocols match
+    protocol_matches = []
+    
+    # PhD check
+    phd_protocol = settings.get("doctype_phd_protocol", "(Ph.D. or PhD or D.Phil. or Dr.)")
+    phd_terms = phd_protocol.strip("()").split(" or ")
+    phd_matches = sum(1 for term in phd_terms if term.strip().lower() in combined)
+    if phd_matches > 0:
+        protocol_matches.append({
+            "type": "PhD Keywords",
+            "matches": phd_matches,
+            "required": settings.get("doctype_phd_keyword_count", 3),
+            "passed": phd_matches >= settings.get("doctype_phd_keyword_count", 3)
+        })
+    
+    # Informative check
+    informative_protocol = settings.get("doctype_informative_protocol", "")
+    if informative_protocol:
+        groups = informative_protocol.split("&")
+        informative_matches = 0
+        for group in groups:
+            group = group.strip().strip("()")
+            terms = [t.strip().lower() for t in group.split(" or ")]
+            if any(term in combined for term in terms):
+                informative_matches += 1
+        protocol_matches.append({
+            "type": "Informative",
+            "matches": informative_matches,
+            "required": len(groups),
+            "passed": informative_matches >= len(groups)
+        })
+    
+    # Blog check
+    blog_count = combined.count("blog")
+    blog_in_title = "blog" in (title.lower() if title else "")
+    protocol_matches.append({
+        "type": "Blog",
+        "matches": blog_count,
+        "in_title": blog_in_title,
+        "required": settings.get("doctype_blog_min_instances", 3),
+        "passed": blog_count >= settings.get("doctype_blog_min_instances", 3) and blog_in_title
+    })
+    
+    # Forum check
+    forum_in_title = "forum" in (title.lower() if title else "")
+    protocol_matches.append({
+        "type": "Forum",
+        "in_title": forum_in_title,
+        "passed": forum_in_title
+    })
+    
+    # Personal Report check
+    import re
+    text_no_quotes = re.sub(r'"[^"]*"', '', content) if content else ""
+    text_no_quotes = re.sub(r"'[^']*'", '', text_no_quotes)
+    i_count = len(re.findall(r'\bI\b', text_no_quotes))
+    protocol_matches.append({
+        "type": "Personal Report (Collected)",
+        "i_count": i_count,
+        "required": settings.get("doctype_personal_min_i_count", 3),
+        "passed": i_count >= settings.get("doctype_personal_min_i_count", 3)
+    })
+    
+    # News check
+    news_count = combined.count("news")
+    protocol_matches.append({
+        "type": "News Article",
+        "matches": news_count,
+        "passed": news_count >= settings.get("doctype_news_min_instances", 3) or doc_type == "News Article"
+    })
+    
+    return {
+        "classification": doc_type,
+        "analysis": {
+            "title_provided": bool(title),
+            "content_length": len(content) if content else 0,
+            "word_count": word_count,
+            "url_provided": bool(url)
+        },
+        "protocol_matches": protocol_matches,
+        "settings_used": {
+            "phd_min_words": settings.get("doctype_phd_min_words", 1500),
+            "phd_keyword_count": settings.get("doctype_phd_keyword_count", 3),
+            "blog_min_instances": settings.get("doctype_blog_min_instances", 3),
+            "personal_min_i_count": settings.get("doctype_personal_min_i_count", 3),
+            "personal_min_paragraph_words": settings.get("doctype_personal_min_paragraph_words", 75),
+            "news_min_instances": settings.get("doctype_news_min_instances", 3)
+        },
+        "message": f"Document classified as: {doc_type}"
+    }
+
+
+# ==================== PAYPAL WALLET ACCUMULATION ====================
+
+@router.get("/paypal-wallets", response_model=dict)
+async def get_paypal_wallets(user = Depends(require_admin)):
+    """
+    Get all PayPal wallets with accumulated balances.
+    Wallets accumulate earnings until they reach the minimum payout threshold.
+    """
+    wallets = await db.paypal_wallets.find().to_list(500)
+    
+    # Get minimum payout threshold setting
+    min_payout_setting = await db.settings.find_one({"key": "paypal_min_payout"})
+    min_payout = min_payout_setting.get("value", 1.00) if min_payout_setting else 1.00
+    
+    formatted = []
+    total_accumulated = 0
+    ready_for_payout = 0
+    
+    for wallet in wallets:
+        balance = wallet.get("balance", 0)
+        total_accumulated += balance
+        if balance >= min_payout:
+            ready_for_payout += balance
+        
+        formatted.append({
+            "id": str(wallet["_id"]),
+            "user_id": wallet.get("user_id"),
+            "paypal_email": wallet.get("paypal_email", "Not set"),
+            "balance": balance,
+            "ready_for_payout": balance >= min_payout,
+            "transactions": wallet.get("transaction_count", 0),
+            "last_transaction": wallet.get("last_transaction", None),
+            "created_at": wallet.get("created_at", datetime.utcnow()).isoformat()
+        })
+    
+    return {
+        "wallets": formatted,
+        "total_wallets": len(formatted),
+        "total_accumulated": total_accumulated,
+        "ready_for_payout": ready_for_payout,
+        "min_payout_threshold": min_payout,
+        "message": f"{len([w for w in formatted if w['ready_for_payout']])} wallets ready for payout"
+    }
+
+
+@router.post("/paypal-wallets/process-payouts", response_model=dict)
+async def process_wallet_payouts(user = Depends(require_admin)):
+    """
+    Process all wallets that have reached the minimum payout threshold.
+    Creates batch payout for all eligible wallets.
+    """
+    min_payout_setting = await db.settings.find_one({"key": "paypal_min_payout"})
+    min_payout = min_payout_setting.get("value", 1.00) if min_payout_setting else 1.00
+    
+    # Find all wallets ready for payout
+    eligible_wallets = await db.paypal_wallets.find({
+        "balance": {"$gte": min_payout},
+        "paypal_email": {"$exists": True, "$ne": ""}
+    }).to_list(500)
+    
+    if not eligible_wallets:
+        return {
+            "success": False,
+            "message": f"No wallets have reached the minimum payout threshold (${min_payout:.2f})",
+            "processed": 0
+        }
+    
+    # Create payout records
+    payout_batch_id = str(ObjectId())
+    processed = []
+    total_amount = 0
+    
+    for wallet in eligible_wallets:
+        balance = wallet.get("balance", 0)
+        
+        # Create payout record
+        payout_record = {
+            "batch_id": payout_batch_id,
+            "user_id": wallet.get("user_id"),
+            "paypal_email": wallet.get("paypal_email"),
+            "amount": balance,
+            "status": "pending",
+            "created_at": datetime.utcnow()
+        }
+        await db.paypal_payouts.insert_one(payout_record)
+        
+        # Reset wallet balance
+        await db.paypal_wallets.update_one(
+            {"_id": wallet["_id"]},
+            {
+                "$set": {"balance": 0, "last_payout": datetime.utcnow()},
+                "$inc": {"payout_count": 1}
+            }
+        )
+        
+        processed.append({
+            "user_id": wallet.get("user_id"),
+            "paypal_email": wallet.get("paypal_email"),
+            "amount": balance
+        })
+        total_amount += balance
+    
+    # Log the batch payout
+    await db.admin_audit_log.insert_one({
+        "action": "process_wallet_payouts",
+        "admin_id": str(user["_id"]),
+        "admin_email": user.get("email"),
+        "batch_id": payout_batch_id,
+        "total_amount": total_amount,
+        "wallet_count": len(processed),
+        "created_at": datetime.utcnow()
+    })
+    
+    return {
+        "success": True,
+        "batch_id": payout_batch_id,
+        "total_amount": total_amount,
+        "wallets_processed": len(processed),
+        "payouts": processed,
+        "message": f"Processed ${total_amount:.2f} in payouts to {len(processed)} wallets"
+    }
+
+
 async def validate_listing_price(user: dict, price: float, is_bundle: bool = False) -> tuple:
     """
     Validate if a user can list at the given price.
