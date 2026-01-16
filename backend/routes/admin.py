@@ -571,14 +571,39 @@ async def validate_listing_price(user: dict, price: float, is_bundle: bool = Fal
     """
     Validate if a user can list at the given price.
     Returns (is_valid, error_message, max_allowed_price)
+    Checks both global limits (for ALL users) and unpaid user limits.
     """
-    # Check if user is paid
+    # First check global price controls (applies to EVERYONE)
+    global_control_enabled = await db.settings.find_one({"key": "global_price_control_enabled"})
+    if global_control_enabled and global_control_enabled.get("value"):
+        # Check global max price
+        global_price_key = "global_max_bundle_price" if is_bundle else "global_max_protocol_price"
+        global_max_setting = await db.settings.find_one({"key": global_price_key})
+        global_max = global_max_setting.get("value", 99.99) if global_max_setting else 99.99
+        
+        if price > global_max:
+            return False, f"Maximum allowed price is ${global_max:.2f} (set by admin).", global_max
+        
+        # Check global min price
+        global_min_setting = await db.settings.find_one({"key": "global_min_protocol_price"})
+        global_min = global_min_setting.get("value", 0.00) if global_min_setting else 0.00
+        
+        if price < global_min:
+            return False, f"Minimum allowed price is ${global_min:.2f} (set by admin).", global_max
+    
+    # Check if user is paid (admins and paid users skip unpaid restrictions)
     is_paid = user.get("subscription_active") or user.get("is_admin")
     
     if is_paid:
-        return True, None, 99.99
+        # Paid users only subject to global limits
+        global_max = 99.99
+        if global_control_enabled and global_control_enabled.get("value"):
+            global_price_key = "global_max_bundle_price" if is_bundle else "global_max_protocol_price"
+            global_max_setting = await db.settings.find_one({"key": global_price_key})
+            global_max = global_max_setting.get("value", 99.99) if global_max_setting else 99.99
+        return True, None, global_max
     
-    # Check if price controls are enabled
+    # Check if unpaid price controls are enabled
     control_enabled = await db.settings.find_one({"key": "unpaid_price_control_enabled"})
     if not control_enabled or not control_enabled.get("value"):
         return True, None, 99.99  # Controls disabled, allow any price
