@@ -20,7 +20,7 @@ const SearchResultComments = ({ resultId, showToast, onClose }) => {
   const fetchComments = useCallback(async () => {
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await fetch(`${API}/api/search-results/${resultId}/comments`, { headers });
+      const res = await fetch(`${API}/search-results/${resultId}/comments`, { headers });
       if (res.ok) {
         const data = await res.json();
         setComments(data.comments || []);
