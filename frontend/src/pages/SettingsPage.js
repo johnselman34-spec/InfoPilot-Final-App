@@ -17,6 +17,13 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
+  
+  // Promotion message state
+  const [promoSettings, setPromoSettings] = useState(null);
+  
+  // Legal documents state
+  const [showLegal, setShowLegal] = useState(null);
+  const [legalContent, setLegalContent] = useState('');
 
   // Check if user has password on mount
   useEffect(() => {
@@ -33,6 +40,43 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
     };
     checkPassword();
   }, [token]);
+  
+  // Fetch admin promo settings
+  useEffect(() => {
+    const fetchPromoSettings = async () => {
+      try {
+        const res = await fetch(`${API}/admin/settings`);
+        if (res.ok) {
+          const data = await res.json();
+          const settingsObj = {};
+          if (Array.isArray(data)) {
+            data.forEach(s => { settingsObj[s.key] = s.value; });
+          } else {
+            Object.assign(settingsObj, data);
+          }
+          setPromoSettings(settingsObj);
+        }
+      } catch (e) {
+        console.error('Failed to fetch promo settings');
+      }
+    };
+    fetchPromoSettings();
+  }, []);
+  
+  // Fetch legal documents
+  const fetchLegalDocument = async (type) => {
+    try {
+      const endpoint = type === 'terms' ? 'user-agreement' : 'privacy-policy';
+      const res = await fetch(`${API}/api/legal/${endpoint}`);
+      if (res.ok) {
+        const data = await res.json();
+        setLegalContent(data.content);
+        setShowLegal(type);
+      }
+    } catch (e) {
+      showToast('Failed to load document', 'error');
+    }
+  };
 
   const updateSettings = async () => {
     try {
