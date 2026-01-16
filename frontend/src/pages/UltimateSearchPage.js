@@ -776,6 +776,7 @@ const UltimateSearchPage = ({ showToast }) => {
         setEditPrice={setEditPrice}
         user={user}
         onSave={saveProtocol}
+        onDelete={deleteCategory}
       />
     </div>
   );
