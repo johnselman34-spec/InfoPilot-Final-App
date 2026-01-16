@@ -435,7 +435,7 @@ const LegalPage = ({ showToast }) => {
             rel="noopener noreferrer"
             style={{ color: '#f472b6' }}
           >
-            "Letters to Evelyn" by John Selman
+            Letters to Evelyn by John Selman
           </a> - A 5-star memoir of survival, love, and redemption.
         </p>
       </div>
