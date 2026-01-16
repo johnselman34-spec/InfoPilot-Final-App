@@ -482,7 +482,7 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
                             data-testid="edit-protocol-settings"
                           />
                           <p style={{ fontSize: '0.7rem', color: '#71717a', marginTop: 5 }}>
-                            Tip: Use "and" or "&" between groups. Use "or" within groups.
+                            Tip: Use &quot;and&quot; or &quot;&amp;&quot; between groups. Use &quot;or&quot; within groups.
                           </p>
                         </div>
                         
