@@ -7,9 +7,12 @@ import React, { useState, useEffect } from 'react';
 import { API } from '../utils/api';
 
 const UpgradePromoBanner = ({ compact = false }) => {
+  const defaultTitle = 'Limited Time Offer!';
+  const defaultMessage = "Our pay-as-you-go promotion is testing the waters. Google Map APIs and AI search subscriptions aren't cheap! Thanks for helping us build something amazing.";
+  
   const [promo, setPromo] = useState({
-    title: 'Limited Time Offer!',
-    message: "Our pay-as-you-go promotion is testing the waters. Google Map APIs and AI search subscriptions aren't cheap! Thanks for helping us build something amazing.",
+    title: defaultTitle,
+    message: defaultMessage,
     show: true
   });
   
@@ -20,8 +23,8 @@ const UpgradePromoBanner = ({ compact = false }) => {
         if (res.ok) {
           const data = await res.json();
           setPromo({
-            title: data.upgrade_promo_title || promo.title,
-            message: data.upgrade_promo_message || promo.message,
+            title: data.upgrade_promo_title || defaultTitle,
+            message: data.upgrade_promo_message || defaultMessage,
             show: data.show_upgrade_promo !== false
           });
         }
