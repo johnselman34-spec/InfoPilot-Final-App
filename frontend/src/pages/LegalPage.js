@@ -115,8 +115,8 @@ const LegalPage = ({ showToast }) => {
           }}>
             <h4 style={{ color: '#7c3aed', margin: '0 0 10px 0' }}>✈️ FIRST IN FLIGHT WITH SEARCH MONETIZATION</h4>
             <p style={{ margin: 0, fontSize: '0.9rem' }}>
-              InfoPilot Explorer is pioneering the monetization of internet searches. So much time is spent 
-              searching for valuable information — <strong>why can't it be worth anything?</strong> If your 
+            InfoPilot Explorer is pioneering the monetization of internet searches. So much time is spent 
+              searching for valuable information — <strong>why not make it worth something?</strong> If your 
               search expertise is valuable to businesses, it should be valuable to <em>you</em>. Our 
               Protocol Marketplace empowers users to create, share, and sell their search protocols, 
               transforming knowledge into income.
