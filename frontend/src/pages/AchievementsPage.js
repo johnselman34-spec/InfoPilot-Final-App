@@ -107,7 +107,10 @@ const AchievementsPage = ({ showToast }) => {
   };
 
   useEffect(() => {
-    fetchData();
+    const loadData = async () => {
+      await fetchData();
+    };
+    loadData();
   }, [fetchData]);
 
   if (loading) {
