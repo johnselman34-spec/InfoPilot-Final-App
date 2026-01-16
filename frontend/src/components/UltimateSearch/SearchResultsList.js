@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { HashtagDisplay } from '../shared';
 import { extractHashtags } from '../../utils/hashtags';
+import SearchResultComments from '../Comments/SearchResultComments';
 
 /**
  * SearchResultsList - Display grid of search results with reactions
@@ -8,8 +9,11 @@ import { extractHashtags } from '../../utils/hashtags';
 const SearchResultsList = ({
   searchResults,
   onDeleteResult,
-  onAddReaction
+  onAddReaction,
+  showToast
 }) => {
+  const [commentsResultId, setCommentsResultId] = useState(null);
+  
   return (
     <div className="card">
       <h3 style={{ marginBottom: 15, color: '#f472b6' }}>
@@ -27,10 +31,20 @@ const SearchResultsList = ({
               result={result}
               onDelete={() => onDeleteResult(result.id)}
               onReaction={(type) => onAddReaction(result.id, type)}
+              onOpenComments={() => setCommentsResultId(result.id)}
             />
           ))
         )}
       </div>
+      
+      {/* Comments Panel */}
+      {commentsResultId && (
+        <SearchResultComments
+          resultId={commentsResultId}
+          showToast={showToast}
+          onClose={() => setCommentsResultId(null)}
+        />
+      )}
     </div>
   );
 };
