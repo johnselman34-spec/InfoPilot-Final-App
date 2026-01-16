@@ -555,6 +555,16 @@ const AchievementsPage = ({ showToast }) => {
       
       {/* Easter Egg Tracker */}
       {token && <EasterEggTracker />}
+      
+      {/* Personal Report Writing Badges */}
+      {token && (
+        <div style={{ marginTop: 20 }}>
+          <PersonalReportBadges 
+            userStats={achievements.personal_report_stats || {}}
+            earnedBadges={achievements.earned?.filter(b => b.category === 'personal_reports') || []}
+          />
+        </div>
+      )}
     </div>
   );
 };
