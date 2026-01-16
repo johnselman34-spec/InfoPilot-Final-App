@@ -98,105 +98,105 @@ const MaestroBistroSection = () => (
     marginTop: 15
   }}>
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
-      {/* Beef Rouladen Dish - Detailed bowl with all components */}
+      {/* Beef Rouladen Dish - DARKER dark brown with rich gravy, bacon, dijon mustard visible */}
       <div style={{
         width: 100,
         height: 100,
         borderRadius: 12,
-        background: 'linear-gradient(180deg, #2d1a0f 0%, #1f120a 100%)',
+        background: 'linear-gradient(180deg, #1a0f08 0%, #120a05 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: 'inset 0 -10px 25px rgba(0,0,0,0.6), 0 6px 15px rgba(0,0,0,0.5)',
+        boxShadow: 'inset 0 -10px 25px rgba(0,0,0,0.8), 0 6px 15px rgba(0,0,0,0.6)',
         position: 'relative',
         overflow: 'hidden',
-        border: '3px solid #5c3d2e'
+        border: '3px solid #3d2a1f'
       }}>
-        {/* Dark reddish-brown gravy pool */}
+        {/* DARK reddish-brown gravy pool - even richer */}
         <div style={{
           position: 'absolute',
           bottom: 8,
           width: '85%',
           height: '60%',
-          background: 'linear-gradient(180deg, #7a3d20 0%, #5c2d15 40%, #3d1f0c 100%)',
+          background: 'linear-gradient(180deg, #4a2512 0%, #3a1c0d 40%, #2a1408 100%)',
           borderRadius: '50% 50% 45% 45%',
-          boxShadow: 'inset 0 3px 10px rgba(120, 60, 30, 0.5)'
+          boxShadow: 'inset 0 3px 10px rgba(80, 40, 20, 0.6)'
         }}/>
-        {/* Beef Rouladen roll #1 - dark brown with bacon visible */}
+        {/* Beef Rouladen roll #1 - VERY dark brown with bacon visible */}
         <div style={{
           position: 'absolute',
           bottom: 22,
           left: '15%',
           width: 28,
           height: 16,
-          background: 'linear-gradient(135deg, #4a2510 0%, #3a1c0c 50%, #2a1408 100%)',
+          background: 'linear-gradient(135deg, #2d1408 0%, #1f0c04 50%, #150a02 100%)',
           borderRadius: '45% 45% 40% 40%',
-          boxShadow: '0 3px 6px rgba(0,0,0,0.6)',
-          border: '1px solid #5c3018'
+          boxShadow: '0 3px 6px rgba(0,0,0,0.7)',
+          border: '1px solid #3d2010'
         }}>
-          {/* Bacon stripe */}
-          <div style={{ position: 'absolute', top: 4, left: 3, width: 22, height: 2, background: '#8b4513', borderRadius: 1, opacity: 0.7 }}/>
-          {/* Dijon mustard hint */}
-          <div style={{ position: 'absolute', top: 7, left: 8, width: 12, height: 2, background: '#c9a227', borderRadius: 1, opacity: 0.5 }}/>
+          {/* Bacon stripe - darker */}
+          <div style={{ position: 'absolute', top: 4, left: 3, width: 22, height: 2, background: '#5c2d18', borderRadius: 1, opacity: 0.8 }}/>
+          {/* Dijon mustard hint - subtle yellow */}
+          <div style={{ position: 'absolute', top: 7, left: 8, width: 12, height: 2, background: '#9a8020', borderRadius: 1, opacity: 0.6 }}/>
         </div>
-        {/* Beef Rouladen roll #2 */}
+        {/* Beef Rouladen roll #2 - DARKER */}
         <div style={{
           position: 'absolute',
           bottom: 20,
           left: '45%',
           width: 24,
           height: 14,
-          background: 'linear-gradient(135deg, #4a2510 0%, #351a0a 100%)',
+          background: 'linear-gradient(135deg, #2d1408 0%, #1a0c04 100%)',
           borderRadius: '45%',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
-          border: '1px solid #5c3018'
+          boxShadow: '0 2px 4px rgba(0,0,0,0.6)',
+          border: '1px solid #3d2010'
         }}/>
-        {/* Egg noodles covered in gravy */}
+        {/* Egg noodles covered in DARK brown gravy */}
         <div style={{
           position: 'absolute',
           bottom: 14,
           right: '12%',
           width: 28,
           height: 22,
-          background: 'linear-gradient(135deg, #c9a54d 0%, #a68940 50%, #8b7535 100%)',
+          background: 'linear-gradient(135deg, #8a7030 0%, #6a5520 50%, #4a3a15 100%)',
           borderRadius: '35%',
-          boxShadow: 'inset 0 2px 4px rgba(90, 60, 20, 0.4)'
+          boxShadow: 'inset 0 2px 4px rgba(60, 40, 15, 0.5)'
         }}>
-          {/* Gravy drizzle on noodles */}
-          <div style={{ position: 'absolute', top: 3, left: 5, width: 18, height: 3, background: '#5c2d15', borderRadius: 2, opacity: 0.6 }}/>
-          <div style={{ position: 'absolute', top: 8, left: 8, width: 12, height: 2, background: '#4a2510', borderRadius: 1, opacity: 0.5 }}/>
+          {/* Gravy drizzle on noodles - darker */}
+          <div style={{ position: 'absolute', top: 3, left: 5, width: 18, height: 3, background: '#3a1c0d', borderRadius: 2, opacity: 0.7 }}/>
+          <div style={{ position: 'absolute', top: 8, left: 8, width: 12, height: 2, background: '#2a1408', borderRadius: 1, opacity: 0.6 }}/>
         </div>
-        {/* Peas scattered */}
-        <div style={{ position: 'absolute', bottom: 28, left: '12%', width: 6, height: 6, background: 'linear-gradient(135deg, #4a8f4a, #3d7a3d)', borderRadius: '50%', boxShadow: 'inset 0 -1px 2px rgba(0,0,0,0.3)' }}/>
-        <div style={{ position: 'absolute', bottom: 34, left: '18%', width: 5, height: 5, background: 'linear-gradient(135deg, #5a9f5a, #4a8f4a)', borderRadius: '50%' }}/>
-        <div style={{ position: 'absolute', bottom: 26, left: '26%', width: 5, height: 5, background: '#3d7a3d', borderRadius: '50%' }}/>
-        <div style={{ position: 'absolute', bottom: 32, right: '35%', width: 5, height: 5, background: '#4a8f4a', borderRadius: '50%' }}/>
-        {/* Carrot slices */}
-        <div style={{ position: 'absolute', bottom: 30, right: '15%', width: 9, height: 6, background: 'linear-gradient(135deg, #e07020, #d45a10)', borderRadius: '40%', boxShadow: 'inset 0 1px 2px rgba(255,150,50,0.3)' }}/>
-        <div style={{ position: 'absolute', bottom: 24, right: '25%', width: 7, height: 5, background: 'linear-gradient(135deg, #d45a10, #c04a00)', borderRadius: '40%' }}/>
+        {/* Peas scattered - darker green */}
+        <div style={{ position: 'absolute', bottom: 28, left: '12%', width: 6, height: 6, background: 'linear-gradient(135deg, #2d5a2d, #1f4a1f)', borderRadius: '50%', boxShadow: 'inset 0 -1px 2px rgba(0,0,0,0.4)' }}/>
+        <div style={{ position: 'absolute', bottom: 34, left: '18%', width: 5, height: 5, background: 'linear-gradient(135deg, #3a6a3a, #2d5a2d)', borderRadius: '50%' }}/>
+        <div style={{ position: 'absolute', bottom: 26, left: '26%', width: 5, height: 5, background: '#1f4a1f', borderRadius: '50%' }}/>
+        <div style={{ position: 'absolute', bottom: 32, right: '35%', width: 5, height: 5, background: '#2d5a2d', borderRadius: '50%' }}/>
+        {/* Carrot slices - slightly darker orange */}
+        <div style={{ position: 'absolute', bottom: 30, right: '15%', width: 9, height: 6, background: 'linear-gradient(135deg, #c05010, #a04008)', borderRadius: '40%', boxShadow: 'inset 0 1px 2px rgba(200,100,30,0.3)' }}/>
+        <div style={{ position: 'absolute', bottom: 24, right: '25%', width: 7, height: 5, background: 'linear-gradient(135deg, #a04008, #803000)', borderRadius: '40%' }}/>
       </div>
       
-      {/* Fish Chowder Bowl */}
+      {/* Fish Chowder Bowl - richer with potatoes, bacon, onions, white fish visible */}
       <div style={{
         width: 80,
         height: 80,
         borderRadius: '50%',
-        background: 'linear-gradient(180deg, #d4c4a0 0%, #c9b896 50%, #b8a882 100%)',
+        background: 'linear-gradient(180deg, #a89070 0%, #988060 50%, #887050 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: 'inset 0 -8px 20px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.3)',
+        boxShadow: 'inset 0 -8px 20px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.4)',
         position: 'relative',
         overflow: 'hidden',
-        border: '3px solid #a89870'
+        border: '3px solid #786850'
       }}>
-        {/* Creamy chowder base */}
+        {/* Creamy chowder base - slightly richer cream color */}
         <div style={{
           position: 'absolute',
           bottom: 8,
           width: '80%',
           height: '55%',
-          background: 'linear-gradient(180deg, #f5f0e0 0%, #e8e0c8 50%, #d8d0b8 100%)',
+          background: 'linear-gradient(180deg, #e8e0c8 0%, #d8d0b0 50%, #c8c098 100%)',
           borderRadius: '50% 50% 45% 45%',
           boxShadow: 'inset 0 2px 6px rgba(200, 180, 140, 0.4)'
         }}/>
