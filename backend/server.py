@@ -469,10 +469,6 @@ class ExtendedWebSearchService:
                     "available": bool(BRAVE_API_KEY),
                     "description": "Privacy-focused search engine"
                 },
-                    "name": "Yandex",
-                    "available": bool(YANDEX_API_KEY and YANDEX_FOLDER_ID),
-                    "description": "Russian and international search"
-                },
                 "duckduckgo": {
                     "name": "DuckDuckGo",
                     "available": DDGS_AVAILABLE,
