@@ -1180,8 +1180,14 @@ async def get_social_feed(user = Depends(get_current_user_local)):
     posts = []
     if group_ids:
         group_posts = await db.group_posts.find({"group_id": {"$in": group_ids}}).sort("created_at", -1).limit(30).to_list(30)
+        
+        # Bulk fetch all authors to avoid N+1 queries
+        author_ids = list(set([ObjectId(p["author_id"]) for p in group_posts]))
+        authors_list = await db.users.find({"_id": {"$in": author_ids}}).to_list(len(author_ids)) if author_ids else []
+        authors_map = {str(a["_id"]): a for a in authors_list}
+        
         for p in group_posts:
-            author = await db.users.find_one({"_id": ObjectId(p["author_id"])})
+            author = authors_map.get(p["author_id"])
             group = next((g for g in groups if str(g["_id"]) == p["group_id"]), None)
             posts.append({
                 "id": str(p["_id"]),
@@ -1196,9 +1202,17 @@ async def get_social_feed(user = Depends(get_current_user_local)):
             })
     
     # Get feed posts
-    feed_posts = await db.feed_posts.find({"author_id": {"$in": [user_id] + [f["id"] for f in (await get_friends(user))["friends"]]}}).sort("created_at", -1).limit(20).to_list(20)
+    friends_data = await get_friends(user)
+    friend_ids = [f["id"] for f in friends_data["friends"]]
+    feed_posts = await db.feed_posts.find({"author_id": {"$in": [user_id] + friend_ids}}).sort("created_at", -1).limit(20).to_list(20)
+    
+    # Bulk fetch feed post authors
+    feed_author_ids = list(set([ObjectId(p["author_id"]) for p in feed_posts]))
+    feed_authors_list = await db.users.find({"_id": {"$in": feed_author_ids}}).to_list(len(feed_author_ids)) if feed_author_ids else []
+    feed_authors_map = {str(a["_id"]): a for a in feed_authors_list}
+    
     for p in feed_posts:
-        author = await db.users.find_one({"_id": ObjectId(p["author_id"])})
+        author = feed_authors_map.get(p["author_id"])
         posts.append({
             "id": str(p["_id"]),
             "type": "feed",
