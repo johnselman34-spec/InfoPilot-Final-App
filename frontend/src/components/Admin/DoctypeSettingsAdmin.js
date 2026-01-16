@@ -365,7 +365,7 @@ const DoctypeSettingsAdmin = ({ showToast }) => {
             </div>
           </div>
           <p style={{ color: '#71717a', fontSize: '0.75rem', marginTop: 10 }}>
-            Rule: 'I' appears {settings.doctype_personal_min_i_count || 3}+ times OUTSIDE quotations in a paragraph 
+            Rule: &apos;I&apos; appears {settings.doctype_personal_min_i_count || 3}+ times OUTSIDE quotations in a paragraph 
             with {settings.doctype_personal_min_paragraph_words || 75}+ words
           </p>
         </DocumentTypeCard>
