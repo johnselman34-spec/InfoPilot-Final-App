@@ -440,7 +440,10 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
                     borderRadius: 8
                   }}>
                     <p style={{ fontSize: '0.75rem', color: '#a1a1aa', marginBottom: 10 }}>
-                      Click a category to edit • {categories.length} total
+                      Click any category to edit • {categories.length} total
+                    </p>
+                    <p style={{ fontSize: '0.7rem', color: '#71717a', marginBottom: 15 }}>
+                      📁 Categories → 📂 Sub-categories → 📄 Sub-sub-categories (and deeper)
                     </p>
                     {buildCategoryTree(categories)}
                   </div>
@@ -453,9 +456,16 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
                       borderRadius: 10,
                       border: '1px solid rgba(124, 58, 237, 0.3)'
                     }}>
-                      <h4 style={{ color: '#f472b6', margin: '0 0 15px 0' }}>
+                      <h4 style={{ color: '#f472b6', margin: '0 0 5px 0' }}>
                         ✏️ Edit: {editingCategory.name}
                       </h4>
+                      <p style={{ color: '#a78bfa', fontSize: '0.75rem', margin: '0 0 15px 0' }}>
+                        {getLevelLabel(editingCategory.level || 0)}
+                        {editingCategory.parent_id && (() => {
+                          const parent = categories.find(c => c.id === editingCategory.parent_id);
+                          return parent ? ` under "${parent.name}"` : '';
+                        })()}
+                      </p>
                       
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         <div>
