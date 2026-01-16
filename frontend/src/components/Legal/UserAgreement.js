@@ -78,12 +78,12 @@ const UserAgreement = ({ onClose, onAccept }) => {
           
           <Section title="1. Acceptance of Terms">
             <p>
-              By accessing and using InfoPilot Explorer ("the Service"), you accept and agree to be 
+              By accessing and using InfoPilot Explorer (&ldquo;the Service&rdquo;), you accept and agree to be 
               bound by the terms and provisions of this agreement. If you do not agree to abide by 
               these terms, please do not use the Service.
             </p>
             <p>
-              Top Pilot Enterprises, Inc. ("Company", "we", "us") reserves the right to modify 
+              Top Pilot Enterprises, Inc. (&ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) reserves the right to modify 
               these terms at any time. Continued use of the Service after changes constitutes 
               acceptance of the new terms.
             </p>
