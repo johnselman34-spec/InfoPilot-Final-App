@@ -680,7 +680,18 @@ async def perform_search(request: SearchRequest, user = Depends(get_current_user
 
 @api_router.post("/collate", response_model=dict)
 async def collate_results(request: CollateRequest, user = Depends(get_current_user_local)):
-    """Collate search results with protocol matching"""
+    """
+    DEEP Collate search results with STRICT protocol matching.
+    
+    This searches MULTIPLE times with different query variations derived from your protocol,
+    then STRICTLY filters results to only include those that truly match your criteria.
+    
+    Features:
+    - Deep Search: Generates 5-10 different search queries from your protocol
+    - Multi-Engine: Searches Google, Bing, DuckDuckGo, Brave simultaneously
+    - Strict Matching: Only accepts results matching 70%+ of protocol groups
+    - Quality Scoring: Results ranked by how well they match your protocol
+    """
     category = await db.categories.find_one({"_id": ObjectId(request.category_id)})
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
@@ -689,46 +700,102 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
     if not protocol:
         raise HTTPException(status_code=400, detail="Category has no protocol")
     
-    # Get search query from protocol
-    search_query = ProtocolParser.extract_search_query(protocol)
+    user_id = str(user["_id"])
     
     # Get settings
-    settings = await db.settings.find_one({"key": "max_search_pages"})
-    max_pages = settings.get("value", 99) if settings else 99
-    max_results = max_pages * 20
+    settings_limit = await db.settings.find_one({"key": "search_collate_limit"})
+    collate_limit = settings_limit.get("value", 100) if settings_limit else 100
     
-    # Perform search
-    raw_results = await ExtendedWebSearchService.search(search_query, min(max_results, 200))
+    settings_threshold = await db.settings.find_one({"key": "match_threshold"})
+    match_threshold = settings_threshold.get("value", 70) if settings_threshold else 70  # 70% default
     
-    # Parse protocol and match results
+    # Parse protocol
     groups = ProtocolParser.parse_protocol(protocol)
-    matched_results = []
-    batch_id = str(ObjectId())
     
-    for result in raw_results:
-        matches, score = ProtocolParser.match_result(result, groups)
-        if matches:
+    # DEEP SEARCH: Generate multiple query variations
+    search_queries = ProtocolParser.generate_deep_search_queries(protocol, max_queries=8)
+    
+    # Fallback to basic extraction if no queries generated
+    if not search_queries:
+        search_queries = [ProtocolParser.extract_search_query(protocol)]
+    
+    logger.info(f"Deep Collate: Executing {len(search_queries)} search queries for protocol")
+    
+    # Collect results from ALL query variations
+    all_raw_results = []
+    seen_urls = set()
+    results_per_query = max(30, collate_limit // len(search_queries))
+    
+    for query in search_queries:
+        if not query.strip():
+            continue
+        
+        try:
+            query_results = await ExtendedWebSearchService.search(query, results_per_query)
+            for result in query_results:
+                url = result.get("url", "")
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    result["source_query"] = query  # Track which query found this
+                    all_raw_results.append(result)
+        except Exception as e:
+            logger.warning(f"Search query failed: {query} - {e}")
+            continue
+    
+    logger.info(f"Deep Collate: Found {len(all_raw_results)} unique results from {len(search_queries)} queries")
+    
+    # STRICT MATCHING: Only accept results that truly match the protocol
+    matched_results = []
+    rejected_count = 0
+    min_match_percent = match_threshold / 100.0  # Convert to decimal
+    
+    for result in all_raw_results:
+        matches, score, details = ProtocolParser.strict_match_result(
+            result, 
+            groups,
+            min_group_match_percent=min_match_percent,
+            fuzzy_threshold=70
+        )
+        
+        if matches and score > 0:
             result["match_score"] = score
+            result["match_details"] = details
             result["article_type"] = ArticleClassifier.classify(
                 result.get("title", ""), result.get("content", "")
             )
             result["root_domain"] = WebSearchService.extract_root_domain(result.get("url", ""))
             matched_results.append(result)
+        else:
+            rejected_count += 1
     
-    # Sort by score
+    logger.info(f"Deep Collate: {len(matched_results)} results passed strict matching, {rejected_count} rejected")
+    
+    # Sort by match score (highest first)
     matched_results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
     
+    # Apply collate limit
+    matched_results = matched_results[:collate_limit]
+    
     # Store results
+    batch_id = str(ObjectId())
+    stored_count = 0
+    
     for result in matched_results:
         existing = await db.search_results.find_one({
             "url": result["url"],
-            "user_id": str(user["_id"])
+            "user_id": user_id
         })
         
         if existing:
             await db.search_results.update_one(
                 {"_id": existing["_id"]},
-                {"$addToSet": {"category_ids": request.category_id}}
+                {
+                    "$addToSet": {"category_ids": request.category_id},
+                    "$set": {
+                        "match_score": max(existing.get("match_score", 0), result.get("match_score", 0)),
+                        "updated_at": datetime.utcnow()
+                    }
+                }
             )
         else:
             await db.search_results.insert_one({
@@ -739,11 +806,14 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
                 "article_type": result.get("article_type", "Unknown"),
                 "root_domain": result.get("root_domain", ""),
                 "match_score": result.get("match_score", 0),
+                "match_details": result.get("match_details", {}),
+                "source_query": result.get("source_query", ""),
                 "category_ids": [request.category_id],
-                "user_id": str(user["_id"]),
+                "user_id": user_id,
                 "batch_id": batch_id,
                 "created_at": datetime.utcnow()
             })
+            stored_count += 1
     
     # Update category
     await db.categories.update_one(
@@ -754,6 +824,7 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
     # Format response
     formatted = []
     for r in matched_results:
+        match_details = r.get("match_details", {})
         formatted.append({
             "id": str(ObjectId()),
             "url": r.get("url", ""),
@@ -761,7 +832,10 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
             "snippet": r.get("snippet", ""),
             "article_type": r.get("article_type", "Unknown"),
             "root_domain": r.get("root_domain", ""),
-            "match_score": r.get("match_score", 0),
+            "match_score": round(r.get("match_score", 0) * 100, 1),  # Convert to percentage
+            "match_percent": round(match_details.get("match_percent", 0) * 100, 1),
+            "groups_matched": match_details.get("groups_matched", 0),
+            "total_groups": match_details.get("total_groups", 0),
             "categories": [category["name"]]
         })
     
@@ -769,7 +843,15 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
         "results": formatted,
         "total": len(formatted),
         "category": category["name"],
-        "batch_id": batch_id
+        "batch_id": batch_id,
+        "deep_search_stats": {
+            "queries_executed": len(search_queries),
+            "total_results_found": len(all_raw_results),
+            "passed_strict_matching": len(matched_results),
+            "rejected": rejected_count,
+            "match_threshold": f"{match_threshold}%"
+        },
+        "message": f"🔍 Deep Collate: Found {len(formatted)} high-quality results from {len(all_raw_results)} searched (using {len(search_queries)} query variations)"
     }
 
 
