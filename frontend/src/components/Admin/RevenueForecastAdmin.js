@@ -298,7 +298,7 @@ const RevenueForecastAdmin = ({ token, showToast }) => {
               textAlign: 'center'
             }}>
               <p style={{ color: '#f472b6', margin: 0, fontStyle: 'italic', fontSize: '0.95rem' }}>
-                "{forecast.forecast.funny_insight}"
+                &quot;{forecast.forecast.funny_insight}&quot;
               </p>
             </div>
           )}
