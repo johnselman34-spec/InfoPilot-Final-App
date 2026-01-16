@@ -275,7 +275,14 @@ const CollapsibleCategoryTree = ({
         maxHeight: '500px',
         overflowY: 'auto'
       }}>
-        {categoryTree.map(category => (
+        {filteredTree.length === 0 && searchFilter ? (
+          <div style={{ textAlign: 'center', padding: 20, color: '#a1a1aa' }}>
+            <p style={{ margin: 0 }}>No categories match "{searchFilter}"</p>
+          </div>
+        ) : (
+          filteredTree.map(category => (
+            <CategoryTreeNode
+              key={category.id || category._id}
           <CategoryTreeNode
             key={category.id || category._id}
             category={category}
