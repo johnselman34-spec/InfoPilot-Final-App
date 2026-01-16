@@ -570,9 +570,9 @@ def start_triweekly_scheduler():
     
     triweekly_scheduler.start()
     logger.info("📬 Tri-weekly newsletter scheduler started!")
-    logger.info("   - 5:42 AM UTC (Morning Edition)")
-    logger.info("   - 8:37 AM UTC (Mid-Morning Edition)")
-    logger.info("   - 4:41 PM UTC (Afternoon Edition)")
+    logger.info("   - 5:46 AM UTC (Morning Edition)")
+    logger.info("   - 9:42 AM UTC (Mid-Morning Edition)")
+    logger.info("   - 4:20 PM UTC (Afternoon Edition)")
 
 
 def stop_triweekly_scheduler():
