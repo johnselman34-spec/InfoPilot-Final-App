@@ -55,6 +55,7 @@ from routes.email_reports import router as email_reports_router
 from routes.unified_chat import router as unified_chat_router
 from routes.easter_eggs import router as easter_eggs_router
 from routes.legal import router as legal_router
+from routes.category_export import router as category_export_router
 
 # Import services
 from services.location_service import LocationService
