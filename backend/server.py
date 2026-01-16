@@ -4498,6 +4498,148 @@ async def get_quality_score_analytics(user = Depends(get_current_user_local)):
     }
 
 
+
+# ============== DOMAIN BLOCKLIST MANAGEMENT ==============
+
+@api_router.get("/admin/blocked-domains")
+async def get_blocked_domains(user = Depends(get_current_user_local)):
+    """Get list of blocked domains"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    blocked = await db.blocked_domains.find({}).sort("blocked_at", -1).to_list(500)
+    
+    return {
+        "blocked_domains": [
+            {
+                "id": str(d["_id"]),
+                "domain": d["domain"],
+                "reason": d.get("reason", "Low quality content"),
+                "avg_score": d.get("avg_score", 0),
+                "result_count": d.get("result_count", 0),
+                "blocked_by": d.get("blocked_by", "admin"),
+                "blocked_at": d.get("blocked_at", datetime.utcnow()).isoformat()
+            }
+            for d in blocked
+        ],
+        "total_blocked": len(blocked)
+    }
+
+
+@api_router.post("/admin/blocked-domains")
+async def add_blocked_domain(
+    domain: str = Body(..., embed=True),
+    reason: str = Body("Low quality content", embed=True),
+    avg_score: float = Body(0, embed=True),
+    result_count: int = Body(0, embed=True),
+    user = Depends(get_current_user_local)
+):
+    """Add a domain to the blocklist"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Check if domain already blocked
+    existing = await db.blocked_domains.find_one({"domain": domain.lower()})
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Domain '{domain}' is already blocked")
+    
+    # Add to blocklist
+    result = await db.blocked_domains.insert_one({
+        "domain": domain.lower(),
+        "reason": reason,
+        "avg_score": avg_score,
+        "result_count": result_count,
+        "blocked_by": user.get("email", "admin"),
+        "blocked_at": datetime.utcnow()
+    })
+    
+    # Optionally remove existing results from this domain
+    deleted = await db.search_results.delete_many({"root_domain": domain.lower()})
+    
+    logger.info(f"Domain blocked: {domain} by {user.get('email')}, removed {deleted.deleted_count} results")
+    
+    return {
+        "success": True,
+        "message": f"Domain '{domain}' added to blocklist",
+        "results_removed": deleted.deleted_count,
+        "blocked_domain": {
+            "id": str(result.inserted_id),
+            "domain": domain.lower(),
+            "reason": reason,
+            "blocked_at": datetime.utcnow().isoformat()
+        }
+    }
+
+
+@api_router.delete("/admin/blocked-domains/{domain}")
+async def remove_blocked_domain(domain: str, user = Depends(get_current_user_local)):
+    """Remove a domain from the blocklist"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.blocked_domains.delete_one({"domain": domain.lower()})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail=f"Domain '{domain}' not found in blocklist")
+    
+    logger.info(f"Domain unblocked: {domain} by {user.get('email')}")
+    
+    return {
+        "success": True,
+        "message": f"Domain '{domain}' removed from blocklist"
+    }
+
+
+@api_router.post("/admin/blocked-domains/bulk")
+async def bulk_block_domains(
+    domains: list = Body(..., embed=True),
+    user = Depends(get_current_user_local)
+):
+    """Block multiple domains at once from Quality Analytics improvement list"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    blocked_count = 0
+    skipped_count = 0
+    total_results_removed = 0
+    
+    for domain_info in domains:
+        domain = domain_info.get("domain", "").lower() if isinstance(domain_info, dict) else str(domain_info).lower()
+        if not domain:
+            continue
+            
+        # Check if already blocked
+        existing = await db.blocked_domains.find_one({"domain": domain})
+        if existing:
+            skipped_count += 1
+            continue
+        
+        # Add to blocklist
+        await db.blocked_domains.insert_one({
+            "domain": domain,
+            "reason": domain_info.get("reason", "Low quality content") if isinstance(domain_info, dict) else "Low quality content",
+            "avg_score": domain_info.get("avg_score", 0) if isinstance(domain_info, dict) else 0,
+            "result_count": domain_info.get("count", 0) if isinstance(domain_info, dict) else 0,
+            "blocked_by": user.get("email", "admin"),
+            "blocked_at": datetime.utcnow()
+        })
+        blocked_count += 1
+        
+        # Remove results from this domain
+        deleted = await db.search_results.delete_many({"root_domain": domain})
+        total_results_removed += deleted.deleted_count
+    
+    logger.info(f"Bulk domain block: {blocked_count} blocked, {skipped_count} skipped, {total_results_removed} results removed by {user.get('email')}")
+    
+    return {
+        "success": True,
+        "blocked_count": blocked_count,
+        "skipped_count": skipped_count,
+        "total_results_removed": total_results_removed,
+        "message": f"Blocked {blocked_count} domains, removed {total_results_removed} results"
+    }
+
+
 # ============== PROTOCOL TEMPLATES ==============
 
 @api_router.get("/protocol-templates")
