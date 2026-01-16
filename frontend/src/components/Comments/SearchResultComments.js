@@ -77,7 +77,7 @@ const SearchResultComments = ({ resultId, showToast, onClose }) => {
     if (!window.confirm('Delete this comment?')) return;
 
     try {
-      const res = await fetch(`${API}/api/search-results/${resultId}/comments/${commentId}`, {
+      const res = await fetch(`${API}/search-results/${resultId}/comments/${commentId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
