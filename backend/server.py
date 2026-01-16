@@ -858,8 +858,13 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
 @api_router.post("/auto-categorize", response_model=dict)
 async def auto_categorize_search(request: dict, user = Depends(get_current_user_local)):
     """
-    One-click auto-categorization: Search and automatically match results against ALL user's categories.
-    Each result can match multiple categories based on their protocols.
+    DEEP Auto-categorization: Search with STRICT protocol matching against ALL categories.
+    
+    Features:
+    - Deep Search: Uses multiple query variations to find more relevant results
+    - Strict Matching: Only accepts results matching 70%+ of protocol groups
+    - Multi-Category: Each result can match multiple categories
+    - Quality Scoring: Results ranked by match quality
     """
     search_query = request.get("query", "").strip()
     if not search_query:
@@ -878,15 +883,52 @@ async def auto_categorize_search(request: dict, user = Depends(get_current_user_
     if not all_categories:
         raise HTTPException(status_code=400, detail="No categories available. Create categories first.")
     
-    # Get collation limit from settings
-    settings = await db.settings.find_one({"key": "collation_limit"})
-    max_results = int(settings.get("value", 40)) if settings else 40
-    max_results = min(max(1, max_results), 100)  # Enforce 1-100 range
+    # Get settings
+    settings_limit = await db.settings.find_one({"key": "search_collate_limit"})
+    collate_limit = int(settings_limit.get("value", 100)) if settings_limit else 100
+    collate_limit = min(max(1, collate_limit), 200)
     
-    # Perform search across multiple engines
-    raw_results = await ExtendedWebSearchService.search(search_query, max_results)
+    settings_threshold = await db.settings.find_one({"key": "match_threshold"})
+    match_threshold = settings_threshold.get("value", 70) if settings_threshold else 70
+    min_match_percent = match_threshold / 100.0
     
-    if not raw_results:
+    # DEEP SEARCH: Generate additional search queries from category protocols
+    all_search_queries = [search_query]
+    
+    # Add queries derived from each category's protocol (for deeper coverage)
+    for category in all_categories[:5]:  # Limit to 5 categories for query generation
+        protocol = category.get("protocol", "")
+        if protocol:
+            protocol_queries = ProtocolParser.generate_deep_search_queries(protocol, max_queries=2)
+            # Combine user query with protocol terms
+            for pq in protocol_queries[:2]:
+                combined = f"{search_query} {pq}"
+                if combined not in all_search_queries:
+                    all_search_queries.append(combined)
+    
+    # Limit total queries
+    all_search_queries = all_search_queries[:10]
+    
+    logger.info(f"Auto-Categorize: Executing {len(all_search_queries)} search queries")
+    
+    # Collect results from all queries
+    all_raw_results = []
+    seen_urls = set()
+    
+    for query in all_search_queries:
+        try:
+            results_per_query = max(20, collate_limit // len(all_search_queries))
+            query_results = await ExtendedWebSearchService.search(query, results_per_query)
+            for result in query_results:
+                url = result.get("url", "")
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    result["source_query"] = query
+                    all_raw_results.append(result)
+        except Exception as e:
+            logger.warning(f"Search query failed: {query} - {e}")
+    
+    if not all_raw_results:
         return {
             "results": [],
             "total": 0,
@@ -894,38 +936,49 @@ async def auto_categorize_search(request: dict, user = Depends(get_current_user_
             "message": "No results found"
         }
     
+    logger.info(f"Auto-Categorize: Found {len(all_raw_results)} unique results")
+    
     batch_id = str(ObjectId())
     matched_results = []
-    category_matches = {}  # Track which categories matched which results
+    category_matches = {}
+    rejected_count = 0
     
-    # For each result, check against ALL categories
-    for result in raw_results:
+    # For each result, check against ALL categories with STRICT matching
+    for result in all_raw_results:
         result_categories = []
         result_category_ids = []
         best_score = 0
+        match_details_list = []
         
         for category in all_categories:
             protocol = category.get("protocol", "")
             if not protocol:
                 continue
             
-            # Parse protocol and check if result matches
+            # Parse protocol and check with STRICT matching
             groups = ProtocolParser.parse_protocol(protocol)
-            matches, score = ProtocolParser.match_result(result, groups)
+            matches, score, details = ProtocolParser.strict_match_result(
+                result, 
+                groups,
+                min_group_match_percent=min_match_percent,
+                fuzzy_threshold=70
+            )
             
-            if matches:
+            if matches and score > 0:
                 cat_id = str(category["_id"])
                 cat_name = category["name"]
                 result_categories.append(cat_name)
                 result_category_ids.append(cat_id)
                 best_score = max(best_score, score)
+                match_details_list.append({
+                    "category": cat_name,
+                    "score": score,
+                    "match_percent": details.get("match_percent", 0)
+                })
                 
                 # Track category matches
                 if cat_id not in category_matches:
-                    category_matches[cat_id] = {
-                        "name": cat_name,
-                        "count": 0
-                    }
+                    category_matches[cat_id] = {"name": cat_name, "count": 0}
                 category_matches[cat_id]["count"] += 1
         
         # Only include results that match at least one category
@@ -937,10 +990,18 @@ async def auto_categorize_search(request: dict, user = Depends(get_current_user_
             result["root_domain"] = WebSearchService.extract_root_domain(result.get("url", ""))
             result["categories"] = result_categories
             result["category_ids"] = result_category_ids
+            result["match_details_list"] = match_details_list
             matched_results.append(result)
+        else:
+            rejected_count += 1
+    
+    logger.info(f"Auto-Categorize: {len(matched_results)} results matched categories, {rejected_count} rejected")
     
     # Sort by score
     matched_results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+    
+    # Apply limit
+    matched_results = matched_results[:collate_limit]
     
     # Store results in database
     for result in matched_results:
@@ -950,12 +1011,15 @@ async def auto_categorize_search(request: dict, user = Depends(get_current_user_
         })
         
         if existing:
-            # Update existing result with new categories
             await db.search_results.update_one(
                 {"_id": existing["_id"]},
                 {
                     "$addToSet": {"category_ids": {"$each": result["category_ids"]}},
-                    "$set": {"batch_id": batch_id, "updated_at": datetime.utcnow()}
+                    "$set": {
+                        "batch_id": batch_id, 
+                        "updated_at": datetime.utcnow(),
+                        "match_score": max(existing.get("match_score", 0), result.get("match_score", 0))
+                    }
                 }
             )
         else:
