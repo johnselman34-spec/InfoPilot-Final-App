@@ -69,7 +69,7 @@ AI-powered suggestions, and a marketplace for search strategies.
 • No browsing data is collected or stored
 • Your protocols are encrypted in transit
 
-Visit https://categoryhub.preview.emergentagent.com for the full experience!
+Visit https://searchmaster-6.preview.emergentagent.com for the full experience!
 ```
 
 #### Category
