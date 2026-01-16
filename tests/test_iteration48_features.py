@@ -420,8 +420,10 @@ class TestAdminEndpoints:
         
         if response.status_code == 200:
             data = response.json()
-            assert isinstance(data, list), "Moderation actions should be a list"
-            print(f"✅ Moderation actions endpoint returned {len(data)} actions")
+            # API returns {"actions": [...]} or direct list
+            actions = data.get("actions", data) if isinstance(data, dict) else data
+            assert isinstance(actions, list), "Moderation actions should be a list"
+            print(f"✅ Moderation actions endpoint returned {len(actions)} actions")
 
 
 class TestSearchFunctionality:
