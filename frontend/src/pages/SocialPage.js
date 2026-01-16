@@ -10,7 +10,8 @@ import {
   FriendCard, 
   FriendRequestCard, 
   GroupCard, 
-  PageCard 
+  PageCard,
+  ModerationPanel 
 } from '../components/Social';
 
 const REACTION_TYPES = [
