@@ -292,21 +292,29 @@ class TestEasterEggsEndpoints:
             return response.json().get("token")
         pytest.skip("Authentication failed")
     
-    def test_gamification_stats(self, auth_token):
-        """Test gamification stats endpoint (includes Easter Eggs)"""
+    def test_gamification_profile(self, auth_token):
+        """Test gamification profile endpoint (includes Easter Eggs)"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.get(f"{BASE_URL}/api/gamification/stats", headers=headers)
+        response = requests.get(f"{BASE_URL}/api/gamification/profile", headers=headers)
         assert response.status_code == 200
         data = response.json()
-        print(f"✓ Gamification stats endpoint working")
+        print(f"✓ Gamification profile endpoint working")
     
-    def test_easter_egg_collection(self, auth_token):
-        """Test Easter Egg collection endpoint"""
+    def test_gamification_leaderboard(self, auth_token):
+        """Test gamification leaderboard endpoint"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.get(f"{BASE_URL}/api/gamification/easter-eggs", headers=headers)
-        # May return 200 or 404 depending on implementation
-        assert response.status_code in [200, 404]
-        print(f"✓ Easter eggs endpoint: status {response.status_code}")
+        response = requests.get(f"{BASE_URL}/api/gamification/leaderboard", headers=headers)
+        assert response.status_code == 200
+        data = response.json()
+        print(f"✓ Gamification leaderboard endpoint working")
+    
+    def test_gamification_badges(self, auth_token):
+        """Test gamification badges endpoint"""
+        headers = {"Authorization": f"Bearer {auth_token}"}
+        response = requests.get(f"{BASE_URL}/api/gamification/badges", headers=headers)
+        assert response.status_code == 200
+        data = response.json()
+        print(f"✓ Gamification badges endpoint working")
 
 
 class TestMapViewEndpoints:
