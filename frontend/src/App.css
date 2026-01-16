@@ -24,6 +24,96 @@
   --card-bg: rgba(30, 20, 50, 0.9);
   --text-light: #f8fafc;
   --text-muted: #a1a1aa;
+  
+  /* Theme variables - defaults to dark */
+  --bg-primary: #0f0a1f;
+  --bg-secondary: #1a1035;
+  --bg-card: rgba(30, 20, 50, 0.8);
+  --bg-hover: rgba(124, 58, 237, 0.1);
+  --text-primary: #e5e7eb;
+  --text-secondary: #a1a1aa;
+  --border-color: rgba(124, 58, 237, 0.3);
+  --accent-primary: #7c3aed;
+  --accent-secondary: #ec4899;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+}
+
+/* Light mode overrides */
+.light-mode {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-hover: rgba(124, 58, 237, 0.05);
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: rgba(124, 58, 237, 0.2);
+  --dark-bg: #f1f5f9;
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --text-light: #1e293b;
+}
+
+/* Light mode body background */
+.light-mode body,
+body.light-mode {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+}
+
+/* Light mode sidebar */
+.light-mode .sidebar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.98) 100%);
+  border-right: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.light-mode .sidebar-logo h1 {
+  background: linear-gradient(135deg, var(--blazing-pink), var(--primary-purple), var(--primary-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.light-mode .sidebar-nav-item {
+  color: #475569;
+}
+
+.light-mode .sidebar-nav-item:hover,
+.light-mode .sidebar-nav-item.active {
+  background: rgba(124, 58, 237, 0.1);
+  color: var(--primary-purple);
+}
+
+/* Light mode cards */
+.light-mode .card {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* Light mode input fields */
+.light-mode .input-field {
+  background: rgba(248, 250, 252, 0.9);
+  border-color: rgba(124, 58, 237, 0.2);
+  color: #1e293b;
+}
+
+.light-mode .input-field::placeholder {
+  color: #94a3b8;
+}
+
+/* Light mode buttons */
+.light-mode .btn-secondary {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: rgba(124, 58, 237, 0.3);
+  color: var(--primary-purple);
+}
+
+/* Light mode text colors */
+.light-mode .text-muted,
+.light-mode [style*="color: #a1a1aa"],
+.light-mode [style*="color: #71717a"] {
+  color: var(--text-secondary) !important;
 }
 
 body {
