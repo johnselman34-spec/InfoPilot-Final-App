@@ -589,7 +589,8 @@ async def get_category_analytics(
     """
     Get comprehensive category analytics for admin dashboard.
     """
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    # Note: cutoff variable available for future time-based filtering
+    # cutoff = datetime.utcnow() - timedelta(days=days)
     
     # Get all categories
     categories = await db.categories.find().to_list(1000)

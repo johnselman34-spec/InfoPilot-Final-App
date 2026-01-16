@@ -213,7 +213,7 @@ class TestCategoryHierarchy:
         updated = edit_response.json()
         assert updated["name"] == "Updated Name"
         assert updated["protocol"] == "(updated or protocol)"
-        assert updated["is_public"] == True
+        assert updated["is_public"] is True
         
         # Cleanup
         requests.delete(f"{BASE_URL}/categories/{cat_id}", headers={"Authorization": f"Bearer {admin_token}"})
