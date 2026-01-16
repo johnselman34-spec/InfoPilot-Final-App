@@ -326,7 +326,7 @@ async def generate_hilarious_report_html(days: int = 7) -> tuple[str, str]:
             </div>
             ''' for t in test_stats])}
             
-            {f'<p style="color:#71717a;font-style:italic;text-align:center;margin:15px 0 0 0;">No test data yet? Time to create some experiments! 🔬</p>' if not test_stats else ''}
+            {'<p style="color:#71717a;font-style:italic;text-align:center;margin:15px 0 0 0;">No test data yet? Time to create some experiments! 🔬</p>' if not test_stats else ''}
         </div>
         
         <!-- AI-Powered Insights -->
