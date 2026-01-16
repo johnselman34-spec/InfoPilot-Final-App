@@ -56,6 +56,11 @@ const ABOptimizerAdmin = ({ token, showToast }) => {
     setLoading(false);
   };
 
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const toggleOptimizer = async () => {
     const endpoint = status?.enabled ? 'disable' : 'enable';
     try {
