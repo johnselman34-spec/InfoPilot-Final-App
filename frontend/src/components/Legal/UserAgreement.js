@@ -243,8 +243,8 @@ const UserAgreement = ({ onClose, onAccept }) => {
           }}>
             <p style={{ margin: 0, fontSize: '0.95rem' }}>
               <strong style={{ color: '#10b981' }}>Thank you for using InfoPilot Explorer!</strong><br/>
-              We're committed to providing you with an excellent search and research experience. 
-              If you have any questions or concerns, don't hesitate to reach out.
+              We&apos;re committed to providing you with an excellent search and research experience. 
+              If you have any questions or concerns, don&apos;t hesitate to reach out.
             </p>
           </div>
         </div>
