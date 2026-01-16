@@ -49,7 +49,7 @@ class TestAdminAuthentication:
             "password": ADMIN_PASSWORD
         })
         if response.status_code == 200:
-            token = response.json().get("access_token")
+            token = response.json().get("token")
             print(f"✅ Admin login successful")
             return token
         pytest.skip(f"Admin login failed: {response.status_code}")
