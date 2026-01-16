@@ -47,7 +47,7 @@ const ThemePresetGallery = ({ showToast, onClose }) => {
     }
 
     try {
-      const res = await fetch(`${API}/api/theme-presets`, {
+      const res = await fetch(`${API}/theme-presets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
