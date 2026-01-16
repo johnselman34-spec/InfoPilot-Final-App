@@ -340,6 +340,7 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Result counts in parentheses (e.g., "American History (1241)")
   - Select All / Deselect All buttons
   - Hierarchical indentation with visual tree lines
+  - **Quick Category Search Filter** - Instantly find categories by name
 - [x] **Map Filtering by User** - UltimateSearchPage shows only logged-in user's results
   - Line 111-116: `mapResults.filter(r => r.user_id === userId)`
   - StatisticsPage & MapPage show ALL users (global data)
@@ -355,6 +356,45 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - [x] **Default Collation Limit** - Changed from 100 to 40
   - Admin-controllable via `collation_limit` setting
   - Applied to all Search & Collate operations
+
+### Batch 8 - Price Controls & Document Classification ✅ (January 16, 2026)
+- [x] **Admin Price Controls for Unpaid Users** (OFF by default)
+  - `GET/PUT /api/admin/unpaid-price-controls`
+  - `unpaid_price_control_enabled` - Master toggle (default: OFF)
+  - `unpaid_max_protocol_price` - Max price unpaid users can charge
+  - `unpaid_max_bundle_price` - Max bundle price for unpaid users
+  - `unpaid_can_sell` - Whether unpaid users can sell at all
+- [x] **Global Price Controls for ALL Users**
+  - `GET/PUT /api/admin/global-price-controls`
+  - `global_price_control_enabled` - Master toggle (default: OFF)
+  - `global_max_protocol_price` - Max price ANY user can charge
+  - `global_max_bundle_price` - Max bundle price for anyone
+  - `global_min_protocol_price` - Min price (0 = free allowed)
+- [x] **Personal Report (Organic) Feature**
+  - `POST /api/personal-reports` - Create report with topic, content, image, location
+  - `GET /api/personal-reports` - List user's reports
+  - `GET /api/personal-reports/{id}` - Get specific report
+  - `PUT /api/personal-reports/{id}` - Update report (owner only)
+  - `DELETE /api/personal-reports/{id}` - Delete report (owner only)
+  - `POST /api/personal-reports/{id}/image` - Upload image (1 per report)
+- [x] **Document Type Auto-Categorization with Admin Protocols**
+  - `GET/PUT /api/admin/doctype-settings`
+  - 15 Document Types with InfoJet 2.0 protocols:
+    1. PhD Informative - Must be Informative + PhD keywords (Ph.D., D.Phil., Dr.) + 1500+ words
+    2. Informative - Protocol: (there are or there is) & (may have or might have) & ...
+    3. InfoPilot Exclusive - Written by InfoPilot writers (no rules)
+    4. InfoBook Exclusive - Written by InfoBook writers (no rules)
+    5. News Article - Default fallback + (news) & (story) protocol
+    6. Blog Post - 3+ 'blog' instances, 1 in title
+    7. Forum - 'forum' in title
+    8. Personal Report (Organic) - Written by members (no rules)
+    9. Personal Report (Collected) - 'I' 3+ times outside quotes in 75+ word paragraph
+    10. Academic Paper - .edu, journal, research URLs
+    11. Government - .gov URLs
+    12. Wiki - Wikipedia URLs
+    13. Video - YouTube, Vimeo URLs
+    14. PDF Document - .pdf URLs
+    15. Webpage - Catch-all default
 
 ### Maps Pricing Decision
 - ✅ **FREE Maps for All Users:**
