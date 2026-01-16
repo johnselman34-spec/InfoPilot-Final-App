@@ -31,20 +31,6 @@ const RegisterPage = ({ onSwitch }) => {
     fetchTermsSummary();
   }, []);
 
-  const fetchLegalDocument = async (type) => {
-    try {
-      const endpoint = type === 'terms' ? 'user-agreement' : 'privacy-policy';
-      const res = await fetch(`${API}/api/legal/${endpoint}`);
-      if (res.ok) {
-        const data = await res.json();
-        setTermsContent(data.content);
-        setShowTerms(type);
-      }
-    } catch (e) {
-      console.error('Failed to fetch legal document');
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!acceptedTerms) {
