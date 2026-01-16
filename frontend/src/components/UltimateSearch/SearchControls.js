@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Icons } from '../shared';
+import { API } from '../../utils/api';
 
 /**
  * SearchControls - Search input box with collate button, auto-categorize, AI search, and aggregation options
+ * Now includes Brave and Yandex search engines!
  */
 const SearchControls = ({
   searchQuery,
