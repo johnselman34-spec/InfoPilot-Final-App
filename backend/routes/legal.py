@@ -366,8 +366,6 @@ Full documents available in Settings after sign-up.""",
 @router.post("/accept-terms", response_model=dict)
 async def accept_terms(user = Depends(get_current_user)):
     """Record user's acceptance of terms"""
-    user_id = str(user["_id"])
-    
     await db.users.update_one(
         {"_id": user["_id"]},
         {"$set": {
