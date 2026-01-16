@@ -220,7 +220,10 @@ const PersonalReportsPage = ({ showToast, onBack }) => {
     setContent(report.content || '');
     setLocation(report.location || '');
     setCategoryId(report.category_id || '');
-    setImagePreview(report.image_url || null);
+    // Support both legacy single image and new multiple images
+    const existingImages = report.image_urls || (report.image_url ? [report.image_url] : []);
+    setImagePreviews(existingImages);
+    setImages([]);  // Don't re-upload existing images
     setShowCreateForm(true);
   };
   
@@ -231,8 +234,11 @@ const PersonalReportsPage = ({ showToast, onBack }) => {
     setContent('');
     setLocation('');
     setCategoryId('');
-    setImage(null);
-    setImagePreview(null);
+    setImages([]);
+    imagePreviews.forEach(url => {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+    });
+    setImagePreviews([]);
     setEditingReport(null);
     setShowCreateForm(false);
   };
