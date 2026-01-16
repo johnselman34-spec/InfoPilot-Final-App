@@ -209,7 +209,7 @@ async def get_optional_user_local(credentials: HTTPAuthorizationCredentials = De
         return None
     try:
         return await get_current_user_local(credentials)
-    except:
+    except Exception:
         return None
 
 # ============== HELPER FUNCTIONS ==============
@@ -267,7 +267,7 @@ class ExtendedWebSearchService:
                             try:
                                 parsed = urllib.parse.urlparse(url)
                                 root_domain = parsed.netloc
-                            except:
+                            except Exception:
                                 root_domain = ""
                             
                             all_results.append({
@@ -321,7 +321,7 @@ class ExtendedWebSearchService:
                 try:
                     parsed = urllib.parse.urlparse(url)
                     root_domain = parsed.netloc
-                except:
+                except Exception:
                     root_domain = ""
                 
                 results.append({
@@ -1109,7 +1109,7 @@ async def get_ultimate_search(
         for cat_id in r.get("category_ids", []):
             try:
                 all_category_ids.add(ObjectId(cat_id))
-            except:
+            except Exception:
                 pass
     
     # Bulk fetch all categories at once
@@ -2676,7 +2676,7 @@ async def get_analytics_dashboard(user = Depends(get_current_user_local)):
         ]
         terms_result = await db.search_queries.aggregate(terms_pipeline).to_list(10)
         popular_terms = [{"term": t["_id"], "count": t["count"]} for t in terms_result if t["_id"]]
-    except:
+    except Exception:
         pass
     
     return {
