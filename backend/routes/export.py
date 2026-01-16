@@ -416,5 +416,5 @@ async def export_protocols(format: str = "json", user = Depends(get_current_user
     return StreamingResponse(
         io.BytesIO(json.dumps(data, indent=2).encode()),
         media_type="application/json",
-        headers={"Content-Disposition": f"attachment; filename=infopilot_protocols.json"}
+        headers={"Content-Disposition": "attachment; filename=infopilot_protocols.json"}
     )
