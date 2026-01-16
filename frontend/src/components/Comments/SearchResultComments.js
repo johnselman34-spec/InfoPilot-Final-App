@@ -120,9 +120,10 @@ const SearchResultComments = ({ resultId, showToast, onClose }) => {
     }));
   };
 
-  // Render single comment
-  const CommentItem = ({ comment, isReply = false }) => (
+  // Render single comment - uses a regular function instead of component to avoid recursion issues
+  const renderComment = (comment, isReply = false) => (
     <div
+      key={comment.id}
       style={{
         marginLeft: isReply ? 30 : 0,
         marginBottom: 15,
