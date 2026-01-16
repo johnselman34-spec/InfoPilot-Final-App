@@ -1129,6 +1129,118 @@ Return ONLY a JSON array of 3 strings, no other text:
     }
 
 
+@api_router.post("/database-search", response_model=dict)
+async def database_text_search(request: dict, user = Depends(get_current_user_local)):
+    """
+    Search within already collated results in the database.
+    Uses AI-powered text matching against stored search results.
+    Great for finding specific content within your existing research.
+    """
+    search_query = request.get("query", "").strip()
+    category_ids = request.get("category_ids", [])
+    article_types = request.get("article_types", [])
+    search_mode = request.get("mode", "smart")  # smart, exact, fuzzy
+    limit = min(request.get("limit", 100), 200)
+    
+    if not search_query:
+        raise HTTPException(status_code=400, detail="Search query is required")
+    
+    user_id = str(user["_id"])
+    
+    # Build base query for user's results
+    base_query = {"user_id": user_id}
+    
+    # Filter by categories if specified
+    if category_ids:
+        base_query["category_ids"] = {"$in": category_ids}
+    
+    # Filter by article types if specified
+    if article_types:
+        base_query["article_type"] = {"$in": article_types}
+    
+    # Get all matching results
+    all_results = await db.search_results.find(base_query).to_list(1000)
+    
+    if not all_results:
+        return {
+            "results": [],
+            "total": 0,
+            "query": search_query,
+            "message": "No results in your database. Try running a search first!"
+        }
+    
+    # Search within results based on mode
+    search_terms = search_query.lower().split()
+    matched_results = []
+    
+    for result in all_results:
+        title = result.get("title", "").lower()
+        snippet = result.get("snippet", "").lower()
+        content = result.get("content", "").lower()
+        url = result.get("url", "").lower()
+        
+        combined_text = f"{title} {snippet} {content} {url}"
+        
+        if search_mode == "exact":
+            # Exact phrase match
+            if search_query.lower() in combined_text:
+                result["relevance_score"] = 100
+                matched_results.append(result)
+        elif search_mode == "fuzzy":
+            # Match if ANY term is found
+            match_count = sum(1 for term in search_terms if term in combined_text)
+            if match_count > 0:
+                result["relevance_score"] = (match_count / len(search_terms)) * 100
+                matched_results.append(result)
+        else:
+            # Smart mode: score based on term frequency and position
+            score = 0
+            for term in search_terms:
+                if term in title:
+                    score += 30  # Title match is most valuable
+                if term in snippet:
+                    score += 15
+                if term in content:
+                    score += 10
+                if term in url:
+                    score += 5
+            
+            if score > 0:
+                result["relevance_score"] = min(score, 100)
+                matched_results.append(result)
+    
+    # Sort by relevance score
+    matched_results.sort(key=lambda x: x.get("relevance_score", 0), reverse=True)
+    matched_results = matched_results[:limit]
+    
+    # Format results
+    formatted = []
+    for r in matched_results:
+        formatted.append({
+            "id": str(r["_id"]),
+            "url": r.get("url", ""),
+            "title": r.get("title", ""),
+            "snippet": r.get("snippet", ""),
+            "article_type": r.get("article_type", "Unknown"),
+            "root_domain": r.get("root_domain", ""),
+            "relevance_score": r.get("relevance_score", 0),
+            "category_ids": r.get("category_ids", []),
+            "created_at": r.get("created_at").isoformat() if r.get("created_at") else None
+        })
+    
+    return {
+        "results": formatted,
+        "total": len(formatted),
+        "total_in_database": len(all_results),
+        "query": search_query,
+        "mode": search_mode,
+        "filters": {
+            "categories": len(category_ids) if category_ids else 0,
+            "article_types": article_types
+        },
+        "message": f"📚 Found {len(formatted)} results in your database matching '{search_query}'"
+    }
+
 
 @api_router.get("/search-engines", response_model=dict)
 async def get_search_engines():
