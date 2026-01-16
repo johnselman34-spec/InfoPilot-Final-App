@@ -717,6 +717,33 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Category Manager fully functional
   - All admin endpoints working
 
+### Batch 18 - AI Recommendation Engine & Final Polish ✅ (January 16, 2026)
+- [x] **Protocol Recommendation Engine (AI-Powered)**
+  - NEW: `/app/frontend/src/components/Marketplace/ProtocolRecommendationEngine.js`
+  - 5 recommendation categories: Trending, Similar, Market Gaps, Seasonal, Premium
+  - AI-generated protocol templates with estimated values and demand levels
+  - Personalized AI Insights based on user's protocol portfolio
+  - Copy-to-clipboard functionality for easy protocol creation
+  - data-testid="protocol-recommendation-engine", "rec-category-{id}"
+- [x] **"It's a Bear" Marketplace Power Section**
+  - Added to BookPromoBanner.js with data-testid="its-a-bear-section"
+  - Kodiak Bear comparison: "apex predator... massive capability, fierce functionality, unstoppable"
+  - Features grid: Unlimited Protocols, Global Reach, AI Powered Search, Earn Revenue
+  - Quote: "Other apps nibble at the edges. InfoPilot? It devours the competition whole."
+- [x] **User Search API**
+  - NEW endpoint: GET `/api/users/search?q={query}&page={n}&limit={n}`
+  - Searches: username, email, first_name, last_name, callsign (Ultimate Search name)
+  - Also searches by full name combination
+  - Admin sees emails, regular users don't (privacy)
+  - Returns: display_name, avatar_url, bio, is_premium, ultimate_search_public
+- [x] **MORE Extremely Funny Easter Egg Jokes**
+  - Now 24 jokes total (up from 16) - lines 39-64 in FloatingEasterEggs.js
+  - NEW: Map & Statistics Instructions (5 rewards) - lines 67-73
+  - Instructions for: Ultimate Search Map, Statistics Screen, Map View Tips, Search & Collate, Categories
+- [x] **Testing Verification**
+  - Iteration 67: 19/19 backend tests passed
+  - All frontend features verified
+
 ### Maps Pricing Decision
 - ✅ **FREE Maps for All Users:**
   - Ultimate Search Page map
