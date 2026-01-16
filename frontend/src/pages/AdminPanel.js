@@ -1113,6 +1113,10 @@ const AdminPanel = ({ showToast }) => {
         {activeTab === 'tutorials' && (
           <YouTubeTutorialAdmin token={token} showToast={showToast} />
         )}
+
+        {activeTab === 'clean-categories' && (
+          <CleanAllCategoriesAdmin showToast={showToast} />
+        )}
       </div>
     </div>
   );
