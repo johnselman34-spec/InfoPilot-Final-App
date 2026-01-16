@@ -208,6 +208,129 @@ async def delete_category(category_id: str, user = Depends(get_current_user)):
     return {"message": "Category deleted"}
 
 
+@router.post("/categories/{category_id}/clean")
+async def clean_category(
+    category_id: str, 
+    mode: str = Query("remove", description="'remove' to unlink results, 'delete' to delete results only in this category"),
+    user = Depends(get_current_user)
+):
+    """
+    Clean all search results from a category.
+    
+    Modes:
+    - 'remove': Removes the category association from all search results (keeps results in other categories)
+    - 'delete': Deletes search results that ONLY belong to this category (preserves multi-category results)
+    - 'delete_all': Deletes ALL search results associated with this category (including multi-category)
+    """
+    # Verify category ownership
+    if user.get("is_admin"):
+        category = await db.categories.find_one({"_id": ObjectId(category_id)})
+    else:
+        category = await db.categories.find_one({
+            "_id": ObjectId(category_id),
+            "user_id": str(user["_id"])
+        })
+    
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    category_name = category.get("name", "Unknown")
+    
+    if mode == "remove":
+        # Remove category_id from all search results (soft clean)
+        result = await db.search_results.update_many(
+            {"category_ids": category_id},
+            {"$pull": {"category_ids": category_id}}
+        )
+        modified_count = result.modified_count
+        
+        # Also clean up any results that now have empty category_ids (optional)
+        # await db.search_results.delete_many({"category_ids": {"$size": 0}})
+        
+        return {
+            "success": True,
+            "message": f"Removed '{category_name}' from {modified_count} search results",
+            "results_affected": modified_count,
+            "mode": "remove"
+        }
+    
+    elif mode == "delete":
+        # Delete results that ONLY belong to this category (exclusive)
+        # First, find results that have ONLY this category
+        result = await db.search_results.delete_many({
+            "user_id": str(user["_id"]),
+            "category_ids": {"$eq": [category_id]}  # Array contains ONLY this category
+        })
+        deleted_count = result.deleted_count
+        
+        # Also remove from multi-category results
+        await db.search_results.update_many(
+            {"category_ids": category_id},
+            {"$pull": {"category_ids": category_id}}
+        )
+        
+        return {
+            "success": True,
+            "message": f"Deleted {deleted_count} exclusive results and cleaned '{category_name}' from remaining results",
+            "results_deleted": deleted_count,
+            "mode": "delete"
+        }
+    
+    elif mode == "delete_all":
+        # Delete ALL results associated with this category (hard delete)
+        result = await db.search_results.delete_many({
+            "user_id": str(user["_id"]),
+            "category_ids": category_id
+        })
+        deleted_count = result.deleted_count
+        
+        return {
+            "success": True,
+            "message": f"Deleted ALL {deleted_count} search results from '{category_name}'",
+            "results_deleted": deleted_count,
+            "mode": "delete_all"
+        }
+    
+    else:
+        raise HTTPException(status_code=400, detail="Invalid mode. Use 'remove', 'delete', or 'delete_all'")
+
+
+@router.get("/categories/{category_id}/results-count")
+async def get_category_results_count(category_id: str, user = Depends(get_current_user)):
+    """Get the count of search results in a category"""
+    # Verify category exists and belongs to user
+    if user.get("is_admin"):
+        category = await db.categories.find_one({"_id": ObjectId(category_id)})
+    else:
+        category = await db.categories.find_one({
+            "_id": ObjectId(category_id),
+            "user_id": str(user["_id"])
+        })
+    
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    # Count total results with this category
+    total_count = await db.search_results.count_documents({
+        "user_id": str(user["_id"]),
+        "category_ids": category_id
+    })
+    
+    # Count exclusive results (only in this category)
+    exclusive_count = await db.search_results.count_documents({
+        "user_id": str(user["_id"]),
+        "category_ids": {"$eq": [category_id]}
+    })
+    
+    return {
+        "category_id": category_id,
+        "category_name": category.get("name"),
+        "total_results": total_count,
+        "exclusive_results": exclusive_count,
+        "shared_results": total_count - exclusive_count
+    }
+
+
 @router.post("/protocol/validate", response_model=dict)
 async def validate_protocol(request: dict):
     """Validate a protocol string"""
