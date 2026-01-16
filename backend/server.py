@@ -867,13 +867,22 @@ async def get_friends(user = Depends(get_current_user_local)):
         ]
     }).to_list(500)
     
+    # Bulk fetch all related users to avoid N+1 queries
+    user_ids = set()
+    for f in friendships:
+        other_id = f["friend_id"] if f["user_id"] == user_id else f["user_id"]
+        user_ids.add(ObjectId(other_id))
+    
+    users_list = await db.users.find({"_id": {"$in": list(user_ids)}}).to_list(len(user_ids))
+    users_map = {str(u["_id"]): u for u in users_list}
+    
     friends = []
     pending_sent = []
     pending_received = []
     
     for f in friendships:
         other_id = f["friend_id"] if f["user_id"] == user_id else f["user_id"]
-        other_user = await db.users.find_one({"_id": ObjectId(other_id)})
+        other_user = users_map.get(other_id)
         
         if not other_user:
             continue
