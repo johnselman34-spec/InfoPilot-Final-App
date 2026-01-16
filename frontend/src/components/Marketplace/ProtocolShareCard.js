@@ -45,11 +45,12 @@ const SHARE_MESSAGES = [
 const ProtocolShareCard = ({ protocol, showToast }) => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  // Initialize stable random message
+  const [funnyMessage] = useState(() => SHARE_MESSAGES[Math.floor(Math.random() * SHARE_MESSAGES.length)]);
   
   if (!protocol) return null;
   
   const shareUrl = `https://infopilotexplorer.biz/marketplace?protocol=${protocol.id}`;
-  const funnyMessage = SHARE_MESSAGES[Math.floor(Math.random() * SHARE_MESSAGES.length)];
   
   const handleShare = (platform) => {
     let url = '';
