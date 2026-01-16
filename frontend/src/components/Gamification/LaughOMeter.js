@@ -4,8 +4,8 @@
  * Designed for MAXIMUM LAUGHTER and user engagement! 🎉
  */
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { API } from '../utils/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { API } from '../../utils/api';
 
 // Laugh-O-Meter Context
 const LaughContext = createContext();
