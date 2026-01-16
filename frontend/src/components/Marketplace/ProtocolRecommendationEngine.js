@@ -59,13 +59,11 @@ const AI_PROTOCOL_TEMPLATES = [
 ];
 
 const ProtocolRecommendationEngine = ({ showToast }) => {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const { isDarkMode, currentAccent } = useTheme();
-  const [recommendations, setRecommendations] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('trending');
   const [userProtocols, setUserProtocols] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [aiInsights, setAiInsights] = useState(null);
   
   const bgColor = isDarkMode ? 'rgba(15, 10, 35, 0.95)' : 'rgba(255, 255, 255, 0.98)';
   const cardBg = isDarkMode ? 'rgba(30, 20, 50, 0.7)' : 'rgba(248, 250, 252, 0.9)';
