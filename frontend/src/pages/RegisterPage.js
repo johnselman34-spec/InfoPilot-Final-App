@@ -130,7 +130,7 @@ const RegisterPage = ({ onSwitch }) => {
                 I agree to the{' '}
                 <a 
                   href="#" 
-                  onClick={(e) => { e.preventDefault(); fetchLegalDocument('terms'); }}
+                  onClick={(e) => { e.preventDefault(); setShowTerms('terms'); }}
                   style={{ color: '#8b5cf6' }}
                 >
                   User Agreement
@@ -138,7 +138,7 @@ const RegisterPage = ({ onSwitch }) => {
                 {' '}and{' '}
                 <a 
                   href="#" 
-                  onClick={(e) => { e.preventDefault(); fetchLegalDocument('privacy'); }}
+                  onClick={(e) => { e.preventDefault(); setShowTerms('privacy'); }}
                   style={{ color: '#8b5cf6' }}
                 >
                   Privacy Policy
