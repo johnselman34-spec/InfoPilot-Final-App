@@ -130,11 +130,31 @@ const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
             Logout
           </div>
           
-          {/* Theme Controls - Dark Mode + Accent Color */}
+          {/* Theme Controls - Dark Mode + Accent Color + Gallery + Preview */}
           <div style={{ padding: '10px 0', borderTop: '1px solid rgba(124, 58, 237, 0.2)', marginTop: 10 }}>
-            <ThemeToggle showColorPicker={true} />
+            <ThemeToggle 
+              showColorPicker={true} 
+              onOpenGallery={() => setShowThemeGallery(true)}
+              onOpenPreview={() => setShowThemePreview(true)}
+            />
           </div>
         </nav>
+        
+        {/* Theme Gallery Modal */}
+        {showThemeGallery && (
+          <ThemePresetGallery 
+            showToast={showToast} 
+            onClose={() => setShowThemeGallery(false)} 
+          />
+        )}
+        
+        {/* Theme Preview Modal */}
+        {showThemePreview && (
+          <ThemePreviewMode 
+            showToast={showToast} 
+            onClose={() => setShowThemePreview(false)} 
+          />
+        )}
 
         {/* Book Promo - Enhanced */}
         <div style={{ marginTop: 20, padding: 15, background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(124, 58, 237, 0.25))', borderRadius: 12, border: '2px solid rgba(236, 72, 153, 0.5)' }}>
