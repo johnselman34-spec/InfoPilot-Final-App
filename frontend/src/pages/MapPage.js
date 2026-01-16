@@ -97,6 +97,66 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     if (showLoadingState) setLoading(false);
   }, [token, extractLocation]);
 
+  // Export map data as CSV or JSON
+  const exportMapData = (format) => {
+    if (mapResults.length === 0) {
+      showToast('No data to export', 'error');
+      return;
+    }
+    
+    const exportData = mapResults.map(r => ({
+      title: r.title || 'Untitled',
+      url: r.url || '',
+      latitude: r.latitude,
+      longitude: r.longitude,
+      article_type: r.article_type || 'Unknown',
+      location: r.extractedPlace || 'Unknown',
+      snippet: (r.snippet || '').substring(0, 200),
+      hashtags: (r.hashtags || []).join(', ')
+    }));
+    
+    let content, filename, mimeType;
+    
+    if (format === 'csv') {
+      // Create CSV content
+      const headers = ['Title', 'URL', 'Latitude', 'Longitude', 'Article Type', 'Location', 'Snippet', 'Hashtags'];
+      const csvRows = [
+        headers.join(','),
+        ...exportData.map(row => [
+          `"${(row.title || '').replace(/"/g, '""')}"`,
+          `"${row.url}"`,
+          row.latitude,
+          row.longitude,
+          `"${row.article_type}"`,
+          `"${row.location}"`,
+          `"${(row.snippet || '').replace(/"/g, '""')}"`,
+          `"${row.hashtags}"`
+        ].join(','))
+      ];
+      content = csvRows.join('\n');
+      filename = `infopilot_map_export_${new Date().toISOString().slice(0,10)}.csv`;
+      mimeType = 'text/csv';
+    } else {
+      // JSON format
+      content = JSON.stringify(exportData, null, 2);
+      filename = `infopilot_map_export_${new Date().toISOString().slice(0,10)}.json`;
+      mimeType = 'application/json';
+    }
+    
+    // Create download
+    const blob = new Blob([content], { type: mimeType });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    showToast(`📊 Exported ${exportData.length} results as ${format.toUpperCase()}!`, 'success');
+  };
+
   useEffect(() => {
     fetchMapResults();
   }, [fetchMapResults]);
