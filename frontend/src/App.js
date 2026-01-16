@@ -100,6 +100,8 @@ const MainApp = () => {
           onClose={() => setToast(null)}
         />
       )}
+      {/* Floating Easter Eggs - Fun gamification feature! */}
+      <FloatingEasterEggsController enabled={true} frequency={45000} />
     </div>
   );
 };
