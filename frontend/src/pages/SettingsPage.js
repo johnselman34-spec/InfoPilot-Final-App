@@ -1186,6 +1186,17 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
           </div>
         </div>
 
+        {/* Category Management Section */}
+        <div style={{ marginTop: 20, padding: 20, background: 'rgba(39, 39, 42, 0.5)', borderRadius: 10 }}>
+          <h3 style={{ marginBottom: 15, color: '#f472b6', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+            🏷️ Category Management
+          </h3>
+          <p style={{ color: '#a1a1aa', fontSize: '0.85rem', marginBottom: 15 }}>
+            Manage your search categories, sub-categories, and protocols from here or from the Ultimate Search page.
+          </p>
+          <CategoryManager showToast={showToast} />
+        </div>
+
         {/* Upgrade Subscription Promo */}
         <div style={{ marginTop: 20 }}>
           <UpgradePromoBanner />
