@@ -106,6 +106,23 @@ const LegalPage = ({ showToast }) => {
             <li>Gamification features including Easter Eggs and achievements</li>
           </ul>
           
+          <div style={{
+            margin: '20px 0',
+            padding: 15,
+            background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(59, 130, 246, 0.15))',
+            borderRadius: 12,
+            border: '2px solid rgba(124, 58, 237, 0.3)'
+          }}>
+            <h4 style={{ color: '#7c3aed', margin: '0 0 10px 0' }}>✈️ FIRST IN FLIGHT WITH SEARCH MONETIZATION</h4>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>
+              InfoPilot Explorer is pioneering the monetization of internet searches. So much time is spent 
+              searching for valuable information — <strong>why can't it be worth anything?</strong> If your 
+              search expertise is valuable to businesses, it should be valuable to <em>you</em>. Our 
+              Protocol Marketplace empowers users to create, share, and sell their search protocols, 
+              transforming knowledge into income.
+            </p>
+          </div>
+          
           <h3>3. User Accounts</h3>
           <p>
             3.1. You must provide accurate, complete registration information and maintain account security.<br/>
