@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="13" skipped="2" tests="18" time="1.056" timestamp="2026-01-16T04:50:54.063795+00:00" hostname="agent-env-0645763a-e694-46c4-a4fc-3c5116d5e2be"><testcase classname="tests.test_iteration47_features.TestAPIHealth" name="test_api_health" time="0.069" /><testcase classname="tests.test_iteration47_features.TestAdminAuthentication" name="test_admin_login" time="0.039"><failure message="assert None is not None">tests/test_iteration47_features.py:59: in test_admin_login
+    assert admin_token is not None
+E   assert None is not None</failure></testcase><testcase classname="tests.test_iteration47_features.TestCategoryOperations" name="test_get_categories" time="0.075"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:83: in test_get_categories
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestCategoryOperations" name="test_create_category" time="0.036"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:99: in test_create_category
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestCategoryOperations" name="test_create_child_category" time="0.034"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:118: in test_create_child_category
+    assert parent_response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestCategoryOperations" name="test_update_category" time="0.077"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:149: in test_update_category
+    assert create_response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestCategoryOperations" name="test_delete_category" time="0.033"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:189: in test_delete_category
+    assert create_response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestCategoryOperations" name="test_cascade_delete_category" time="0.033"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:224: in test_cascade_delete_category
+    assert parent_response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestAdminModeration" name="test_get_users_list" time="0.075"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:298: in test_get_users_list
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestAdminModeration" name="test_get_moderation_history" time="0.034"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:317: in test_get_moderation_history
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestAdminModeration" name="test_ban_user_endpoint_structure" time="0.034"><skipped type="pytest.skip" message="No non-admin user available for ban test">/app/tests/test_iteration47_features.py:347: No non-admin user available for ban test</skipped></testcase><testcase classname="tests.test_iteration47_features.TestAdminModeration" name="test_mute_user_endpoint_structure" time="0.034"><skipped type="pytest.skip" message="No non-admin user available for mute test">/app/tests/test_iteration47_features.py:388: No non-admin user available for mute test</skipped></testcase><testcase classname="tests.test_iteration47_features.TestAdminModeration" name="test_moderation_actions_logged" time="0.035"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:420: in test_moderation_actions_logged
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestAdminSettings" name="test_get_admin_settings" time="0.067"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:457: in test_get_admin_settings
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestAdminSettings" name="test_get_admin_stats" time="0.036"><failure message="assert 401 == 200&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:468: in test_get_admin_stats
+    assert response.status_code == 200
+E   assert 401 == 200
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestSearchFunctionality" name="test_search_endpoint" time="0.067"><failure message="assert 401 in [200, 429, 503]&#10; +  where 401 = &lt;Response [401]&gt;.status_code">tests/test_iteration47_features.py:497: in test_search_endpoint
+    assert response.status_code in [200, 429, 503]
+E   assert 401 in [200, 429, 503]
+E    +  where 401 = &lt;Response [401]&gt;.status_code</failure></testcase><testcase classname="tests.test_iteration47_features.TestSearchFunctionality" name="test_ultimate_search_endpoint" time="0.039" /><testcase classname="tests.test_iteration47_features.TestCleanup" name="test_cleanup_test_categories" time="0.069" /></testsuite></testsuites>
