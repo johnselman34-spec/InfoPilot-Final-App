@@ -99,7 +99,7 @@ const SearchResultComments = ({ resultId, showToast, onClose }) => {
     }
 
     try {
-      await fetch(`${API}/api/search-results/${resultId}/comments/${commentId}/like`, {
+      await fetch(`${API}/search-results/${resultId}/comments/${commentId}/like`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
