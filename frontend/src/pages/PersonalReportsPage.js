@@ -495,15 +495,16 @@ const PersonalReportsPage = ({ showToast, onBack }) => {
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={submitting}
+                disabled={submitting || uploadingImage}
                 data-testid="save-report-btn"
               >
-                {submitting ? '⏳ Saving...' : editingReport ? '💾 Update Report' : '✨ Create Report'}
+                {uploadingImage ? '📤 Uploading Images...' : submitting ? '⏳ Saving...' : editingReport ? '💾 Update Report' : '✨ Create Report'}
               </button>
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={resetForm}
+                disabled={submitting || uploadingImage}
               >
                 Cancel
               </button>
