@@ -177,11 +177,11 @@ async def export_all_data(
         "name": l["name"],
         "description": l["description"],
         "protocol": l["protocol"],
-        "price": l["price"],
-        "total_sales": l.get("total_sales", 0),
-        "total_earnings": l.get("creator_earnings", 0),
-        "rating": l.get("rating", 0)
-    } for l in listings]
+        "price": listing["price"],
+        "total_sales": listing.get("total_sales", 0),
+        "total_earnings": listing.get("creator_earnings", 0),
+        "rating": listing.get("rating", 0)
+    } for listing in listings]
     
     # Friends
     friendships = await db.friendships.find({
@@ -286,9 +286,9 @@ async def export_as_csv(data: dict, username: str):
     if data['marketplace']['listings']:
         output.write("## MARKETPLACE LISTINGS\n")
         output.write("Name,Price,Total Sales,Total Earnings,Rating\n")
-        for l in data['marketplace']['listings']:
-            name = l['name'].replace('"', '""')
-            output.write(f"\"{name}\",${l['price']},{l['total_sales']},${l['total_earnings']},{l['rating']}\n")
+        for listing in data['marketplace']['listings']:
+            name = listing['name'].replace('"', '""')
+            output.write(f"\"{name}\",${listing['price']},{listing['total_sales']},${listing['total_earnings']},{listing['rating']}\n")
         output.write("\n")
     
     # Gamification
