@@ -463,6 +463,119 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
           </label>
         </div>
 
+        {/* Content Filtering Section */}
+        <div style={{ padding: 15, background: 'rgba(30, 20, 50, 0.5)', borderRadius: 10 }} data-testid="content-filter-section">
+          <div style={{ marginBottom: 12 }}>
+            <strong style={{ color: '#f472b6' }}>🔞 Content Filtering</strong>
+            <p style={{ fontSize: '0.8rem', color: '#a1a1aa', marginTop: 4 }}>
+              Control what type of content appears in your search results. This allows you to research adult topics including sexual positions, techniques, supplements, devices, and technology.
+            </p>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <label 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 12, 
+                cursor: 'pointer',
+                padding: '10px 12px',
+                background: settings.content_filter === 'strict' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0,0,0,0.2)',
+                borderRadius: 8,
+                border: settings.content_filter === 'strict' ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid transparent'
+              }}
+              data-testid="content-filter-strict"
+            >
+              <input
+                type="radio"
+                name="content_filter"
+                value="strict"
+                checked={settings.content_filter === 'strict'}
+                onChange={(e) => setSettings({ ...settings, content_filter: e.target.value })}
+                style={{ accentColor: '#10b981' }}
+              />
+              <div>
+                <span style={{ color: '#10b981', fontWeight: 600 }}>🛡️ Strict (Default)</span>
+                <p style={{ fontSize: '0.75rem', color: '#71717a', marginTop: 2, marginBottom: 0 }}>
+                  Family-friendly content only. Adult content is filtered out.
+                </p>
+              </div>
+            </label>
+            
+            <label 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 12, 
+                cursor: 'pointer',
+                padding: '10px 12px',
+                background: settings.content_filter === 'moderate' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(0,0,0,0.2)',
+                borderRadius: 8,
+                border: settings.content_filter === 'moderate' ? '1px solid rgba(245, 158, 11, 0.5)' : '1px solid transparent'
+              }}
+              data-testid="content-filter-moderate"
+            >
+              <input
+                type="radio"
+                name="content_filter"
+                value="moderate"
+                checked={settings.content_filter === 'moderate'}
+                onChange={(e) => setSettings({ ...settings, content_filter: e.target.value })}
+                style={{ accentColor: '#f59e0b' }}
+              />
+              <div>
+                <span style={{ color: '#f59e0b', fontWeight: 600 }}>⚠️ Moderate</span>
+                <p style={{ fontSize: '0.75rem', color: '#71717a', marginTop: 2, marginBottom: 0 }}>
+                  Allow educational and health-related adult content. Explicit content filtered.
+                </p>
+              </div>
+            </label>
+            
+            <label 
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 12, 
+                cursor: 'pointer',
+                padding: '10px 12px',
+                background: settings.content_filter === 'off' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(0,0,0,0.2)',
+                borderRadius: 8,
+                border: settings.content_filter === 'off' ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid transparent'
+              }}
+              data-testid="content-filter-off"
+            >
+              <input
+                type="radio"
+                name="content_filter"
+                value="off"
+                checked={settings.content_filter === 'off'}
+                onChange={(e) => setSettings({ ...settings, content_filter: e.target.value })}
+                style={{ accentColor: '#ef4444' }}
+              />
+              <div>
+                <span style={{ color: '#ef4444', fontWeight: 600 }}>🔓 Off (Adult Content Enabled)</span>
+                <p style={{ fontSize: '0.75rem', color: '#71717a', marginTop: 2, marginBottom: 0 }}>
+                  No filtering. Research sexual positions, techniques, supplements, devices, and technology freely.
+                </p>
+              </div>
+            </label>
+          </div>
+          
+          {settings.content_filter === 'off' && (
+            <div style={{
+              marginTop: 12,
+              padding: 10,
+              background: 'rgba(239, 68, 68, 0.1)',
+              borderRadius: 8,
+              border: '1px solid rgba(239, 68, 68, 0.3)'
+            }}>
+              <p style={{ color: '#fca5a5', fontSize: '0.75rem', margin: 0 }}>
+                ⚠️ <strong>Adult Content Warning:</strong> You have enabled unrestricted content. This allows research on sexual topics. You must be 18+ to use this setting.
+              </p>
+            </div>
+          )}
+        </div>
+
         <button className="btn btn-primary" onClick={updateSettings} data-testid="save-settings-btn">
           Save Settings
         </button>
