@@ -198,7 +198,7 @@ const LegalPage = ({ showToast }) => {
           
           <h3>8. Disclaimers</h3>
           <p>
-            THE SERVICE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. WE DO NOT GUARANTEE 
+            THE SERVICE IS PROVIDED AS IS WITHOUT WARRANTIES OF ANY KIND. WE DO NOT GUARANTEE 
             ACCURACY OF SEARCH RESULTS OR THIRD-PARTY CONTENT. USE AT YOUR OWN RISK.
           </p>
           
