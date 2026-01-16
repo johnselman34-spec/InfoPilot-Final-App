@@ -11,7 +11,8 @@ import {
   SearchResultsList,
   BatchManager,
   CreateCategoryModal,
-  EditCategoryModal
+  EditCategoryModal,
+  CollapsibleCategoryTree
 } from '../components/UltimateSearch';
 
 // Fix for leaflet marker icons
