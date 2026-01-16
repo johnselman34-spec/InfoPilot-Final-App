@@ -396,6 +396,31 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
     14. PDF Document - .pdf URLs
     15. Webpage - Catch-all default
 
+### Batch 9 - Admin Panel UI & Refactoring ✅ (January 16, 2026)
+- [x] **Admin Panel UI for Price Controls**
+  - New tab: "💰 Price Controls" in Admin Panel
+  - `PriceControlsAdmin.js` component with:
+    - Global Price Controls section (for ALL users)
+    - Unpaid User Price Controls section (OFF by default)
+    - Visual toggle switches, input fields, save buttons
+- [x] **Admin Panel UI for Document Type Settings**
+  - New tab: "📄 Doc Types" in Admin Panel
+  - `DoctypeSettingsAdmin.js` component with:
+    - InfoJet 2.0 Document Classification header
+    - Auto-Categorize toggle
+    - Expandable cards for each document type with protocols
+    - Edit InfoJet 2.0 protocols inline (PhD, Informative, News, Blog, Forum, Personal Report)
+- [x] **MarketplacePage Refactoring**
+  - Split 582-line file into smaller components:
+    - `MarketplaceComponents.js` - Constants and utility components
+    - `ProtocolCard.js` - Individual protocol display
+    - `SellForm.js` - Protocol listing form
+    - `SellerDashboard.js` - Seller stats and earnings
+- [x] **Quick Category Search Filter**
+  - Added to CollapsibleCategoryTree component
+  - Instantly filter categories by typing name
+  - data-testid="category-search-filter"
+
 ### Maps Pricing Decision
 - ✅ **FREE Maps for All Users:**
   - Ultimate Search Page map
