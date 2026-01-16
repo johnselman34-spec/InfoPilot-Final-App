@@ -201,3 +201,37 @@ async def update_newsletter_schedule(data: dict, user = Depends(require_admin)):
         upsert=True
     )
     return {"success": True, "schedule": data}
+
+
+
+# ==================== AI NEWSLETTER OPTIMIZATION ====================
+
+@router.get("/newsletter/ai-optimize", response_model=dict)
+async def get_ai_newsletter_optimization(user = Depends(require_admin)):
+    """Get AI-powered newsletter schedule optimization recommendations"""
+    from services.triweekly_newsletter import ai_optimize_newsletter_times
+    
+    result = await ai_optimize_newsletter_times()
+    return result
+
+
+@router.post("/newsletter/apply-ai-schedule", response_model=dict)
+async def apply_ai_newsletter_schedule(data: dict, user = Depends(require_admin)):
+    """Apply AI-recommended newsletter schedule"""
+    from services.triweekly_newsletter import apply_ai_optimized_schedule
+    
+    recommendations = data.get("recommendations", {})
+    if not recommendations:
+        raise HTTPException(status_code=400, detail="No recommendations provided")
+    
+    result = await apply_ai_optimized_schedule(recommendations)
+    return result
+
+
+@router.get("/newsletter/performance", response_model=dict)
+async def get_newsletter_performance(user = Depends(require_admin)):
+    """Get newsletter performance data for analysis"""
+    from services.triweekly_newsletter import get_newsletter_performance_data
+    
+    data = await get_newsletter_performance_data()
+    return data
