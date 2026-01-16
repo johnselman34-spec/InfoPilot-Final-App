@@ -450,3 +450,278 @@ async def get_newsletter_performance(user = Depends(require_admin)):
     
     data = await get_newsletter_performance_data()
     return data
+
+
+
+# ==================== UNPAID USER PRICE CONTROLS ====================
+
+@router.get("/unpaid-price-controls", response_model=dict)
+async def get_unpaid_price_controls(user = Depends(require_admin)):
+    """
+    Get current price control settings for unpaid users.
+    Feature is OFF by default - must be enabled by admin.
+    """
+    settings = {}
+    keys = ["unpaid_price_control_enabled", "unpaid_max_protocol_price", 
+            "unpaid_max_bundle_price", "unpaid_can_sell"]
+    
+    for key in keys:
+        setting = await db.settings.find_one({"key": key})
+        if setting:
+            settings[key] = setting.get("value")
+        else:
+            # Defaults
+            defaults = {
+                "unpaid_price_control_enabled": False,
+                "unpaid_max_protocol_price": 5.00,
+                "unpaid_max_bundle_price": 10.00,
+                "unpaid_can_sell": True
+            }
+            settings[key] = defaults.get(key)
+    
+    # Get stats
+    unpaid_sellers = await db.users.count_documents({
+        "subscription_active": {"$ne": True},
+        "marketplace_listings": {"$gt": 0}
+    })
+    
+    return {
+        "settings": settings,
+        "stats": {
+            "unpaid_sellers": unpaid_sellers
+        },
+        "description": {
+            "unpaid_price_control_enabled": "Master toggle for price controls (OFF by default)",
+            "unpaid_max_protocol_price": "Maximum price unpaid users can charge per protocol",
+            "unpaid_max_bundle_price": "Maximum price unpaid users can charge per bundle",
+            "unpaid_can_sell": "Whether unpaid users can sell at all"
+        }
+    }
+
+
+@router.put("/unpaid-price-controls", response_model=dict)
+async def update_unpaid_price_controls(data: dict, user = Depends(require_admin)):
+    """
+    Update price control settings for unpaid users.
+    """
+    allowed_keys = ["unpaid_price_control_enabled", "unpaid_max_protocol_price", 
+                    "unpaid_max_bundle_price", "unpaid_can_sell"]
+    
+    updated = []
+    
+    for key in allowed_keys:
+        if key in data:
+            value = data[key]
+            
+            # Validate price values
+            if key in ["unpaid_max_protocol_price", "unpaid_max_bundle_price"]:
+                try:
+                    value = float(value)
+                    if value < 0:
+                        raise HTTPException(status_code=400, detail=f"{key} must be >= 0")
+                    if value > 99.99:
+                        raise HTTPException(status_code=400, detail=f"{key} must be <= 99.99")
+                except (ValueError, TypeError):
+                    raise HTTPException(status_code=400, detail=f"{key} must be a valid number")
+            
+            await db.settings.update_one(
+                {"key": key},
+                {"$set": {"value": value, "updated_at": datetime.utcnow()}},
+                upsert=True
+            )
+            updated.append({"key": key, "value": value})
+    
+    # Log the change
+    await db.admin_audit_log.insert_one({
+        "action": "update_unpaid_price_controls",
+        "admin_id": str(user["_id"]),
+        "admin_email": user.get("email"),
+        "changes": updated,
+        "created_at": datetime.utcnow()
+    })
+    
+    return {
+        "success": True,
+        "message": "Unpaid user price controls updated",
+        "updated": updated
+    }
+
+
+async def validate_listing_price(user: dict, price: float, is_bundle: bool = False) -> tuple:
+    """
+    Validate if a user can list at the given price.
+    Returns (is_valid, error_message, max_allowed_price)
+    """
+    # Check if user is paid
+    is_paid = user.get("subscription_active") or user.get("is_admin")
+    
+    if is_paid:
+        return True, None, 99.99
+    
+    # Check if price controls are enabled
+    control_enabled = await db.settings.find_one({"key": "unpaid_price_control_enabled"})
+    if not control_enabled or not control_enabled.get("value"):
+        return True, None, 99.99  # Controls disabled, allow any price
+    
+    # Check if unpaid users can sell at all
+    can_sell = await db.settings.find_one({"key": "unpaid_can_sell"})
+    if can_sell and not can_sell.get("value"):
+        return False, "Unpaid users are not allowed to sell. Please upgrade to Premium.", 0
+    
+    # Get max price setting
+    price_key = "unpaid_max_bundle_price" if is_bundle else "unpaid_max_protocol_price"
+    max_price_setting = await db.settings.find_one({"key": price_key})
+    max_price = max_price_setting.get("value", 5.00) if max_price_setting else 5.00
+    
+    if price > max_price:
+        return False, f"Unpaid users can only charge up to ${max_price:.2f}. Upgrade to Premium for higher prices!", max_price
+    
+    return True, None, max_price
+
+
+# ==================== CATEGORY ANALYTICS DASHBOARD ====================
+
+@router.get("/category-analytics", response_model=dict)
+async def get_category_analytics(
+    days: int = 30,
+    user = Depends(require_admin)
+):
+    """
+    Get comprehensive category analytics for admin dashboard.
+    """
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    
+    # Get all categories
+    categories = await db.categories.find().to_list(1000)
+    
+    # Get search results counts per category
+    pipeline = [
+        {"$unwind": "$categories"},
+        {"$group": {
+            "_id": "$categories",
+            "result_count": {"$sum": 1},
+            "with_location": {"$sum": {"$cond": [{"$and": [{"$ne": ["$latitude", None]}, {"$ne": ["$longitude", None]}]}, 1, 0]}}
+        }},
+        {"$sort": {"result_count": -1}}
+    ]
+    
+    category_results = await db.search_results.aggregate(pipeline).to_list(100)
+    results_by_category = {r["_id"]: r for r in category_results}
+    
+    # Get protocol match rates
+    match_pipeline = [
+        {"$match": {"created_at": {"$gte": cutoff}}},
+        {"$group": {
+            "_id": "$category_id",
+            "total_matches": {"$sum": 1},
+            "avg_match_score": {"$avg": "$match_score"}
+        }}
+    ]
+    
+    # Build category analytics
+    analytics = []
+    total_results = 0
+    total_with_location = 0
+    
+    for cat in categories:
+        cat_name = cat["name"]
+        cat_data = results_by_category.get(cat_name, {})
+        result_count = cat_data.get("result_count", 0)
+        with_location = cat_data.get("with_location", 0)
+        
+        total_results += result_count
+        total_with_location += with_location
+        
+        # Get child count
+        child_count = len([c for c in categories if c.get("parent_id") == str(cat["_id"])])
+        
+        analytics.append({
+            "id": str(cat["_id"]),
+            "name": cat_name,
+            "level": cat.get("level", 0),
+            "is_public": cat.get("is_public", False),
+            "price": cat.get("price", 0),
+            "protocol_length": len(cat.get("protocol", "")),
+            "result_count": result_count,
+            "results_with_location": with_location,
+            "location_rate": round((with_location / result_count * 100) if result_count > 0 else 0, 1),
+            "child_count": child_count,
+            "created_at": cat.get("created_at", datetime.utcnow()).isoformat() if cat.get("created_at") else None
+        })
+    
+    # Sort by result count
+    analytics.sort(key=lambda x: x["result_count"], reverse=True)
+    
+    # Get template popularity from marketplace
+    template_pipeline = [
+        {"$match": {"is_bundle": True, "status": "active"}},
+        {"$group": {
+            "_id": "$category",
+            "count": {"$sum": 1},
+            "total_sales": {"$sum": "$total_sales"}
+        }},
+        {"$sort": {"total_sales": -1}}
+    ]
+    
+    template_popularity = await db.marketplace_protocols.aggregate(template_pipeline).to_list(20)
+    
+    return {
+        "period_days": days,
+        "summary": {
+            "total_categories": len(categories),
+            "total_results": total_results,
+            "results_with_location": total_with_location,
+            "avg_results_per_category": round(total_results / len(categories), 1) if categories else 0,
+            "categories_by_level": {
+                "level_0": len([c for c in categories if c.get("level", 0) == 0]),
+                "level_1": len([c for c in categories if c.get("level", 0) == 1]),
+                "level_2": len([c for c in categories if c.get("level", 0) == 2]),
+                "level_3_plus": len([c for c in categories if c.get("level", 0) >= 3])
+            },
+            "public_categories": len([c for c in categories if c.get("is_public")]),
+            "paid_categories": len([c for c in categories if c.get("price", 0) > 0])
+        },
+        "top_categories": analytics[:20],
+        "empty_categories": [a for a in analytics if a["result_count"] == 0][:10],
+        "template_popularity": template_popularity,
+        "generated_at": datetime.utcnow().isoformat()
+    }
+
+
+@router.get("/category-analytics/trends", response_model=dict)
+async def get_category_trends(
+    days: int = 30,
+    user = Depends(require_admin)
+):
+    """Get category growth trends over time"""
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    
+    # Categories created over time
+    pipeline = [
+        {"$match": {"created_at": {"$gte": cutoff}}},
+        {"$group": {
+            "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"_id": 1}}
+    ]
+    
+    daily_categories = await db.categories.aggregate(pipeline).to_list(days)
+    
+    # Results added over time
+    results_pipeline = [
+        {"$match": {"created_at": {"$gte": cutoff}}},
+        {"$group": {
+            "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"_id": 1}}
+    ]
+    
+    daily_results = await db.search_results.aggregate(results_pipeline).to_list(days)
+    
+    return {
+        "period_days": days,
+        "daily_categories_created": daily_categories,
+        "daily_results_added": daily_results
+    }
