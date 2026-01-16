@@ -1829,6 +1829,305 @@ async def delete_single_result(result_id: str, user = Depends(get_current_user_l
     
     return {"deleted": True}
 
+
+# ==================== PERSONAL REPORT (ORGANIC) ENDPOINTS ====================
+
+class PersonalReportCreate(BaseModel):
+    """Model for creating a Personal Report (Organic)"""
+    title: str
+    content: str
+    topic: Optional[str] = ""
+    location_name: Optional[str] = ""
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    image_url: Optional[str] = None
+    category_ids: Optional[List[str]] = []
+
+
+@api_router.post("/personal-reports", response_model=dict)
+async def create_personal_report(report: PersonalReportCreate, user = Depends(get_current_user_local)):
+    """
+    Create a Personal Report (Organic) - written by members.
+    Users can write their own first-hand reports about any topic.
+    """
+    user_id = str(user["_id"])
+    
+    # Create the report as a search result with special article_type
+    report_data = {
+        "title": report.title,
+        "content": report.content,
+        "snippet": report.content[:300] if report.content else "",
+        "topic": report.topic,
+        "url": f"infopilot://personal-report/{ObjectId()}",  # Internal URL
+        "article_type": "Personal Report (Organic)",
+        "root_domain": "infopilot.local",
+        "is_personal_report": True,
+        "is_organic": True,  # Written by member, not extracted
+        "location_name": report.location_name,
+        "latitude": report.latitude,
+        "longitude": report.longitude,
+        "image_url": report.image_url,
+        "category_ids": report.category_ids,
+        "user_id": user_id,
+        "author_id": user_id,
+        "author_name": user.get("username") or user.get("email", "").split("@")[0],
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
+    }
+    
+    result = await db.search_results.insert_one(report_data)
+    
+    # Update category result counts
+    for cat_id in report.category_ids:
+        await db.categories.update_one(
+            {"_id": ObjectId(cat_id)},
+            {"$inc": {"result_count": 1}}
+        )
+    
+    return {
+        "success": True,
+        "report_id": str(result.inserted_id),
+        "message": "Personal Report created successfully!",
+        "report": {
+            "id": str(result.inserted_id),
+            "title": report.title,
+            "article_type": "Personal Report (Organic)",
+            "author": report_data["author_name"]
+        }
+    }
+
+
+@api_router.get("/personal-reports", response_model=dict)
+async def get_personal_reports(
+    user_id: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 20,
+    user = Depends(get_current_user_local)
+):
+    """
+    Get Personal Reports (Organic).
+    If user_id is provided, get that user's reports. Otherwise, get current user's reports.
+    """
+    target_user_id = user_id or str(user["_id"])
+    
+    query = {
+        "article_type": "Personal Report (Organic)",
+        "is_personal_report": True
+    }
+    
+    # If requesting own reports, show all. If requesting others', only show if public categories.
+    if target_user_id == str(user["_id"]):
+        query["user_id"] = target_user_id
+    else:
+        query["author_id"] = target_user_id
+    
+    total = await db.search_results.count_documents(query)
+    reports = await db.search_results.find(query).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    formatted = []
+    for r in reports:
+        formatted.append({
+            "id": str(r["_id"]),
+            "title": r.get("title", ""),
+            "content": r.get("content", ""),
+            "snippet": r.get("snippet", ""),
+            "topic": r.get("topic", ""),
+            "article_type": "Personal Report (Organic)",
+            "author_name": r.get("author_name", ""),
+            "location_name": r.get("location_name", ""),
+            "latitude": r.get("latitude"),
+            "longitude": r.get("longitude"),
+            "image_url": r.get("image_url"),
+            "category_ids": r.get("category_ids", []),
+            "created_at": r.get("created_at", datetime.utcnow()).isoformat(),
+            "updated_at": r.get("updated_at", datetime.utcnow()).isoformat()
+        })
+    
+    return {
+        "reports": formatted,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+
+@api_router.get("/personal-reports/{report_id}", response_model=dict)
+async def get_personal_report(report_id: str, user = Depends(get_current_user_local)):
+    """Get a specific Personal Report by ID"""
+    report = await db.search_results.find_one({
+        "_id": ObjectId(report_id),
+        "article_type": "Personal Report (Organic)"
+    })
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Personal Report not found")
+    
+    return {
+        "report": {
+            "id": str(report["_id"]),
+            "title": report.get("title", ""),
+            "content": report.get("content", ""),
+            "snippet": report.get("snippet", ""),
+            "topic": report.get("topic", ""),
+            "article_type": "Personal Report (Organic)",
+            "author_name": report.get("author_name", ""),
+            "author_id": report.get("author_id", ""),
+            "location_name": report.get("location_name", ""),
+            "latitude": report.get("latitude"),
+            "longitude": report.get("longitude"),
+            "image_url": report.get("image_url"),
+            "category_ids": report.get("category_ids", []),
+            "created_at": report.get("created_at", datetime.utcnow()).isoformat(),
+            "updated_at": report.get("updated_at", datetime.utcnow()).isoformat(),
+            "is_owner": report.get("author_id") == str(user["_id"])
+        }
+    }
+
+
+@api_router.put("/personal-reports/{report_id}", response_model=dict)
+async def update_personal_report(report_id: str, data: dict, user = Depends(get_current_user_local)):
+    """
+    Update a Personal Report (Organic).
+    Only the author can update their report.
+    """
+    user_id = str(user["_id"])
+    
+    # Find the report
+    report = await db.search_results.find_one({
+        "_id": ObjectId(report_id),
+        "article_type": "Personal Report (Organic)"
+    })
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Personal Report not found")
+    
+    if report.get("author_id") != user_id:
+        raise HTTPException(status_code=403, detail="You can only edit your own reports")
+    
+    # Allowed fields to update
+    allowed_fields = ["title", "content", "topic", "location_name", "latitude", "longitude", "image_url", "category_ids"]
+    update_data = {k: v for k, v in data.items() if k in allowed_fields}
+    
+    if "content" in update_data:
+        update_data["snippet"] = update_data["content"][:300]
+    
+    update_data["updated_at"] = datetime.utcnow()
+    
+    # Handle category changes
+    old_category_ids = set(report.get("category_ids", []))
+    new_category_ids = set(update_data.get("category_ids", old_category_ids))
+    
+    # Decrement count for removed categories
+    for cat_id in old_category_ids - new_category_ids:
+        await db.categories.update_one(
+            {"_id": ObjectId(cat_id)},
+            {"$inc": {"result_count": -1}}
+        )
+    
+    # Increment count for added categories
+    for cat_id in new_category_ids - old_category_ids:
+        await db.categories.update_one(
+            {"_id": ObjectId(cat_id)},
+            {"$inc": {"result_count": 1}}
+        )
+    
+    await db.search_results.update_one(
+        {"_id": ObjectId(report_id)},
+        {"$set": update_data}
+    )
+    
+    return {
+        "success": True,
+        "message": "Personal Report updated successfully",
+        "updated_fields": list(update_data.keys())
+    }
+
+
+@api_router.delete("/personal-reports/{report_id}", response_model=dict)
+async def delete_personal_report(report_id: str, user = Depends(get_current_user_local)):
+    """
+    Delete a Personal Report (Organic).
+    Only the author can delete their report.
+    """
+    user_id = str(user["_id"])
+    
+    # Find the report
+    report = await db.search_results.find_one({
+        "_id": ObjectId(report_id),
+        "article_type": "Personal Report (Organic)"
+    })
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Personal Report not found")
+    
+    if report.get("author_id") != user_id and not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="You can only delete your own reports")
+    
+    # Decrement category counts
+    for cat_id in report.get("category_ids", []):
+        await db.categories.update_one(
+            {"_id": ObjectId(cat_id)},
+            {"$inc": {"result_count": -1}}
+        )
+    
+    await db.search_results.delete_one({"_id": ObjectId(report_id)})
+    
+    return {
+        "success": True,
+        "message": "Personal Report deleted successfully"
+    }
+
+
+@api_router.post("/personal-reports/{report_id}/image", response_model=dict)
+async def upload_personal_report_image(
+    report_id: str,
+    file: UploadFile = File(...),
+    user = Depends(get_current_user_local)
+):
+    """
+    Upload an image for a Personal Report (Organic).
+    Only 1 image per report (replaces existing).
+    """
+    user_id = str(user["_id"])
+    
+    # Verify ownership
+    report = await db.search_results.find_one({
+        "_id": ObjectId(report_id),
+        "author_id": user_id,
+        "article_type": "Personal Report (Organic)"
+    })
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Personal Report not found or not owned by you")
+    
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Only JPEG, PNG, GIF, and WebP images are allowed")
+    
+    # Save file
+    file_extension = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"report_{report_id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.{file_extension}"
+    filepath = os.path.join(MESSAGE_UPLOAD_DIR, filename)
+    
+    with open(filepath, "wb") as f:
+        content = await file.read()
+        f.write(content)
+    
+    # Update report with image URL
+    image_url = f"/api/uploads/messages/{filename}"
+    await db.search_results.update_one(
+        {"_id": ObjectId(report_id)},
+        {"$set": {"image_url": image_url, "updated_at": datetime.utcnow()}}
+    )
+    
+    return {
+        "success": True,
+        "image_url": image_url,
+        "message": "Image uploaded successfully"
+    }
+
+
 @api_router.get("/map-data", response_model=dict)
 async def get_map_data(user = Depends(get_current_user_local)):
     """Get geolocated search results for map display"""
