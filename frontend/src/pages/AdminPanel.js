@@ -255,10 +255,12 @@ const AdminPanel = ({ showToast }) => {
 
   useEffect(() => {
     if (activeTab === 'newsletter') {
-      fetchNewsletterHistory();
-      fetchNewsletterSchedule();
+      const loadNewsletterData = async () => {
+        await Promise.all([fetchNewsletterHistory(), fetchNewsletterSchedule()]);
+      };
+      loadNewsletterData();
     }
-  }, [activeTab]);
+  }, [activeTab, fetchNewsletterHistory, fetchNewsletterSchedule]);
 
   if (loading) {
     return <div className="loading-spinner"><div className="spinner"></div></div>;
