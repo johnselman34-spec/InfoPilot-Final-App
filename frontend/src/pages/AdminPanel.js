@@ -287,19 +287,20 @@ const AdminPanel = ({ showToast }) => {
               marginBottom: 25,
               border: '1px solid rgba(124, 58, 237, 0.3)'
             }}>
-              <h4 style={{ color: '#a78bfa', margin: '0 0 15px 0' }}>🔍 Collation Settings</h4>
+              <h4 style={{ color: '#a78bfa', margin: '0 0 15px 0' }}>🔍 Search & Collation Settings</h4>
               
               <div className="admin-setting">
                 <label>Collation Limit (Per Search)</label>
                 <input
                   type="number"
-                  min="10"
-                  max="200"
+                  min="1"
+                  max="100"
                   defaultValue={getSetting('collation_limit') || 40}
-                  onBlur={(e) => updateSetting('collation_limit', Math.min(200, Math.max(10, parseInt(e.target.value))))}
+                  onBlur={(e) => updateSetting('collation_limit', Math.min(100, Math.max(1, parseInt(e.target.value))))}
+                  data-testid="collation-limit-input"
                 />
                 <small style={{ color: '#a1a1aa', display: 'block', marginTop: 5 }}>
-                  Results per Search & Collate (default: 40, max: 200)
+                  Results per Search & Collate (1-100, default: 40). Higher = more results but slower.
                 </small>
               </div>
               
