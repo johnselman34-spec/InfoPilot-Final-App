@@ -259,9 +259,15 @@ class TestIteration54Features:
         assert response.status_code == 200
         data = response.json()
         
-        # Verify response is a list
-        assert isinstance(data, list), "Expected list of personal reports"
-        print(f"✅ Personal Reports GET: {len(data)} reports found")
+        # Response can be a list or object with 'reports' key
+        if isinstance(data, list):
+            reports = data
+        else:
+            assert "reports" in data, "Expected 'reports' key in response"
+            reports = data["reports"]
+        
+        assert isinstance(reports, list), "Expected list of personal reports"
+        print(f"✅ Personal Reports GET: {len(reports)} reports found")
     
     # ==================== UNPAID PRICE CONTROLS ====================
     
@@ -321,9 +327,16 @@ class TestIteration54Features:
         assert response.status_code == 200
         data = response.json()
         
+        # Response can be a list or object with 'types' key
+        if isinstance(data, list):
+            types = data
+        else:
+            assert "types" in data, "Expected 'types' key in response"
+            types = data["types"]
+        
         # Verify we have document types
-        assert len(data) >= 10, f"Expected at least 10 article types, got {len(data)}"
-        print(f"✅ Article Types GET: {len(data)} types found")
+        assert len(types) >= 10, f"Expected at least 10 article types, got {len(types)}"
+        print(f"✅ Article Types GET: {len(types)} types found")
 
 
 if __name__ == "__main__":
