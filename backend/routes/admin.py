@@ -112,6 +112,25 @@ async def init_settings(user = Depends(require_admin)):
         {"key": "unpaid_max_protocol_price", "value": 5.00, "description": "Max price unpaid users can charge per protocol ($)"},
         {"key": "unpaid_max_bundle_price", "value": 10.00, "description": "Max price unpaid users can charge per bundle ($)"},
         {"key": "unpaid_can_sell", "value": True, "description": "Allow unpaid users to sell at all"},
+        # Global Price Controls (for ALL users)
+        {"key": "global_price_control_enabled", "value": False, "description": "Enable price limits for ALL users"},
+        {"key": "global_max_protocol_price", "value": 99.99, "description": "Max price ANY user can charge per protocol ($)"},
+        {"key": "global_max_bundle_price", "value": 199.99, "description": "Max price ANY user can charge per bundle ($)"},
+        {"key": "global_min_protocol_price", "value": 0.00, "description": "Min price for protocols (0 = free allowed)"},
+        # Document Type Classification Settings (Admin Controllable)
+        {"key": "doctype_phd_min_words", "value": 1500, "description": "Min words for PhD classification"},
+        {"key": "doctype_phd_keyword_count", "value": 3, "description": "Min PhD keywords (Ph.D., PhD, D.Phil., Dr.)"},
+        {"key": "doctype_phd_protocol", "value": "(Ph.D. or PhD or D.Phil. or Dr.)", "description": "PhD detection protocol"},
+        {"key": "doctype_informative_protocol", "value": "(there are or there is) & (may have or might have or that are) & (this kind or these kinds or this type or these types or it is) & (is easily or of each or less than the or more than or greater than or is more or is less) & (it is)", "description": "Informative article protocol"},
+        {"key": "doctype_news_protocol", "value": "(news) & (news or story or news story) & (news or story or news story)", "description": "News Article detection protocol"},
+        {"key": "doctype_news_min_instances", "value": 3, "description": "Min instances for News classification"},
+        {"key": "doctype_blog_protocol", "value": "(blog)", "description": "Blog detection protocol"},
+        {"key": "doctype_blog_min_instances", "value": 3, "description": "Min 'blog' instances (1 must be in title)"},
+        {"key": "doctype_forum_protocol", "value": "(forum)", "description": "Forum detection protocol (must be in title)"},
+        {"key": "doctype_personal_collected_protocol", "value": "(I)", "description": "Personal Report detection protocol"},
+        {"key": "doctype_personal_min_i_count", "value": 3, "description": "Min 'I' occurrences outside quotes"},
+        {"key": "doctype_personal_min_paragraph_words", "value": 75, "description": "Min words in paragraph for Personal Report"},
+        {"key": "doctype_auto_categorize", "value": True, "description": "Auto-categorize by document type"},
     ]
     
     for setting in default_settings:
