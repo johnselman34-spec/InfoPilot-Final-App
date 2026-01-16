@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useDarkMode, DarkModeToggle } from '../../contexts/DarkModeContext';
+import { useTheme, ThemeToggle } from '../../contexts/ThemeContext';
 import Icons from './Icons';
 import NotificationBell from './NotificationBell';
 
