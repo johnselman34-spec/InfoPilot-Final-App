@@ -284,6 +284,79 @@ const StatisticsPage = ({ showToast }) => {
   const [funnyMessage] = useState(() => FUNNY_STATS_MESSAGES[Math.floor(Math.random() * FUNNY_STATS_MESSAGES.length)]);
   const [mapMarkers, setMapMarkers] = useState([]);
   const [selectedStatType, setSelectedStatType] = useState(null);
+  
+  // AI Search state
+  const [aiSearchQuery, setAiSearchQuery] = useState('');
+  const [aiSearchLoading, setAiSearchLoading] = useState(false);
+  const [aiSearchMode, setAiSearchMode] = useState('comprehensive');
+
+  // AI Intelligent Search for Statistics
+  const aiSearchFromStats = async () => {
+    if (!aiSearchQuery.trim()) {
+      showToast('Please enter a search query', 'error');
+      return;
+    }
+    
+    setAiSearchLoading(true);
+    
+    try {
+      const res = await fetch(`${API}/ai-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ 
+          query: aiSearchQuery,
+          mode: aiSearchMode,
+          auto_categorize: true
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`🤖 ${data.message}`, 'success');
+        // Refresh statistics
+        fetchStatistics();
+      } else {
+        const error = await res.json();
+        showToast(error.detail || 'AI Search failed', 'error');
+      }
+    } catch (e) {
+      showToast('AI Search failed', 'error');
+    }
+    
+    setAiSearchLoading(false);
+  };
+
+  // Auto-Categorize Search from Statistics
+  const autoCategorizeFroStats = async () => {
+    if (!aiSearchQuery.trim()) {
+      showToast('Please enter a search query', 'error');
+      return;
+    }
+    
+    setAiSearchLoading(true);
+    
+    try {
+      const res = await fetch(`${API}/auto-categorize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ query: aiSearchQuery })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`🎯 ${data.message}`, 'success');
+        // Refresh statistics
+        fetchStatistics();
+      } else {
+        const error = await res.json();
+        showToast(error.detail || 'Auto-categorization failed', 'error');
+      }
+    } catch (e) {
+      showToast('Auto-categorization failed', 'error');
+    }
+    
+    setAiSearchLoading(false);
+  };
 
   useEffect(() => {
     fetchStatistics();
