@@ -9,7 +9,7 @@ import os
 import time
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://project-finale-6.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://search-comments.preview.emergentagent.com')
 
 # Test credentials
 ADMIN_EMAIL = "jjspilot24@gmail.com"

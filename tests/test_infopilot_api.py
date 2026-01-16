@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = "https://project-finale-6.preview.emergentagent.com"
+BASE_URL = "https://search-comments.preview.emergentagent.com"
 
 # Test credentials
 ADMIN_EMAIL = "john@infojet.com"
