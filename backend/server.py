@@ -487,7 +487,6 @@ class ExtendedWebSearchService:
             "total_available": sum([
                 bool(SERPAPI_KEY and SERPAPI_AVAILABLE),
                 bool(BRAVE_API_KEY),
-                bool(YANDEX_API_KEY and YANDEX_FOLDER_ID),
                 DDGS_AVAILABLE,
                 True  # Basic always available
             ])
