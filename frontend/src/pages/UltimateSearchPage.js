@@ -1060,6 +1060,7 @@ const UltimateSearchPage = ({ showToast }) => {
           searchResults={searchResults}
           onDeleteResult={deleteResult}
           onAddReaction={addReaction}
+          showToast={showToast}
         />
       </div>
 
