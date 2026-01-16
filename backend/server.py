@@ -1452,6 +1452,28 @@ async def database_text_search(request: dict, user = Depends(get_current_user_lo
     }
 
 
+@api_router.get("/article-types", response_model=dict)
+async def get_article_types():
+    """Get list of all supported article/document types"""
+    return {
+        "types": [
+            {"id": "phd_informative", "name": "PhD Informative", "description": "Academic content by credentialed professionals"},
+            {"id": "personal_organic", "name": "Personal Report (Organic)", "description": "First-hand personal accounts and experiences"},
+            {"id": "personal_collected", "name": "Personal Report (Collected)", "description": "Aggregated and curated personal reports"},
+            {"id": "news_article", "name": "News Article", "description": "Current events and journalism"},
+            {"id": "academic_paper", "name": "Academic Paper", "description": "Scholarly research and publications"},
+            {"id": "government", "name": "Government", "description": "Official government documents"},
+            {"id": "wiki", "name": "Wiki", "description": "Wikipedia and wiki-based content"},
+            {"id": "blog_post", "name": "Blog Post", "description": "Personal blogs and opinion pieces"},
+            {"id": "forum", "name": "Forum", "description": "Discussion boards and Q&A sites"},
+            {"id": "video", "name": "Video", "description": "Video content from YouTube, Vimeo, etc."},
+            {"id": "pdf_document", "name": "PDF Document", "description": "PDF files and documents"},
+            {"id": "ms_word", "name": "MS Word Document", "description": "Microsoft Word documents"},
+            {"id": "webpage", "name": "Webpage", "description": "General web pages"}
+        ]
+    }
+
+
 @api_router.get("/search-engines", response_model=dict)
 async def get_search_engines():
     """Get list of available search engines and their status"""
