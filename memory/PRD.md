@@ -1988,3 +1988,62 @@ Frontend:
 ### Testing: 28/28 tests passed (100%)
 - Test Report: `/app/test_reports/iteration_50.json`
 
+
+
+## Update Session - January 16, 2026 (Iteration 51) - Admin Price Controls & Analytics
+
+### Admin Unpaid User Price Controls ✅
+**Feature is OFF by default - must be enabled by admin**
+
+**API Endpoints:**
+- `GET /api/admin/unpaid-price-controls` - Get current settings
+- `PUT /api/admin/unpaid-price-controls` - Update settings
+
+**Settings:**
+- `unpaid_price_control_enabled`: Master toggle (OFF by default)
+- `unpaid_max_protocol_price`: $5.00 default
+- `unpaid_max_bundle_price`: $10.00 default
+- `unpaid_can_sell`: true by default (can disable entirely)
+
+**Price Validation:**
+- When enabled, marketplace listing creation validates against limits
+- Users see helpful error message with max allowed price
+- FREE protocols ($0) always allowed
+- Admin-only endpoints with audit logging
+
+**Frontend UI:**
+- New "💰 Price Controls" tab in Admin Panel
+- Toggle to enable/disable controls
+- Sliders for max protocol and bundle prices
+- Stats showing unpaid sellers count
+
+### Category Analytics Dashboard ✅
+**New admin-only analytics for category performance**
+
+**API Endpoints:**
+- `GET /api/admin/category-analytics` - Full analytics
+- `GET /api/admin/category-analytics/trends` - Growth trends
+
+**Dashboard Features:**
+- Summary stats: total categories, results, location data
+- Top categories by results (bar chart)
+- Category depth distribution (pie chart)
+- Performance table with all metrics
+- Empty categories warning
+- Template popularity in marketplace
+
+**Frontend UI:**
+- New "📊 Cat Analytics" tab in Admin Panel
+- Interactive Recharts visualizations
+- Configurable date range (7, 30, 90 days)
+
+### Admin Panel Now Has 16 Tabs
+general | search | pricing | newsletter | users | 🛡️ moderation | 💰 price-controls | 📊 cat-analytics | content | polls | ab-testing | 🤖 optimizer | 📈 forecast | 🔮 protocol-forecast | email-reports | 🎬 tutorials
+
+### Bug Fixes
+- Fixed MongoDB ObjectId serialization in payout-settings endpoint
+
+### Testing: 27/27 tests passed (100%)
+- Test Report: `/app/test_reports/iteration_51.json`
+- Test File: `/app/tests/test_iteration51_features.py`
+
