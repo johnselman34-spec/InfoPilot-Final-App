@@ -469,9 +469,39 @@ const MapPage = ({ showToast, setCurrentPage }) => {
             <option value="news">📰 News</option>
             <option value="research">🔬 Research</option>
           </select>
+          <button
+            onClick={databaseSearchForMap}
+            disabled={dbSearchLoading || !aiSearchQuery.trim()}
+            className="btn"
+            style={{
+              background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+              color: '#fff',
+              padding: '10px 15px',
+              opacity: (!aiSearchQuery.trim() || dbSearchLoading) ? 0.5 : 1
+            }}
+            data-testid="map-database-search-btn"
+          >
+            {dbSearchLoading ? '📚 Searching...' : '📚 DB Search'}
+          </button>
+          <select
+            value={dbSearchMode}
+            onChange={(e) => setDbSearchMode(e.target.value)}
+            style={{
+              background: 'rgba(6, 182, 212, 0.3)',
+              border: '1px solid rgba(6, 182, 212, 0.4)',
+              color: '#22d3ee',
+              padding: '8px 12px',
+              borderRadius: 8,
+              fontSize: '0.85rem'
+            }}
+          >
+            <option value="smart">🧠 Smart</option>
+            <option value="exact">🎯 Exact</option>
+            <option value="fuzzy">🔍 Fuzzy</option>
+          </select>
         </div>
         <p style={{ color: '#a1a1aa', fontSize: '0.75rem', marginTop: 8, marginBottom: 0 }}>
-          💡 AI Search uses GPT to expand your keywords and searches Google, DuckDuckGo & Brave simultaneously
+          💡 <strong>AI Search:</strong> Google, Bing, DuckDuckGo, Brave with GPT keyword expansion. <strong>DB Search:</strong> Search your already collated results.
         </p>
       </div>
 
