@@ -189,11 +189,21 @@ class ProtocolParser:
         
         Handles abbreviated names like "William C. Gamble" and
         abbreviations like "etc.", "U.S.", etc.
+        
+        NOW ACCEPTS: Both "&" and "and" (case-insensitive) as group separators
+        Examples: 
+          - (word1 or word2) & (word3) 
+          - (word1 or word2) and (word3)
+          - (word1 or word2) AND (word3)
         """
         groups = []
         
+        # Normalize "and" to "&" (case-insensitive, with word boundaries)
+        # Match " and " surrounded by spaces to avoid matching "and" within words
+        normalized_protocol = re.sub(r'\s+and\s+', ' & ', protocol, flags=re.IGNORECASE)
+        
         # Split by & operator
-        parts = re.split(r'\s*&\s*', protocol)
+        parts = re.split(r'\s*&\s*', normalized_protocol)
         
         for part in parts:
             part = part.strip()
