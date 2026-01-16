@@ -360,7 +360,7 @@ async def share_categories_to_marketplace(
     
     return {
         "success": True,
-        "message": f"Category bundle listed on marketplace!",
+        "message": "Category bundle listed on marketplace!",
         "listing_id": str(result.inserted_id),
         "name": bundle_name,
         "categories_included": len(categories),
