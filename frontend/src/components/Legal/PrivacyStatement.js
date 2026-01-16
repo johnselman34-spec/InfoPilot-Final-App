@@ -272,8 +272,8 @@ const PrivacyStatement = ({ onClose, onAccept }) => {
           }}>
             <p style={{ margin: 0, fontSize: '0.95rem' }}>
               <strong style={{ color: '#22d3ee' }}>Your Privacy Matters to Us</strong><br/>
-              We're committed to transparency and giving you control over your personal data. 
-              If you have any questions about our privacy practices, please don't hesitate to 
+              We&apos;re committed to transparency and giving you control over your personal data. 
+              If you have any questions about our privacy practices, please don&apos;t hesitate to 
               reach out.
             </p>
           </div>
