@@ -14,10 +14,27 @@ const ChatPage = ({ showToast }) => {
   const [newRoomName, setNewRoomName] = useState('');
   const [typingUsers, setTypingUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [unifiedOverview, setUnifiedOverview] = useState(null);
   
   const wsRef = useRef(null);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  // Fetch unified chat overview (groups + DMs)
+  const fetchUnifiedOverview = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/api/unified-chat/overview`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUnifiedOverview(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch unified overview:', e);
+    }
+  }, [token]);
 
   const fetchRooms = useCallback(async () => {
     try {
