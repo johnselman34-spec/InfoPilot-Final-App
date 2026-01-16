@@ -87,17 +87,41 @@ const PersonalReportsPage = ({ showToast, onBack }) => {
     }
   };
   
-  // Handle image selection
+  // Handle image selection - supports up to 3 images
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 6.9 * 1024 * 1024) {
-        showToast('Image must be less than 6.9MB', 'error');
-        return;
-      }
-      setImage(file);
-      setImagePreview(URL.createObjectURL(file));
+    const files = Array.from(e.target.files);
+    const remainingSlots = 3 - imagePreviews.length;
+    
+    if (files.length > remainingSlots) {
+      showToast(`You can only add ${remainingSlots} more image(s). Max 3 per report.`, 'error');
+      return;
     }
+    
+    const validFiles = [];
+    const newPreviews = [];
+    
+    for (const file of files) {
+      if (file.size > 6.9 * 1024 * 1024) {
+        showToast(`Image "${file.name}" exceeds 6.9MB limit`, 'error');
+        continue;
+      }
+      validFiles.push(file);
+      newPreviews.push(URL.createObjectURL(file));
+    }
+    
+    if (validFiles.length > 0) {
+      setImages(prev => [...prev, ...validFiles]);
+      setImagePreviews(prev => [...prev, ...newPreviews]);
+    }
+  };
+  
+  // Remove a specific image by index
+  const removeImage = (index) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => {
+      URL.revokeObjectURL(prev[index]);  // Clean up
+      return prev.filter((_, i) => i !== index);
+    });
   };
   
   // Create or update report
