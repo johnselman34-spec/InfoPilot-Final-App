@@ -421,6 +421,37 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Instantly filter categories by typing name
   - data-testid="category-search-filter"
 
+### Batch 10 - Advanced Features & Testing Tools ✅ (January 16, 2026)
+- [x] **Bulk Document Type Testing Tool**
+  - `POST /api/admin/doctype-test` - Test classification with sample text
+  - `DoctypeTestingTool.js` component in Admin Panel Doc Types tab
+  - Load sample buttons for PhD, Informative, Blog, Forum, Personal, News
+  - Shows classification result, analysis, and protocol matches
+- [x] **Map Export Features (4 formats)**
+  - `GET /api/map-data/export?format=json` - Standard JSON
+  - `GET /api/map-data/export?format=geojson` - GeoJSON for mapping apps
+  - `GET /api/map-data/export?format=kml` - KML for Google Earth
+  - `GET /api/map-data/export?format=csv` - CSV spreadsheet
+  - `GET /api/map-data/statistics` - Region distribution, article types, bounding box
+- [x] **PayPal Wallet Accumulation**
+  - `GET /api/admin/paypal-wallets` - List all wallets with balances
+  - `POST /api/admin/paypal-wallets/process-payouts` - Process eligible payouts
+  - Settings: `paypal_min_payout` (default $1.00), `paypal_auto_payout`, `paypal_payout_schedule`
+  - Earnings accumulate until reaching minimum threshold
+- [x] **15+ New Gamification Badges**
+  - Content: first_personal_report (Storyteller), personal_reports_10 (Prolific Writer)
+  - Search: phd_finder (Academic Hunter), news_junkie (News Junkie)
+  - Map: first_location (Cartographer), world_traveler (World Traveler), globe_trotter (Globe Trotter)
+  - Collection: collector_100/500/1000 (Collector, Archivist, Knowledge Keeper)
+  - Premium: premium_member (Premium Pioneer), annual_subscriber (Committed Fan)
+  - Fun: midnight_owl (Night Owl), early_bird (Early Bird), weekend_warrior (Weekend Warrior)
+- [x] **Personal Report Creator UI**
+  - `PersonalReportCreator.js` component
+  - Create reports with: title, topic, content, 1 image, location
+  - Auto-detect location button
+  - Category assignment
+  - data-testid="create-personal-report-btn"
+
 ### Maps Pricing Decision
 - ✅ **FREE Maps for All Users:**
   - Ultimate Search Page map
