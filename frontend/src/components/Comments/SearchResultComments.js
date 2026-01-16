@@ -330,9 +330,7 @@ const SearchResultComments = ({ resultId, showToast, onClose }) => {
             Loading comments...
           </p>
         ) : threads.length > 0 ? (
-          threads.map(comment => (
-            <CommentItem key={comment.id} comment={comment} />
-          ))
+          threads.map(comment => renderComment(comment, false))
         ) : (
           <div style={{ textAlign: 'center', padding: 40 }}>
             <p style={{ color: isDarkMode ? '#71717a' : '#94a3b8', marginBottom: 10 }}>
