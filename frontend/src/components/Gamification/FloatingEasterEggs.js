@@ -4,88 +4,110 @@
  * A fun gamification feature where colorful Easter eggs randomly float
  * across the screen. Users can click/catch them to earn rewards like:
  * - Protocol ideas
- * - Funny jokes
+ * - Funny jokes (inspired by "Letters to Evelyn" by John Selman)
  * - Protocol pricing ideas
  * - Laughter points & XP
  * 
  * Born from a story of resilience - turning life's challenges into laughter!
  * "I survived January 3rd, 2000, and became a Hollywood Star!" 🌟
+ * 
+ * Inspired by John Selman's incredible journey from Naval Aviation to bestselling author.
+ * Check out "Letters to Evelyn" on Amazon and ReadersFavorite.com!
  */
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLaugh } from './LaughOMeter';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Easter Egg reward types
+// Easter Egg reward types - with EXTREMELY FUNNY jokes inspired by John Selman's story!
 const EGG_REWARDS = [
-  // Protocol Ideas
+  // Protocol Ideas - Enhanced with aviation themes
   { type: 'protocol', emoji: '📋', title: 'Protocol Idea!', rewards: [
     '(breaking news or latest updates) & (politics or government) & (analysis or opinion)+',
     '(scientific study or research paper) & (peer reviewed or published) & (findings or results)',
-    '(recipe or cooking) & (homemade or traditional) & (easy or quick)+',
-    '(travel guide or destination) & (hidden gems or local tips) & (budget or affordable)',
+    '(aviation or flight or pilot) & (training or career or military) & (success or achievement)+',
+    '(memoir or autobiography) & (survival or resilience) & (inspiring or motivational)+',
     '(health tips or wellness) & (doctor recommended or expert) & (natural or organic)+',
     '(financial advice or investment) & (stocks or crypto) & (beginner or expert)+',
-    '(DIY project or craft) & (step by step or tutorial) & (creative or unique)',
-    '(book review or recommendation) & (bestseller or award winning) & (fiction or non-fiction)+',
+    '(book review or literary criticism) & (bestseller or award winning) & (fiction or non-fiction)+',
+    '(travel guide or destination) & (hidden gems or local tips) & (budget or affordable)',
+    '(supernatural or paranormal) & (true story or documentary) & (evidence or investigation)+',
+    '(family drama or memoir) & (overcoming adversity or triumph) & (inspirational)+',
   ]},
-  // Funny Jokes
+  
+  // EXTREMELY FUNNY Jokes - Inspired by "Letters to Evelyn" by John Selman
   { type: 'joke', emoji: '😂', title: 'LOL Moment!', rewards: [
-    "Why don't scientists trust atoms? Because they make up everything! 🔬",
-    "I told my computer I needed a break... Now it won't stop sending me vacation ads! 💻",
-    "Why did the scarecrow win an award? He was outstanding in his field! 🌾",
-    "I'm reading a book about anti-gravity. It's impossible to put down! 📚",
-    "Why don't eggs tell jokes? They'd crack each other up! 🥚",
-    "What do you call a fake noodle? An impasta! 🍝",
-    "Why did the coffee file a police report? It got mugged! ☕",
-    "I used to hate facial hair, but then it grew on me! 🧔",
-    "What's the best thing about Switzerland? I don't know, but the flag is a big plus! 🇨🇭",
-    "Why do programmers prefer dark mode? Because light attracts bugs! 🐛",
-    "I tried to catch fog yesterday. Mist! 🌫️",
-    "What do you call a belt made of watches? A waist of time! ⌚",
+    "Why did John's stepmother make such terrible eggs? Because her 'special ingredient' was a one-way ticket to seeing the universe! 🥚✨ #SurvivedAndThrived",
+    "What's the difference between John's stepmother's cooking and a haunted house? At least the haunted house WARNS you it's going to be scary! 👻🍳",
+    "John's dad was a pilot. John wanted to be one too. It was a real 'wing-man' situation... until his stepmother tried to ground him PERMANENTLY! ✈️😅",
+    "Why did John become a bestselling author? Because his stepmother's 'breakfast surprise' gave him enough material for THREE books! 📚🥇",
+    "What did John say after surviving his stepmother's eggs? 'This trip was NOT on my flight plan!' 🛫🌀",
+    "John's commanding officer kept calling him Jesus. His stepmother kept trying to... well, let's just say she wasn't a fan of resurrections! 😇",
+    "Why was John's stepmother bad at murder? She kept picking the most dramatic methods that made for GREAT book chapters! 📖💀",
+    "What's John's secret to success? Even when your 'co-pilot' is a hallucination and your stepmother wants you dead, KEEP FLYING! ✈️🌟",
+    "John's love life: Met Evelyn in chemistry class. Appropriate, since his stepmother was ALSO into chemistry... just the wrong kind! 💕⚗️",
+    "Why did John write 'Letters to Evelyn'? Because therapy was expensive and revenge is a book that sells on Amazon! 📚💰",
+    "John survived his stepmother AND became famous. That's what we call 'failing upward'... for HER! 😂🏆",
+    "What's the moral of John's story? Never underestimate a man whose breakfast tried to kill him! 🍳💪",
+    "John's stepmother's eggs were out of this world... literally. Her 'secret ingredient' made him see aliens! 👽🥚",
+    "Why should you read 'Letters to Evelyn'? It's got everything: aviation, romance, and the world's most incompetent villain! ✈️💕🦹‍♀️",
+    "John followed his father's footsteps into aviation. His stepmother tried to give him a different kind of 'trip'. He chose the one with wings! 🛫",
+    "What's funnier than John's stepmother's failed murder attempts? Her face when he became a MOVIE PRODUCER! 🎬😱",
   ]},
-  // Protocol Pricing Ideas
+  
+  // Protocol Pricing Ideas - Enhanced with author wisdom
   { type: 'pricing', emoji: '💰', title: 'Pricing Wisdom!', rewards: [
-    '💡 Start with FREE protocols to build your reputation - the sales will follow!',
-    '🎯 Bundle 5 related protocols for $4.99 - everyone loves a deal!',
-    '⭐ Premium exclusives at $2.99 perform better than $0.99!',
-    '📈 A/B test your prices - sometimes higher = more perceived value!',
-    '🤝 Offer a "Pay What You Want" option - trust builds loyalty!',
-    '🔥 Flash sales (50% off for 24hrs) create urgency and boost sales 3x!',
-    '💎 Create a "Pro Bundle" at $9.99 with your best 10 protocols!',
-    '🎁 Holiday specials work wonders - think Christmas, Easter, New Year!',
+    '💡 Start with FREE protocols to build your reputation - John Selman started with just a story and became a bestseller!',
+    '🎯 Bundle 5 related protocols for $4.99 - everyone loves a deal! Like getting the whole "survival story" package!',
+    '⭐ Premium exclusives at $2.99 perform better than $0.99! Quality matters - ask any pilot!',
+    '📈 A/B test your prices - sometimes higher = more perceived value! Like hardcover vs paperback!',
+    '🤝 Offer a "Pay What You Want" option - trust builds loyalty! John trusted his readers and they trusted him back!',
+    '🔥 Flash sales (50% off for 24hrs) create urgency! Limited time, like John's limited patience with bad eggs!',
+    '💎 Create a "Pro Bundle" at $9.99 with your best 10 protocols! The "Full Story" package!',
+    '🎁 Holiday specials work wonders - Easter eggs, anyone? 🥚 (Disclaimer: no hallucinations included)',
+    '✈️ Price like a pilot: start low to gain altitude, then cruise at premium! 🛫',
+    '📚 Authors like John prove: quality content sells itself. Invest in your protocols!',
   ]},
-  // Motivational Messages
-  { type: 'motivation', emoji: '💪', title: 'You\'re Amazing!', rewards: [
-    '🌟 Every search brings you closer to knowledge - keep exploring!',
-    '🚀 You\'re building something incredible, one protocol at a time!',
-    '🏆 Winners are just losers who tried one more time!',
-    '💫 Your curiosity today shapes tomorrow\'s breakthroughs!',
-    '🎯 Focus + Consistency = Unstoppable!',
-    '⚡ The best time to start was yesterday. The second best time is NOW!',
-    '🌈 After every search storm comes a rainbow of results!',
-    '🔥 You survived 100% of your worst days. You\'re stronger than you know!',
+  
+  // Motivational Messages - Survival & Success themed
+  { type: 'motivation', emoji: '💪', title: 'Survivor\'s Wisdom!', rewards: [
+    '🌟 Every search brings you closer to knowledge - keep exploring! John searched for answers and found fame!',
+    '🚀 You're building something incredible, one protocol at a time! Like John built his book, one letter at a time!',
+    '🏆 Winners are just losers who tried one more time! John tried one more flight after every setback!',
+    '💫 Your curiosity today shapes tomorrow's breakthroughs! John's curiosity about Evelyn shaped a bestseller!',
+    '🎯 Focus + Consistency = Unstoppable! Even military-grade obstacles couldn't stop John!',
+    '⚡ The best time to start was yesterday. The second best time is NOW! John didn't wait to write his story!',
+    '🌈 After every storm comes a rainbow! After every bad egg comes... well, a book deal apparently! 📚',
+    '🔥 You survived 100% of your worst days. John survived worse - you've got this! 💪',
+    '✈️ Like a pilot, keep your eyes on the horizon. The turbulence doesn't last forever! 🛫',
+    '📖 Your story isn't over yet. John's best chapters came AFTER his worst days! 🌟',
   ]},
-  // Fun Facts
+  
+  // Fun Facts - Aviation & Literary themed
   { type: 'fact', emoji: '🧠', title: 'Did You Know?', rewards: [
-    '🌍 Honey never spoils - archaeologists found 3000-year-old honey still edible!',
-    '🐙 Octopuses have three hearts and blue blood!',
-    '⚡ A bolt of lightning is 5x hotter than the surface of the sun!',
-    '🦋 Butterflies taste with their feet!',
-    '🌙 There\'s a species of jellyfish that is biologically immortal!',
-    '🐘 Elephants are the only animals that can\'t jump!',
-    '🎸 The longest recorded guitar solo lasted over 25 hours!',
-    '📱 The first mobile phone call was made in 1973!',
+    '✈️ Naval aviators like John Selman's father flew the legendary A-4 Skyhawk - one of the most agile jets ever made!',
+    '📚 "Letters to Evelyn" received 5 stars from Readers Favorite - a prestigious book review platform!',
+    '🛫 The T-34C Turbomentor (John's training aircraft in Roswell) has trained thousands of Navy pilots since 1977!',
+    '🌍 Honey never spoils - archaeologists found 3000-year-old honey still edible! (Much safer than some eggs...)',
+    '💜 The USS Enterprise (where John served) was the world's first nuclear-powered aircraft carrier!',
+    '🐙 Octopuses have three hearts and blue blood - almost as mysterious as John's journey!',
+    '⚡ A bolt of lightning is 5x hotter than the surface of the sun - almost as hot as this app's features!',
+    '🦋 Butterflies taste with their feet - probably a safer way to test food than what John experienced!',
+    '📱 The first mobile phone call was made in 1973 - the same decade John's father was flying!',
+    '🎬 John Selman went from Navy pilot to movie producer - talk about a plot twist! 🎥',
   ]},
-  // Secret Tips
+  
+  // Secret Tips - Enhanced with insider knowledge
   { type: 'secret', emoji: '🤫', title: 'Insider Secret!', rewards: [
-    '🔑 Pro tip: Use AND between parentheses to narrow results!',
-    '🎮 Konami code (↑↑↓↓←→←→BA) unlocks a secret badge!',
-    '🌙 Search at night? You might earn the Night Owl badge!',
-    '📊 The Statistics page shows your search patterns over time!',
-    '🗺️ The Map View reveals geographical trends in your research!',
-    '🎯 Categories with + at the end boost priority in results!',
-    '💎 FREE protocols often get more downloads than paid ones!',
-    '📈 Check your Analytics daily - knowledge is power!',
+    '🔑 Pro tip: Use "and" between parentheses - it works just like "&" in protocols!',
+    '🎮 Konami code (↑↑↓↓←→←→BA) unlocks a secret badge! Like finding a hidden chapter!',
+    '🌙 Search at night? You might earn the Night Owl badge! John wrote many letters at night!',
+    '📊 The Statistics page now shows your Easter Egg catching stats! Check it out!',
+    '🗺️ The Map View reveals geographical trends - trace John's journey from Roswell to the Enterprise!',
+    '🎯 Categories with + at the end boost priority in results! Like adding extra engine power!',
+    '💎 FREE protocols often get more downloads than paid ones! Build your squadron first!',
+    '📈 Check your Analytics daily - knowledge is power! John analyzed his experiences into a book!',
+    '📚 Visit https://www.amazon.com - search "Letters to Evelyn by John Selman" for more of the story!',
+    '⭐ Check out readersfavorite.com for the 5-star review of "Letters to Evelyn"! 🏆',
   ]},
 ];
 
