@@ -3,8 +3,8 @@ import { Icons } from '../shared';
 import { API } from '../../utils/api';
 
 /**
- * SearchControls - Search input box with collate button, auto-categorize, AI search, and aggregation options
- * Now includes Brave and Yandex search engines!
+ * SearchControls - Search input box with collate button, auto-categorize, AI search, database search, and aggregation options
+ * Includes Google (SerpAPI), Bing, Brave, DuckDuckGo, and Basic search engines!
  */
 const SearchControls = ({
   searchQuery,
@@ -13,15 +13,19 @@ const SearchControls = ({
   onCollate,
   onAutoCategorize,
   onAISearch,
+  onDatabaseSearch,
   loading,
   collateLoading,
   autoCatLoading,
   aiSearchLoading,
+  dbSearchLoading,
   selectedCategoriesCount,
   aggregation,
   setAggregation,
   aiSearchMode,
   setAiSearchMode,
+  dbSearchMode,
+  setDbSearchMode,
   showMap,
   setShowMap,
   mapResultsCount,
