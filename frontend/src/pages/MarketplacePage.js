@@ -311,7 +311,14 @@ const MarketplacePage = ({ showToast }) => {
       )}
 
       {/* Dashboard Tab */}
-      {activeTab === 'dashboard' && <SellerDashboard dashboard={dashboard} adminPercent={adminPercent} />}
+      {activeTab === 'dashboard' && (
+        <div>
+          <PerformanceInsights showToast={showToast} />
+          <div style={{ marginTop: 25 }}>
+            <SellerDashboard dashboard={dashboard} adminPercent={adminPercent} />
+          </div>
+        </div>
+      )}
 
       {/* Analytics Tab */}
       {activeTab === 'analytics' && <ProtocolAnalyticsDashboard showToast={showToast} />}
