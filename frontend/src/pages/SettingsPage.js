@@ -364,6 +364,22 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
                     </span>
                   )}
                   <button
+                    onClick={(e) => { e.stopPropagation(); cleanCategory(cat.id, 'delete_all'); }}
+                    style={{
+                      background: 'rgba(245, 158, 11, 0.2)',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      color: '#f59e0b',
+                      padding: '4px 8px',
+                      borderRadius: 4,
+                      fontSize: '0.7rem',
+                      cursor: 'pointer'
+                    }}
+                    title="Clean all search results from this category"
+                    data-testid={`clean-category-quick-${cat.id}`}
+                  >
+                    🧹
+                  </button>
+                  <button
                     onClick={(e) => { e.stopPropagation(); deleteCategory(cat.id); }}
                     style={{
                       background: 'rgba(239, 68, 68, 0.2)',
