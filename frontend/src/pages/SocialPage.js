@@ -584,6 +584,16 @@ const SocialPage = ({ showToast }) => {
                     <>
                       <button className="btn btn-secondary" onClick={() => leaveGroup(group.id)} style={{ flex: 1 }}>Leave</button>
                       {group.is_admin && <button className="btn btn-primary" onClick={() => openCreatePollModal('group', group.id)}>📊 Poll</button>}
+                      {(group.is_admin || group.is_moderator || group.is_owner) && (
+                        <button 
+                          className="btn" 
+                          onClick={() => setModerationTarget({ type: 'group', entity: group })}
+                          style={{ background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                          data-testid={`moderate-group-${group.id}`}
+                        >
+                          🛡️ Moderate
+                        </button>
+                      )}
                     </>
                   ) : (
                     <button className="btn btn-primary" onClick={() => joinGroup(group.id)} style={{ flex: 1 }}>Join Group</button>
