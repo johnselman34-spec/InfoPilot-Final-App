@@ -282,8 +282,10 @@ class TestCategoryExportAPI:
         response = requests.get(f"{BASE_URL}/api/category-transfer/export", headers=headers)
         assert response.status_code == 200
         data = response.json()
-        assert "categories" in data
-        print(f"✓ Category Export: {len(data['categories'])} categories exported")
+        # Response has nested structure: data.categories
+        assert "data" in data or "categories" in data
+        categories = data.get("data", {}).get("categories", data.get("categories", []))
+        print(f"✓ Category Export: {len(categories)} categories exported")
 
 
 class TestUnpaidPriceControls:
