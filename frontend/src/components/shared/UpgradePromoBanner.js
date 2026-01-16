@@ -126,7 +126,7 @@ const UpgradePromoBanner = ({ compact = false }) => {
           color: '#d4d4d8'
         }}>
           <strong style={{ color: '#10b981' }}>🙏 Thank You!</strong> Your support helps us maintain these 
-          powerful features. We're testing our pay-as-you-go model to see if it's sustainable. 
+          powerful features. We&apos;re testing our pay-as-you-go model to see if it&apos;s sustainable. 
           Every search, every protocol sale keeps this platform running!
         </div>
       </div>
