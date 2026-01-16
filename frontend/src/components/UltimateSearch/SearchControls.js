@@ -37,7 +37,7 @@ const SearchControls = ({
   useEffect(() => {
     const fetchEngines = async () => {
       try {
-        const res = await fetch(`${API}/api/search-engines`);
+        const res = await fetch(`${API}/search-engines`);
         if (res.ok) {
           const data = await res.json();
           setSearchEngines(data);
