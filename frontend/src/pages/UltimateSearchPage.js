@@ -624,10 +624,20 @@ const UltimateSearchPage = ({ showToast }) => {
   };
 
   // Build category tree for sidebar
+  // Calculate result counts per category
+  const getCategoryResultCount = (categoryId) => {
+    return searchResults.filter(r => 
+      r.category_ids?.includes(categoryId) || 
+      r.categories?.some(c => categories.find(cat => cat.name === c)?.id === categoryId)
+    ).length;
+  };
+
   const buildCategoryTree = (cats, parentId = null, level = 0) => {
     return cats
       .filter(c => c.parent_id === parentId)
-      .map(cat => (
+      .map(cat => {
+        const resultCount = getCategoryResultCount(cat.id);
+        return (
         <div key={cat.id}>
           <div 
             className={`category-item category-item-level-${level} ${selectedCategories.includes(cat.id) ? 'selected' : ''}`}
@@ -655,6 +665,15 @@ const UltimateSearchPage = ({ showToast }) => {
                   fontWeight: selectedCategories.includes(cat.id) ? 600 : 400
                 }}>
                   {cat.name}
+                  {/* Result count in parentheses */}
+                  <span style={{ 
+                    color: resultCount > 0 ? '#10b981' : '#71717a',
+                    fontSize: '0.75rem',
+                    marginLeft: 6,
+                    fontWeight: 400
+                  }}>
+                    ({resultCount})
+                  </span>
                 </span>
               </div>
               <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
@@ -681,7 +700,7 @@ const UltimateSearchPage = ({ showToast }) => {
           </div>
           {buildCategoryTree(cats, cat.id, level + 1)}
         </div>
-      ));
+      )});
   };
 
   return (
