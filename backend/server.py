@@ -573,61 +573,202 @@ class ExtendedWebSearchService:
 class ArticleClassifier:
     """
     Classify articles based on content with expanded document types.
+    Uses Admin-controllable InfoJet 2.0 protocols for classification.
     
     Supported Types:
     - PhD Informative: Academic content by credentialed professionals
-    - Personal Report (Organic): First-hand personal accounts
-    - Personal Report (Collected): Aggregated personal reports
-    - News Article: Current events and journalism
+    - Informative: Educational content meeting protocol criteria
+    - InfoPilot Exclusive: Content written by InfoPilot writers
+    - InfoBook Exclusive: Content written by InfoBook writers
+    - News Article: Current events and journalism (default fallback)
+    - Blog Post: Personal blogs and opinion pieces
+    - Forum: Discussion boards (forum in title)
+    - Personal Report (Organic): First-hand reports by members
+    - Personal Report (Collected): Extracted personal narratives
     - Academic Paper: Scholarly research
     - Government: Official government documents
     - Wiki: Wikipedia and wiki-based content  
-    - Blog Post: Personal blogs and opinion pieces
-    - Forum: Discussion boards
     - Video: Video content
     - PDF Document: PDF files
-    - MS Word Document: Word documents
-    - Webpage: General web pages
+    - Webpage: General web pages (catch-all)
     """
     
-    PHD_INDICATORS = ['ph.d.', 'phd', 'd.phil.', 'dr.', 'professor', 'research by',
-                      'peer-reviewed', 'peer reviewed', 'published in', 'journal of',
-                      'university study', 'clinical study', 'scientific study']
-    PERSONAL_INDICATORS = ['my experience', 'i personally', 'in my opinion', 'my story',
-                           'first-hand', 'firsthand', 'personal account', 'i found that',
-                           'i discovered', 'my journey', 'my review', 'personal report']
-    COLLECTED_INDICATORS = ['collected', 'compilation', 'aggregated', 'curated',
-                            'testimonials', 'user reports', 'customer experiences',
-                            'reviews collected', 'gathered from', 'roundup']
+    # Default protocols (can be overridden by admin settings)
+    DEFAULT_PHD_PROTOCOL = "(Ph.D. or PhD or D.Phil. or Dr.)"
+    DEFAULT_INFORMATIVE_PROTOCOL = "(there are or there is) & (may have or might have or that are) & (this kind or these kinds or this type or these types or it is) & (is easily or of each or less than the or more than or greater than or is more or is less) & (it is)"
+    DEFAULT_NEWS_PROTOCOL = "(news) & (news or story or news story) & (news or story or news story)"
+    DEFAULT_BLOG_PROTOCOL = "(blog)"
+    DEFAULT_FORUM_PROTOCOL = "(forum)"
+    DEFAULT_PERSONAL_PROTOCOL = "(I)"
     
     @classmethod
-    def classify(cls, title: str, content: str, url: str = "") -> str:
-        """Classify article type based on content analysis"""
+    async def get_settings(cls):
+        """Get current document type settings from database"""
+        settings = {}
+        keys = [
+            "doctype_phd_min_words", "doctype_phd_keyword_count", "doctype_phd_protocol",
+            "doctype_informative_protocol", "doctype_news_protocol", "doctype_news_min_instances",
+            "doctype_blog_protocol", "doctype_blog_min_instances", "doctype_forum_protocol",
+            "doctype_personal_collected_protocol", "doctype_personal_min_i_count",
+            "doctype_personal_min_paragraph_words", "doctype_auto_categorize"
+        ]
+        
+        defaults = {
+            "doctype_phd_min_words": 1500,
+            "doctype_phd_keyword_count": 3,
+            "doctype_phd_protocol": cls.DEFAULT_PHD_PROTOCOL,
+            "doctype_informative_protocol": cls.DEFAULT_INFORMATIVE_PROTOCOL,
+            "doctype_news_protocol": cls.DEFAULT_NEWS_PROTOCOL,
+            "doctype_news_min_instances": 3,
+            "doctype_blog_protocol": cls.DEFAULT_BLOG_PROTOCOL,
+            "doctype_blog_min_instances": 3,
+            "doctype_forum_protocol": cls.DEFAULT_FORUM_PROTOCOL,
+            "doctype_personal_collected_protocol": cls.DEFAULT_PERSONAL_PROTOCOL,
+            "doctype_personal_min_i_count": 3,
+            "doctype_personal_min_paragraph_words": 75,
+            "doctype_auto_categorize": True
+        }
+        
+        for key in keys:
+            setting = await db.settings.find_one({"key": key})
+            if setting:
+                settings[key] = setting.get("value")
+            else:
+                settings[key] = defaults.get(key)
+        
+        return settings
+    
+    @classmethod
+    def _count_protocol_matches(cls, text: str, protocol: str) -> int:
+        """
+        Count how many times a protocol matches in text.
+        Protocol format: (word1 or word2) & (word3 or word4)
+        Returns count of matching groups.
+        """
+        if not protocol or not text:
+            return 0
+        
+        text_lower = text.lower()
+        groups = protocol.split('&')
+        matches = 0
+        
+        for group in groups:
+            group = group.strip().strip('()')
+            terms = [t.strip().lower() for t in group.split(' or ')]
+            if any(term in text_lower for term in terms):
+                matches += 1
+        
+        return matches
+    
+    @classmethod
+    def _count_i_outside_quotes(cls, text: str) -> tuple:
+        """
+        Count 'I' occurrences outside quotations and find longest paragraph with them.
+        Returns (total_count, max_paragraph_word_count)
+        """
+        if not text:
+            return 0, 0
+        
+        # Remove quoted text
+        import re
+        text_no_quotes = re.sub(r'"[^"]*"', '', text)
+        text_no_quotes = re.sub(r"'[^']*'", '', text_no_quotes)
+        
+        # Split into paragraphs
+        paragraphs = text_no_quotes.split('\n')
+        
+        max_word_count = 0
+        total_i_count = 0
+        
+        for para in paragraphs:
+            # Count standalone 'I' (not part of another word)
+            i_count = len(re.findall(r'\bI\b', para))
+            total_i_count += i_count
+            
+            if i_count >= 3:  # Potential personal report paragraph
+                word_count = len(para.split())
+                max_word_count = max(max_word_count, word_count)
+        
+        return total_i_count, max_word_count
+    
+    @classmethod
+    def classify(cls, title: str, content: str, url: str = "", settings: dict = None) -> str:
+        """
+        Classify article type based on content analysis using Admin-controlled protocols.
+        """
         if not content and not title:
             return "Webpage"
         
-        title_lower = title.lower() if title else ""
-        content_lower = content.lower()[:1500] if content else ""
-        url_lower = url.lower() if url else ""
-        combined = f"{title_lower} {content_lower} {url_lower}"
+        # Use default settings if none provided
+        if settings is None:
+            settings = {
+                "doctype_phd_min_words": 1500,
+                "doctype_phd_keyword_count": 3,
+                "doctype_phd_protocol": cls.DEFAULT_PHD_PROTOCOL,
+                "doctype_informative_protocol": cls.DEFAULT_INFORMATIVE_PROTOCOL,
+                "doctype_news_protocol": cls.DEFAULT_NEWS_PROTOCOL,
+                "doctype_news_min_instances": 3,
+                "doctype_blog_protocol": cls.DEFAULT_BLOG_PROTOCOL,
+                "doctype_blog_min_instances": 3,
+                "doctype_forum_protocol": cls.DEFAULT_FORUM_PROTOCOL,
+                "doctype_personal_collected_protocol": cls.DEFAULT_PERSONAL_PROTOCOL,
+                "doctype_personal_min_i_count": 3,
+                "doctype_personal_min_paragraph_words": 75,
+            }
         
-        # PhD Informative - academic credentialed content
-        phd_count = sum(1 for ind in cls.PHD_INDICATORS if ind in combined)
+        title_lower = title.lower() if title else ""
+        content_lower = content.lower() if content else ""
+        url_lower = url.lower() if url else ""
+        combined = f"{title_lower} {content_lower}"
         word_count = len(content.split()) if content else 0
         
-        if phd_count >= 2 or (phd_count >= 1 and word_count >= 1500):
-            return "PhD Informative"
+        # 1. FORUM - Must contain 'forum' in title (checked first, simple rule)
+        forum_protocol = settings.get("doctype_forum_protocol", "(forum)")
+        if cls._count_protocol_matches(title_lower, forum_protocol) > 0:
+            return "Forum"
         
-        # Personal Report detection
-        personal_count = sum(1 for ind in cls.PERSONAL_INDICATORS if ind in combined)
-        collected_count = sum(1 for ind in cls.COLLECTED_INDICATORS if ind in combined)
+        # 2. BLOG - Must contain 'blog' N times, one in title
+        blog_protocol = settings.get("doctype_blog_protocol", "(blog)")
+        blog_min = settings.get("doctype_blog_min_instances", 3)
+        blog_count = combined.count("blog")
+        if blog_count >= blog_min and "blog" in title_lower:
+            return "Blog Post"
         
-        if collected_count >= 2 or (collected_count >= 1 and personal_count >= 1):
+        # 3. INFORMATIVE - Check if meets informative protocol
+        informative_protocol = settings.get("doctype_informative_protocol", cls.DEFAULT_INFORMATIVE_PROTOCOL)
+        informative_groups = informative_protocol.split('&')
+        informative_matches = 0
+        for group in informative_groups:
+            group = group.strip().strip('()')
+            terms = [t.strip().lower() for t in group.split(' or ')]
+            if any(term in combined for term in terms):
+                informative_matches += 1
+        is_informative = informative_matches >= len(informative_groups)
+        
+        # 4. PhD INFORMATIVE - Must be Informative first + PhD keywords + word count
+        if is_informative:
+            phd_protocol = settings.get("doctype_phd_protocol", cls.DEFAULT_PHD_PROTOCOL)
+            phd_min_words = settings.get("doctype_phd_min_words", 1500)
+            phd_keyword_count = settings.get("doctype_phd_keyword_count", 3)
+            
+            phd_terms = phd_protocol.strip('()').split(' or ')
+            phd_matches = sum(1 for term in phd_terms if term.strip().lower() in combined)
+            
+            if phd_matches >= phd_keyword_count and word_count >= phd_min_words:
+                return "PhD Informative"
+            
+            return "Informative"
+        
+        # 5. PERSONAL REPORT (Collected) - 'I' outside quotes in paragraph with min words
+        personal_protocol = settings.get("doctype_personal_collected_protocol", "(I)")
+        min_i_count = settings.get("doctype_personal_min_i_count", 3)
+        min_para_words = settings.get("doctype_personal_min_paragraph_words", 75)
+        
+        total_i, max_para_words = cls._count_i_outside_quotes(content)
+        if total_i >= min_i_count and max_para_words >= min_para_words:
             return "Personal Report (Collected)"
-        if personal_count >= 2:
-            return "Personal Report (Organic)"
         
-        # URL-based classification
+        # 6. URL-based classification
         if any(x in url_lower for x in ['wikipedia.org', 'wiki']):
             return 'Wiki'
         if any(x in url_lower for x in ['youtube.com', 'vimeo.com', 'video', 'dailymotion']):
@@ -636,26 +777,27 @@ class ArticleClassifier:
             return 'Government'
         if any(x in url_lower for x in ['.edu', 'academic', 'journal', 'research', 'scholar', 'arxiv', 'pubmed']):
             return 'Academic Paper'
-        if any(x in url_lower for x in ['forum', 'reddit.com', 'quora.com', 'stackexchange', 'stackoverflow']):
-            return 'Forum'
-        if any(x in url_lower for x in ['blog', 'medium.com', 'wordpress', 'substack']):
-            return 'Blog Post'
         if any(x in url_lower for x in ['.pdf']):
             return 'PDF Document'
         if any(x in url_lower for x in ['.doc', '.docx']):
             return 'MS Word Document'
         
-        # Content-based classification
-        if "forum" in title_lower:
-            return "Forum"
-        if content_lower.count("blog") >= 3 and "blog" in title_lower:
-            return "Blog Post"
-        if any(x in combined for x in ['breaking news', 'latest news', 'news article', 'reported today']):
-            return "News Article"
-        if content_lower.count("news") >= 3:
+        # 7. NEWS ARTICLE - Protocol match or default fallback
+        news_protocol = settings.get("doctype_news_protocol", cls.DEFAULT_NEWS_PROTOCOL)
+        news_min = settings.get("doctype_news_min_instances", 3)
+        news_matches = cls._count_protocol_matches(combined, news_protocol)
+        
+        if news_matches >= news_min or "news" in combined:
             return "News Article"
         
-        return "Webpage"
+        # Default fallback
+        return "News Article"
+    
+    @classmethod
+    async def classify_async(cls, title: str, content: str, url: str = "") -> str:
+        """Async version that fetches settings from database"""
+        settings = await cls.get_settings()
+        return cls.classify(title, content, url, settings)
 
 # ============== PAYMENT ENDPOINTS ==============
 
