@@ -45,7 +45,7 @@ const SearchResultComments = ({ resultId, showToast, onClose }) => {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API}/api/search-results/${resultId}/comments`, {
+      const res = await fetch(`${API}/search-results/${resultId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
