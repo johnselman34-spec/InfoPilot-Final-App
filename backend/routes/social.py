@@ -531,6 +531,254 @@ async def remove_member(group_id: str, member_id: str, user = Depends(get_curren
     return {"success": True, "message": "Member removed"}
 
 
+
+# ==================== GROUP MODERATION ====================
+
+@router.post("/groups/{group_id}/ban/{member_id}", response_model=dict)
+async def ban_group_member(group_id: str, member_id: str, reason: str = "", user = Depends(get_current_user)):
+    """Ban a member from the group (admin/moderator only)"""
+    user_id = str(user["_id"])
+    
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Check permissions
+    is_admin = user_id in group.get("admins", []) or group.get("created_by") == user_id
+    is_mod = user_id in group.get("moderators", [])
+    
+    if not is_admin and not is_mod:
+        raise HTTPException(status_code=403, detail="Only admins and moderators can ban members")
+    
+    # Cannot ban the owner or yourself
+    if member_id == group.get("created_by"):
+        raise HTTPException(status_code=400, detail="Cannot ban the group owner")
+    if member_id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot ban yourself")
+    
+    # Moderators cannot ban admins
+    if not is_admin and member_id in group.get("admins", []):
+        raise HTTPException(status_code=403, detail="Moderators cannot ban admins")
+    
+    # Remove from group and add to ban list
+    await db.groups.update_one(
+        {"_id": ObjectId(group_id)},
+        {
+            "$pull": {"members": member_id, "admins": member_id, "moderators": member_id},
+            "$addToSet": {"banned_members": {
+                "user_id": member_id,
+                "banned_by": user_id,
+                "reason": reason,
+                "banned_at": datetime.utcnow()
+            }}
+        }
+    )
+    
+    # Notify the banned user
+    await db.notifications.insert_one({
+        "user_id": member_id,
+        "type": "group_ban",
+        "group_id": group_id,
+        "message": f"You have been banned from {group['name']}" + (f": {reason}" if reason else ""),
+        "read": False,
+        "created_at": datetime.utcnow()
+    })
+    
+    return {"success": True, "message": "Member banned from group"}
+
+
+@router.post("/groups/{group_id}/unban/{member_id}", response_model=dict)
+async def unban_group_member(group_id: str, member_id: str, user = Depends(get_current_user)):
+    """Unban a member from the group (admin only)"""
+    user_id = str(user["_id"])
+    
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    if user_id not in group.get("admins", []) and group.get("created_by") != user_id:
+        raise HTTPException(status_code=403, detail="Only admins can unban members")
+    
+    # Remove from ban list
+    await db.groups.update_one(
+        {"_id": ObjectId(group_id)},
+        {"$pull": {"banned_members": {"user_id": member_id}}}
+    )
+    
+    return {"success": True, "message": "Member unbanned"}
+
+
+@router.post("/groups/{group_id}/mute/{member_id}", response_model=dict)
+async def mute_group_member(group_id: str, member_id: str, duration_hours: int = 24, reason: str = "", user = Depends(get_current_user)):
+    """Mute a member in the group (admin/moderator only)"""
+    user_id = str(user["_id"])
+    
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    # Check permissions
+    is_admin = user_id in group.get("admins", []) or group.get("created_by") == user_id
+    is_mod = user_id in group.get("moderators", [])
+    
+    if not is_admin and not is_mod:
+        raise HTTPException(status_code=403, detail="Only admins and moderators can mute members")
+    
+    # Cannot mute the owner
+    if member_id == group.get("created_by"):
+        raise HTTPException(status_code=400, detail="Cannot mute the group owner")
+    
+    # Moderators cannot mute admins
+    if not is_admin and member_id in group.get("admins", []):
+        raise HTTPException(status_code=403, detail="Moderators cannot mute admins")
+    
+    from datetime import timedelta
+    mute_until = datetime.utcnow() + timedelta(hours=duration_hours)
+    
+    # Add to muted list
+    await db.groups.update_one(
+        {"_id": ObjectId(group_id)},
+        {"$set": {f"muted_members.{member_id}": {
+            "muted_by": user_id,
+            "reason": reason,
+            "muted_at": datetime.utcnow(),
+            "muted_until": mute_until
+        }}}
+    )
+    
+    # Notify the muted user
+    await db.notifications.insert_one({
+        "user_id": member_id,
+        "type": "group_mute",
+        "group_id": group_id,
+        "message": f"You have been muted in {group['name']} for {duration_hours} hours" + (f": {reason}" if reason else ""),
+        "read": False,
+        "created_at": datetime.utcnow()
+    })
+    
+    return {"success": True, "message": f"Member muted for {duration_hours} hours", "muted_until": mute_until.isoformat()}
+
+
+@router.post("/groups/{group_id}/unmute/{member_id}", response_model=dict)
+async def unmute_group_member(group_id: str, member_id: str, user = Depends(get_current_user)):
+    """Unmute a member in the group (admin/moderator only)"""
+    user_id = str(user["_id"])
+    
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    is_admin = user_id in group.get("admins", []) or group.get("created_by") == user_id
+    is_mod = user_id in group.get("moderators", [])
+    
+    if not is_admin and not is_mod:
+        raise HTTPException(status_code=403, detail="Only admins and moderators can unmute members")
+    
+    await db.groups.update_one(
+        {"_id": ObjectId(group_id)},
+        {"$unset": {f"muted_members.{member_id}": ""}}
+    )
+    
+    return {"success": True, "message": "Member unmuted"}
+
+
+@router.get("/groups/{group_id}/banned", response_model=dict)
+async def get_banned_members(group_id: str, user = Depends(get_current_user)):
+    """Get list of banned members (admin only)"""
+    user_id = str(user["_id"])
+    
+    group = await db.groups.find_one({"_id": ObjectId(group_id)})
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    
+    if user_id not in group.get("admins", []) and group.get("created_by") != user_id:
+        raise HTTPException(status_code=403, detail="Only admins can view banned members")
+    
+    banned = group.get("banned_members", [])
+    
+    # Get user details for banned members
+    banned_with_details = []
+    for ban in banned:
+        banned_user = await db.users.find_one({"_id": ObjectId(ban["user_id"])})
+        if banned_user:
+            banned_with_details.append({
+                "user_id": ban["user_id"],
+                "username": banned_user.get("username", "Unknown"),
+                "reason": ban.get("reason", ""),
+                "banned_at": ban.get("banned_at").isoformat() if ban.get("banned_at") else None,
+                "banned_by": ban.get("banned_by")
+            })
+    
+    return {"banned_members": banned_with_details}
+
+
+# ==================== PAGE MODERATION ====================
+
+@router.post("/pages/{page_id}/ban/{user_id_to_ban}", response_model=dict)
+async def ban_page_follower(page_id: str, user_id_to_ban: str, reason: str = "", user = Depends(get_current_user)):
+    """Ban a user from the page (admin only)"""
+    current_user_id = str(user["_id"])
+    
+    page = await db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    # Only owner or admins can ban
+    if page.get("created_by") != current_user_id and current_user_id not in page.get("admins", []):
+        raise HTTPException(status_code=403, detail="Only page admins can ban users")
+    
+    # Cannot ban the owner
+    if user_id_to_ban == page.get("created_by"):
+        raise HTTPException(status_code=400, detail="Cannot ban the page owner")
+    
+    # Remove from followers and add to ban list
+    await db.pages.update_one(
+        {"_id": ObjectId(page_id)},
+        {
+            "$pull": {"followers": user_id_to_ban, "admins": user_id_to_ban},
+            "$addToSet": {"banned_users": {
+                "user_id": user_id_to_ban,
+                "banned_by": current_user_id,
+                "reason": reason,
+                "banned_at": datetime.utcnow()
+            }}
+        }
+    )
+    
+    # Notify the banned user
+    await db.notifications.insert_one({
+        "user_id": user_id_to_ban,
+        "type": "page_ban",
+        "page_id": page_id,
+        "message": f"You have been banned from {page['name']}" + (f": {reason}" if reason else ""),
+        "read": False,
+        "created_at": datetime.utcnow()
+    })
+    
+    return {"success": True, "message": "User banned from page"}
+
+
+@router.post("/pages/{page_id}/unban/{user_id_to_unban}", response_model=dict)
+async def unban_page_user(page_id: str, user_id_to_unban: str, user = Depends(get_current_user)):
+    """Unban a user from the page (admin only)"""
+    current_user_id = str(user["_id"])
+    
+    page = await db.pages.find_one({"_id": ObjectId(page_id)})
+    if not page:
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    if page.get("created_by") != current_user_id and current_user_id not in page.get("admins", []):
+        raise HTTPException(status_code=403, detail="Only page admins can unban users")
+    
+    await db.pages.update_one(
+        {"_id": ObjectId(page_id)},
+        {"$pull": {"banned_users": {"user_id": user_id_to_unban}}}
+    )
+    
+    return {"success": True, "message": "User unbanned from page"}
+
+
+
 @router.get("/groups/{group_id}/roles", response_model=dict)
 async def get_group_roles(group_id: str, user = Depends(get_current_user)):
     """Get all roles and members in a group"""
