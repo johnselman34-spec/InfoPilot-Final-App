@@ -84,6 +84,9 @@ if RESEND_API_KEY:
 
 # SerpAPI Key
 SERPAPI_KEY = os.environ.get('SERPAPI_KEY')
+BRAVE_API_KEY = os.environ.get('BRAVE_API_KEY')
+YANDEX_API_KEY = os.environ.get('YANDEX_API_KEY')
+YANDEX_FOLDER_ID = os.environ.get('YANDEX_FOLDER_ID')
 
 # Create the main app
 app = FastAPI(title="InfoPilot API", version="2.0.0")
