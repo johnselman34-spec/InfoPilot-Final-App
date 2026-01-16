@@ -2523,7 +2523,7 @@ async def get_monthly_leaderboard():
                 "rank": i + 1,
                 "user_id": ml["_id"],
                 "username": user.get("username", "Unknown"),
-                "monthly_xp": l["monthly_xp"]
+                "monthly_xp": ml["monthly_xp"]
             })
     
     return {"leaderboard": leaderboard, "period": "monthly"}
