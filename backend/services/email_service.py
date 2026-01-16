@@ -313,7 +313,7 @@ RECOMMENDATIONS
 - Consider promoting winning variants to 100% traffic
 - Review the A/B Dashboard for detailed breakdowns
 
-View full dashboard: https://infopilot-explorer.preview.emergentagent.com/#admin
+View full dashboard: {os.environ.get('FRONTEND_URL', 'https://infopilot-explorer.preview.emergentagent.com')}/#admin
 """
     
     return plain
