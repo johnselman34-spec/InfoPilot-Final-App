@@ -994,7 +994,7 @@ const UltimateSearchPage = ({ showToast }) => {
       )}
       
       {/* Filtered Results Section - Bottom Center */}
-      {(selectedCategories.length > 0 || selectedDocTypes.length > 0) && showFilteredResults && (
+      {(selectedCategories.length > 0 || selectedDocTypes.length > 0 || minQualityScore > 0) && showFilteredResults && (
         <div className="card" style={{ 
           marginBottom: 20,
           background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.1))',
@@ -1005,6 +1005,11 @@ const UltimateSearchPage = ({ showToast }) => {
               🎯 Filtered Results 
               <span style={{ fontSize: '0.85rem', color: '#a1a1aa', fontWeight: 'normal', marginLeft: 10 }}>
                 {filteredResults.length} of {searchResults.length} results match your filters
+                {minQualityScore > 0 && (
+                  <span style={{ marginLeft: 8, color: '#10b981' }}>
+                    (Quality: {minQualityScore}+)
+                  </span>
+                )}
               </span>
             </h3>
             <button
