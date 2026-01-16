@@ -158,15 +158,23 @@ const PersonalReportsPage = ({ showToast, onBack }) => {
       if (res.ok) {
         const data = await res.json();
         
-        // Upload image if selected
-        if (image && data.report?.id) {
-          const formData = new FormData();
-          formData.append('image', image);
-          await fetch(`${API}/api/personal-reports/${data.report.id}/image`, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-            body: formData
-          });
+        // Upload all images (up to 3)
+        if (images.length > 0 && data.report?.id) {
+          setUploadingImage(true);
+          for (const img of images) {
+            const formData = new FormData();
+            formData.append('file', img);
+            try {
+              await fetch(`${API}/api/personal-reports/${data.report.id}/image`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData
+              });
+            } catch (imgError) {
+              console.error('Failed to upload image:', imgError);
+            }
+          }
+          setUploadingImage(false);
         }
         
         showToast(editingReport ? 'Report updated!' : 'Report created!', 'success');
