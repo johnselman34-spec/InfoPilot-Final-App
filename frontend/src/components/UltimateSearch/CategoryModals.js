@@ -55,10 +55,28 @@ const CreateCategoryModal = ({
             />
             Make this category public
           </label>
-          <p style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>
-            💡 Protocols are case-insensitive. Use (keyphrase1 or keyphrase2) for OR logic, 
-            & for AND, + for INCLUDE ALL, ^ for EXCLUDE ALL
-          </p>
+          
+          {/* Protocol Syntax Help */}
+          <div style={{
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: 8,
+            padding: 12,
+            fontSize: '0.8rem'
+          }}>
+            <p style={{ color: '#10b981', fontWeight: 600, marginBottom: 8 }}>📝 Protocol Syntax Help:</p>
+            <ul style={{ color: '#a1a1aa', margin: 0, paddingLeft: 20, lineHeight: 1.6 }}>
+              <li><code style={{ color: '#f472b6' }}>or</code> - Separate alternatives within a group</li>
+              <li><code style={{ color: '#f472b6' }}>&</code> <strong>or</strong> <code style={{ color: '#f472b6' }}>and</code> - Connect groups (both work!)</li>
+              <li><code style={{ color: '#f472b6' }}>+</code> - Boost priority of a group</li>
+              <li><code style={{ color: '#f472b6' }}>^</code> - Exclude matches containing these terms</li>
+            </ul>
+            <p style={{ color: '#22d3ee', marginTop: 10, marginBottom: 0 }}>
+              ✨ <strong>Tip:</strong> "and" works the same as "&" between groups!<br/>
+              <span style={{ color: '#a1a1aa' }}>Example: <code>(aviation or pilot) and (safety)</code></span>
+            </p>
+          </div>
+          
           <button className="btn btn-primary" onClick={onCreate} data-testid="create-category-btn">
             Create Category
           </button>
