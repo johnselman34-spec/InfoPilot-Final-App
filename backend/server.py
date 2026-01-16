@@ -2949,6 +2949,82 @@ async def change_password(request: PasswordChangeRequest, user = Depends(get_cur
     
     return {"success": True, "message": "Password changed successfully"}
 
+@api_router.get("/users/search", response_model=dict)
+async def search_users(
+    q: str = Query(..., min_length=1, description="Search query"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    user = Depends(get_current_user_local)
+):
+    """
+    Search users by first name, last name, email, username, or Ultimate Search page name.
+    Returns matching users with their profiles.
+    """
+    query = q.strip().lower()
+    
+    # Build search filter - search across multiple fields
+    search_filter = {
+        "$or": [
+            {"username": {"$regex": query, "$options": "i"}},
+            {"email": {"$regex": query, "$options": "i"}},
+            {"first_name": {"$regex": query, "$options": "i"}},
+            {"last_name": {"$regex": query, "$options": "i"}},
+            {"callsign": {"$regex": query, "$options": "i"}},  # Ultimate Search page name
+            {"ultimate_search_name": {"$regex": query, "$options": "i"}},
+            # Also search by full name combination
+            {"$expr": {
+                "$regexMatch": {
+                    "input": {"$concat": ["$first_name", " ", "$last_name"]},
+                    "regex": query,
+                    "options": "i"
+                }
+            }}
+        ]
+    }
+    
+    # Get total count
+    total = await db.users.count_documents(search_filter)
+    
+    # Get paginated results
+    skip = (page - 1) * limit
+    cursor = db.users.find(
+        search_filter,
+        {
+            "_id": 0,
+            "hashed_password": 0,  # Never return password
+            "reset_token": 0,
+            "reset_token_expiry": 0
+        }
+    ).skip(skip).limit(limit).sort("username", 1)
+    
+    users = []
+    async for u in cursor:
+        # Add display name logic
+        display_name = u.get("callsign") or u.get("ultimate_search_name") or u.get("username")
+        users.append({
+            "id": u.get("id"),
+            "username": u.get("username"),
+            "email": u.get("email") if user.get("is_admin") else None,  # Only admin sees emails
+            "first_name": u.get("first_name", ""),
+            "last_name": u.get("last_name", ""),
+            "display_name": display_name,
+            "callsign": u.get("callsign"),
+            "ultimate_search_name": u.get("ultimate_search_name"),
+            "avatar_url": u.get("avatar_url"),
+            "bio": u.get("bio", ""),
+            "is_premium": u.get("is_premium", False),
+            "created_at": u.get("created_at"),
+            "ultimate_search_public": u.get("ultimate_search_public", False)
+        })
+    
+    return {
+        "users": users,
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit if limit > 0 else 0,
+        "query": q
+    }
+
 @api_router.get("/users/has-password", response_model=dict)
 async def check_has_password(user = Depends(get_current_user_local)):
     """Check if user has a password set"""
