@@ -109,7 +109,9 @@ function App() {
 
   return (
     <AuthProvider>
-      <AppContent authMode={authMode} setAuthMode={setAuthMode} />
+      <LaughProvider>
+        <AppContent authMode={authMode} setAuthMode={setAuthMode} />
+      </LaughProvider>
     </AuthProvider>
   );
 }
