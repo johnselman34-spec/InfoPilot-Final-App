@@ -604,6 +604,142 @@ const MapPage = ({ showToast, setCurrentPage }) => {
         </p>
       </div>
 
+      {/* Category Filter Section */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1))',
+        borderRadius: 12,
+        padding: 15,
+        marginBottom: 15,
+        border: '1px solid rgba(16, 185, 129, 0.3)'
+      }} data-testid="category-filter-section">
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          marginBottom: showCategoryFilter ? 12 : 0
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <h4 style={{ color: '#10b981', margin: 0, fontSize: '0.95rem' }}>
+              🏷️ Filter by Category
+            </h4>
+            {selectedCategories.length > 0 && (
+              <span style={{
+                background: 'linear-gradient(135deg, #10b981, #3b82f6)',
+                padding: '2px 10px',
+                borderRadius: 20,
+                fontSize: '0.75rem',
+                color: '#fff',
+                fontWeight: 600
+              }}>
+                {selectedCategories.length} selected • {filteredMapResults.length} results
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {selectedCategories.length > 0 && (
+              <button
+                onClick={() => setSelectedCategories([])}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#f87171',
+                  padding: '4px 10px',
+                  borderRadius: 6,
+                  fontSize: '0.75rem',
+                  cursor: 'pointer'
+                }}
+                data-testid="clear-category-filter"
+              >
+                ✕ Clear All
+              </button>
+            )}
+            <button
+              onClick={() => setShowCategoryFilter(!showCategoryFilter)}
+              style={{
+                background: showCategoryFilter ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                color: '#10b981',
+                padding: '4px 10px',
+                borderRadius: 6,
+                fontSize: '0.75rem',
+                cursor: 'pointer'
+              }}
+            >
+              {showCategoryFilter ? '▲ Collapse' : '▼ Expand'}
+            </button>
+          </div>
+        </div>
+        
+        {showCategoryFilter && categories.length > 0 && (
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 8
+          }}>
+            {categories.map((category) => {
+              const isSelected = selectedCategories.includes(category.name);
+              const color = categoryColorMap[category.name] || '#6b7280';
+              const categoryResults = mapResults.filter(r => 
+                r.categories && r.categories.includes(category.name)
+              );
+              
+              return (
+                <label
+                  key={category.id || category.name}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 12px',
+                    background: isSelected ? `${color}25` : 'rgba(30, 20, 50, 0.5)',
+                    border: `2px solid ${isSelected ? color : 'transparent'}`,
+                    borderRadius: 20,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    fontSize: '0.8rem'
+                  }}
+                  data-testid={`category-filter-${category.name}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleCategory(category.name)}
+                    style={{ 
+                      display: 'none'
+                    }}
+                  />
+                  <div style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: color,
+                    boxShadow: isSelected ? `0 0 8px ${color}` : 'none'
+                  }} />
+                  <span style={{ color: isSelected ? '#fff' : '#a1a1aa' }}>
+                    {category.name}
+                  </span>
+                  <span style={{
+                    background: 'rgba(0,0,0,0.3)',
+                    padding: '1px 6px',
+                    borderRadius: 10,
+                    fontSize: '0.65rem',
+                    color: '#71717a'
+                  }}>
+                    {categoryResults.length}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+        
+        {showCategoryFilter && categories.length === 0 && (
+          <p style={{ color: '#71717a', fontSize: '0.8rem', margin: 0 }}>
+            No categories yet. Create categories in Ultimate Search to filter results here.
+          </p>
+        )}
+      </div>
+
       {/* Legend */}
       <div style={{ 
         display: 'flex', gap: 15, flexWrap: 'wrap', marginBottom: 15,
