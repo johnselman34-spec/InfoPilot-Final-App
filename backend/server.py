@@ -1232,6 +1232,7 @@ Return ONLY a JSON array of 3 strings, no other text:
     batch_id = str(ObjectId())
     
     # If auto_categorize is enabled, match against categories
+    # Enhanced: Count parenthetical group matches for better scoring
     if auto_categorize:
         all_categories = await db.categories.find({
             "$or": [
@@ -1243,7 +1244,9 @@ Return ONLY a JSON array of 3 strings, no other text:
         for result in all_results:
             result_categories = []
             result_category_ids = []
+            result_scores = []  # Track scores per category
             best_score = 0
+            total_groups_matched = 0  # Count parenthetical groups matched
             
             for category in all_categories:
                 protocol = category.get("protocol", "")
@@ -1256,11 +1259,32 @@ Return ONLY a JSON array of 3 strings, no other text:
                 if matches:
                     result_categories.append(category["name"])
                     result_category_ids.append(str(category["_id"]))
+                    result_scores.append(score)
                     best_score = max(best_score, score)
+                    
+                    # Count how many groups (parentheses) this result matches
+                    combined_text = f"{result.get('title', '')} {result.get('snippet', '')} {result.get('content', '')}".lower()
+                    groups_matched_count = 0
+                    for group in groups:
+                        if group.get("excluded"):
+                            continue
+                        for term in group["terms"]:
+                            term_lower = term.lower().strip('"\'')
+                            if term_lower in combined_text:
+                                groups_matched_count += 1
+                                break  # One match per group is enough
+                    total_groups_matched = max(total_groups_matched, groups_matched_count)
+            
+            # Enhanced scoring: weight by number of groups matched (parentheses)
+            # More groups matched = higher priority for auto-collation
+            parentheses_bonus = total_groups_matched * 0.1
+            combined_score = best_score + parentheses_bonus
             
             result["categories"] = result_categories
             result["category_ids"] = result_category_ids
-            result["match_score"] = best_score
+            result["match_score"] = combined_score
+            result["groups_matched"] = total_groups_matched
+            result["should_auto_collate"] = combined_score >= 0.5 and len(result_category_ids) > 0  # Only auto-collate best matches
     
     # Classify and add metadata
     for result in all_results:
