@@ -168,43 +168,43 @@ class TestCategoryManagement:
     
     def test_create_sub_sub_category(self):
         """Test creating a sub-sub-category (3 levels deep)"""
-        # Create parent
+        # Create parent - protocol must have 'or' operator
         parent_data = {
             "name": f"TEST_L0_{int(time.time())}",
-            "protocol": "(level0)",
+            "protocol": "(level0 or parent)",
             "is_public": False
         }
         parent_response = requests.post(f"{BASE_URL}/api/categories", 
                                         json=parent_data, 
                                         headers=self.headers)
-        assert parent_response.status_code == 200
+        assert parent_response.status_code == 200, f"Parent creation failed: {parent_response.text}"
         parent = parent_response.json()
         
         # Create sub-category (level 1)
         sub_data = {
             "name": f"TEST_L1_{int(time.time())}",
-            "protocol": "(level1)",
+            "protocol": "(level1 or sub)",
             "parent_id": parent["id"],
             "is_public": False
         }
         sub_response = requests.post(f"{BASE_URL}/api/categories", 
                                      json=sub_data, 
                                      headers=self.headers)
-        assert sub_response.status_code == 200
+        assert sub_response.status_code == 200, f"Sub creation failed: {sub_response.text}"
         sub = sub_response.json()
         assert sub["level"] == 1
         
         # Create sub-sub-category (level 2)
         subsub_data = {
             "name": f"TEST_L2_{int(time.time())}",
-            "protocol": "(level2)",
+            "protocol": "(level2 or subsub)",
             "parent_id": sub["id"],
             "is_public": False
         }
         subsub_response = requests.post(f"{BASE_URL}/api/categories", 
                                         json=subsub_data, 
                                         headers=self.headers)
-        assert subsub_response.status_code == 200
+        assert subsub_response.status_code == 200, f"SubSub creation failed: {subsub_response.text}"
         subsub = subsub_response.json()
         assert subsub["level"] == 2  # Sub-sub-category should be level 2
         print(f"✅ Created 3-level hierarchy: {parent['name']} -> {sub['name']} -> {subsub['name']}")
@@ -215,16 +215,16 @@ class TestCategoryManagement:
     
     def test_update_category(self):
         """Test updating a category"""
-        # Create category first
+        # Create category first - protocol must have 'or' operator
         category_data = {
             "name": f"TEST_Update_{int(time.time())}",
-            "protocol": "(original)",
+            "protocol": "(original or base)",
             "is_public": False
         }
         create_response = requests.post(f"{BASE_URL}/api/categories", 
                                         json=category_data, 
                                         headers=self.headers)
-        assert create_response.status_code == 200
+        assert create_response.status_code == 200, f"Create failed: {create_response.text}"
         category = create_response.json()
         
         # Update category
@@ -237,7 +237,7 @@ class TestCategoryManagement:
         update_response = requests.put(f"{BASE_URL}/api/categories/{category['id']}", 
                                        json=update_data, 
                                        headers=self.headers)
-        assert update_response.status_code == 200
+        assert update_response.status_code == 200, f"Update failed: {update_response.text}"
         updated = update_response.json()
         assert updated["name"] == update_data["name"]
         assert updated["protocol"] == update_data["protocol"]
@@ -282,31 +282,31 @@ class TestCategoryManagement:
     
     def test_cascade_delete(self):
         """Test cascade delete of parent category removes children"""
-        # Create parent
+        # Create parent - protocol must have 'or' operator
         parent_data = {
             "name": f"TEST_CascadeParent_{int(time.time())}",
-            "protocol": "(cascade)",
+            "protocol": "(cascade or parent)",
             "is_public": False
         }
         parent_response = requests.post(f"{BASE_URL}/api/categories", 
                                         json=parent_data, 
                                         headers=self.headers)
-        assert parent_response.status_code == 200
+        assert parent_response.status_code == 200, f"Parent creation failed: {parent_response.text}"
         parent = parent_response.json()
         
-        # Create children
+        # Create children - protocol must have 'or' operator
         child_ids = []
         for i in range(3):
             child_data = {
                 "name": f"TEST_CascadeChild{i}_{int(time.time())}",
-                "protocol": f"(child{i})",
+                "protocol": f"(child{i} or sub{i})",
                 "parent_id": parent["id"],
                 "is_public": False
             }
             child_response = requests.post(f"{BASE_URL}/api/categories", 
                                            json=child_data, 
                                            headers=self.headers)
-            assert child_response.status_code == 200
+            assert child_response.status_code == 200, f"Child creation failed: {child_response.text}"
             child_ids.append(child_response.json()["id"])
         
         # Delete parent
@@ -432,8 +432,13 @@ class TestAdminEndpoints:
         response = requests.get(f"{BASE_URL}/api/admin/users", headers=self.headers)
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
-        print(f"✅ Admin users list: {len(data)} users")
+        # Response is wrapped in {"users": [...]}
+        if isinstance(data, dict) and "users" in data:
+            users = data["users"]
+        else:
+            users = data
+        assert isinstance(users, list)
+        print(f"✅ Admin users list: {len(users)} users")
     
     def test_admin_moderation_actions(self):
         """Test admin moderation actions endpoint"""
