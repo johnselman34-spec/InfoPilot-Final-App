@@ -415,7 +415,7 @@ class ExtendedWebSearchService:
     
     @staticmethod
     async def search(query: str, num_results: int = 200) -> List[Dict[str, Any]]:
-        """Aggregate search from multiple sources: Google (SerpAPI), DuckDuckGo, Brave, Yandex"""
+        """Aggregate search from multiple sources: Google (SerpAPI), DuckDuckGo, Brave"""
         all_results = []
         seen_urls = set()
         
@@ -431,14 +431,6 @@ class ExtendedWebSearchService:
         if BRAVE_API_KEY and len(all_results) < num_results:
             brave_results = await ExtendedWebSearchService.search_brave(query, min(20, num_results - len(all_results)))
             for r in brave_results:
-                if r["url"] not in seen_urls:
-                    seen_urls.add(r["url"])
-                    all_results.append(r)
-        
-        # Yandex Search (good for international/Russian content)
-        if YANDEX_API_KEY and YANDEX_FOLDER_ID and len(all_results) < num_results:
-            yandex_results = await ExtendedWebSearchService.search_yandex(query, min(10, num_results - len(all_results)))
-            for r in yandex_results:
                 if r["url"] not in seen_urls:
                     seen_urls.add(r["url"])
                     all_results.append(r)
@@ -477,7 +469,6 @@ class ExtendedWebSearchService:
                     "available": bool(BRAVE_API_KEY),
                     "description": "Privacy-focused search engine"
                 },
-                "yandex": {
                     "name": "Yandex",
                     "available": bool(YANDEX_API_KEY and YANDEX_FOLDER_ID),
                     "description": "Russian and international search"
