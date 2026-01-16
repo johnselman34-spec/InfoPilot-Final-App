@@ -264,27 +264,6 @@ const MaestroBistroSection = () => (
     </div>
   </div>
 );
-            }}/>
-            <span><strong style={{ color: '#38bdf8' }}>Fresh Fish Chowder</strong> - Maine's finest catch</span>
-          </div>
-        </div>
-        <div style={{
-          marginTop: 12,
-          padding: '8px 15px',
-          background: 'rgba(139, 69, 19, 0.3)',
-          borderRadius: 10,
-          color: '#fbbf24',
-          fontSize: '0.8rem',
-          fontStyle: 'italic',
-          fontWeight: 600,
-          border: '1px solid rgba(210, 105, 30, 0.4)'
-        }}>
-          "Appropriate & conscientable prices for appropriately & conscientiously AMAZING food!" 🎻
-        </div>
-      </div>
-    </div>
-  </div>
-);
 
 // InfoPilot Promo Section
 const InfoPilotSection = () => (
