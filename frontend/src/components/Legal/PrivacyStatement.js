@@ -78,10 +78,10 @@ const PrivacyStatement = ({ onClose, onAccept }) => {
           
           <Section title="1. Introduction">
             <p>
-              Top Pilot Enterprises, Inc. ("Company", "we", "us", "our") respects your privacy 
+              Top Pilot Enterprises, Inc. (&ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) respects your privacy 
               and is committed to protecting your personal data. This Privacy Statement explains 
               how we collect, use, disclose, and safeguard your information when you use 
-              InfoPilot Explorer ("the Service").
+              InfoPilot Explorer (&ldquo;the Service&rdquo;).
             </p>
           </Section>
           
