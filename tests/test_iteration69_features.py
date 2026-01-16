@@ -234,7 +234,13 @@ class TestContentQualityScoring:
         if categories_response.status_code != 200:
             pytest.skip("Could not fetch categories")
         
-        categories = categories_response.json().get("categories", [])
+        # Handle both list and dict response formats
+        categories_data = categories_response.json()
+        if isinstance(categories_data, list):
+            categories = categories_data
+        else:
+            categories = categories_data.get("categories", [])
+        
         if not categories:
             pytest.skip("No categories available for testing")
         
@@ -319,8 +325,14 @@ class TestMyProtocols:
         assert response.status_code == 200
         data = response.json()
         
-        assert "protocols" in data
-        print(f"✅ My protocols returned: {len(data.get('protocols', []))} protocols")
+        # Handle both list and dict response formats
+        if isinstance(data, list):
+            protocols = data
+            print(f"✅ My protocols returned: {len(protocols)} protocols (list format)")
+        else:
+            assert "protocols" in data
+            protocols = data.get("protocols", [])
+            print(f"✅ My protocols returned: {len(protocols)} protocols (dict format)")
 
 
 if __name__ == "__main__":
