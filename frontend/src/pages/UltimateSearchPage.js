@@ -539,11 +539,17 @@ const UltimateSearchPage = ({ showToast }) => {
           setSearchQuery={setSearchQuery}
           onSearch={handleSearch}
           onCollate={collateWithCategories}
+          onAutoCategorize={autoCategorizeSearc}
+          onAISearch={aiIntelligentSearch}
           loading={loading}
           collateLoading={collateLoading}
+          autoCatLoading={autoCatLoading}
+          aiSearchLoading={aiSearchLoading}
           selectedCategoriesCount={selectedCategories.length}
           aggregation={aggregation}
           setAggregation={setAggregation}
+          aiSearchMode={aiSearchMode}
+          setAiSearchMode={setAiSearchMode}
           showMap={showMap}
           setShowMap={setShowMap}
           mapResultsCount={mapResults.length}
