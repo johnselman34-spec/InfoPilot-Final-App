@@ -481,6 +481,29 @@ const UltimateSearchPage = ({ showToast }) => {
     }
   };
 
+  const deleteCategory = async (categoryId) => {
+    try {
+      const res = await fetch(`${API}/categories/${categoryId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        showToast('Category deleted successfully!', 'success');
+        setEditingCategory(null);
+        setSelectedCategories(prev => prev.filter(id => id !== categoryId));
+        fetchCategories();
+        fetchSearchResults();
+        triggerMapRefresh();
+      } else {
+        const data = await res.json();
+        showToast(data.detail || 'Failed to delete category', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to delete category', 'error');
+    }
+  };
+
   const toggleCategorySelection = (catId) => {
     setSelectedCategories(prev => 
       prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
