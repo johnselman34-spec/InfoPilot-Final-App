@@ -11,7 +11,7 @@ import CustomMapStyling from '../components/Map/CustomMapStyling';
 const MAP_REFRESH_INTERVAL = 30000;
 
 const MapPage = ({ showToast, setCurrentPage }) => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [mapResults, setMapResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hoveredResult, setHoveredResult] = useState(null);
@@ -19,6 +19,11 @@ const MapPage = ({ showToast, setCurrentPage }) => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
   const [containerWidth, setContainerWidth] = useState(800); // Default width
+  const [showMapStyling, setShowMapStyling] = useState(false);
+  const [mapStyle, setMapStyle] = useState(() => {
+    const cached = localStorage.getItem('mapStylePreferences');
+    return cached ? JSON.parse(cached) : { preset: 'default', tileUrl: null };
+  });
   const mapContainerRef = useRef(null);
   const refreshIntervalRef = useRef(null);
   
