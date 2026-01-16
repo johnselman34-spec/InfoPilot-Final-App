@@ -1779,7 +1779,18 @@ async def get_ultimate_search(
     
     skip = (page - 1) * limit
     total = await db.search_results.count_documents(query)
-    results = await db.search_results.find(query).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    
+    # Sort by content_quality_score when filtering by category to prioritize valuable content
+    if selected_category_ids or category_id:
+        # When viewing category results, sort by quality_score (highest first) for best content
+        results = await db.search_results.find(query).sort([
+            ("content_quality_score", -1),  # Highest quality first
+            ("match_score", -1),            # Then by match score
+            ("created_at", -1)              # Finally by date
+        ]).skip(skip).limit(limit).to_list(limit)
+    else:
+        # Default: sort by created_at for recent results
+        results = await db.search_results.find(query).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     
     # Collect all unique category IDs for bulk fetch (N+1 query optimization)
     all_category_ids = set()
