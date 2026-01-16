@@ -24,7 +24,7 @@ const ThemePresetGallery = ({ showToast, onClose }) => {
   const fetchPresets = useCallback(async () => {
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await fetch(`${API}/api/theme-presets`, { headers });
+      const res = await fetch(`${API}/theme-presets`, { headers });
       if (res.ok) {
         const data = await res.json();
         setPresets(data);
