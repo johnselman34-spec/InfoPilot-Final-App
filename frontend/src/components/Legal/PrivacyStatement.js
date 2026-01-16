@@ -166,7 +166,7 @@ const PrivacyStatement = ({ onClose, onAccept }) => {
             <ul style={{ paddingLeft: 25 }}>
               <li><strong>Access:</strong> Request a copy of your personal data</li>
               <li><strong>Correction:</strong> Request correction of inaccurate data</li>
-              <li><strong>Deletion:</strong> Request deletion of your data ("right to be forgotten")</li>
+              <li><strong>Deletion:</strong> Request deletion of your data (&ldquo;right to be forgotten&rdquo;)</li>
               <li><strong>Portability:</strong> Receive your data in a portable format</li>
               <li><strong>Object:</strong> Object to certain processing of your data</li>
               <li><strong>Withdraw Consent:</strong> Withdraw consent where processing is based on consent</li>
