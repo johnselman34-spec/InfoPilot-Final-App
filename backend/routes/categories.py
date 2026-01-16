@@ -168,16 +168,28 @@ async def update_category(category_id: str, update: CategoryUpdate, user = Depen
 
 
 async def update_children_levels(parent_id: str, new_level: int):
-    """Recursively update children category levels"""
+    """Recursively update children category levels - Optimized with bulk operations"""
+    from pymongo import UpdateOne
+    
     children = await db.categories.find({"parent_id": parent_id}).to_list(1000)
-    for child in children:
-        child_id = str(child["_id"])
-        await db.categories.update_one(
+    if not children:
+        return
+    
+    # Bulk update all children at once for better performance
+    bulk_ops = [
+        UpdateOne(
             {"_id": child["_id"]},
             {"$set": {"level": new_level}}
         )
-        # Recursively update grandchildren
-        await update_children_levels(child_id, new_level + 1)
+        for child in children
+    ]
+    
+    if bulk_ops:
+        await db.categories.bulk_write(bulk_ops)
+    
+    # Recursively update grandchildren
+    for child in children:
+        await update_children_levels(str(child["_id"]), new_level + 1)
 
 
 @router.delete("/categories/{category_id}")
