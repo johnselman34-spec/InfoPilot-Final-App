@@ -385,6 +385,189 @@ class ProtocolParser:
         return " ".join(query_terms)
     
     @staticmethod
+    def generate_deep_search_queries(protocol: str, max_queries: int = 10) -> List[str]:
+        """
+        Generate multiple search query variations from a protocol for DEEP searching.
+        This ensures we search with different term combinations to find results
+        that truly match the protocol, not just top-ranked generic results.
+        
+        Returns list of unique search queries to execute.
+        """
+        groups = ProtocolParser.parse_protocol(protocol)
+        non_excluded = [g for g in groups if not g.get("excluded")]
+        
+        if not non_excluded:
+            return []
+        
+        queries = set()
+        
+        # Strategy 1: All combinations of first terms from each group
+        first_terms = [g["terms"][0] if g["terms"] else "" for g in non_excluded]
+        first_terms = [t for t in first_terms if t]
+        if first_terms:
+            queries.add(" ".join(first_terms))
+        
+        # Strategy 2: Boosted groups get priority - search with each boosted term individually
+        for group in non_excluded:
+            if group.get("boosted") and group["terms"]:
+                for term in group["terms"][:3]:  # Top 3 terms from boosted groups
+                    queries.add(term)
+                    # Combine with terms from other groups
+                    for other_group in non_excluded:
+                        if other_group != group and other_group["terms"]:
+                            queries.add(f"{term} {other_group['terms'][0]}")
+        
+        # Strategy 3: Generate queries using different terms from each group
+        import itertools
+        
+        # Get up to 3 terms from each group
+        term_lists = []
+        for group in non_excluded[:4]:  # Limit to 4 groups
+            terms = group["terms"][:3] if group["terms"] else [""]
+            term_lists.append(terms)
+        
+        # Generate combinations (limit to avoid explosion)
+        if term_lists:
+            for combo in itertools.product(*term_lists):
+                query = " ".join([t for t in combo if t])
+                if query:
+                    queries.add(query)
+                if len(queries) >= max_queries * 2:
+                    break
+        
+        # Strategy 4: Quoted exact phrases for multi-word terms
+        for group in non_excluded:
+            for term in group["terms"]:
+                if " " in term or "." in term:  # Multi-word or abbreviated
+                    queries.add(f'"{term}"')
+        
+        # Strategy 5: Combine longest terms (most specific)
+        longest_terms = []
+        for group in non_excluded:
+            if group["terms"]:
+                longest = max(group["terms"], key=len)
+                longest_terms.append(longest)
+        if len(longest_terms) >= 2:
+            queries.add(" ".join(longest_terms[:3]))
+        
+        # Convert to list and limit
+        query_list = list(queries)[:max_queries]
+        
+        # Ensure we have at least one query
+        if not query_list and non_excluded and non_excluded[0]["terms"]:
+            query_list = [non_excluded[0]["terms"][0]]
+        
+        return query_list
+    
+    @staticmethod
+    def strict_match_result(result: Dict[str, Any], groups: List[Dict[str, Any]], 
+                           min_group_match_percent: float = 0.7,
+                           fuzzy_threshold: int = 70) -> Tuple[bool, float, Dict[str, Any]]:
+        """
+        STRICT protocol matching - only accepts results that truly fulfill requirements.
+        
+        Args:
+            result: Search result to match
+            groups: Parsed protocol groups
+            min_group_match_percent: Minimum percentage of groups that must match (0.0-1.0)
+            fuzzy_threshold: Minimum fuzzy match score (higher = stricter)
+        
+        Returns:
+            (matches, score, match_details)
+        """
+        if not groups:
+            return False, 0.0, {}
+        
+        title = result.get("title", "")
+        snippet = result.get("snippet", "")
+        content = result.get("content", "")
+        combined_text = f"{title} {snippet} {content}"
+        
+        if not combined_text.strip():
+            return False, 0.0, {}
+        
+        non_excluded = [g for g in groups if not g.get("excluded")]
+        excluded = [g for g in groups if g.get("excluded")]
+        
+        # Check excluded groups first - any match = reject
+        for group in excluded:
+            for term in group["terms"]:
+                if ProtocolParser.fuzzy_match(combined_text, term, fuzzy_threshold - 10):
+                    return False, 0.0, {"rejected_by": term}
+        
+        # Match non-excluded groups
+        matched_groups = []
+        unmatched_groups = []
+        total_score = 0.0
+        
+        for i, group in enumerate(non_excluded):
+            group_matched = False
+            best_match_score = 0.0
+            matched_term = None
+            
+            for term in group["terms"]:
+                term_lower = ProtocolParser._prepare_term_for_matching(term)
+                
+                # Check for exact match first (highest score)
+                if term_lower in combined_text.lower():
+                    group_matched = True
+                    best_match_score = 1.0
+                    matched_term = term
+                    
+                    # Bonus if in title
+                    if term_lower in title.lower():
+                        best_match_score = 1.2
+                    break
+                
+                # Check fuzzy match
+                elif ProtocolParser.fuzzy_match(combined_text, term, fuzzy_threshold):
+                    group_matched = True
+                    best_match_score = 0.75
+                    matched_term = term
+            
+            if group_matched:
+                if group.get("boosted"):
+                    best_match_score *= 1.5
+                total_score += best_match_score
+                matched_groups.append({
+                    "group_index": i,
+                    "matched_term": matched_term,
+                    "score": best_match_score
+                })
+            else:
+                unmatched_groups.append({
+                    "group_index": i,
+                    "required_terms": group["terms"][:3]
+                })
+        
+        # Calculate match percentage
+        if len(non_excluded) == 0:
+            return False, 0.0, {}
+        
+        match_percent = len(matched_groups) / len(non_excluded)
+        
+        # STRICT: Must match minimum percentage of groups
+        if match_percent < min_group_match_percent:
+            return False, 0.0, {
+                "match_percent": match_percent,
+                "required_percent": min_group_match_percent,
+                "unmatched_groups": unmatched_groups
+            }
+        
+        # Normalize score (0.0 - 1.0 range, can exceed with bonuses)
+        normalized_score = (total_score / len(non_excluded)) * match_percent
+        
+        match_details = {
+            "match_percent": match_percent,
+            "matched_groups": matched_groups,
+            "unmatched_groups": unmatched_groups,
+            "total_groups": len(non_excluded),
+            "groups_matched": len(matched_groups)
+        }
+        
+        return True, normalized_score, match_details
+    
+    @staticmethod
     def debug_protocol(protocol: str) -> Dict[str, Any]:
         """Return debugging info about a protocol"""
         is_valid, message = ProtocolParser.validate_protocol(protocol)
