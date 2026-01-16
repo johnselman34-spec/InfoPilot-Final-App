@@ -342,7 +342,7 @@ const YouTubeTutorialAdmin = ({ token, showToast }) => {
           <li>Start with a brief overview of what users will learn</li>
           <li>Use screen recordings to show actual features</li>
           <li>Add captions for accessibility (YouTube auto-generates them)</li>
-          <li>Include a call-to-action at the end (e.g., "Try it yourself!")</li>
+          <li>Include a call-to-action at the end (e.g., &quot;Try it yourself!&quot;)</li>
         </ul>
       </div>
     </div>
