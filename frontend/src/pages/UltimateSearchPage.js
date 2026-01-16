@@ -776,6 +776,237 @@ const UltimateSearchPage = ({ showToast }) => {
               💡 No results have location data. Results will appear on the map when they have latitude/longitude coordinates.
             </p>
           )}
+          
+          {/* Document Type Filters - Beneath the Map */}
+          <div style={{
+            marginTop: 15,
+            padding: 15,
+            background: 'rgba(30, 20, 50, 0.4)',
+            borderRadius: 10,
+            border: '1px solid rgba(124, 58, 237, 0.2)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <h4 style={{ color: '#a78bfa', margin: 0, fontSize: '0.95rem' }}>
+                📄 Filter by Document Type
+              </h4>
+              {selectedDocTypes.length > 0 && (
+                <button
+                  onClick={() => { setSelectedDocTypes([]); setShowFilteredResults(false); }}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: '#f87171',
+                    padding: '4px 12px',
+                    borderRadius: 6,
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Clear ({selectedDocTypes.length})
+                </button>
+              )}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {documentTypes.map(docType => (
+                <label
+                  key={docType.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 12px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    background: selectedDocTypes.includes(docType.id) 
+                      ? `${docType.color}30`
+                      : 'rgba(255,255,255,0.05)',
+                    border: selectedDocTypes.includes(docType.id)
+                      ? `2px solid ${docType.color}`
+                      : '1px solid rgba(255,255,255,0.1)',
+                    transition: 'all 0.2s'
+                  }}
+                  data-testid={`doctype-${docType.id.replace(/[^a-z0-9]/gi, '-').toLowerCase()}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedDocTypes.includes(docType.id)}
+                    onChange={() => toggleDocType(docType.id)}
+                    style={{ 
+                      accentColor: docType.color,
+                      width: 14,
+                      height: 14
+                    }}
+                  />
+                  <span style={{ 
+                    color: selectedDocTypes.includes(docType.id) ? docType.color : '#a1a1aa',
+                    fontSize: '0.8rem',
+                    fontWeight: selectedDocTypes.includes(docType.id) ? 600 : 400
+                  }}>
+                    {docType.name}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <p style={{ color: '#71717a', fontSize: '0.75rem', marginTop: 10 }}>
+              💡 Check document types to filter results. Selected categories and document types combine to show matching results below.
+            </p>
+          </div>
+        </div>
+      )}
+      
+      {/* Filtered Results Section - Bottom Center */}
+      {(selectedCategories.length > 0 || selectedDocTypes.length > 0) && showFilteredResults && (
+        <div className="card" style={{ 
+          marginBottom: 20,
+          background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.1))',
+          border: '2px solid rgba(124, 58, 237, 0.3)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+            <h3 style={{ color: '#f472b6', margin: 0 }}>
+              🎯 Filtered Results 
+              <span style={{ fontSize: '0.85rem', color: '#a1a1aa', fontWeight: 'normal', marginLeft: 10 }}>
+                {filteredResults.length} of {searchResults.length} results match your filters
+              </span>
+            </h3>
+            <button
+              onClick={() => setShowFilteredResults(false)}
+              style={{
+                background: 'rgba(107, 114, 128, 0.2)',
+                border: '1px solid rgba(107, 114, 128, 0.3)',
+                color: '#9ca3af',
+                padding: '6px 14px',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontSize: '0.85rem'
+              }}
+            >
+              ✕ Hide
+            </button>
+          </div>
+          
+          {/* Active Filters Display */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 15 }}>
+            {selectedCategories.map(catId => {
+              const cat = categories.find(c => c.id === catId);
+              return cat ? (
+                <span 
+                  key={catId}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '4px 10px',
+                    background: 'rgba(236, 72, 153, 0.2)',
+                    border: '1px solid rgba(236, 72, 153, 0.3)',
+                    borderRadius: 6,
+                    color: '#f472b6',
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  📁 {cat.name}
+                  <button
+                    onClick={() => setSelectedCategories(prev => prev.filter(id => id !== catId))}
+                    style={{ 
+                      background: 'none', 
+                      border: 'none', 
+                      color: '#f472b6', 
+                      cursor: 'pointer',
+                      padding: 0,
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ) : null;
+            })}
+            {selectedDocTypes.map(docType => {
+              const dt = documentTypes.find(d => d.id === docType);
+              return (
+                <span 
+                  key={docType}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '4px 10px',
+                    background: `${dt?.color || '#6b7280'}20`,
+                    border: `1px solid ${dt?.color || '#6b7280'}50`,
+                    borderRadius: 6,
+                    color: dt?.color || '#6b7280',
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  📄 {docType}
+                  <button
+                    onClick={() => setSelectedDocTypes(prev => prev.filter(d => d !== docType))}
+                    style={{ 
+                      background: 'none', 
+                      border: 'none', 
+                      color: dt?.color || '#6b7280', 
+                      cursor: 'pointer',
+                      padding: 0,
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+          
+          {/* Filtered Results Grid */}
+          <div className="results-grid">
+            {filteredResults.length === 0 ? (
+              <p style={{ color: '#a1a1aa', textAlign: 'center', padding: 20 }}>
+                No results match your current filter criteria. Try adjusting your category or document type selections.
+              </p>
+            ) : (
+              filteredResults.slice(0, 50).map(result => (
+                <div 
+                  key={result.id} 
+                  className="result-card"
+                  style={{ background: 'rgba(30, 20, 50, 0.5)' }}
+                >
+                  <h3>
+                    <a href={result.url} target="_blank" rel="noopener noreferrer">
+                      {result.title}
+                    </a>
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: '#a1a1aa' }}>{result.snippet?.substring(0, 150)}...</p>
+                  <div className="result-card-meta">
+                    <span 
+                      className="result-tag" 
+                      style={{ 
+                        background: `${documentTypes.find(d => d.id === result.article_type)?.color || '#6b7280'}30`,
+                        color: documentTypes.find(d => d.id === result.article_type)?.color || '#6b7280'
+                      }}
+                    >
+                      {result.article_type}
+                    </span>
+                    <span className="result-tag">{result.root_domain}</span>
+                    {result.categories?.slice(0, 3).map((cat, i) => (
+                      <span key={i} className="result-tag" style={{ background: 'rgba(236, 72, 153, 0.2)', color: '#f472b6' }}>
+                        {cat}
+                      </span>
+                    ))}
+                    {result.categories?.length > 3 && (
+                      <span className="result-tag" style={{ background: 'rgba(107, 114, 128, 0.2)', color: '#9ca3af' }}>
+                        +{result.categories.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          
+          {filteredResults.length > 50 && (
+            <p style={{ color: '#a1a1aa', textAlign: 'center', marginTop: 15, fontSize: '0.85rem' }}>
+              Showing first 50 of {filteredResults.length} filtered results.
+            </p>
+          )}
         </div>
       )}
 
