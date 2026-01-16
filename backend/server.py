@@ -576,6 +576,364 @@ async def collate_results(request: CollateRequest, user = Depends(get_current_us
         "batch_id": batch_id
     }
 
+
+@api_router.post("/auto-categorize", response_model=dict)
+async def auto_categorize_search(request: dict, user = Depends(get_current_user_local)):
+    """
+    One-click auto-categorization: Search and automatically match results against ALL user's categories.
+    Each result can match multiple categories based on their protocols.
+    """
+    search_query = request.get("query", "").strip()
+    if not search_query:
+        raise HTTPException(status_code=400, detail="Search query is required")
+    
+    user_id = str(user["_id"])
+    
+    # Get all user's categories
+    all_categories = await db.categories.find({
+        "$or": [
+            {"user_id": user_id},
+            {"is_public": True}
+        ]
+    }).to_list(500)
+    
+    if not all_categories:
+        raise HTTPException(status_code=400, detail="No categories available. Create categories first.")
+    
+    # Get collation limit from settings
+    settings = await db.settings.find_one({"key": "collation_limit"})
+    max_results = int(settings.get("value", 40)) if settings else 40
+    max_results = min(max(1, max_results), 100)  # Enforce 1-100 range
+    
+    # Perform search across multiple engines
+    raw_results = await ExtendedWebSearchService.search(search_query, max_results)
+    
+    if not raw_results:
+        return {
+            "results": [],
+            "total": 0,
+            "categories_matched": 0,
+            "message": "No results found"
+        }
+    
+    batch_id = str(ObjectId())
+    matched_results = []
+    category_matches = {}  # Track which categories matched which results
+    
+    # For each result, check against ALL categories
+    for result in raw_results:
+        result_categories = []
+        result_category_ids = []
+        best_score = 0
+        
+        for category in all_categories:
+            protocol = category.get("protocol", "")
+            if not protocol:
+                continue
+            
+            # Parse protocol and check if result matches
+            groups = ProtocolParser.parse_protocol(protocol)
+            matches, score = ProtocolParser.match_result(result, groups)
+            
+            if matches:
+                cat_id = str(category["_id"])
+                cat_name = category["name"]
+                result_categories.append(cat_name)
+                result_category_ids.append(cat_id)
+                best_score = max(best_score, score)
+                
+                # Track category matches
+                if cat_id not in category_matches:
+                    category_matches[cat_id] = {
+                        "name": cat_name,
+                        "count": 0
+                    }
+                category_matches[cat_id]["count"] += 1
+        
+        # Only include results that match at least one category
+        if result_categories:
+            result["match_score"] = best_score
+            result["article_type"] = ArticleClassifier.classify(
+                result.get("title", ""), result.get("content", "")
+            )
+            result["root_domain"] = WebSearchService.extract_root_domain(result.get("url", ""))
+            result["categories"] = result_categories
+            result["category_ids"] = result_category_ids
+            matched_results.append(result)
+    
+    # Sort by score
+    matched_results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+    
+    # Store results in database
+    for result in matched_results:
+        existing = await db.search_results.find_one({
+            "url": result["url"],
+            "user_id": user_id
+        })
+        
+        if existing:
+            # Update existing result with new categories
+            await db.search_results.update_one(
+                {"_id": existing["_id"]},
+                {
+                    "$addToSet": {"category_ids": {"$each": result["category_ids"]}},
+                    "$set": {"batch_id": batch_id, "updated_at": datetime.utcnow()}
+                }
+            )
+        else:
+            await db.search_results.insert_one({
+                "url": result["url"],
+                "title": result.get("title", ""),
+                "snippet": result.get("snippet", ""),
+                "content": result.get("content", ""),
+                "article_type": result.get("article_type", "Unknown"),
+                "root_domain": result.get("root_domain", ""),
+                "match_score": result.get("match_score", 0),
+                "category_ids": result["category_ids"],
+                "user_id": user_id,
+                "batch_id": batch_id,
+                "created_at": datetime.utcnow()
+            })
+    
+    # Format response
+    formatted = []
+    for r in matched_results:
+        formatted.append({
+            "id": str(ObjectId()),
+            "url": r.get("url", ""),
+            "title": r.get("title", ""),
+            "snippet": r.get("snippet", ""),
+            "article_type": r.get("article_type", "Unknown"),
+            "root_domain": r.get("root_domain", ""),
+            "match_score": r.get("match_score", 0),
+            "categories": r.get("categories", []),
+            "category_ids": r.get("category_ids", [])
+        })
+    
+    # Build category summary
+    categories_summary = [
+        {"id": cat_id, "name": data["name"], "result_count": data["count"]}
+        for cat_id, data in category_matches.items()
+    ]
+    categories_summary.sort(key=lambda x: x["result_count"], reverse=True)
+    
+    return {
+        "results": formatted,
+        "total": len(formatted),
+        "categories_matched": len(category_matches),
+        "category_summary": categories_summary,
+        "batch_id": batch_id,
+        "message": f"Auto-categorized {len(formatted)} results across {len(category_matches)} categories!"
+    }
+
+
+@api_router.post("/ai-search", response_model=dict)
+async def ai_intelligent_search(request: dict, user = Depends(get_current_user_local)):
+    """
+    AI-powered intelligent keyword search across multiple search engines.
+    Uses GPT to expand keywords and optimize search queries for better results.
+    Searches Google, DuckDuckGo, Bing, and other connected databases.
+    """
+    original_query = request.get("query", "").strip()
+    search_mode = request.get("mode", "comprehensive")  # comprehensive, news, research
+    auto_categorize = request.get("auto_categorize", True)
+    
+    if not original_query:
+        raise HTTPException(status_code=400, detail="Search query is required")
+    
+    user_id = str(user["_id"])
+    
+    # Get collation limit from settings
+    settings = await db.settings.find_one({"key": "collation_limit"})
+    max_results = int(settings.get("value", 40)) if settings else 40
+    max_results = min(max(1, max_results), 100)
+    
+    # Use AI to expand and optimize the search query
+    expanded_queries = [original_query]
+    ai_suggestions = []
+    
+    try:
+        from emergentintegrations.llm.chat import chat, ModelType
+        import os
+        
+        emergent_key = os.environ.get("EMERGENT_MODEL_API_KEY", "")
+        if emergent_key:
+            mode_context = {
+                "comprehensive": "general web search covering all aspects",
+                "news": "recent news and current events",
+                "research": "academic, research papers, and in-depth analysis"
+            }.get(search_mode, "general web search")
+            
+            ai_prompt = f"""You are a search optimization expert. Given the user's search query, generate 3 optimized search queries that will find the most relevant and diverse results for {mode_context}.
+
+Original query: "{original_query}"
+
+Provide 3 alternative search queries that:
+1. First query: Include synonyms and related terms
+2. Second query: Focus on specific aspects or subtopics
+3. Third query: Use different phrasing or question format
+
+Return ONLY a JSON array of 3 strings, no other text:
+["query1", "query2", "query3"]"""
+
+            ai_response = await chat(
+                api_key=emergent_key,
+                model=ModelType.GPT_5_2,
+                prompt=ai_prompt
+            )
+            
+            # Parse AI response
+            import json
+            try:
+                json_start = ai_response.find('[')
+                json_end = ai_response.rfind(']') + 1
+                if json_start != -1 and json_end > json_start:
+                    ai_suggestions = json.loads(ai_response[json_start:json_end])
+                    expanded_queries.extend(ai_suggestions[:3])
+            except json.JSONDecodeError:
+                pass
+    except Exception as e:
+        logger.warning(f"AI query expansion failed: {e}")
+    
+    # Search across multiple engines with all queries
+    all_results = []
+    seen_urls = set()
+    
+    for query in expanded_queries:
+        try:
+            # ExtendedWebSearchService already searches multiple engines
+            results = await ExtendedWebSearchService.search(query, max_results // len(expanded_queries))
+            
+            for result in results:
+                url = result.get("url", "")
+                if url and url not in seen_urls:
+                    seen_urls.add(url)
+                    result["search_query"] = query
+                    all_results.append(result)
+        except Exception as e:
+            logger.warning(f"Search failed for query '{query}': {e}")
+    
+    if not all_results:
+        return {
+            "results": [],
+            "total": 0,
+            "original_query": original_query,
+            "expanded_queries": expanded_queries,
+            "message": "No results found"
+        }
+    
+    batch_id = str(ObjectId())
+    
+    # If auto_categorize is enabled, match against categories
+    if auto_categorize:
+        all_categories = await db.categories.find({
+            "$or": [
+                {"user_id": user_id},
+                {"is_public": True}
+            ]
+        }).to_list(500)
+        
+        for result in all_results:
+            result_categories = []
+            result_category_ids = []
+            best_score = 0
+            
+            for category in all_categories:
+                protocol = category.get("protocol", "")
+                if not protocol:
+                    continue
+                
+                groups = ProtocolParser.parse_protocol(protocol)
+                matches, score = ProtocolParser.match_result(result, groups)
+                
+                if matches:
+                    result_categories.append(category["name"])
+                    result_category_ids.append(str(category["_id"]))
+                    best_score = max(best_score, score)
+            
+            result["categories"] = result_categories
+            result["category_ids"] = result_category_ids
+            result["match_score"] = best_score
+    
+    # Classify and add metadata
+    for result in all_results:
+        result["article_type"] = ArticleClassifier.classify(
+            result.get("title", ""), result.get("content", "")
+        )
+        result["root_domain"] = WebSearchService.extract_root_domain(result.get("url", ""))
+    
+    # Sort by match score (if categorized) or by search engine ranking
+    all_results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+    
+    # Store results
+    for result in all_results[:max_results]:
+        existing = await db.search_results.find_one({
+            "url": result["url"],
+            "user_id": user_id
+        })
+        
+        category_ids = result.get("category_ids", [])
+        
+        if existing:
+            if category_ids:
+                await db.search_results.update_one(
+                    {"_id": existing["_id"]},
+                    {
+                        "$addToSet": {"category_ids": {"$each": category_ids}},
+                        "$set": {
+                            "batch_id": batch_id,
+                            "ai_search": True,
+                            "updated_at": datetime.utcnow()
+                        }
+                    }
+                )
+        else:
+            await db.search_results.insert_one({
+                "url": result["url"],
+                "title": result.get("title", ""),
+                "snippet": result.get("snippet", ""),
+                "content": result.get("content", ""),
+                "article_type": result.get("article_type", "Unknown"),
+                "root_domain": result.get("root_domain", ""),
+                "match_score": result.get("match_score", 0),
+                "category_ids": category_ids,
+                "user_id": user_id,
+                "batch_id": batch_id,
+                "ai_search": True,
+                "search_query": result.get("search_query", original_query),
+                "created_at": datetime.utcnow()
+            })
+    
+    # Format response
+    formatted = []
+    for r in all_results[:max_results]:
+        formatted.append({
+            "id": str(ObjectId()),
+            "url": r.get("url", ""),
+            "title": r.get("title", ""),
+            "snippet": r.get("snippet", ""),
+            "article_type": r.get("article_type", "Unknown"),
+            "root_domain": r.get("root_domain", ""),
+            "match_score": r.get("match_score", 0),
+            "categories": r.get("categories", []),
+            "category_ids": r.get("category_ids", []),
+            "search_engine": r.get("source", "multi-engine")
+        })
+    
+    return {
+        "results": formatted,
+        "total": len(formatted),
+        "original_query": original_query,
+        "expanded_queries": expanded_queries,
+        "ai_suggestions": ai_suggestions,
+        "batch_id": batch_id,
+        "search_mode": search_mode,
+        "auto_categorized": auto_categorize,
+        "message": f"🤖 AI Search found {len(formatted)} results using {len(expanded_queries)} optimized queries!"
+    }
+
+
+
 @api_router.get("/ultimate-search", response_model=dict)
 async def get_ultimate_search(
     page: int = Query(1, ge=1),
