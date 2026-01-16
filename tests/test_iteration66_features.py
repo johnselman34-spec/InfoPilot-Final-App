@@ -111,27 +111,30 @@ class TestAdminUserManagement:
     def test_ban_endpoint_exists(self, auth_token):
         """Test ban endpoint exists (don't actually ban anyone)"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        # Test with invalid user ID to verify endpoint exists
-        response = requests.post(f"{BASE_URL}/api/admin/users/invalid_id/ban", 
+        # Test with valid ObjectId format but non-existent user
+        fake_id = "507f1f77bcf86cd799439011"
+        response = requests.post(f"{BASE_URL}/api/admin/users/{fake_id}/ban", 
                                 json={"reason": "test"}, headers=headers)
-        # Should return 404 (user not found) or 422 (invalid ID), not 404 (endpoint not found)
-        assert response.status_code in [404, 422, 400], f"Ban endpoint issue: {response.status_code}"
-        print(f"✓ Ban endpoint exists (returned {response.status_code} for invalid user)")
+        # Should return 404 (user not found)
+        assert response.status_code == 404, f"Ban endpoint issue: {response.status_code} - {response.text}"
+        print(f"✓ Ban endpoint exists (returned {response.status_code} for non-existent user)")
     
     def test_mute_endpoint_exists(self, auth_token):
         """Test mute endpoint exists"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.post(f"{BASE_URL}/api/admin/users/invalid_id/mute",
+        fake_id = "507f1f77bcf86cd799439011"
+        response = requests.post(f"{BASE_URL}/api/admin/users/{fake_id}/mute",
                                 json={"duration_hours": 24}, headers=headers)
-        assert response.status_code in [404, 422, 400], f"Mute endpoint issue: {response.status_code}"
-        print(f"✓ Mute endpoint exists (returned {response.status_code} for invalid user)")
+        assert response.status_code == 404, f"Mute endpoint issue: {response.status_code} - {response.text}"
+        print(f"✓ Mute endpoint exists (returned {response.status_code} for non-existent user)")
     
     def test_delete_endpoint_exists(self, auth_token):
         """Test delete endpoint exists"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        response = requests.delete(f"{BASE_URL}/api/admin/users/invalid_id", headers=headers)
-        assert response.status_code in [404, 422, 400], f"Delete endpoint issue: {response.status_code}"
-        print(f"✓ Delete endpoint exists (returned {response.status_code} for invalid user)")
+        fake_id = "507f1f77bcf86cd799439011"
+        response = requests.delete(f"{BASE_URL}/api/admin/users/{fake_id}", headers=headers)
+        assert response.status_code == 404, f"Delete endpoint issue: {response.status_code} - {response.text}"
+        print(f"✓ Delete endpoint exists (returned {response.status_code} for non-existent user)")
     
     def test_moderation_actions_log(self, auth_token):
         """Test moderation actions log endpoint"""
@@ -239,10 +242,11 @@ class TestCategoryManagement:
     def test_clean_category_endpoint(self, auth_token):
         """Test clean category endpoint exists"""
         headers = {"Authorization": f"Bearer {auth_token}"}
-        # Test with invalid ID to verify endpoint exists
-        response = requests.post(f"{BASE_URL}/api/categories/invalid_id/clean", headers=headers)
-        # Should return 404 or 422, not 405 (method not allowed)
-        assert response.status_code in [404, 422, 400, 500], f"Clean endpoint issue: {response.status_code}"
+        # Test with valid ObjectId format but non-existent category
+        fake_id = "507f1f77bcf86cd799439011"
+        response = requests.post(f"{BASE_URL}/api/categories/{fake_id}/clean", headers=headers)
+        # Should return 404 (category not found)
+        assert response.status_code == 404, f"Clean endpoint issue: {response.status_code} - {response.text}"
         print(f"✓ Clean category endpoint exists")
 
 
