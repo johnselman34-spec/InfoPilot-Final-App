@@ -360,9 +360,12 @@ async def get_easter_egg_leaderboard(limit: int = 20):
             "latest_discovery": result.get("latest_discovery").isoformat() if result.get("latest_discovery") else None
         })
     
+    # Get total unique hunters
+    unique_hunters = await db.easter_egg_discoveries.aggregate([{"$group": {"_id": "$user_id"}}]).to_list(1000)
+    
     return {
         "leaderboard": leaderboard,
-        "total_hunters": await db.easter_egg_discoveries.aggregate([{"$group": {"_id": "$user_id"}}]).to_list(1000).__len__(),
+        "total_hunters": len(unique_hunters),
         "total_eggs_available": len(EASTER_EGGS),
         "funny_title": "🥚 Hall of Egg-cellent Hunters 🥚"
     }
