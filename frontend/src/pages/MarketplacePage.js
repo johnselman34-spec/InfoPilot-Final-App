@@ -18,7 +18,8 @@ import {
   SellForm,
   SellerDashboard,
   CommunityLeaderboard,
-  ProtocolRecommendationEngine
+  ProtocolRecommendationEngine,
+  PerformanceInsights
 } from '../components/Marketplace';
 
 // Main Marketplace Page Component
