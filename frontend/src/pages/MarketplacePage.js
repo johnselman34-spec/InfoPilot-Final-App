@@ -253,7 +253,7 @@ const MarketplacePage = ({ showToast }) => {
                 <div style={{ textAlign: 'center', padding: 40, background: 'rgba(30, 20, 50, 0.5)', borderRadius: 12 }}>
                   <div style={{ fontSize: '3rem', marginBottom: 15 }}>🔍</div>
                   <p style={{ color: '#a1a1aa', marginBottom: 15 }}>No protocols found. Be the first to sell!</p>
-                  <button className="btn btn-primary" onClick={() => setActiveTab('sell')}>List Your Protocol - It's FREE!</button>
+                  <button className="btn btn-primary" onClick={() => setActiveTab('sell')}>List Your Protocol - FREE</button>
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 15 }}>
@@ -325,7 +325,7 @@ const MarketplacePage = ({ showToast }) => {
             </div>
             <div style={{ padding: 20 }}>
               <p style={{ color: '#a1a1aa', marginBottom: 15 }}>Complete your PayPal payment, then click the button below.</p>
-              <button className="btn btn-primary" onClick={confirmPurchase} style={{ width: '100%' }}>I've Completed Payment</button>
+              <button className="btn btn-primary" onClick={confirmPurchase} style={{ width: '100%' }}>Payment Completed</button>
             </div>
           </div>
         </div>
