@@ -333,6 +333,29 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Shows related protocols and bundles
   - Discount badges and "SAVE MORE!" messaging
 
+### Batch 7 - UI Enhancements & Admin Controls ✅ (January 16, 2026)
+- [x] **CollapsibleCategoryTree Component** - Space-saving tree view
+  - `/app/frontend/src/components/UltimateSearch/CollapsibleCategoryTree.js`
+  - Expand All / Collapse All buttons (+/- toggles)
+  - Result counts in parentheses (e.g., "American History (1241)")
+  - Select All / Deselect All buttons
+  - Hierarchical indentation with visual tree lines
+- [x] **Map Filtering by User** - UltimateSearchPage shows only logged-in user's results
+  - Line 111-116: `mapResults.filter(r => r.user_id === userId)`
+  - StatisticsPage & MapPage show ALL users (global data)
+- [x] **Newsletter Schedule Update** - Tri-weekly at user-specified times
+  - Morning: 5:46 AM UTC
+  - Mid-Morning: 9:42 AM UTC
+  - Afternoon: 4:20 PM UTC
+  - Admin-controllable via settings
+- [x] **Enhanced Auto-Collate for AI Search** - Intelligent result categorization
+  - Weights results by "groups matched" (parenthetical word choices)
+  - Only auto-saves results with match_score >= 0.5
+  - Response includes `auto_collated_count` and `groups_matched` per result
+- [x] **Default Collation Limit** - Changed from 100 to 40
+  - Admin-controllable via `collation_limit` setting
+  - Applied to all Search & Collate operations
+
 ### Maps Pricing Decision
 - ✅ **FREE Maps for All Users:**
   - Ultimate Search Page map
