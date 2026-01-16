@@ -264,9 +264,7 @@ const SearchResultComments = ({ resultId, showToast, onClose }) => {
       )}
 
       {/* Nested replies */}
-      {comment.replies?.map(reply => (
-        <CommentItem key={reply.id} comment={reply} isReply={true} />
-      ))}
+      {comment.replies?.map(reply => renderComment(reply, true))}
     </div>
   );
 
