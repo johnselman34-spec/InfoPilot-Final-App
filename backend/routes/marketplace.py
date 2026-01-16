@@ -7,7 +7,7 @@ Enables users to buy and sell search protocols
 - 100% FREE to browse and search!
 """
 from fastapi import APIRouter, HTTPException, Depends, Query
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 from bson import ObjectId
 
