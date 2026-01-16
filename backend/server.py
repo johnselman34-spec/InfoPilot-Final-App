@@ -2083,7 +2083,7 @@ async def upload_personal_report_image(
 ):
     """
     Upload an image for a Personal Report (Organic).
-    Only 1 image per report (replaces existing).
+    Supports up to 3 images per report (max 6.9MB each).
     """
     user_id = str(user["_id"])
     
@@ -2102,26 +2102,113 @@ async def upload_personal_report_image(
     if file.content_type not in allowed_types:
         raise HTTPException(status_code=400, detail="Only JPEG, PNG, GIF, and WebP images are allowed")
     
+    # Check file size (max 6.9MB)
+    content = await file.read()
+    if len(content) > 6.9 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Image must be less than 6.9MB")
+    
+    # Check existing images count
+    existing_images = report.get("image_urls", [])
+    if report.get("image_url") and not existing_images:
+        # Migrate legacy single image to array
+        existing_images = [report.get("image_url")]
+    
+    if len(existing_images) >= 3:
+        raise HTTPException(status_code=400, detail="Maximum 3 images allowed per report. Delete an existing image first.")
+    
     # Save file
     file_extension = file.filename.split(".")[-1] if "." in file.filename else "jpg"
-    filename = f"report_{report_id}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.{file_extension}"
+    filename = f"report_{report_id}_{len(existing_images) + 1}_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.{file_extension}"
     filepath = os.path.join(MESSAGE_UPLOAD_DIR, filename)
     
     with open(filepath, "wb") as f:
-        content = await file.read()
         f.write(content)
     
     # Update report with image URL
     image_url = f"/api/uploads/messages/{filename}"
+    new_images = existing_images + [image_url]
+    
     await db.search_results.update_one(
         {"_id": ObjectId(report_id)},
-        {"$set": {"image_url": image_url, "updated_at": datetime.utcnow()}}
+        {
+            "$set": {
+                "image_url": new_images[0],  # Keep legacy field for compatibility
+                "image_urls": new_images,
+                "updated_at": datetime.utcnow()
+            }
+        }
     )
     
     return {
         "success": True,
         "image_url": image_url,
-        "message": "Image uploaded successfully"
+        "image_urls": new_images,
+        "images_count": len(new_images),
+        "message": f"Image uploaded successfully ({len(new_images)}/3)"
+    }
+
+
+@api_router.delete("/personal-reports/{report_id}/image/{image_index}", response_model=dict)
+async def delete_personal_report_image(
+    report_id: str,
+    image_index: int,
+    user = Depends(get_current_user_local)
+):
+    """
+    Delete a specific image from a Personal Report by index (0-2).
+    """
+    user_id = str(user["_id"])
+    
+    # Verify ownership
+    report = await db.search_results.find_one({
+        "_id": ObjectId(report_id),
+        "author_id": user_id,
+        "article_type": "Personal Report (Organic)"
+    })
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Personal Report not found or not owned by you")
+    
+    # Get existing images
+    existing_images = report.get("image_urls", [])
+    if report.get("image_url") and not existing_images:
+        existing_images = [report.get("image_url")]
+    
+    if image_index < 0 or image_index >= len(existing_images):
+        raise HTTPException(status_code=400, detail="Invalid image index")
+    
+    # Remove the image from array
+    removed_url = existing_images.pop(image_index)
+    
+    # Try to delete the file
+    try:
+        filename = removed_url.split("/")[-1]
+        filepath = os.path.join(MESSAGE_UPLOAD_DIR, filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+    except Exception as e:
+        logger.warning(f"Failed to delete image file: {e}")
+    
+    # Update report
+    update_data = {
+        "image_urls": existing_images,
+        "updated_at": datetime.utcnow()
+    }
+    if existing_images:
+        update_data["image_url"] = existing_images[0]
+    else:
+        update_data["image_url"] = None
+    
+    await db.search_results.update_one(
+        {"_id": ObjectId(report_id)},
+        {"$set": update_data}
+    )
+    
+    return {
+        "success": True,
+        "image_urls": existing_images,
+        "images_count": len(existing_images),
+        "message": f"Image deleted successfully ({len(existing_images)}/3 remaining)"
     }
 
 
