@@ -77,35 +77,7 @@ const ChatPage = ({ showToast }) => {
     }
   }, []);
 
-  useEffect(() => {
-    fetchRooms();
-    fetchOnlineUsers();
-    fetchUnifiedOverview();
-    const interval = setInterval(fetchOnlineUsers, 30000);
-    const overviewInterval = setInterval(fetchUnifiedOverview, 60000);
-    return () => {
-      clearInterval(interval);
-      clearInterval(overviewInterval);
-    };
-  }, [fetchRooms, fetchOnlineUsers, fetchUnifiedOverview]);
-
-  useEffect(() => {
-    if (activeRoom) {
-      fetchMessages(activeRoom.id);
-      connectWebSocket(activeRoom.id);
-    }
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-    };
-  }, [activeRoom, fetchMessages, token]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const connectWebSocket = (roomId) => {
+  const connectWebSocket = useCallback((roomId) => {
     if (wsRef.current) {
       wsRef.current.close();
     }
@@ -150,7 +122,35 @@ const ChatPage = ({ showToast }) => {
     wsRef.current.onerror = (error) => {
       console.error('Chat WebSocket error:', error);
     };
-  };
+  }, [token, user?.id, showToast]);
+
+  useEffect(() => {
+    fetchRooms();
+    fetchOnlineUsers();
+    fetchUnifiedOverview();
+    const interval = setInterval(fetchOnlineUsers, 30000);
+    const overviewInterval = setInterval(fetchUnifiedOverview, 60000);
+    return () => {
+      clearInterval(interval);
+      clearInterval(overviewInterval);
+    };
+  }, [fetchRooms, fetchOnlineUsers, fetchUnifiedOverview]);
+
+  useEffect(() => {
+    if (activeRoom) {
+      fetchMessages(activeRoom.id);
+      connectWebSocket(activeRoom.id);
+    }
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [activeRoom, fetchMessages, connectWebSocket]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const sendMessage = () => {
     if (!newMessage.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
