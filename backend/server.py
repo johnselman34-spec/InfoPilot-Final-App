@@ -521,11 +521,11 @@ class ExtendedWebSearchService:
     
     @staticmethod
     async def search(query: str, num_results: int = 200) -> List[Dict[str, Any]]:
-        """Aggregate search from multiple sources"""
+        """Aggregate search from multiple sources: Google (SerpAPI), DuckDuckGo, Brave, Yandex"""
         all_results = []
         seen_urls = set()
         
-        # Try SerpAPI first if available
+        # Try SerpAPI first if available (Google)
         if SERPAPI_KEY and SERPAPI_AVAILABLE:
             serp_results = await ExtendedWebSearchService.search_serpapi(query, min(70, num_results))
             for r in serp_results:
@@ -533,7 +533,23 @@ class ExtendedWebSearchService:
                     seen_urls.add(r["url"])
                     all_results.append(r)
         
-        # Then DDGS
+        # Brave Search (privacy-focused, high quality)
+        if BRAVE_API_KEY and len(all_results) < num_results:
+            brave_results = await ExtendedWebSearchService.search_brave(query, min(20, num_results - len(all_results)))
+            for r in brave_results:
+                if r["url"] not in seen_urls:
+                    seen_urls.add(r["url"])
+                    all_results.append(r)
+        
+        # Yandex Search (good for international/Russian content)
+        if YANDEX_API_KEY and YANDEX_FOLDER_ID and len(all_results) < num_results:
+            yandex_results = await ExtendedWebSearchService.search_yandex(query, min(10, num_results - len(all_results)))
+            for r in yandex_results:
+                if r["url"] not in seen_urls:
+                    seen_urls.add(r["url"])
+                    all_results.append(r)
+        
+        # DuckDuckGo (always available, no API key needed)
         if DDGS_AVAILABLE and len(all_results) < num_results:
             ddgs_results = await ExtendedWebSearchService.search_ddgs_library(query, num_results - len(all_results))
             for r in ddgs_results:
@@ -549,6 +565,7 @@ class ExtendedWebSearchService:
                     seen_urls.add(r["url"])
                     all_results.append(r)
         
+        logger.info(f"Total search results from all engines: {len(all_results)}")
         return all_results[:num_results]
 
 # ============== ARTICLE CLASSIFIER ==============
