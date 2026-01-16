@@ -22,7 +22,7 @@ const SearchResultsList = ({
       <div className="results-grid">
         {searchResults.length === 0 ? (
           <p style={{ color: '#a1a1aa' }}>
-            No results yet. Use "Search & Collate" to find and categorize web content!
+            No results yet. Use Search &amp; Collate to find and categorize web content!
           </p>
         ) : (
           searchResults.map(result => (
