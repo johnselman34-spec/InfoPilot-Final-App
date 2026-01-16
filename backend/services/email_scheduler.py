@@ -174,7 +174,7 @@ async def generate_hilarious_report_html(days: int = 7) -> tuple[str, str]:
     - Usefulness
     """
     from config import db
-    from datetime import datetime, timezone, timedelta
+    # Using already imported timedelta from top of file
     
     cutoff = datetime.now(timezone.utc) - timedelta(days=days)
     
