@@ -347,6 +347,82 @@ const MapPage = ({ showToast, setCurrentPage }) => {
           </div>
         </div>
       </div>
+      
+      {/* AI Search Section */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(236, 72, 153, 0.15))',
+        borderRadius: 12,
+        padding: 15,
+        marginBottom: 15,
+        border: '1px solid rgba(124, 58, 237, 0.3)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <input
+            type="text"
+            value={aiSearchQuery}
+            onChange={(e) => setAiSearchQuery(e.target.value)}
+            placeholder="Enter search query for AI-powered search..."
+            style={{
+              flex: 1,
+              minWidth: 200,
+              padding: '10px 15px',
+              background: 'rgba(30, 20, 50, 0.8)',
+              border: '1px solid rgba(124, 58, 237, 0.4)',
+              borderRadius: 8,
+              color: '#fff'
+            }}
+            onKeyPress={(e) => e.key === 'Enter' && aiSearchForMap()}
+            data-testid="map-ai-search-input"
+          />
+          <button
+            onClick={autoCategorizeSearc}
+            disabled={aiSearchLoading || !aiSearchQuery.trim()}
+            className="btn"
+            style={{
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: '#fff',
+              padding: '10px 15px',
+              opacity: (!aiSearchQuery.trim() || aiSearchLoading) ? 0.5 : 1
+            }}
+            data-testid="map-auto-categorize-btn"
+          >
+            {aiSearchLoading ? '⏳' : '🎯'} Auto-Categorize
+          </button>
+          <button
+            onClick={aiSearchForMap}
+            disabled={aiSearchLoading || !aiSearchQuery.trim()}
+            className="btn"
+            style={{
+              background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+              color: '#fff',
+              padding: '10px 15px',
+              opacity: (!aiSearchQuery.trim() || aiSearchLoading) ? 0.5 : 1
+            }}
+            data-testid="map-ai-search-btn"
+          >
+            {aiSearchLoading ? '🤖 Searching...' : '🤖 AI Search'}
+          </button>
+          <select
+            value={aiSearchMode}
+            onChange={(e) => setAiSearchMode(e.target.value)}
+            style={{
+              background: 'rgba(124, 58, 237, 0.3)',
+              border: '1px solid rgba(124, 58, 237, 0.4)',
+              color: '#a78bfa',
+              padding: '8px 12px',
+              borderRadius: 8,
+              fontSize: '0.85rem'
+            }}
+          >
+            <option value="comprehensive">📊 Comprehensive</option>
+            <option value="news">📰 News</option>
+            <option value="research">🔬 Research</option>
+          </select>
+        </div>
+        <p style={{ color: '#a1a1aa', fontSize: '0.75rem', marginTop: 8, marginBottom: 0 }}>
+          💡 AI Search uses GPT to expand your keywords and searches Google, DuckDuckGo, and Bing simultaneously
+        </p>
+      </div>
 
       {/* Legend */}
       <div style={{ 
