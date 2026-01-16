@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
-import { DataExport, PushNotifications } from '../components/shared';
+import { DataExport, PushNotifications, UpgradePromoBanner } from '../components/shared';
 import { UserAgreement, PrivacyStatement } from '../components/Legal';
-import { EasterEggStats } from '../components/Gamification/FloatingEasterEggs';
+import { EasterEggStats, EasterEggRewardHistory } from '../components/Gamification/FloatingEasterEggs';
 
 const SettingsPage = ({ showToast, setCurrentPage }) => {
   const { token, user, refreshUser } = useAuth();
