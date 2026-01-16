@@ -271,9 +271,10 @@ const UltimateSearchPage = ({ showToast }) => {
   }, [token, selectedCategories, aggregation]);
 
   useEffect(() => {
-    fetchCategories();
-    fetchSearchResults();
-    fetchBatches();
+    const loadData = async () => {
+      await Promise.all([fetchCategories(), fetchSearchResults(), fetchBatches()]);
+    };
+    loadData();
   }, [fetchCategories, fetchSearchResults, fetchBatches]);
 
   const handleSearch = async () => {
