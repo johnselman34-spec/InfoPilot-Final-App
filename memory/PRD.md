@@ -1414,4 +1414,26 @@ All features implemented, tested, and working!
 #### UI Locations ✅
 - Ultimate Search Page, Map Page, Statistics Page - All have AI search buttons
 
+
+## Update Session - January 16, 2026 (Iteration 41)
+
+### Brave and Yandex Search Engine Integration ✅
+
+#### New Search Engines Added
+- **Brave Search:** Privacy-focused search engine (requires BRAVE_API_KEY)
+- **Yandex Search:** Russian and international search (requires YANDEX_API_KEY + YANDEX_FOLDER_ID)
+
+#### Search Engine Status Endpoint
+- `GET /api/search-engines` - Returns status of all 5 engines
+- Currently active: SerpAPI (Google), DuckDuckGo, Basic (3/5)
+- Brave and Yandex ready but need API keys configured
+
+#### Frontend Updates
+- SearchControls displays engine status badges (green ✓ / red ✗)
+- Shows total active engines count
+- Help text mentions all search engines
+
+### Testing: 16/16 passed (100%)
+
+
 ### Testing: 24/24 passed (100%)
