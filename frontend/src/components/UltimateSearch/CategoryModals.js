@@ -355,23 +355,67 @@ const EditCategoryModal = ({
             </ul>
           </div>
           
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             <button 
               className="btn btn-secondary" 
               onClick={onClose}
-              style={{ flex: 1 }}
+              style={{ flex: 1, minWidth: 100 }}
             >
               Cancel
             </button>
             <button 
               className="btn btn-primary" 
               onClick={onSave}
-              style={{ flex: 1 }}
+              style={{ flex: 1, minWidth: 100 }}
               data-testid="save-protocol-btn"
             >
               Save Protocol
             </button>
           </div>
+          
+          {/* Delete Category Section */}
+          {onDelete && (
+            <div style={{
+              marginTop: 20,
+              padding: 15,
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: 10
+            }}>
+              <h4 style={{ color: '#ef4444', margin: '0 0 10px 0', fontSize: '0.9rem' }}>
+                🗑️ Delete Category
+              </h4>
+              <p style={{ color: '#a1a1aa', fontSize: '0.8rem', margin: '0 0 10px 0' }}>
+                Permanently delete this category and all its sub-categories. This action cannot be undone.
+                {editingCategory.subcategory_count > 0 && (
+                  <span style={{ display: 'block', color: '#fbbf24', marginTop: 5 }}>
+                    ⚠️ Warning: This will also delete {editingCategory.subcategory_count} sub-categor{editingCategory.subcategory_count === 1 ? 'y' : 'ies'}!
+                  </span>
+                )}
+              </p>
+              <button
+                onClick={() => {
+                  if (window.confirm(`Delete "${editingCategory.name}" and all its sub-categories? This cannot be undone!`)) {
+                    onDelete(editingCategory.id);
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  padding: '10px 16px',
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  border: '1px solid rgba(239, 68, 68, 0.5)',
+                  borderRadius: 8,
+                  color: '#ef4444',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                data-testid="delete-category-btn"
+              >
+                🗑️ Delete Category
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
