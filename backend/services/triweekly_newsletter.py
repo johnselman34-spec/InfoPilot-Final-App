@@ -342,6 +342,195 @@ async def send_triweekly_newsletter(time_slot: str):
     logger.info(f"📧 Tri-weekly newsletter complete: {success_count}/{len(subscribers)} sent successfully")
 
 
+# ==================== AI-DRIVEN SCHEDULING OPTIMIZATION ====================
+
+async def get_newsletter_performance_data():
+    """Gather newsletter performance data for AI analysis"""
+    from config import db
+    
+    # Get last 30 days of newsletter sends
+    sends = await db.newsletter_sends.find({
+        "sent_at": {"$gte": datetime.now(timezone.utc) - timedelta(days=30)}
+    }).to_list(1000)
+    
+    # Calculate open rates and click rates by time slot
+    performance_by_slot = {}
+    for send in sends:
+        slot = send.get("time_slot", "unknown")
+        if slot not in performance_by_slot:
+            performance_by_slot[slot] = {
+                "sends": 0,
+                "successful": 0,
+                "total_subscribers": 0
+            }
+        performance_by_slot[slot]["sends"] += 1
+        performance_by_slot[slot]["successful"] += send.get("successful_sends", 0)
+        performance_by_slot[slot]["total_subscribers"] += send.get("total_subscribers", 0)
+    
+    return {
+        "performance_by_slot": performance_by_slot,
+        "total_sends": len(sends),
+        "analysis_period": "30 days"
+    }
+
+
+async def ai_optimize_newsletter_times() -> dict:
+    """Use AI to analyze performance data and suggest optimal send times"""
+    try:
+        from emergentintegrations.llm.chat import chat, ModelType
+        import os
+        
+        emergent_key = os.environ.get("EMERGENT_MODEL_API_KEY", "")
+        if not emergent_key:
+            return {
+                "success": False,
+                "error": "Emergent LLM key not configured",
+                "fallback_recommendation": {
+                    "morning": "5:30 AM UTC",
+                    "midmorning": "9:15 AM UTC", 
+                    "afternoon": "4:30 PM UTC",
+                    "reason": "Default times based on general email marketing best practices"
+                }
+            }
+        
+        # Gather performance data
+        perf_data = await get_newsletter_performance_data()
+        
+        prompt = f"""You are an AI email marketing optimization expert. Analyze the following newsletter performance data and recommend the optimal send times for maximum engagement and revenue.
+
+Performance Data (Last 30 Days):
+{perf_data}
+
+Current Schedule:
+- Morning: 5:42 AM UTC
+- Mid-Morning: 8:37 AM UTC  
+- Afternoon: 4:41 PM UTC
+
+Consider:
+1. General email marketing best practices (high open rates typically 9-11 AM local time)
+2. The target audience is global, so UTC times should balance US/EU/Asia engagement
+3. Weekend vs weekday patterns
+4. Avoiding spam filter triggers from unusual send times
+
+Provide your recommendations in this exact JSON format:
+{{
+    "recommended_morning_time": "HH:MM UTC",
+    "recommended_midmorning_time": "HH:MM UTC",
+    "recommended_afternoon_time": "HH:MM UTC",
+    "reasoning": "Brief explanation of recommendations",
+    "expected_improvement": "Estimated percentage improvement in engagement"
+}}
+
+Be specific with times and provide actionable insights!"""
+
+        response = await chat(
+            api_key=emergent_key,
+            model=ModelType.GPT_5_2,
+            prompt=prompt
+        )
+        
+        import json
+        try:
+            # Try to parse JSON from response
+            json_start = response.find('{')
+            json_end = response.rfind('}') + 1
+            if json_start != -1 and json_end > json_start:
+                recommendations = json.loads(response[json_start:json_end])
+                return {
+                    "success": True,
+                    "ai_recommendations": recommendations,
+                    "performance_data": perf_data,
+                    "generated_at": datetime.now(timezone.utc).isoformat()
+                }
+        except json.JSONDecodeError:
+            pass
+        
+        return {
+            "success": True,
+            "ai_response": response,
+            "performance_data": perf_data
+        }
+        
+    except Exception as e:
+        logger.error(f"AI optimization error: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "fallback_recommendation": {
+                "morning": "5:30 AM UTC",
+                "midmorning": "9:15 AM UTC",
+                "afternoon": "4:30 PM UTC",
+                "reason": "Default times based on general email marketing best practices"
+            }
+        }
+
+
+async def apply_ai_optimized_schedule(recommendations: dict):
+    """Apply AI-recommended schedule to the newsletter scheduler"""
+    global triweekly_scheduler
+    from config import db
+    
+    if not triweekly_scheduler:
+        logger.warning("Scheduler not running - cannot apply AI optimizations")
+        return {"success": False, "error": "Scheduler not running"}
+    
+    try:
+        # Parse times from recommendations
+        morning_time = recommendations.get("recommended_morning_time", "5:42 UTC").replace(" UTC", "")
+        midmorning_time = recommendations.get("recommended_midmorning_time", "8:37 UTC").replace(" UTC", "")
+        afternoon_time = recommendations.get("recommended_afternoon_time", "16:41 UTC").replace(" UTC", "")
+        
+        morning_parts = morning_time.split(":")
+        midmorning_parts = midmorning_time.split(":")
+        afternoon_parts = afternoon_time.split(":")
+        
+        # Update jobs with new times
+        triweekly_scheduler.reschedule_job(
+            "triweekly_morning",
+            trigger=CronTrigger(hour=int(morning_parts[0]), minute=int(morning_parts[1]))
+        )
+        triweekly_scheduler.reschedule_job(
+            "triweekly_midmorning", 
+            trigger=CronTrigger(hour=int(midmorning_parts[0]), minute=int(midmorning_parts[1]))
+        )
+        triweekly_scheduler.reschedule_job(
+            "triweekly_afternoon",
+            trigger=CronTrigger(hour=int(afternoon_parts[0]), minute=int(afternoon_parts[1]))
+        )
+        
+        # Save optimized times to database
+        await db.app_settings.update_one(
+            {"key": "newsletter_ai_schedule"},
+            {"$set": {
+                "key": "newsletter_ai_schedule",
+                "morning_time": morning_time,
+                "midmorning_time": midmorning_time,
+                "afternoon_time": afternoon_time,
+                "reasoning": recommendations.get("reasoning", ""),
+                "applied_at": datetime.now(timezone.utc)
+            }},
+            upsert=True
+        )
+        
+        logger.info(f"🤖 AI-optimized newsletter schedule applied!")
+        logger.info(f"   - Morning: {morning_time} UTC")
+        logger.info(f"   - Mid-Morning: {midmorning_time} UTC")
+        logger.info(f"   - Afternoon: {afternoon_time} UTC")
+        
+        return {
+            "success": True,
+            "new_schedule": {
+                "morning": morning_time,
+                "midmorning": midmorning_time,
+                "afternoon": afternoon_time
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to apply AI schedule: {e}")
+        return {"success": False, "error": str(e)}
+
+
 def start_triweekly_scheduler():
     """Start the tri-weekly newsletter scheduler"""
     global triweekly_scheduler
