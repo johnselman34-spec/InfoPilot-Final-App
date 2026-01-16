@@ -245,6 +245,42 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     setAiSearchLoading(false);
   };
 
+  // Database Text Search for Map
+  const databaseSearchForMap = async () => {
+    if (!aiSearchQuery.trim()) {
+      showToast('Please enter a search query', 'error');
+      return;
+    }
+    
+    setDbSearchLoading(true);
+    
+    try {
+      const res = await fetch(`${API}/database-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ 
+          query: aiSearchQuery,
+          mode: dbSearchMode,
+          limit: 100
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`📚 ${data.message}`, 'success');
+        // Refresh map to show results
+        fetchMapResults(true);
+      } else {
+        const error = await res.json();
+        showToast(error.detail || 'Database search failed', 'error');
+      }
+    } catch (e) {
+      showToast('Database search failed', 'error');
+    }
+    
+    setDbSearchLoading(false);
+  };
+
   useEffect(() => {
     fetchMapResults();
   }, [fetchMapResults]);
