@@ -452,6 +452,41 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
   - Category assignment
   - data-testid="create-personal-report-btn"
 
+### Batch 11 - Easter Eggs & Legal ✅ (January 16, 2026)
+- [x] **Floating Easter Eggs Gamification**
+  - `FloatingEasterEggs.js` - Colorful eggs float across screen
+  - Click eggs to catch and earn rewards:
+    - 📋 Protocol Ideas (25 XP) - Complete InfoJet 2.0 protocol templates
+    - 😂 Funny Jokes (15 XP) - Programmer and general humor
+    - 💰 Pricing Wisdom (20 XP) - Tips for protocol pricing
+    - 💪 Motivation (10 XP) - Encouraging messages
+    - 🧠 Fun Facts (15 XP) - Interesting trivia
+    - 🤫 Insider Secrets (30 XP) - App tips and Easter eggs
+  - Eggs spawn every 45 seconds from screen edges
+  - Beautiful gradient colors with shine effects
+  - Reward popup shows XP earned and content
+  - Copy Protocol button for protocol rewards
+  - Egg counter shows total caught
+  - `EasterEggStats` component shows Eggs Caught, XP Earned, Catch Rate
+- [x] **Protocol Parser "and" ↔ "&" Enhancement**
+  - `protocol_service.py` lines 203-205: `re.sub(r'\s+and\s+', ' & ', text, flags=re.IGNORECASE)`
+  - Case-insensitive: AND, And, and all work as synonym for &
+  - Example: `(word1 or word2) and (word3 or word4)` = `(word1 or word2) & (word3 or word4)`
+  - Mixed usage supported: `(a or b) and (c or d) & (e or f)` works correctly
+- [x] **User Agreement Component**
+  - `UserAgreement.js` - Professional Terms of Service for Top Pilot Enterprises, Inc.
+  - 13 sections: Acceptance, Description, Accounts, Conduct, Marketplace, Content Ownership, Privacy, Subscription, Termination, Disclaimers, Liability, Governing Law, Contact
+  - Accessible from Registration page and Settings page
+  - Modal overlay with styled sections
+- [x] **Privacy Statement Component**
+  - `PrivacyStatement.js` - GDPR/CCPA compliant Privacy Policy
+  - 14 sections: Introduction, Information Collected, How We Use, Sharing, Security, Your Rights, Cookies, Retention, Children, International, California Rights, EU Rights, Changes, Contact
+  - Accessible from Registration page and Settings page
+- [x] **Easter Egg Stats in Settings**
+  - `EasterEggStats` component added to SettingsPage
+  - Shows Eggs Caught, XP Earned, Catch Rate percentage
+  - Fun messaging: "Keep your eyes peeled for floating Easter eggs!"
+
 ### Maps Pricing Decision
 - ✅ **FREE Maps for All Users:**
   - Ultimate Search Page map
