@@ -7,6 +7,8 @@ import ABOptimizerAdmin from '../components/Admin/ABOptimizerAdmin';
 import RevenueForecastAdmin from '../components/Admin/RevenueForecastAdmin';
 import MarketplaceProtocolForecast from '../components/Admin/MarketplaceProtocolForecast';
 import UserModerationAdmin from '../components/Admin/UserModerationAdmin';
+import CategoryAnalyticsDashboard from '../components/Admin/CategoryAnalyticsDashboard';
+import UnpaidPriceControlsAdmin from '../components/Admin/UnpaidPriceControlsAdmin';
 
 const AdminPanel = ({ showToast }) => {
   const { token } = useAuth();
