@@ -107,7 +107,7 @@ const CrossSellSection = ({ protocolId, showToast, onAddToCart }) => {
       {bundles.length > 0 && (
         <div style={{ marginBottom: 20 }}>
           <p style={{ color: '#ec4899', fontWeight: 600, marginBottom: 10 }}>
-            📦 {DISCOUNT_MESSAGES[Math.floor(Math.random() * DISCOUNT_MESSAGES.length)]}
+            📦 {discountMessage}
           </p>
           <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap' }}>
             {bundles.map(bundle => (
