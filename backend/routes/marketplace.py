@@ -18,8 +18,21 @@ from services.protocol_service import ProtocolParser
 
 router = APIRouter(prefix="/marketplace", tags=["Protocol Marketplace"])
 
-# PayPal minimum payout threshold
-PAYPAL_MIN_PAYOUT = 1.00
+# PayPal Payment Configuration
+# =============================
+# PayPal requires minimum $1.00 for transactions
+# For low-price protocols, the platform fee may be less than $1.00
+# Solution: Accumulate creator earnings until threshold is met
+
+PAYPAL_MIN_PAYOUT = 1.00  # Minimum accumulated before payout
+
+# Minimum protocol price for paid protocols (free protocols allowed)
+MINIMUM_PAID_PROTOCOL_PRICE = 0.99
+
+# Platform fee configuration (admin configurable, default 15%)
+# At 15% fee: $6.67 protocol = $1.00 fee
+# Below this, fees accumulate until threshold is met
+DEFAULT_PLATFORM_FEE_PERCENT = 15
 
 
 # ==================== ADMIN REVENUE SETTINGS ====================
