@@ -72,6 +72,27 @@ const UltimateSearchPage = ({ showToast }) => {
   const [mapCenter, setMapCenter] = useState([39.8283, -98.5795]);
   const [mapZoom] = useState(4);
   const [filterInfo, setFilterInfo] = useState({ filter_applied: false, aggregation_mode: 'and_or' });
+  
+  // Document Type Filtering state
+  const [selectedDocTypes, setSelectedDocTypes] = useState([]);
+  const [showFilteredResults, setShowFilteredResults] = useState(false);
+  
+  // Available document types
+  const documentTypes = useMemo(() => [
+    { id: 'PhD Informative', name: 'PhD Informative', color: '#8b5cf6' },
+    { id: 'Personal Report (Organic)', name: 'Personal Report (Organic)', color: '#10b981' },
+    { id: 'Personal Report (Collected)', name: 'Personal Report (Collected)', color: '#14b8a6' },
+    { id: 'News Article', name: 'News Article', color: '#3b82f6' },
+    { id: 'Academic Paper', name: 'Academic Paper', color: '#6366f1' },
+    { id: 'Government', name: 'Government', color: '#ef4444' },
+    { id: 'Wiki', name: 'Wiki', color: '#f59e0b' },
+    { id: 'Blog Post', name: 'Blog Post', color: '#ec4899' },
+    { id: 'Forum', name: 'Forum', color: '#06b6d4' },
+    { id: 'Video', name: 'Video', color: '#f472b6' },
+    { id: 'PDF Document', name: 'PDF Document', color: '#dc2626' },
+    { id: 'MS Word Document', name: 'MS Word Document', color: '#2563eb' },
+    { id: 'Webpage', name: 'Webpage', color: '#6b7280' }
+  ], []);
 
   // Category colors for map markers
   const categoryColors = useMemo(() => [
@@ -89,6 +110,48 @@ const UltimateSearchPage = ({ showToast }) => {
   const mapResults = useMemo(() => {
     return searchResults.filter(r => r.latitude && r.longitude);
   }, [searchResults]);
+  
+  // Filtered results based on category and document type selections
+  const filteredResults = useMemo(() => {
+    let results = searchResults;
+    
+    // Filter by selected categories
+    if (selectedCategories.length > 0) {
+      const selectedCatNames = categories
+        .filter(c => selectedCategories.includes(c.id))
+        .map(c => c.name);
+      
+      if (aggregation === 'and') {
+        // AND: Must have ALL selected categories
+        results = results.filter(r => 
+          selectedCatNames.every(catName => r.categories?.includes(catName))
+        );
+      } else {
+        // OR / AND_OR: Must have ANY selected category
+        results = results.filter(r => 
+          selectedCatNames.some(catName => r.categories?.includes(catName))
+        );
+      }
+    }
+    
+    // Filter by selected document types
+    if (selectedDocTypes.length > 0) {
+      results = results.filter(r => selectedDocTypes.includes(r.article_type));
+    }
+    
+    return results;
+  }, [searchResults, selectedCategories, selectedDocTypes, categories, aggregation]);
+  
+  // Toggle document type selection
+  const toggleDocType = (docType) => {
+    setSelectedDocTypes(prev => 
+      prev.includes(docType)
+        ? prev.filter(d => d !== docType)
+        : [...prev, docType]
+    );
+    // Show filtered results when filters are active
+    setShowFilteredResults(true);
+  };
 
   // Handle applying a template
   const handleApplyTemplate = (protocol, templateName) => {
