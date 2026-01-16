@@ -2149,6 +2149,204 @@ async def get_map_data(user = Depends(get_current_user_local)):
     
     return {"results": formatted, "count": len(formatted)}
 
+
+# ==================== MAP EXPORT FEATURES ====================
+
+@api_router.get("/map-data/export", response_model=dict)
+async def export_map_data(
+    format: str = "json",
+    category_ids: Optional[str] = None,
+    user = Depends(get_current_user_local)
+):
+    """
+    Export map data in various formats (JSON, CSV, KML, GeoJSON).
+    Supports filtering by category.
+    """
+    user_id = str(user["_id"])
+    
+    # Build query
+    query = {
+        "user_id": user_id,
+        "latitude": {"$exists": True, "$ne": None},
+        "longitude": {"$exists": True, "$ne": None}
+    }
+    
+    # Filter by categories if provided
+    if category_ids:
+        cat_list = [c.strip() for c in category_ids.split(",")]
+        query["category_ids"] = {"$in": cat_list}
+    
+    results = await db.search_results.find(query).to_list(1000)
+    
+    # Format based on export type
+    if format == "geojson":
+        # GeoJSON format for mapping applications
+        features = []
+        for r in results:
+            features.append({
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [r.get("longitude"), r.get("latitude")]
+                },
+                "properties": {
+                    "id": str(r["_id"]),
+                    "title": r.get("title", ""),
+                    "url": r.get("url", ""),
+                    "article_type": r.get("article_type", "Unknown"),
+                    "snippet": r.get("snippet", "")[:200]
+                }
+            })
+        
+        return {
+            "type": "FeatureCollection",
+            "features": features,
+            "metadata": {
+                "total": len(features),
+                "exported_at": datetime.utcnow().isoformat()
+            }
+        }
+    
+    elif format == "kml":
+        # KML format for Google Earth
+        placemarks = []
+        for r in results:
+            placemarks.append({
+                "name": r.get("title", "Untitled"),
+                "description": r.get("snippet", "")[:300],
+                "coordinates": f"{r.get('longitude')},{r.get('latitude')},0",
+                "url": r.get("url", "")
+            })
+        
+        return {
+            "format": "kml",
+            "placemarks": placemarks,
+            "total": len(placemarks),
+            "message": "Use this data to generate a KML file for Google Earth"
+        }
+    
+    elif format == "csv":
+        # CSV format
+        rows = []
+        rows.append(["id", "title", "url", "latitude", "longitude", "article_type", "snippet"])
+        for r in results:
+            rows.append([
+                str(r["_id"]),
+                r.get("title", ""),
+                r.get("url", ""),
+                str(r.get("latitude", "")),
+                str(r.get("longitude", "")),
+                r.get("article_type", "Unknown"),
+                r.get("snippet", "")[:200].replace(",", ";")
+            ])
+        
+        return {
+            "format": "csv",
+            "headers": rows[0],
+            "rows": rows[1:],
+            "total": len(rows) - 1
+        }
+    
+    else:  # Default JSON
+        formatted = []
+        for r in results:
+            formatted.append({
+                "id": str(r["_id"]),
+                "title": r.get("title", ""),
+                "url": r.get("url", ""),
+                "latitude": r.get("latitude"),
+                "longitude": r.get("longitude"),
+                "article_type": r.get("article_type", "Unknown"),
+                "snippet": r.get("snippet", "")[:200],
+                "category_ids": r.get("category_ids", [])
+            })
+        
+        return {
+            "format": "json",
+            "results": formatted,
+            "total": len(formatted),
+            "exported_at": datetime.utcnow().isoformat()
+        }
+
+
+@api_router.get("/map-data/statistics", response_model=dict)
+async def get_map_statistics(user = Depends(get_current_user_local)):
+    """
+    Get statistics about geolocated results.
+    Includes country distribution, article types, and more.
+    """
+    user_id = str(user["_id"])
+    
+    # Get all geolocated results
+    results = await db.search_results.find({
+        "user_id": user_id,
+        "latitude": {"$exists": True, "$ne": None},
+        "longitude": {"$exists": True, "$ne": None}
+    }).to_list(1000)
+    
+    # Calculate statistics
+    total_geolocated = len(results)
+    
+    # Article type distribution
+    article_types = {}
+    for r in results:
+        atype = r.get("article_type", "Unknown")
+        article_types[atype] = article_types.get(atype, 0) + 1
+    
+    # Geographic distribution (rough estimate based on coordinates)
+    regions = {
+        "North America": 0,
+        "South America": 0,
+        "Europe": 0,
+        "Asia": 0,
+        "Africa": 0,
+        "Oceania": 0,
+        "Unknown": 0
+    }
+    
+    for r in results:
+        lat = r.get("latitude", 0)
+        lng = r.get("longitude", 0)
+        
+        # Simple region detection based on coordinates
+        if lat > 15 and lng < -30:
+            regions["North America"] += 1
+        elif lat < 15 and lat > -60 and lng < -30:
+            regions["South America"] += 1
+        elif lat > 35 and lng > -10 and lng < 40:
+            regions["Europe"] += 1
+        elif lat > 0 and lng > 40:
+            regions["Asia"] += 1
+        elif lat < 35 and lat > -35 and lng > -20 and lng < 55:
+            regions["Africa"] += 1
+        elif lat < 0 and lng > 100:
+            regions["Oceania"] += 1
+        else:
+            regions["Unknown"] += 1
+    
+    # Calculate bounding box
+    if results:
+        lats = [r.get("latitude", 0) for r in results]
+        lngs = [r.get("longitude", 0) for r in results]
+        bounding_box = {
+            "north": max(lats),
+            "south": min(lats),
+            "east": max(lngs),
+            "west": min(lngs)
+        }
+    else:
+        bounding_box = None
+    
+    return {
+        "total_geolocated": total_geolocated,
+        "article_types": article_types,
+        "regions": regions,
+        "bounding_box": bounding_box,
+        "export_formats": ["json", "geojson", "kml", "csv"],
+        "message": f"You have {total_geolocated} geolocated results"
+    }
+
+
 @api_router.post("/reactions", response_model=dict)
 async def add_reaction(reaction: ReactionCreate, user = Depends(get_current_user_local)):
     """Add a reaction to a search result"""
