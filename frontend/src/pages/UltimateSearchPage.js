@@ -337,6 +337,53 @@ const UltimateSearchPage = ({ showToast }) => {
     setAiSearchLoading(false);
   };
 
+  // DATABASE TEXT SEARCH - Search within already collated results
+  const [dbSearchLoading, setDbSearchLoading] = useState(false);
+  const [dbSearchMode, setDbSearchMode] = useState('smart');
+  
+  const databaseTextSearch = async () => {
+    if (!searchQuery.trim()) {
+      showToast('Please enter a search query', 'error');
+      return;
+    }
+    
+    setDbSearchLoading(true);
+    const startTime = Date.now();
+    
+    try {
+      const res = await fetch(`${API}/database-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ 
+          query: searchQuery,
+          mode: dbSearchMode,
+          category_ids: selectedCategories,
+          limit: 100
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+        
+        // Display results directly from database search
+        if (data.results && data.results.length > 0) {
+          setSearchResults(data.results);
+          showToast(`📚 ${data.message} (${totalTime}s) - Found in ${data.total_in_database} total records`, 'success');
+        } else {
+          showToast(`📚 No matches found in database. Try running a search first to collate results!`, 'info');
+        }
+      } else {
+        const error = await res.json();
+        showToast(error.detail || 'Database search failed', 'error');
+      }
+    } catch (e) {
+      showToast('Database search failed', 'error');
+    }
+    
+    setDbSearchLoading(false);
+  };
+
   const collateWithCategories = async () => {
     if (selectedCategories.length === 0) {
       showToast('Please select at least one category to collate', 'error');
