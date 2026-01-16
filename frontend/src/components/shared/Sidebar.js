@@ -127,9 +127,9 @@ const Sidebar = ({ currentPage, setCurrentPage, showToast }) => {
             Logout
           </div>
           
-          {/* Dark Mode Toggle */}
+          {/* Theme Controls - Dark Mode + Accent Color */}
           <div style={{ padding: '10px 0', borderTop: '1px solid rgba(124, 58, 237, 0.2)', marginTop: 10 }}>
-            <DarkModeToggle />
+            <ThemeToggle showColorPicker={true} />
           </div>
         </nav>
 
