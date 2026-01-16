@@ -524,13 +524,24 @@ class TestEasterEggJokes:
     def test_easter_egg_stats_endpoint(self, admin_token):
         """Test Easter Egg stats endpoint"""
         response = requests.get(
-            f"{BASE_URL}/api/gamification/easter-egg-stats",
+            f"{BASE_URL}/api/easter-eggs/stats",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200
         data = response.json()
-        assert "user_stats" in data or "global_stats" in data or "stats" in data
-        print("✅ GET /api/gamification/easter-egg-stats - endpoint working")
+        assert "total_discoveries" in data or "available_eggs" in data
+        print("✅ GET /api/easter-eggs/stats - endpoint working")
+    
+    def test_easter_egg_leaderboard(self, admin_token):
+        """Test Easter Egg leaderboard endpoint"""
+        response = requests.get(
+            f"{BASE_URL}/api/easter-eggs/leaderboard",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "leaderboard" in data or "hunters" in data or isinstance(data, list)
+        print("✅ GET /api/easter-eggs/leaderboard - endpoint working")
 
 
 class TestThemeColorCustomization:
