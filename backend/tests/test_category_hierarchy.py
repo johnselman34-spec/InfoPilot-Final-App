@@ -34,7 +34,7 @@ class TestCategoryHierarchy:
             f"{BASE_URL}/categories",
             json={
                 "name": "Test Parent Category",
-                "protocol": "weather AND forecast",
+                "protocol": "(weather or forecast)",
                 "is_public": True
             },
             headers={"Authorization": f"Bearer {admin_token}"}
@@ -44,6 +44,9 @@ class TestCategoryHierarchy:
         assert data["name"] == "Test Parent Category"
         assert data["level"] == 0
         assert data["parent_id"] is None
+        
+        # Cleanup
+        requests.delete(f"{BASE_URL}/categories/{data['id']}", headers={"Authorization": f"Bearer {admin_token}"})
         return data["id"]
     
     def test_create_subcategory(self, admin_token):
@@ -55,7 +58,7 @@ class TestCategoryHierarchy:
             f"{BASE_URL}/categories",
             json={
                 "name": "Parent for Subcategory Test",
-                "protocol": "sports AND news",
+                "protocol": "(sports or news)",
                 "is_public": True
             },
             headers={"Authorization": f"Bearer {admin_token}"}
@@ -68,7 +71,7 @@ class TestCategoryHierarchy:
             f"{BASE_URL}/categories",
             json={
                 "name": "Test Subcategory",
-                "protocol": "basketball OR football",
+                "protocol": "(basketball or football)",
                 "is_public": True,
                 "parent_id": parent_id
             },
@@ -92,7 +95,7 @@ class TestCategoryHierarchy:
             f"{BASE_URL}/categories",
             json={
                 "name": "Level 0 Category",
-                "protocol": "technology",
+                "protocol": "(technology or science)",
                 "is_public": True
             },
             headers={"Authorization": f"Bearer {admin_token}"}
@@ -105,7 +108,7 @@ class TestCategoryHierarchy:
             f"{BASE_URL}/categories",
             json={
                 "name": "Level 1 Category",
-                "protocol": "programming",
+                "protocol": "(programming or coding)",
                 "is_public": True,
                 "parent_id": l0_id
             },
@@ -120,7 +123,7 @@ class TestCategoryHierarchy:
             f"{BASE_URL}/categories",
             json={
                 "name": "Level 2 Category",
-                "protocol": "python",
+                "protocol": "(python or javascript)",
                 "is_public": True,
                 "parent_id": l1_id
             },
@@ -144,7 +147,7 @@ class TestCategoryHierarchy:
             f"{BASE_URL}/categories",
             json={
                 "name": "Parent to Delete",
-                "protocol": "test cascade",
+                "protocol": "(test or cascade)",
                 "is_public": True
             },
             headers={"Authorization": f"Bearer {admin_token}"}
@@ -156,7 +159,7 @@ class TestCategoryHierarchy:
             f"{BASE_URL}/categories",
             json={
                 "name": "Child to Cascade Delete",
-                "protocol": "cascade child",
+                "protocol": "(cascade or child)",
                 "is_public": True,
                 "parent_id": parent_id
             },
@@ -189,7 +192,7 @@ class TestCategoryHierarchy:
             f"{BASE_URL}/categories",
             json={
                 "name": "Original Name",
-                "protocol": "original protocol",
+                "protocol": "(original or test)",
                 "is_public": False
             },
             headers={"Authorization": f"Bearer {admin_token}"}
@@ -201,7 +204,7 @@ class TestCategoryHierarchy:
             f"{BASE_URL}/categories/{cat_id}",
             json={
                 "name": "Updated Name",
-                "protocol": "updated protocol",
+                "protocol": "(updated or protocol)",
                 "is_public": True
             },
             headers={"Authorization": f"Bearer {admin_token}"}
@@ -209,7 +212,7 @@ class TestCategoryHierarchy:
         assert edit_response.status_code == 200
         updated = edit_response.json()
         assert updated["name"] == "Updated Name"
-        assert updated["protocol"] == "updated protocol"
+        assert updated["protocol"] == "(updated or protocol)"
         assert updated["is_public"] == True
         
         # Cleanup
@@ -224,7 +227,7 @@ class TestCategoryHierarchy:
             f"{BASE_URL}/categories",
             json={
                 "name": "Count Test Category",
-                "protocol": "count test",
+                "protocol": "(count or test)",
                 "is_public": True
             },
             headers={"Authorization": f"Bearer {admin_token}"}
