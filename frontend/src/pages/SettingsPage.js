@@ -67,7 +67,7 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
   const fetchLegalDocument = async (type) => {
     try {
       const endpoint = type === 'terms' ? 'user-agreement' : 'privacy-policy';
-      const res = await fetch(`${API}/api/legal/${endpoint}`);
+      const res = await fetch(`${API}/legal/${endpoint}`);
       if (res.ok) {
         const data = await res.json();
         setLegalContent(data.content);
