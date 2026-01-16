@@ -230,6 +230,30 @@ async def create_marketplace_protocol(protocol: MarketplaceProtocolCreate, user 
     # Determine if protocol is free
     is_free = protocol.price == 0 or protocol.price < 0.01
     
+    # Validate price for unpaid users
+    is_paid_user = user.get("subscription_active") or user.get("is_admin")
+    if not is_paid_user and not is_free:
+        # Check if price controls are enabled
+        control_enabled = await db.settings.find_one({"key": "unpaid_price_control_enabled"})
+        if control_enabled and control_enabled.get("value"):
+            # Check if unpaid users can sell
+            can_sell = await db.settings.find_one({"key": "unpaid_can_sell"})
+            if can_sell and not can_sell.get("value"):
+                raise HTTPException(
+                    status_code=403, 
+                    detail="Unpaid users are not currently allowed to sell. Please upgrade to Premium!"
+                )
+            
+            # Check max price
+            max_price_setting = await db.settings.find_one({"key": "unpaid_max_protocol_price"})
+            max_price = max_price_setting.get("value", 5.00) if max_price_setting else 5.00
+            
+            if protocol.price > max_price:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Unpaid users can only charge up to ${max_price:.2f}. Upgrade to Premium for higher prices!"
+                )
+    
     # Create listing
     listing = {
         "name": protocol.name,
