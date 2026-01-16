@@ -94,7 +94,7 @@ const SearchControls = ({
       <div className="search-box">
         <input
           className="input-field"
-          placeholder="Enter search query (searches Google, DuckDuckGo, Brave, Yandex)..."
+          placeholder="Enter search query (searches Google, Bing, DuckDuckGo, Brave)..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && onSearch()}
@@ -123,11 +123,11 @@ const SearchControls = ({
         </button>
       </div>
       
-      {/* NEW: Auto-Categorize and AI Search Buttons */}
+      {/* Search Action Buttons Row 1: Auto-Categorize and AI Intelligent Search */}
       <div style={{ 
         display: 'flex', 
         gap: 10, 
-        marginBottom: 15, 
+        marginBottom: 10, 
         flexWrap: 'wrap',
         alignItems: 'center'
       }}>
@@ -145,7 +145,7 @@ const SearchControls = ({
           data-testid="auto-categorize-btn"
           title="One-click: Search and automatically match results against ALL your categories"
         >
-          {autoCatLoading ? '⏳ Auto-Categorizing...' : '🎯 Auto-Categorize All'}
+          {autoCatLoading ? '⏳ Auto-Categorizing...' : '🎯 Search & Auto-Categorize'}
         </button>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -161,7 +161,7 @@ const SearchControls = ({
               opacity: (!searchQuery.trim() || aiSearchLoading) ? 0.5 : 1
             }}
             data-testid="ai-search-btn"
-            title="AI-powered search across Google, DuckDuckGo, Bing with intelligent keyword expansion"
+            title="AI-powered search across Google, Bing, DuckDuckGo, Brave with intelligent keyword expansion"
           >
             {aiSearchLoading ? '🤖 AI Searching...' : '🤖 AI Intelligent Search'}
           </button>
@@ -186,14 +186,62 @@ const SearchControls = ({
             <option value="research">🔬 Research Focus</option>
           </select>
         </div>
+      </div>
+      
+      {/* Search Action Buttons Row 2: Database Text Search */}
+      <div style={{ 
+        display: 'flex', 
+        gap: 10, 
+        marginBottom: 15, 
+        flexWrap: 'wrap',
+        alignItems: 'center'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <button
+            className="btn"
+            onClick={onDatabaseSearch}
+            disabled={dbSearchLoading || !searchQuery.trim()}
+            style={{
+              background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+              color: '#fff',
+              padding: '10px 20px',
+              fontWeight: 600,
+              opacity: (!searchQuery.trim() || dbSearchLoading) ? 0.5 : 1
+            }}
+            data-testid="database-search-btn"
+            title="Search within your already collated database results"
+          >
+            {dbSearchLoading ? '📚 Searching Database...' : '📚 Database Text Search'}
+          </button>
+          
+          {/* Database Search Mode Selector */}
+          <select
+            value={dbSearchMode || 'smart'}
+            onChange={(e) => setDbSearchMode && setDbSearchMode(e.target.value)}
+            style={{
+              background: 'rgba(6, 182, 212, 0.2)',
+              border: '1px solid rgba(6, 182, 212, 0.4)',
+              color: '#22d3ee',
+              padding: '8px 12px',
+              borderRadius: 8,
+              fontSize: '0.85rem',
+              cursor: 'pointer'
+            }}
+            data-testid="db-search-mode"
+          >
+            <option value="smart">🧠 Smart Match</option>
+            <option value="exact">🎯 Exact Phrase</option>
+            <option value="fuzzy">🔍 Fuzzy Match</option>
+          </select>
+        </div>
         
         <span style={{ 
           color: '#a1a1aa', 
           fontSize: '0.75rem', 
-          marginLeft: 10,
-          maxWidth: 300
+          maxWidth: 450
         }}>
-          💡 Auto-Categorize matches ALL categories. AI Search uses GPT + Google, DuckDuckGo & Brave.
+          💡 <strong>AI Search:</strong> Searches Google, Bing, DuckDuckGo, Brave with GPT keyword expansion. 
+          <strong> Database Search:</strong> Finds content in your already collated results.
         </span>
       </div>
 
