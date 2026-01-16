@@ -1520,15 +1520,25 @@ Return ONLY a JSON array of 3 strings, no other text:
             result["groups_matched"] = total_groups_matched
             result["should_auto_collate"] = combined_score >= 0.5 and len(result_category_ids) > 0  # Only auto-collate best matches
     
-    # Classify and add metadata
+    # Classify and add metadata, calculate content quality
     for result in all_results:
         result["article_type"] = ArticleClassifier.classify(
             result.get("title", ""), result.get("content", "")
         )
         result["root_domain"] = WebSearchService.extract_root_domain(result.get("url", ""))
+        # Calculate content quality score for prioritizing valuable content
+        result["content_quality_score"] = ArticleClassifier.calculate_content_quality_score(
+            result.get("title", ""),
+            result.get("snippet", result.get("content", "")),
+            result.get("url", "")
+        )
     
-    # Sort by match score (if categorized) or by search engine ranking
-    all_results.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+    # Sort by combined score: 60% match_score + 40% content_quality_score
+    # This prioritizes valuable, extensive content while still considering match relevance
+    all_results.sort(
+        key=lambda x: (x.get("match_score", 0) * 0.6) + (x.get("content_quality_score", 50) * 0.004),
+        reverse=True
+    )
     
     # Store results - Only auto-collate results that meet threshold
     auto_collated_count = 0
