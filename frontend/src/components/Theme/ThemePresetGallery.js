@@ -254,7 +254,7 @@ const ThemePresetGallery = ({ showToast, onClose }) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 1000,
+      zIndex: 10000,
       padding: 20
     }} data-testid="theme-preset-gallery">
       <div style={{
