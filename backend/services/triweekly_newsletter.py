@@ -512,7 +512,7 @@ async def apply_ai_optimized_schedule(recommendations: dict):
             upsert=True
         )
         
-        logger.info(f"🤖 AI-optimized newsletter schedule applied!")
+        logger.info("🤖 AI-optimized newsletter schedule applied!")
         logger.info(f"   - Morning: {morning_time} UTC")
         logger.info(f"   - Mid-Morning: {midmorning_time} UTC")
         logger.info(f"   - Afternoon: {afternoon_time} UTC")

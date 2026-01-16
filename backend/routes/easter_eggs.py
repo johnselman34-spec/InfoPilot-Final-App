@@ -297,7 +297,7 @@ async def discover_easter_egg(data: dict, user = Depends(get_current_user)):
     await db.notifications.insert_one({
         "user_id": user_id,
         "type": "easter_egg",
-        "title": f"🥚 Easter Egg Discovered!",
+        "title": "🥚 Easter Egg Discovered!",
         "message": f"You found {egg['name']}! +{egg['xp']} XP",
         "read": False,
         "created_at": datetime.now(timezone.utc)
