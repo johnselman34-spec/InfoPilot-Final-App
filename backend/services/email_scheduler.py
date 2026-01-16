@@ -347,7 +347,7 @@ async def generate_hilarious_report_html(days: int = 7) -> tuple[str, str]:
         
         <!-- CTA -->
         <div style="text-align:center;margin-bottom:25px;">
-            <a href="https://protocol-market-1.preview.emergentagent.com/#admin" 
+            <a href="https://infopilot-explorer.preview.emergentagent.com/#admin" 
                style="display:inline-block;background:linear-gradient(135deg,#7c3aed 0%,#ec4899 100%);color:white;text-decoration:none;padding:15px 35px;border-radius:30px;font-weight:bold;font-size:16px;">
                 📊 View Full Dashboard
             </a>
@@ -370,7 +370,7 @@ async def generate_hilarious_report_html(days: int = 7) -> tuple[str, str]:
             </p>
             <p style="color:#52525b;font-size:10px;margin:10px 0 0 0;">
                 You're receiving this because you're an admin who opted in. 
-                <a href="https://protocol-market-1.preview.emergentagent.com/#settings" style="color:#7c3aed;">Manage preferences</a>
+                <a href="https://infopilot-explorer.preview.emergentagent.com/#settings" style="color:#7c3aed;">Manage preferences</a>
             </p>
         </div>
     </div>
