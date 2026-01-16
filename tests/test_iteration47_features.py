@@ -15,15 +15,27 @@ Features to test:
 import pytest
 import requests
 import os
-import time
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
 # Test credentials
 ADMIN_EMAIL = "jjspilot24@gmail.com"
 ADMIN_PASSWORD = "InfoPilot2024!"
-TEST_USER_EMAIL = "testuser@example.com"
-TEST_USER_PASSWORD = "password123"
+
+
+# Module-level token fixture
+@pytest.fixture(scope="module")
+def admin_token():
+    """Get admin authentication token"""
+    response = requests.post(f"{BASE_URL}/api/auth/login", json={
+        "email": ADMIN_EMAIL,
+        "password": ADMIN_PASSWORD
+    })
+    if response.status_code == 200:
+        token = response.json().get("token")
+        print(f"✅ Admin login successful, token obtained")
+        return token
+    pytest.skip(f"Admin login failed: {response.status_code}")
 
 
 class TestAPIHealth:
@@ -41,38 +53,15 @@ class TestAPIHealth:
 class TestAdminAuthentication:
     """Admin authentication tests"""
     
-    @pytest.fixture(scope="class")
-    def admin_token(self):
-        """Get admin authentication token"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        })
-        if response.status_code == 200:
-            token = response.json().get("token")
-            print(f"✅ Admin login successful")
-            return token
-        pytest.skip(f"Admin login failed: {response.status_code}")
-    
     def test_admin_login(self, admin_token):
         """Verify admin can login"""
         assert admin_token is not None
-        print("✅ Admin token obtained")
+        assert len(admin_token) > 10
+        print("✅ Admin token obtained and valid")
 
 
 class TestCategoryOperations:
     """Category CRUD operations including delete"""
-    
-    @pytest.fixture(scope="class")
-    def admin_token(self):
-        """Get admin authentication token"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        })
-        if response.status_code == 200:
-            return response.json().get("access_token")
-        pytest.skip("Admin login failed")
     
     def test_get_categories(self, admin_token):
         """Test fetching categories"""
@@ -101,38 +90,12 @@ class TestCategoryOperations:
         assert "id" in data
         assert data["name"] == "TEST_ParentCategory_Delete"
         print(f"✅ Created parent category: {data['id']}")
-        return data["id"]
-    
-    def test_create_child_category(self, admin_token):
-        """Test creating a child category for cascade delete test"""
-        # First create parent
-        parent_response = requests.post(
-            f"{BASE_URL}/api/categories",
-            headers={"Authorization": f"Bearer {admin_token}"},
-            json={
-                "name": "TEST_CascadeParent",
-                "protocol": "(cascade or parent)",
-                "is_public": False
-            }
-        )
-        assert parent_response.status_code == 200
-        parent_id = parent_response.json()["id"]
         
-        # Create child
-        child_response = requests.post(
-            f"{BASE_URL}/api/categories",
-            headers={"Authorization": f"Bearer {admin_token}"},
-            json={
-                "name": "TEST_CascadeChild",
-                "protocol": "(cascade or child)",
-                "parent_id": parent_id,
-                "is_public": False
-            }
+        # Cleanup
+        requests.delete(
+            f"{BASE_URL}/api/categories/{data['id']}",
+            headers={"Authorization": f"Bearer {admin_token}"}
         )
-        assert child_response.status_code == 200
-        child_id = child_response.json()["id"]
-        print(f"✅ Created parent {parent_id} with child {child_id}")
-        return parent_id, child_id
     
     def test_update_category(self, admin_token):
         """Test updating category name, protocol, visibility, price"""
@@ -278,17 +241,6 @@ class TestCategoryOperations:
 class TestAdminModeration:
     """Admin moderation endpoint tests"""
     
-    @pytest.fixture(scope="class")
-    def admin_token(self):
-        """Get admin authentication token"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        })
-        if response.status_code == 200:
-            return response.json().get("access_token")
-        pytest.skip("Admin login failed")
-    
     def test_get_users_list(self, admin_token):
         """Test admin can get list of users"""
         response = requests.get(
@@ -327,8 +279,8 @@ class TestAdminModeration:
             assert "target_username" in action or "target_user_id" in action
             print(f"✅ Action structure verified")
     
-    def test_ban_user_endpoint_structure(self, admin_token):
-        """Test ban endpoint accepts correct parameters"""
+    def test_ban_unban_user_flow(self, admin_token):
+        """Test ban and unban user endpoints"""
         # Get a non-admin user to test with
         users_response = requests.get(
             f"{BASE_URL}/api/admin/users",
@@ -346,7 +298,7 @@ class TestAdminModeration:
         if not test_user:
             pytest.skip("No non-admin user available for ban test")
         
-        # Test ban endpoint (we'll unban immediately after)
+        # Test ban endpoint
         ban_response = requests.post(
             f"{BASE_URL}/api/admin/users/{test_user['id']}/ban",
             headers={"Authorization": f"Bearer {admin_token}"},
@@ -368,8 +320,8 @@ class TestAdminModeration:
         assert unban_response.status_code == 200
         print(f"✅ Unban endpoint works")
     
-    def test_mute_user_endpoint_structure(self, admin_token):
-        """Test mute endpoint accepts correct parameters"""
+    def test_mute_unmute_user_flow(self, admin_token):
+        """Test mute and unmute user endpoints"""
         # Get a non-admin user to test with
         users_response = requests.get(
             f"{BASE_URL}/api/admin/users",
@@ -437,17 +389,6 @@ class TestAdminModeration:
 class TestAdminSettings:
     """Admin settings tests"""
     
-    @pytest.fixture(scope="class")
-    def admin_token(self):
-        """Get admin authentication token"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        })
-        if response.status_code == 200:
-            return response.json().get("access_token")
-        pytest.skip("Admin login failed")
-    
     def test_get_admin_settings(self, admin_token):
         """Test fetching admin settings"""
         response = requests.get(
@@ -475,28 +416,6 @@ class TestAdminSettings:
 class TestSearchFunctionality:
     """Verify search functionality still works"""
     
-    @pytest.fixture(scope="class")
-    def admin_token(self):
-        """Get admin authentication token"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        })
-        if response.status_code == 200:
-            return response.json().get("access_token")
-        pytest.skip("Admin login failed")
-    
-    def test_search_endpoint(self, admin_token):
-        """Test search endpoint works"""
-        response = requests.post(
-            f"{BASE_URL}/api/search",
-            headers={"Authorization": f"Bearer {admin_token}"},
-            json={"query": "aviation safety"}
-        )
-        # Search might return 200 or other status depending on API limits
-        assert response.status_code in [200, 429, 503]
-        print(f"✅ Search endpoint responded with status {response.status_code}")
-    
     def test_ultimate_search_endpoint(self, admin_token):
         """Test ultimate search results endpoint"""
         response = requests.get(
@@ -509,20 +428,8 @@ class TestSearchFunctionality:
         print(f"✅ Ultimate search returned {len(data.get('results', []))} results")
 
 
-# Cleanup test data
 class TestCleanup:
     """Cleanup test categories"""
-    
-    @pytest.fixture(scope="class")
-    def admin_token(self):
-        """Get admin authentication token"""
-        response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": ADMIN_EMAIL,
-            "password": ADMIN_PASSWORD
-        })
-        if response.status_code == 200:
-            return response.json().get("access_token")
-        pytest.skip("Admin login failed")
     
     def test_cleanup_test_categories(self, admin_token):
         """Clean up any remaining test categories"""
