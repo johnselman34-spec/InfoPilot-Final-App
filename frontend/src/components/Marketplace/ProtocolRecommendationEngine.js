@@ -89,9 +89,9 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
     }
   }, [token]);
   
-  // Generate AI insights based on user data
-  const generateAiInsights = useCallback(() => {
-    const insights = {
+  // Generate AI insights based on user data - use useMemo for derived state
+  const aiInsights = React.useMemo(() => {
+    return {
       totalProtocols: userProtocols.length,
       avgPrice: userProtocols.length > 0 
         ? (userProtocols.reduce((sum, p) => sum + (p.price || 0), 0) / userProtocols.length).toFixed(2)
@@ -106,7 +106,6 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
         : "Try our 'Similar to Your Top' recommendations for easy wins.",
       potentialRevenue: `$${(userProtocols.length * 15 + 50).toFixed(2)} - $${(userProtocols.length * 50 + 200).toFixed(2)}/month`
     };
-    setAiInsights(insights);
   }, [userProtocols]);
   
   useEffect(() => {
@@ -116,13 +115,6 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
     };
     loadData();
   }, [fetchUserProtocols]);
-  
-  useEffect(() => {
-    // Generate insights when userProtocols changes
-    if (!loading) {
-      generateAiInsights();
-    }
-  }, [generateAiInsights, loading]);
   
   // Get recommendations for selected category
   const currentRecommendations = AI_PROTOCOL_TEMPLATES.find(t => t.category === selectedCategory)?.protocols || [];
