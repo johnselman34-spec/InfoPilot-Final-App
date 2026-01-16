@@ -1,5 +1,6 @@
 export { default as ProtocolSearchInput } from './ProtocolSearchInput';
 export { default as CategoryList, CategoryCard } from './CategoryList';
+export { default as CollapsibleCategoryTree, CategoryTreeNode } from './CollapsibleCategoryTree';
 export { default as ResultsMap } from './ResultsMap';
 export { default as SearchControls } from './SearchControls';
 export { SearchResultsList, ResultCard } from './SearchResultsList';
