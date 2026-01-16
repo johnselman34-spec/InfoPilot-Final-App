@@ -282,23 +282,24 @@ const CollapsibleCategoryTree = ({
         ) : (
           filteredTree.map(category => (
             <CategoryTreeNode
+          filteredTree.map(category => (
+            <CategoryTreeNode
               key={category.id || category._id}
-          <CategoryTreeNode
-            key={category.id || category._id}
-            category={category}
-            level={0}
-            expanded={expandedCategories}
-            onToggleExpand={toggleExpand}
-            selectedCategories={selectedCategories}
-            onToggleSelect={onToggleSelect}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onViewDetails={onViewDetails}
-            isOwner={isOwner}
-            compact={compact}
-            getTotalResultCount={getTotalResultCount}
-          />
-        ))}
+              category={category}
+              level={0}
+              expanded={expandedCategories}
+              onToggleExpand={toggleExpand}
+              selectedCategories={selectedCategories}
+              onToggleSelect={onToggleSelect}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onViewDetails={onViewDetails}
+              isOwner={isOwner}
+              compact={compact}
+              getTotalResultCount={getTotalResultCount}
+            />
+          ))
+        )}
       </div>
     </div>
   );
