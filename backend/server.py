@@ -2,7 +2,7 @@
 InfoPilot Explorer - Main FastAPI Application
 Refactored with modular routers
 """
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query, Body
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query, Body, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
