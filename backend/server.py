@@ -669,8 +669,7 @@ class ArticleClassifier:
         if not text:
             return 0, 0
         
-        # Remove quoted text
-        import re
+        # Remove quoted text - use module-level re import
         text_no_quotes = re.sub(r'"[^"]*"', '', text)
         text_no_quotes = re.sub(r"'[^']*'", '', text_no_quotes)
         
