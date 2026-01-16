@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API } from '../../utils/api';
 
 /**
@@ -26,11 +26,7 @@ const YouTubeTutorialAdmin = ({ token, showToast }) => {
     { id: 'mobile', label: '📱 Mobile & Extension', color: '#14b8a6' }
   ];
 
-  useEffect(() => {
-    fetchTutorials();
-  }, []);
-
-  const fetchTutorials = async () => {
+  const fetchTutorials = useCallback(async () => {
     try {
       const res = await fetch(`${API}/tutorials`);
       if (res.ok) {
@@ -42,7 +38,11 @@ const YouTubeTutorialAdmin = ({ token, showToast }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTutorials();
+  }, [fetchTutorials]);
 
   const extractVideoId = (url) => {
     if (!url) return null;
