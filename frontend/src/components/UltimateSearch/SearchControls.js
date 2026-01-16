@@ -189,7 +189,7 @@ const SearchControls = ({
           marginLeft: 10,
           maxWidth: 300
         }}>
-          💡 Auto-Categorize matches ALL categories. AI Search uses GPT + Google, DuckDuckGo, Brave & Yandex.
+          💡 Auto-Categorize matches ALL categories. AI Search uses GPT + Google, DuckDuckGo & Brave.
         </span>
       </div>
 

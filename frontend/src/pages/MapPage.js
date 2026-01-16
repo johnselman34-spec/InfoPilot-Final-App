@@ -420,7 +420,7 @@ const MapPage = ({ showToast, setCurrentPage }) => {
           </select>
         </div>
         <p style={{ color: '#a1a1aa', fontSize: '0.75rem', marginTop: 8, marginBottom: 0 }}>
-          💡 AI Search uses GPT to expand your keywords and searches Google, DuckDuckGo, Brave & Yandex simultaneously
+          💡 AI Search uses GPT to expand your keywords and searches Google, DuckDuckGo & Brave simultaneously
         </p>
       </div>
 
