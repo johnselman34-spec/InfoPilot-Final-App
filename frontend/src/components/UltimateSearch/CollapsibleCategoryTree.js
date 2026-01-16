@@ -146,6 +146,51 @@ const CollapsibleCategoryTree = ({
 
   return (
     <div data-testid="collapsible-category-tree">
+      {/* Quick Search Filter */}
+      <div style={{ marginBottom: 12 }}>
+        <input
+          type="text"
+          placeholder="🔍 Search categories..."
+          value={searchFilter}
+          onChange={(e) => setSearchFilter(e.target.value)}
+          data-testid="category-search-filter"
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            borderRadius: 8,
+            border: '1px solid rgba(139, 92, 246, 0.3)',
+            background: 'rgba(0,0,0,0.3)',
+            color: '#fff',
+            fontSize: '0.85rem',
+            outline: 'none'
+          }}
+        />
+        {searchFilter && (
+          <div style={{ 
+            marginTop: 6, 
+            fontSize: '0.75rem', 
+            color: '#a78bfa',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <span>Found {filteredTree.length} matching categories</span>
+            <button
+              onClick={() => setSearchFilter('')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#f87171',
+                cursor: 'pointer',
+                fontSize: '0.75rem'
+              }}
+            >
+              ✕ Clear
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Control Bar */}
       <div style={{ 
         display: 'flex', 
