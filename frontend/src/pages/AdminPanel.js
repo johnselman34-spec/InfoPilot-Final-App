@@ -693,8 +693,8 @@ const AdminPanel = ({ showToast }) => {
             <div style={{ marginTop: 20, padding: 15, background: 'rgba(16, 185, 129, 0.1)', borderRadius: 10, border: '1px solid rgba(16, 185, 129, 0.3)' }}>
               <p style={{ fontSize: '0.85rem', color: '#10b981' }}>
                 💡 Tips:<br/>
-                • Enter your PayPal business email to accept "Pay What You Want" payments<br/>
-                • Set "Unpaid User Max Pages" to more than 40 to make the app FREE
+                • Enter your PayPal business email to accept Pay What You Want payments<br/>
+                • Set Unpaid User Max Pages to more than 40 to make the app FREE
               </p>
             </div>
           </div>
