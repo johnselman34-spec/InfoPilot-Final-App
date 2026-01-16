@@ -590,7 +590,7 @@ const MapPage = ({ showToast, setCurrentPage }) => {
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                url={mapStyle.tileUrl || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
               />
               {mapResults.slice(0, 50).map((result, idx) => (
                 <Marker
