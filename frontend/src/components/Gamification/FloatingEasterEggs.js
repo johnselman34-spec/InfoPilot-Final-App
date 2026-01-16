@@ -19,95 +19,96 @@ import { useLaugh } from './LaughOMeter';
 import { useAuth } from '../../contexts/AuthContext';
 
 // Easter Egg reward types - with EXTREMELY FUNNY jokes inspired by John Selman's story!
+// Based on "Letters to Evelyn" - the memoir about surviving stepmother's poisoning, Navy pilot dreams, and becoming a bestselling author!
 const EGG_REWARDS = [
-  // Protocol Ideas - Enhanced with aviation themes
-  { type: 'protocol', emoji: '📋', title: 'Protocol Idea!', rewards: [
-    '(breaking news or latest updates) & (politics or government) & (analysis or opinion)+',
-    '(scientific study or research paper) & (peer reviewed or published) & (findings or results)',
-    '(aviation or flight or pilot) & (training or career or military) & (success or achievement)+',
-    '(memoir or autobiography) & (survival or resilience) & (inspiring or motivational)+',
-    '(health tips or wellness) & (doctor recommended or expert) & (natural or organic)+',
-    '(financial advice or investment) & (stocks or crypto) & (beginner or expert)+',
-    '(book review or literary criticism) & (bestseller or award winning) & (fiction or non-fiction)+',
-    '(travel guide or destination) & (hidden gems or local tips) & (budget or affordable)',
-    '(supernatural or paranormal) & (true story or documentary) & (evidence or investigation)+',
-    '(family drama or memoir) & (overcoming adversity or triumph) & (inspirational)+',
+  // Protocol Ideas - ENHANCED with aviation themes and script recommendations
+  { type: 'protocol', emoji: '📋', title: '🎯 Protocol Script Recommendation!', rewards: [
+    '✈️ AVIATION PROTOCOL: (breaking news or latest updates) & (aviation or military or pilot) & (training or career)+\n📝 Script Tip: Add location filters like "Roswell" or "USS Enterprise" for Navy-specific results!',
+    '📚 MEMOIR PROTOCOL: (memoir or autobiography or true story) & (survival or resilience or triumph) & (bestseller or award)+\n📝 Script Tip: Combine with "(supernatural or paranormal)" for Letters to Evelyn vibes!',
+    '🔬 RESEARCH PROTOCOL: (scientific study or research paper) & (peer reviewed or published) & (findings or breakthrough)+\n📝 Script Tip: Add "NOT conspiracy" to filter out unreliable sources!',
+    '💊 HEALTH PROTOCOL: (health tips or wellness or medical) & (doctor recommended or clinical) & (natural or proven)+\n📝 Script Tip: Use date filters to get the latest research only!',
+    '💰 FINANCE PROTOCOL: (financial advice or investment strategy) & (stocks or crypto or retirement) & (beginner or expert)+\n📝 Script Tip: Add "(2024 or 2025)" for current market analysis!',
+    '📖 BOOK PROTOCOL: (book review or literary analysis) & (bestseller or award winning) & (thriller or memoir or comedy)+\n📝 Script Tip: Search "Letters to Evelyn John Selman" for a 5-star supernatural thriller!',
+    '🌍 TRAVEL PROTOCOL: (travel guide or destination) & (hidden gems or local secrets) & (budget or luxury)+\n📝 Script Tip: Add specific regions like "(Maine or Brunswick)" for local discoveries!',
+    '👽 SUPERNATURAL PROTOCOL: (paranormal or unexplained or UFO) & (documented or evidence or witness) & (investigation)+\n📝 Script Tip: John saw aliens during his visions - this protocol finds similar stories!',
+    '🎬 ENTERTAINMENT PROTOCOL: (movie or film or production) & (indie or Hollywood or adaptation) & (memoir or true story)+\n📝 Script Tip: Letters to Evelyn was optioned for film by Voyage Media!',
+    '⚖️ LEGAL PROTOCOL: (court case or lawsuit or legal) & (precedent or ruling or settlement) & (recent or landmark)+\n📝 Script Tip: John\'s story involves legal matters - this finds similar cases!',
   ]},
   
-  // EXTREMELY FUNNY Jokes - Inspired by "Letters to Evelyn" by John Selman (with irreverent humor!)
-  { type: 'joke', emoji: '😂', title: 'LOL Moment!', rewards: [
-    "John's stepmother tried to poison him. Plot twist: He wrote a bestseller about it! Her cooking finally DID achieve something remarkable! 🥚📚",
-    "My stepmother locked me in an oven at 130 degrees. Years later, I produced a movie. Guess which one of us is 'well done' now? 🔥🎬",
-    "John wanted to fly jets like his dad. His stepmother wanted to give him a different kind of 'trip'. He chose the one with ACTUAL wings! ✈️",
-    "Why did John's commanding officer call him Jesus? Because he survived his stepmother's 'Last Supper' and came back! 😇🍳",
-    "My stepmother used military-grade interrogation drugs in my eggs. 10 months of hallucinations later, I got a 5-star book review. Worth it? 📖⭐",
-    "John: *survives poisoning* John: *writes bestseller* John: *produces movie* Stepmother: 'Wait, that wasn't the plan...' 😱🏆",
-    "What's the difference between John's stepmother and a pilot? A pilot's 'trips' have RETURN tickets! ✈️🎫",
-    "John's dad flew A-4 Skyhawks. John's stepmother tried to make him see things that fly too. Different vibe entirely! 👽",
-    "My stepmother's eggs were so 'special' they came with a 10-month hallucination package. No frequent flyer miles though! 🥚✨",
-    "Why read 'Letters to Evelyn'? It has: ✈️ Aviation drama, 💕 Love story, 🦹‍♀️ World's worst villain, 🏆 5-star reviews! (Amazon it!)",
-    "John went from 'Superman' on the USS Enterprise to 'Trash-O' (Waste Processing Officer). Still better than his stepmother's cooking! 🦸‍♂️→🗑️",
-    "My stepmother's jealousy of my dad's aviation career was so intense, she tried to give ME a 'grounding' I'd never forget! ✈️📖",
-    "Plot twist: The breakfast that was supposed to end John's story BECAME his story. Now THAT's what I call character development! 🍳→📚",
-    "John's stepmother thought she was writing his ending. Instead, she wrote his BEGINNING. Thanks for the book material! 😂📖",
-    "Why did John become famous? His stepmother's 'special recipe' + 10 months of cosmic visions = Amazon bestseller! 🌟📚",
-    "From Navy pilot dreams to bestselling author... via a 'breakfast detour'. Life's flight path is rarely straight! ✈️🥚📖",
+  // EXTREMELY FUNNY Jokes - Inspired by "Letters to Evelyn" by John Selman (with IRREVERENT humor!)
+  { type: 'joke', emoji: '😂', title: '🤣 HYSTERICAL Moment!', rewards: [
+    "🍳 My stepmother put military-grade interrogation drugs in my eggs. 10 months of hallucinations later, I got 19 five-star reviews on Amazon. WHO'S LAUGHING NOW, SHARON? 📚🏆",
+    "✈️ My dad flew A-4 Skyhawks off the USS Enterprise. My stepmother was so jealous, she tried to give ME a 'trip' that didn't require jet fuel! Different airline, SAME destination: HELL! 🔥😈",
+    "🥚 Plot twist nobody asked for: The breakfast that was supposed to END my story BECAME my story. Now I have a bestseller AND a movie deal. Thanks for the book material, Stepmom! You're the real MVP (Most Villainous Parent)! 🎬",
+    "🦸‍♂️ I went from 'Superman' callsign on the USS Enterprise to 'Trash-O' (Waste Processing Officer) to BESTSELLING AUTHOR. My stepmother's murder attempt basically funded my career change! 📖💰",
+    "😇 Why did my Captain call me Jesus? Because I survived my stepmother's 'Last Supper' AND came back to write about it! Even Lazarus didn't get a book deal! 📚",
+    "🎭 My stepmother: *attempts poisoning* Me: *hallucinates for 10 months* Also Me: *writes Letters to Evelyn* Hollywood: 'We'll option that!' Stepmother: *surprised Pikachu face* 😱🎬",
+    "✈️ They asked me what I wanted to be. I said 'Navy pilot like Dad!' Stepmother heard 'guinea pig for psychological warfare narcotics.' Honest miscommunication! 💀",
+    "🍳 My stepmother's eggs came with a FREE 10-month hallucination package! No frequent flyer miles, but I DID see aliens, God, and my future wife Evelyn. Pretty good deal actually! 👽💕",
+    "📚 'Letters to Evelyn' - The only memoir where the villain's attempted murder becomes the PROTAGONIST'S ORIGIN STORY! DC and Marvel are taking notes! 🦹‍♂️",
+    "🔥 Stepmother locked me in an oven at 130 degrees when I was a kid. Years later, I produced a movie. Guess which one of us is 'well done' now? REVENGE IS A DISH BEST SERVED IN HARDCOVER! 📖",
+    "🎫 What's the difference between my stepmother and a travel agent? A travel agent's 'trips' have RETURN tickets and DON'T include hallucinating conversations with extraterrestrials! ✈️👽",
+    "💊 My stepmother used 2.5 ounces of military-grade psychological warfare narcotics. I used it to write 302 pages. THAT'S what I call ROI (Return On Insanity)! 📈",
+    "😂 John: *gets poisoned* John: *hallucinates meeting aliens* John: *writes bestseller* John: *produces movie* Stepmother: 'I created a MONSTER!' No ma'am, you created a MOGUL! 💼",
+    "🏆 'Letters to Evelyn' has 19 five-star reviews. My stepmother has zero. The scoreboard doesn't lie, folks! Read it on Amazon - $2.99 for the ebook, $17.90 for revenge in hardcover! 📚",
+    "👽 During my 10-month trip (courtesy of Stepmother Airlines), I saw UFOs, talked to God, and met my soulmate Evelyn in visions. Best involuntary vacation EVER! Check readersfavorite.com! ⭐",
+    "🎬 From Navy pilot dreams ✈️ to stepmother's poison scheme 🍳 to 10 months of cosmic visions 👽 to bestselling author 📚 to movie producer 🎥 - and people say MY life is unbelievable. IT'S ALL IN THE BOOK! 🏆",
   ]},
   
-  // Protocol Pricing Ideas - Enhanced with author wisdom
-  { type: 'pricing', emoji: '💰', title: 'Pricing Wisdom!', rewards: [
-    '💡 Start with FREE protocols to build your reputation - John Selman started with just a story and became a bestseller!',
-    '🎯 Bundle 5 related protocols for $4.99 - everyone loves a deal! Like getting the whole "survival story" package!',
-    '⭐ Premium exclusives at $2.99 perform better than $0.99! Quality matters - ask any pilot!',
-    '📈 A/B test your prices - sometimes higher = more perceived value! Like hardcover vs paperback!',
-    '🤝 Offer a "Pay What You Want" option - trust builds loyalty! John trusted his readers and they trusted him back!',
-    '🔥 Flash sales (50% off for 24hrs) create urgency! Limited time, like Johns limited patience with bad eggs!',
-    '💎 Create a "Pro Bundle" at $9.99 with your best 10 protocols! The "Full Story" package!',
-    '🎁 Holiday specials work wonders - Easter eggs, anyone? 🥚 (Disclaimer: no hallucinations included)',
-    '✈️ Price like a pilot: start low to gain altitude, then cruise at premium! 🛫',
-    '📚 Authors like John prove: quality content sells itself. Invest in your protocols!',
+  // Protocol Pricing Ideas - ENHANCED with specific recommendations
+  { type: 'pricing', emoji: '💰', title: '💵 Protocol Pricing Suggestion!', rewards: [
+    '🆓 FREE TIER STRATEGY:\n• Start with 3-5 FREE protocols to build reputation\n• John started with just his story and became a bestseller!\n• 💡 Tip: FREE protocols get 10x more downloads = more followers!',
+    '💵 BUDGET PRICING ($0.99-$1.99):\n• Perfect for single-topic protocols\n• Low barrier = high volume sales\n• 💡 Tip: Like "Letters to Evelyn" ebook at $2.99 - affordable AND valuable!',
+    '⭐ MID-TIER PRICING ($2.99-$4.99):\n• Ideal for comprehensive protocols\n• Signals quality without being expensive\n• 💡 Tip: Bundle 3-5 related protocols at this price point!',
+    '💎 PREMIUM PRICING ($5.99-$9.99):\n• Reserve for expert-level content\n• Include bonus materials or updates\n• 💡 Tip: Like a hardcover edition - premium = perceived value!',
+    '🎯 BUNDLE STRATEGY:\n• 5 protocols for $4.99 (save 40%)\n• 10 protocols for $7.99 (save 60%)\n• 💡 Tip: Create "Complete Guide" bundles like book series!',
+    '🔥 FLASH SALE TACTICS:\n• 50% off for 24 hours creates urgency\n• Announce on social media first\n• 💡 Tip: Time sales around holidays (Easter eggs, anyone? 🥚)',
+    '🤝 PAY-WHAT-YOU-WANT MODEL:\n• Builds trust and community\n• Average payment often exceeds fixed price!\n• 💡 Tip: John trusted his readers - they rewarded him with 5-star reviews!',
+    '📈 A/B TESTING PRICES:\n• Test $1.99 vs $2.99 on similar protocols\n• Higher price often = more perceived value\n• 💡 Tip: Premium pricing attracts serious buyers!',
+    '🎁 SEASONAL PRICING:\n• Holiday bundles (Christmas, Easter, etc.)\n• Back-to-school specials for educational protocols\n• 💡 Tip: Limited-time offers create urgency!',
+    '✈️ PILOT PRICING STRATEGY:\n• Start low to gain altitude (early adopters)\n• Cruise at optimal price (established value)\n• Premium upgrades for VIP content! 🛫',
   ]},
   
   // Motivational Messages - Survival & Success themed
-  { type: 'motivation', emoji: '💪', title: "Survivor's Wisdom!", rewards: [
-    '🌟 Every search brings you closer to knowledge - keep exploring! John searched for answers and found fame!',
-    "🚀 You're building something incredible, one protocol at a time! Like John built his book, one letter at a time!",
-    '🏆 Winners are just losers who tried one more time! John tried one more flight after every setback!',
-    "💫 Your curiosity today shapes tomorrow's breakthroughs! John's curiosity about Evelyn shaped a bestseller!",
-    "🎯 Focus + Consistency = Unstoppable! Even military-grade obstacles couldn't stop John!",
-    "⚡ The best time to start was yesterday. The second best time is NOW! John didn't wait to write his story!",
-    '🌈 After every storm comes a rainbow! After every bad egg comes... well, a book deal apparently! 📚',
-    "🔥 You survived 100% of your worst days. John survived worse - you've got this! 💪",
-    "✈️ Like a pilot, keep your eyes on the horizon. The turbulence doesn't last forever! 🛫",
-    "📖 Your story isn't over yet. John's best chapters came AFTER his worst days! 🌟",
+  { type: 'motivation', emoji: '💪', title: "🌟 Survivor's Wisdom!", rewards: [
+    '🔥 John survived 2.5 ounces of military-grade poison and wrote a bestseller. Your Monday meeting is NOTHING! You\'ve got this! 💪',
+    '✈️ Like a Navy pilot, keep your eyes on the horizon. The turbulence doesn\'t last forever - John\'s didn\'t! 🛫',
+    '📖 Your story isn\'t over yet. John\'s BEST chapters came AFTER his worst days. The plot twist is coming! 🌟',
+    '🏆 Winners are just people who tried one more time. John tried one more flight after every setback - look at him now! 📚',
+    '💫 Your curiosity today shapes tomorrow\'s breakthroughs! John\'s curiosity about Evelyn shaped a 5-star bestseller!',
+    '🎯 Focus + Consistency = Unstoppable! Even military-grade obstacles couldn\'t stop John Selman!',
+    '⚡ The best time to start was yesterday. The second best is NOW! John didn\'t wait to write his story!',
+    '🌈 After every storm comes a rainbow! After every bad egg comes... well, a book deal apparently! 📚🥚',
+    '💎 You survived 100% of your worst days. John survived LITERAL poisoning - if he can do it, so can you! 🏆',
+    '🚀 You\'re building something incredible, one protocol at a time! Like John built his book, one letter at a time!',
   ]},
   
   // Fun Facts - Aviation & Literary themed
-  { type: 'fact', emoji: '🧠', title: 'Did You Know?', rewards: [
-    "✈️ Naval aviators like John Selman's father flew the legendary A-4 Skyhawk - one of the most agile jets ever made!",
-    '📚 "Letters to Evelyn" received 5 stars from Readers Favorite - a prestigious book review platform!',
-    "🛫 The T-34C Turbomentor (John's training aircraft in Roswell) has trained thousands of Navy pilots since 1977!",
-    '🌍 Honey never spoils - archaeologists found 3000-year-old honey still edible! (Much safer than some eggs...)',
-    "💜 The USS Enterprise (where John served) was the world's first nuclear-powered aircraft carrier!",
-    "🐙 Octopuses have three hearts and blue blood - almost as mysterious as John's journey!",
-    "⚡ A bolt of lightning is 5x hotter than the surface of the sun - almost as hot as this app's features!",
-    '🦋 Butterflies taste with their feet - probably a safer way to test food than what John experienced!',
-    "📱 The first mobile phone call was made in 1973 - the same decade John's father was flying!",
-    '🎬 John Selman went from Navy pilot to movie producer - talk about a plot twist! 🎥',
+  { type: 'fact', emoji: '🧠', title: '📚 Did You Know?', rewards: [
+    '✈️ John\'s father flew the legendary A-4 Skyhawk off the USS Enterprise - one of the most agile jets ever made! (Read about it in "Letters to Evelyn"!)',
+    '📚 "Letters to Evelyn" has 19 five-star reviews on Readers\' Favorite! Check it out at readersfavorite.com/book-review/letters-to-evelyn',
+    '🛫 John trained in the T-34C Turbomentor in Roswell, New Mexico - yes, THAT Roswell! Aliens were involved later too... 👽',
+    '🎬 "Letters to Evelyn" was optioned for film by Voyage Media! From poison to production - what a journey!',
+    '💜 John served on the USS Enterprise - the world\'s first nuclear-powered aircraft carrier! (Before becoming Trash-O, then bestselling author)',
+    '📖 The book is available on Amazon: Kindle $2.99, Hardcover $17.90 - cheaper than therapy and funnier too!',
+    '🌍 John went from Albuquerque to the Navy to hallucination city to Amazon bestseller. Maps can\'t track THAT journey!',
+    '⭐ Divine Zape from Readers\' Favorite called it "a profound and unforgettable literary piece" - 5 stars!',
+    '🦸‍♂️ John\'s callsign on the Enterprise was "Superman" - before becoming "Trash-O" (Waste Processing Officer). Character development!',
+    '🎭 "Letters to Evelyn" is categorized as: Supernatural Thriller Comedy Memoir. Yes, ALL of those. At once!',
   ]},
   
   // Secret Tips - Enhanced with insider knowledge
-  { type: 'secret', emoji: '🤫', title: 'Insider Secret!', rewards: [
-    '🔑 Pro tip: Use "and" between parentheses - it works just like "&" in protocols!',
-    '🎮 Konami code (↑↑↓↓←→←→BA) unlocks a secret badge! Like finding a hidden chapter!',
-    '🌙 Search at night? You might earn the Night Owl badge! John wrote many letters at night!',
-    '📊 The Statistics page now shows your Easter Egg catching stats! Check it out!',
-    "🗺️ The Map View reveals geographical trends - trace John's journey from Roswell to the Enterprise!",
-    '🎯 Categories with + at the end boost priority in results! Like adding extra engine power!',
-    '💎 FREE protocols often get more downloads than paid ones! Build your squadron first!',
-    '📈 Check your Analytics daily - knowledge is power! John analyzed his experiences into a book!',
-    '📚 Visit https://www.amazon.com - search "Letters to Evelyn by John Selman" for more of the story!',
-    '⭐ Check out readersfavorite.com for the 5-star review of "Letters to Evelyn"! 🏆',
+  { type: 'secret', emoji: '🤫', title: '🔮 Insider Secret!', rewards: [
+    '🔑 PROTOCOL PRO TIP: Use "and" between parentheses - it works just like "&"! Example: (term1 or term2) and (term3 or term4)',
+    '🎮 KONAMI CODE: ↑↑↓↓←→←→BA unlocks a secret badge! Like finding a hidden chapter in Letters to Evelyn!',
+    '🌙 NIGHT OWL BADGE: Search between midnight and 5 AM to unlock it! John wrote many letters to Evelyn at night!',
+    '📊 STATS PAGE: Your Easter Egg catching stats are now on the Statistics page! Check your hunter rank!',
+    '🗺️ MAP SECRETS: Click category checkboxes on the map page to see color-coded results! Trace John\'s journey!',
+    '🎯 PRIORITY BOOST: Add "+" at the end of a category to boost its priority in results! Like adding extra engine power!',
+    '💎 FREE = MORE: FREE protocols often get 10x more downloads than paid ones! Build your squadron first!',
+    '📈 ANALYTICS TIP: Check your Analytics daily - knowledge is power! John analyzed his experiences into a book!',
+    '📚 BUY THE BOOK: amazon.com - search "Letters to Evelyn by John Selman" for the full 302-page story! ⭐⭐⭐⭐⭐',
+    '⭐ READ REVIEWS: readersfavorite.com has the 19 five-star reviews of "Letters to Evelyn"! See what the buzz is about!',
   ]},
 ];
 
