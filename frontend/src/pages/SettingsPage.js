@@ -4,6 +4,7 @@ import { API } from '../utils/api';
 import { DataExport, PushNotifications, UpgradePromoBanner } from '../components/shared';
 import { UserAgreement, PrivacyStatement } from '../components/Legal';
 import { EasterEggStats, EasterEggRewardHistory } from '../components/Gamification/FloatingEasterEggs';
+import { CategoryManager } from '../components/Settings';
 
 const SettingsPage = ({ showToast, setCurrentPage }) => {
   const { token, user, refreshUser } = useAuth();
