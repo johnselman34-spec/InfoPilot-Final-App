@@ -13,6 +13,7 @@ import PriceControlsAdmin from '../components/Admin/PriceControlsAdmin';
 import DoctypeSettingsAdmin from '../components/Admin/DoctypeSettingsAdmin';
 import DoctypeTestingTool from '../components/Admin/DoctypeTestingTool';
 import CleanAllCategoriesAdmin from '../components/Admin/CleanAllCategoriesAdmin';
+import QualityScoreAnalytics from '../components/Admin/QualityScoreAnalytics';
 
 const AdminPanel = ({ showToast }) => {
   const { token } = useAuth();
