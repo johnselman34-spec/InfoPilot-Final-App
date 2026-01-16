@@ -7,6 +7,7 @@ import './i18n'; // i18n multi-language support
 // Import refactored modules
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Toast, Sidebar, QuoteOfTheDay, BookPromoBanner } from './components/shared';
+import { LaughProvider } from './components/Gamification/LaughOMeter';
 import { 
   LoginPage, 
   RegisterPage, 
