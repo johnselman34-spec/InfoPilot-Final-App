@@ -102,7 +102,7 @@ const EGG_REWARDS = [
     '🎮 Konami code (↑↑↓↓←→←→BA) unlocks a secret badge! Like finding a hidden chapter!',
     '🌙 Search at night? You might earn the Night Owl badge! John wrote many letters at night!',
     '📊 The Statistics page now shows your Easter Egg catching stats! Check it out!',
-    '🗺️ The Map View reveals geographical trends - trace John's journey from Roswell to the Enterprise!',
+    "🗺️ The Map View reveals geographical trends - trace John's journey from Roswell to the Enterprise!",
     '🎯 Categories with + at the end boost priority in results! Like adding extra engine power!',
     '💎 FREE protocols often get more downloads than paid ones! Build your squadron first!',
     '📈 Check your Analytics daily - knowledge is power! John analyzed his experiences into a book!',
