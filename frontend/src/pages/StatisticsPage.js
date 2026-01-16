@@ -536,7 +536,7 @@ const StatisticsPage = ({ showToast }) => {
           </select>
         </div>
         <p style={{ color: '#a1a1aa', fontSize: '0.8rem', marginTop: 10, marginBottom: 0 }}>
-          💡 <strong>Auto-Categorize:</strong> One click matches results against ALL your categories. <strong>AI Search:</strong> Uses GPT to expand keywords and searches multiple engines.
+          💡 <strong>Auto-Categorize:</strong> One click matches results against ALL your categories. <strong>AI Search:</strong> Uses GPT to expand keywords and searches Google, DuckDuckGo, Brave & Yandex.
         </p>
       </div>
       
