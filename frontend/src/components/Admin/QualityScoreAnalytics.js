@@ -42,12 +42,119 @@ const QualityScoreAnalytics = ({ showToast }) => {
     setLoading(false);
   }, [token, showToast]);
   
+  const fetchBlockedDomains = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/admin/blocked-domains`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBlockedDomains(data.blocked_domains || []);
+      }
+    } catch (e) {
+      console.error('Failed to fetch blocked domains:', e);
+    }
+  }, [token]);
+  
+  const handleBlockDomain = async (domain, avgScore, count) => {
+    if (!token) return;
+    setBlockingDomain(domain);
+    
+    try {
+      const res = await fetch(`${API}/admin/blocked-domains`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          domain,
+          reason: `Low quality content (avg score: ${avgScore})`,
+          avg_score: avgScore,
+          result_count: count
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`🚫 Blocked ${domain} - Removed ${data.results_removed} results`, 'success');
+        await fetchAnalytics();
+        await fetchBlockedDomains();
+      } else {
+        const error = await res.json();
+        showToast(error.detail || 'Failed to block domain', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to block domain', 'error');
+    }
+    setBlockingDomain(null);
+  };
+  
+  const handleUnblockDomain = async (domain) => {
+    if (!token) return;
+    
+    try {
+      const res = await fetch(`${API}/admin/blocked-domains/${encodeURIComponent(domain)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        showToast(`✅ Unblocked ${domain}`, 'success');
+        await fetchBlockedDomains();
+      } else {
+        showToast('Failed to unblock domain', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to unblock domain', 'error');
+    }
+  };
+  
+  const handleBlockAllLowQuality = async () => {
+    if (!token || !analytics?.improvement_opportunities?.length) return;
+    
+    const confirm = window.confirm(
+      `This will block ${analytics.improvement_opportunities.length} low-quality domains and remove all their results. Continue?`
+    );
+    if (!confirm) return;
+    
+    try {
+      const res = await fetch(`${API}/admin/blocked-domains/bulk`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          domains: analytics.improvement_opportunities.map(d => ({
+            domain: d.domain,
+            avg_score: d.avg_score,
+            count: d.count,
+            reason: `Low quality (avg: ${d.avg_score})`
+          }))
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`🚫 Blocked ${data.blocked_count} domains - Removed ${data.total_results_removed} results`, 'success');
+        await fetchAnalytics();
+        await fetchBlockedDomains();
+      } else {
+        showToast('Failed to bulk block domains', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to bulk block domains', 'error');
+    }
+  };
+  
   useEffect(() => {
     const load = async () => {
-      await fetchAnalytics();
+      await Promise.all([fetchAnalytics(), fetchBlockedDomains()]);
     };
     load();
-  }, [fetchAnalytics]);
+  }, [fetchAnalytics, fetchBlockedDomains]);
   
   if (loading) {
     return (
