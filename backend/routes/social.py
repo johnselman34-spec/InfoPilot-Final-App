@@ -919,6 +919,7 @@ async def remove_page_admin(page_id: str, admin_id: str, user = Depends(get_curr
 async def get_pages(user = Depends(get_optional_user)):
     """Get all pages"""
     pages = await db.pages.find().sort("created_at", -1).to_list(100)
+    user_id_str = str(user["_id"]) if user else None
     
     return {
         "pages": [{
@@ -929,8 +930,9 @@ async def get_pages(user = Depends(get_optional_user)):
             "cover_photo": p.get("cover_photo"),
             "profile_photo": p.get("profile_photo"),
             "follower_count": len(p.get("followers", [])),
-            "is_following": user and str(user["_id"]) in p.get("followers", []),
-            "is_admin": user and str(user["_id"]) == p.get("created_by"),
+            "is_following": user and user_id_str in p.get("followers", []),
+            "is_owner": user and user_id_str == p.get("created_by"),
+            "is_admin": user and (user_id_str == p.get("created_by") or user_id_str in p.get("admins", [])),
             "created_at": p.get("created_at", datetime.utcnow()).isoformat()
         } for p in pages]
     }
