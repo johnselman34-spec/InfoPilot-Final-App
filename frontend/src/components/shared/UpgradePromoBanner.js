@@ -4,7 +4,7 @@
  * Admin-configurable from the Admin Settings control panel
  */
 import React, { useState, useEffect } from 'react';
-import { API } from '../utils/api';
+import { API } from '../../utils/api';
 
 const UpgradePromoBanner = ({ compact = false }) => {
   const defaultTitle = 'Limited Time Offer!';
