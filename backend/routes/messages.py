@@ -213,8 +213,8 @@ async def get_messages(
         {"$set": {"read": True, "read_at": datetime.now(timezone.utc)}}
     )
     
-    # Get other participant for read receipts
-    other_id = [p for p in conv["participants"] if p != user_id][0]
+    # Note: other_id could be used for read receipts in future
+    # For now, just format and return messages
     
     formatted = []
     for m in reversed(messages):
