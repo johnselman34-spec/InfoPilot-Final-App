@@ -61,8 +61,15 @@ const CleanAllCategoriesAdmin = ({ showToast }) => {
   }, [token, showToast]);
   
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    let mounted = true;
+    const loadCategories = async () => {
+      if (mounted) {
+        await fetchCategories();
+      }
+    };
+    loadCategories();
+    return () => { mounted = false; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   
   // Sort categories
   const sortedCategories = [...categories].sort((a, b) => {
