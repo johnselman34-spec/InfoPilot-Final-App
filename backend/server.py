@@ -2465,6 +2465,49 @@ async def get_map_data(user = Depends(get_current_user_local)):
     return {"results": formatted, "count": len(formatted)}
 
 
+@api_router.get("/map/worldwide", response_model=dict)
+async def get_worldwide_map_data(
+    limit: int = 500,
+    category_filter: Optional[str] = None,
+    user = Depends(get_current_user_local)
+):
+    """Get worldwide/public search results for map display"""
+    
+    # Query for results with location data that are from public categories or all users (for admin)
+    query = {
+        "latitude": {"$exists": True, "$ne": None},
+        "longitude": {"$exists": True, "$ne": None}
+    }
+    
+    # Filter by category if provided
+    if category_filter:
+        query["categories"] = {"$in": [category_filter]}
+    
+    # Get results - prioritize quality and variety
+    results = await db.search_results.find(query).sort([
+        ("content_quality_score", -1),
+        ("created_at", -1)
+    ]).limit(limit).to_list(limit)
+    
+    formatted = []
+    for r in results:
+        formatted.append({
+            "id": str(r["_id"]),
+            "title": r.get("title", ""),
+            "url": r.get("url", ""),
+            "snippet": r.get("snippet", "")[:200],
+            "latitude": r.get("latitude"),
+            "longitude": r.get("longitude"),
+            "article_type": r.get("article_type", "Unknown"),
+            "categories": r.get("categories", []),
+            "content_quality_score": r.get("content_quality_score", 50),
+            "user_id": r.get("user_id"),
+            "created_at": r.get("created_at", datetime.utcnow()).isoformat() if r.get("created_at") else None
+        })
+    
+    return {"results": formatted, "count": len(formatted), "source": "worldwide"}
+
+
 # ==================== MAP EXPORT FEATURES ====================
 
 @api_router.get("/map-data/export", response_model=dict)
