@@ -1066,6 +1066,10 @@ const AdminPanel = ({ showToast }) => {
           <BannedWordsAdmin showToast={showToast} />
         )}
 
+        {activeTab === 'quality-report' && (
+          <ContentQualityReport showToast={showToast} />
+        )}
+
         {activeTab === 'price-controls' && (
           <PriceControlsAdmin showToast={showToast} />
         )}
