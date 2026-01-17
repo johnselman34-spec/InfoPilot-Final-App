@@ -232,6 +232,16 @@ const UltimateSearchPage = ({ showToast }) => {
     }
   };
 
+  // Track if component is mounted to prevent state updates after unmount
+  const isMountedRef = useRef(true);
+  
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+  
   // Fetch categories using token from useAuth
   const fetchCategories = useCallback(async () => {
     console.log('fetchCategories called, token:', token ? 'present' : 'missing');
@@ -248,8 +258,11 @@ const UltimateSearchPage = ({ showToast }) => {
       console.log('fetchCategories: Response status:', res.status);
       if (res.ok) {
         const data = await res.json();
-        console.log('fetchCategories: Got', data.length, 'categories');
-        setCategories(data);
+        console.log('fetchCategories: Got', data.length, 'categories, isMounted:', isMountedRef.current);
+        if (isMountedRef.current) {
+          setCategories(data);
+          console.log('fetchCategories: State updated with', data.length, 'categories');
+        }
       } else {
         console.error('fetchCategories: Response not OK:', res.status);
       }
