@@ -664,20 +664,23 @@ const UltimateSearchPage = ({ showToast }) => {
             }}
           >
             <div 
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', flexWrap: 'nowrap', gap: 8 }}
               onClick={() => toggleCategorySelection(cat.id)}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 auto', minWidth: 0, overflow: 'hidden' }}>
                 <input
                   type="checkbox"
                   checked={selectedCategories.includes(cat.id)}
                   onChange={() => {}}
-                  style={{ accentColor: getCategoryColor(cat.id), width: 16, height: 16, cursor: 'pointer' }}
+                  style={{ accentColor: getCategoryColor(cat.id), width: 16, height: 16, cursor: 'pointer', flexShrink: 0 }}
                   data-testid={`category-checkbox-${cat.id}`}
                 />
                 <span style={{ 
                   color: selectedCategories.includes(cat.id) ? '#f472b6' : '#e2e8f0',
-                  fontWeight: selectedCategories.includes(cat.id) ? 600 : 400
+                  fontWeight: selectedCategories.includes(cat.id) ? 600 : 400,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
                 }}>
                   {cat.name}
                   {/* Result count in parentheses */}
@@ -691,15 +694,15 @@ const UltimateSearchPage = ({ showToast }) => {
                   </span>
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
                 <CopyButton text={cat.name} label="" successLabel="✓" size="sm" variant="icon" showToast={showToast} style={{ fontSize: '0.7rem' }} />
                 {cat.protocol && (
                   <CopyButton text={cat.protocol} label="" successLabel="✓" size="sm" variant="icon" showToast={showToast} style={{ fontSize: '0.7rem', color: '#a78bfa' }} />
                 )}
-                {cat.is_public && <span style={{ fontSize: '0.65rem', color: '#10b981', padding: '2px 6px', background: 'rgba(16,185,129,0.2)', borderRadius: 4 }}>Public</span>}
+                {cat.is_public && <span style={{ fontSize: '0.6rem', color: '#10b981', padding: '1px 4px', background: 'rgba(16,185,129,0.2)', borderRadius: 4, flexShrink: 0 }}>Pub</span>}
                 <button 
                   onClick={(e) => handleEditCategory(cat, e)}
-                  style={{ background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer', padding: '2px 6px', fontSize: '0.75rem' }}
+                  style={{ background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer', padding: '2px 4px', fontSize: '0.7rem', flexShrink: 0 }}
                   title="Edit Protocol"
                   data-testid={`edit-category-${cat.id}`}
                 >
