@@ -9,6 +9,17 @@ const PushNotifications = ({ showToast }) => {
   const [loading, setLoading] = useState(false);
   const [supported, setSupported] = useState(false);
 
+  // Check for existing push subscription
+  const checkExistingSubscription = useCallback(async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const existingSubscription = await registration.pushManager.getSubscription();
+      setSubscription(existingSubscription);
+    } catch (e) {
+      console.error('Error checking subscription:', e);
+    }
+  }, []);
+
   // Check if push notifications are supported
   useEffect(() => {
     const isSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
@@ -18,18 +29,7 @@ const PushNotifications = ({ showToast }) => {
       setPermission(Notification.permission);
       checkExistingSubscription();
     }
-  }, []);
-
-  // Check for existing push subscription
-  const checkExistingSubscription = async () => {
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      const existingSubscription = await registration.pushManager.getSubscription();
-      setSubscription(existingSubscription);
-    } catch (e) {
-      console.error('Error checking subscription:', e);
-    }
-  };
+  }, [checkExistingSubscription]);
 
   // Request notification permission and subscribe
   const enablePushNotifications = async () => {
