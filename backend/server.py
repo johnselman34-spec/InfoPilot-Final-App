@@ -5336,6 +5336,146 @@ async def check_for_banned_words(
     }
 
 
+# ============== CONTENT QUALITY REPORT ==============
+
+@api_router.get("/admin/content-quality-report")
+async def get_content_quality_report(
+    days: int = Query(30, description="Number of days to look back"),
+    user = Depends(get_current_user_local)
+):
+    """
+    Get content quality report showing:
+    - Content blocked by banned words
+    - Patterns in attempted violations
+    - Quality score distribution
+    - Category violations breakdown
+    """
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    from datetime import datetime, timedelta, timezone
+    
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+    
+    # Get all banned words for analysis
+    banned_words = await db.banned_words.find().to_list(1000)
+    banned_word_list = [bw["word"].lower() for bw in banned_words]
+    
+    # Get content violation logs (if they exist)
+    violations = await db.content_violations.find({
+        "created_at": {"$gte": cutoff_date}
+    }).sort("created_at", -1).to_list(500)
+    
+    # Analyze patterns
+    violation_by_word = {}
+    violation_by_day = {}
+    violation_by_type = {"category": 0, "protocol": 0, "marketplace": 0, "other": 0}
+    unique_users = set()
+    
+    for v in violations:
+        word = v.get("word", "unknown")
+        violation_by_word[word] = violation_by_word.get(word, 0) + 1
+        
+        day = v.get("created_at", datetime.now(timezone.utc)).strftime("%Y-%m-%d")
+        violation_by_day[day] = violation_by_day.get(day, 0) + 1
+        
+        content_type = v.get("content_type", "other")
+        if content_type in violation_by_type:
+            violation_by_type[content_type] += 1
+        else:
+            violation_by_type["other"] += 1
+        
+        if v.get("user_id"):
+            unique_users.add(v.get("user_id"))
+    
+    # Get quality score distribution from search results
+    quality_pipeline = [
+        {"$match": {"content_quality_score": {"$exists": True}}},
+        {"$group": {
+            "_id": {
+                "$cond": [
+                    {"$lt": ["$content_quality_score", 30]}, "poor",
+                    {"$cond": [
+                        {"$lt": ["$content_quality_score", 50]}, "fair",
+                        {"$cond": [
+                            {"$lt": ["$content_quality_score", 70]}, "good",
+                            {"$cond": [
+                                {"$lt": ["$content_quality_score", 85]}, "high",
+                                "premium"
+                            ]}
+                        ]}
+                    ]}
+                ]
+            },
+            "count": {"$sum": 1}
+        }}
+    ]
+    
+    quality_results = await db.search_results.aggregate(quality_pipeline).to_list(10)
+    quality_distribution = {q["_id"]: q["count"] for q in quality_results}
+    
+    # Top offending words
+    top_offending = sorted(violation_by_word.items(), key=lambda x: x[1], reverse=True)[:10]
+    
+    # Trend data (last 7 days)
+    trend_data = []
+    for i in range(min(7, days)):
+        d = (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d")
+        trend_data.append({
+            "date": d,
+            "violations": violation_by_day.get(d, 0)
+        })
+    
+    return {
+        "period_days": days,
+        "total_violations": len(violations),
+        "unique_violators": len(unique_users),
+        "banned_words_count": len(banned_word_list),
+        "violations_by_type": violation_by_type,
+        "top_offending_words": [{"word": w, "count": c} for w, c in top_offending],
+        "quality_distribution": {
+            "poor": quality_distribution.get("poor", 0),
+            "fair": quality_distribution.get("fair", 0),
+            "good": quality_distribution.get("good", 0),
+            "high": quality_distribution.get("high", 0),
+            "premium": quality_distribution.get("premium", 0)
+        },
+        "violation_trend": trend_data,
+        "recent_violations": [{
+            "id": str(v["_id"]),
+            "word": v.get("word", "unknown"),
+            "content_type": v.get("content_type", "unknown"),
+            "attempted_text": v.get("attempted_text", "")[:100],
+            "user_id": v.get("user_id"),
+            "created_at": v.get("created_at", datetime.now(timezone.utc)).isoformat()
+        } for v in violations[:20]]
+    }
+
+
+@api_router.post("/admin/log-violation")
+async def log_content_violation(
+    word: str,
+    content_type: str,
+    attempted_text: str,
+    user_id: str = None
+):
+    """
+    Internal endpoint to log a content violation
+    Called when banned words are detected
+    """
+    from datetime import datetime, timezone
+    
+    await db.content_violations.insert_one({
+        "word": word,
+        "content_type": content_type,
+        "attempted_text": attempted_text[:500],  # Limit stored text
+        "user_id": user_id,
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    return {"logged": True}
+
+
 # ============== PROTOCOL TEMPLATES ==============
 
 @api_router.get("/protocol-templates")
