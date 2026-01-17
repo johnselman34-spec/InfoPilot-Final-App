@@ -289,10 +289,20 @@ const UltimateSearchPage = ({ showToast }) => {
 
   useEffect(() => {
     // Only load data if token is available
-    if (!token) return;
+    if (!token) {
+      console.log('[loadData] No token, skipping data load');
+      return;
+    }
+    console.log('[loadData] Token available, loading data...');
     
     const loadData = async () => {
-      await Promise.all([fetchCategories(), fetchSearchResults(), fetchBatches()]);
+      try {
+        console.log('[loadData] Starting parallel data load');
+        await Promise.all([fetchCategories(), fetchSearchResults(), fetchBatches()]);
+        console.log('[loadData] Data load complete');
+      } catch (e) {
+        console.error('[loadData] Error during data load:', e);
+      }
     };
     loadData();
   }, [token, fetchCategories, fetchSearchResults, fetchBatches]);
