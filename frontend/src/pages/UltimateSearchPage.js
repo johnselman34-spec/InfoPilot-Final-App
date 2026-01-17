@@ -232,42 +232,27 @@ const UltimateSearchPage = ({ showToast }) => {
     }
   };
 
-  // Track if categories are being fetched (use ref to avoid stale closure)
+  // Track if categories are being fetched (use ref to avoid StrictMode double-fetch)
   const categoriesLoadingRef = useRef(false);
   
   const fetchCategories = useCallback(async () => {
-    // Get token directly from localStorage to avoid stale closure
     const currentToken = localStorage.getItem('token');
-    if (!currentToken) {
-      console.log('[fetchCategories] No token in localStorage');
-      return;
-    }
+    if (!currentToken) return;
     
     // Skip if already loading (prevents duplicate calls from StrictMode)
-    if (categoriesLoadingRef.current) {
-      console.log('[fetchCategories] Already loading, skipping');
-      return;
-    }
+    if (categoriesLoadingRef.current) return;
     categoriesLoadingRef.current = true;
     
-    console.log('[fetchCategories] Starting fetch...');
     try {
-      const url = `${API}/categories`;
-      const res = await fetch(url, {
+      const res = await fetch(`${API}/categories`, {
         headers: { 'Authorization': `Bearer ${currentToken}` }
       });
-      console.log('[fetchCategories] Response status:', res.status);
-      
       if (res.ok) {
         const data = await res.json();
-        console.log('[fetchCategories] Categories loaded:', data.length);
         setCategories(data);
-      } else {
-        const errorText = await res.text();
-        console.error('[fetchCategories] Error response:', res.status, errorText);
       }
     } catch (e) {
-      console.error('[fetchCategories] Exception:', e.name, e.message);
+      console.error('Failed to fetch categories:', e);
     } finally {
       categoriesLoadingRef.current = false;
     }
