@@ -435,16 +435,76 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     }
   };
 
-  // Handle marker hover
+  // Popup state for maximize functionality
+  const [isPopupMaximized, setIsPopupMaximized] = useState(false);
+  const popupTimeoutRef = useRef(null);
+
+  // Handle marker hover - INSTANT popup switching
   const handleMarkerHover = (result, event) => {
+    // Clear any pending hide timeout for instant switching
+    if (popupTimeoutRef.current) {
+      clearTimeout(popupTimeoutRef.current);
+      popupTimeoutRef.current = null;
+    }
+    
     if (mapContainerRef.current) {
       const rect = mapContainerRef.current.getBoundingClientRect();
       const x = event.originalEvent.clientX - rect.left;
       const y = event.originalEvent.clientY - rect.top;
       setHoverPosition({ x, y });
     }
+    // Instantly show new popup (replaces old one)
     setHoveredResult(result);
+    setIsPopupMaximized(false); // Reset maximize state
   };
+
+  // Handle marker mouse leave - delayed hide for better UX
+  const handleMarkerLeave = () => {
+    popupTimeoutRef.current = setTimeout(() => {
+      setHoveredResult(null);
+      setIsPopupMaximized(false);
+    }, 200); // Small delay to allow moving to popup
+  };
+
+  // Keep popup open when hovering the popup itself
+  const handlePopupMouseEnter = () => {
+    if (popupTimeoutRef.current) {
+      clearTimeout(popupTimeoutRef.current);
+      popupTimeoutRef.current = null;
+    }
+  };
+
+  // Hide popup when leaving the popup
+  const handlePopupMouseLeave = () => {
+    popupTimeoutRef.current = setTimeout(() => {
+      setHoveredResult(null);
+      setIsPopupMaximized(false);
+    }, 150);
+  };
+
+  // Close popup immediately
+  const closePopup = () => {
+    if (popupTimeoutRef.current) {
+      clearTimeout(popupTimeoutRef.current);
+      popupTimeoutRef.current = null;
+    }
+    setHoveredResult(null);
+    setIsPopupMaximized(false);
+  };
+
+  // Toggle maximize popup
+  const togglePopupMaximize = () => {
+    setIsPopupMaximized(prev => !prev);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (popupTimeoutRef.current) {
+        clearTimeout(popupTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="card" data-testid="map-page">
