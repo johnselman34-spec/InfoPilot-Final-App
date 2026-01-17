@@ -380,19 +380,191 @@ const QualityScoreAnalytics = ({ showToast }) => {
               Automatic scoring identifies domains with consistently low quality content
             </p>
           </div>
-          <button
-            onClick={runDomainScoring}
-            disabled={runningScoring}
-            style={{
-              background: runningScoring ? 'rgba(156, 163, 175, 0.3)' : 'linear-gradient(135deg, #7c3aed, #a78bfa)',
-              border: 'none',
-              color: '#fff',
-              padding: '10px 20px',
-              borderRadius: 10,
-              fontSize: '0.9rem',
-              fontWeight: 600,
-              cursor: runningScoring ? 'wait' : 'pointer',
-              display: 'flex',
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={() => setShowScheduleSettings(!showScheduleSettings)}
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(124, 58, 237, 0.4)',
+                color: '#a78bfa',
+                padding: '10px 15px',
+                borderRadius: 10,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+              data-testid="toggle-schedule-settings"
+            >
+              ⚙️ Schedule
+              {scheduleConfig?.enabled && <span style={{ color: '#10b981' }}>✓</span>}
+            </button>
+            <button
+              onClick={runDomainScoring}
+              disabled={runningScoring}
+              style={{
+                background: runningScoring ? 'rgba(156, 163, 175, 0.3)' : 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+                border: 'none',
+                color: '#fff',
+                padding: '10px 20px',
+                borderRadius: 10,
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                cursor: runningScoring ? 'wait' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
+              }}
+              data-testid="run-domain-scoring"
+            >
+              {runningScoring ? '⏳ Analyzing...' : '🔍 Run Now'}
+            </button>
+          </div>
+        </div>
+        
+        {/* Schedule Settings Panel */}
+        {showScheduleSettings && (
+          <div style={{
+            background: 'rgba(124, 58, 237, 0.1)',
+            borderRadius: 12,
+            padding: 20,
+            marginBottom: 20,
+            border: '1px solid rgba(124, 58, 237, 0.3)'
+          }} data-testid="schedule-settings-panel">
+            <h4 style={{ color: '#a78bfa', margin: '0 0 15px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
+              ⏰ Scheduled Auto-Scoring
+              {scheduleConfig?.enabled && (
+                <span style={{ background: '#10b981', color: '#fff', padding: '2px 8px', borderRadius: 6, fontSize: '0.7rem' }}>ACTIVE</span>
+              )}
+            </h4>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 15, marginBottom: 15 }}>
+              {/* Enable/Disable Toggle */}
+              <div>
+                <label style={{ color: mutedColor, fontSize: '0.8rem', display: 'block', marginBottom: 6 }}>Status</label>
+                <button
+                  onClick={() => updateScheduleConfig({ ...scheduleConfig, enabled: !scheduleConfig?.enabled })}
+                  disabled={savingSchedule}
+                  style={{
+                    background: scheduleConfig?.enabled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                    border: `1px solid ${scheduleConfig?.enabled ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
+                    color: scheduleConfig?.enabled ? '#10b981' : '#ef4444',
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    width: '100%',
+                    fontWeight: 600
+                  }}
+                >
+                  {scheduleConfig?.enabled ? '✅ Enabled' : '❌ Disabled'}
+                </button>
+              </div>
+              
+              {/* Schedule Frequency */}
+              <div>
+                <label style={{ color: mutedColor, fontSize: '0.8rem', display: 'block', marginBottom: 6 }}>Frequency</label>
+                <select
+                  value={scheduleConfig?.schedule || 'daily'}
+                  onChange={(e) => updateScheduleConfig({ ...scheduleConfig, schedule: e.target.value })}
+                  disabled={savingSchedule}
+                  style={{
+                    background: cardBg,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: textColor,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    width: '100%'
+                  }}
+                >
+                  <option value="hourly">Hourly (Testing)</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                </select>
+              </div>
+              
+              {/* Run Hour */}
+              <div>
+                <label style={{ color: mutedColor, fontSize: '0.8rem', display: 'block', marginBottom: 6 }}>Run Time (UTC)</label>
+                <select
+                  value={scheduleConfig?.run_hour || 6}
+                  onChange={(e) => updateScheduleConfig({ ...scheduleConfig, run_hour: parseInt(e.target.value) })}
+                  disabled={savingSchedule}
+                  style={{
+                    background: cardBg,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: textColor,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    width: '100%'
+                  }}
+                >
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={i}>{i.toString().padStart(2, '0')}:00 UTC</option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Email Notifications Toggle */}
+              <div>
+                <label style={{ color: mutedColor, fontSize: '0.8rem', display: 'block', marginBottom: 6 }}>Email Alerts</label>
+                <button
+                  onClick={() => updateScheduleConfig({ ...scheduleConfig, email_notifications: !scheduleConfig?.email_notifications })}
+                  disabled={savingSchedule}
+                  style={{
+                    background: scheduleConfig?.email_notifications ? 'rgba(16, 185, 129, 0.2)' : 'rgba(156, 163, 175, 0.2)',
+                    border: `1px solid ${scheduleConfig?.email_notifications ? 'rgba(16, 185, 129, 0.4)' : 'rgba(156, 163, 175, 0.4)'}`,
+                    color: scheduleConfig?.email_notifications ? '#10b981' : mutedColor,
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    width: '100%',
+                    fontWeight: 600
+                  }}
+                >
+                  {scheduleConfig?.email_notifications ? '📧 On' : '📧 Off'}
+                </button>
+              </div>
+            </div>
+            
+            {/* Last Run & Next Run Info */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 15, padding: '12px 15px', background: 'rgba(0,0,0,0.2)', borderRadius: 8, marginBottom: 15 }}>
+              <div>
+                <span style={{ color: mutedColor, fontSize: '0.8rem' }}>Last Run: </span>
+                <span style={{ color: textColor, fontSize: '0.85rem' }}>
+                  {scheduleConfig?.last_run ? new Date(scheduleConfig.last_run).toLocaleString() : 'Never'}
+                </span>
+              </div>
+              {scheduleConfig?.enabled && scheduleConfig?.next_run && (
+                <div>
+                  <span style={{ color: mutedColor, fontSize: '0.8rem' }}>Next Run: </span>
+                  <span style={{ color: '#10b981', fontSize: '0.85rem', fontWeight: 600 }}>
+                    {new Date(scheduleConfig.next_run).toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {/* Test Email Button */}
+            {scheduleConfig?.email_notifications && (
+              <button
+                onClick={sendTestEmail}
+                style={{
+                  background: 'rgba(236, 72, 153, 0.2)',
+                  border: '1px solid rgba(236, 72, 153, 0.4)',
+                  color: '#f472b6',
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: '0.85rem'
+                }}
+                data-testid="send-test-email"
+              >
+                📧 Send Test Email
+              </button>
+            )}
+          </div>
+        )}
               alignItems: 'center',
               gap: 8
             }}
