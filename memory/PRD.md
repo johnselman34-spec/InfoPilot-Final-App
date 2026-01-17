@@ -3693,3 +3693,51 @@ Revenue, General, Search, Pricing, Newsletter, Users, Moderation, **Banned Words
 
 #### Admin Panel Tabs (22 total):
 Revenue, General, Search, Pricing, Newsletter, Users, Moderation, Banned Words, **Quality Report**, Price Controls, Doc Types, Cat Analytics, Quality, Clean, Content, Polls, A/B Testing, Optimizer, Forecast, Protocol Forecast, Email Reports, Tutorials
+
+### Batch 26 - Bug Fixes & New Features ✅ (January 17, 2026)
+
+#### Completed:
+- [x] **Clean Category Function Fixed**
+  - Added ObjectId validation
+  - Fixed mode parameter (delete_all, delete, remove)
+  - Proper error handling for invalid category IDs
+
+- [x] **Edit Category Modal Fix**
+  - Added mousedown/click tracking to prevent accidental closure
+  - Modal no longer closes when highlighting/selecting text
+
+- [x] **Marketplace Copy Protocol**
+  - Fixed filtered results to show proper buttons
+  - "Copy FREE" for free protocols
+  - "Buy $X.XX" for paid protocols
+
+- [x] **Data Source Toggles Added**
+  - Map View: Worldwide vs Personal toggle
+  - Statistics Page: Worldwide vs Personal toggle
+  - New endpoint: GET `/api/map/worldwide`
+
+- [x] **Violation Alerts System (Admin)**
+  - New endpoints: GET/PUT `/api/admin/violation-alerts/settings`
+  - POST `/api/admin/violation-alerts/check` - Manual check
+  - GET `/api/admin/alerts` - Alert history
+  - PUT `/api/admin/alerts/{id}/acknowledge`
+  - New Admin Panel tab: "🚨 Alerts"
+
+- [x] **Email/Password Change in Settings**
+  - PUT `/api/auth/update-email` - Change email with password verification
+  - PUT `/api/auth/change-password` - Change or set password
+  - Full UI in Settings page
+
+- [x] **Meta Tags Updated**
+  - Open Graph tags for Facebook
+  - Twitter Card tags
+  - Proper URL and image references
+  - Structured data (Schema.org)
+
+#### Admin Panel Tabs (23 total):
+Revenue, General, Search, Pricing, Newsletter, Users, Moderation, Banned Words, Quality Report, **Alerts**, Price Controls, Doc Types, Cat Analytics, Quality, Clean, Content, Polls, A/B Testing, Optimizer, Forecast, Protocol Forecast, Email Reports, Tutorials
+
+#### Testing Results:
+- Backend: 18/18 tests passed (100%)
+- Frontend: Navigation and basic functionality working
+- Category count display fixed
