@@ -290,6 +290,197 @@ async def refresh_suggestions(user = Depends(get_current_user)):
     return await get_ai_protocol_suggestions(limit=5, user=user)
 
 
+# ==================== A/B TESTING FOR AI RECOMMENDATIONS ====================
+
+@router.post("/ai/recommendations/track", response_model=dict)
+async def track_recommendation_interaction(
+    category: str = Body(...),
+    action: str = Body(...),  # 'view', 'copy', 'create', 'purchase'
+    recommendation_name: str = Body(None),
+    user = Depends(get_current_user)
+):
+    """
+    Track user interactions with AI recommendations for A/B testing.
+    This helps determine which recommendation categories are most effective.
+    """
+    user_id = str(user["_id"])
+    
+    await db.ai_recommendation_analytics.insert_one({
+        "user_id": user_id,
+        "category": category,
+        "action": action,
+        "recommendation_name": recommendation_name,
+        "timestamp": datetime.now(timezone.utc)
+    })
+    
+    # Update category performance stats
+    await db.ai_recommendation_stats.update_one(
+        {"category": category},
+        {
+            "$inc": {
+                f"actions.{action}": 1,
+                "total_interactions": 1
+            },
+            "$setOnInsert": {"category": category, "created_at": datetime.now(timezone.utc)}
+        },
+        upsert=True
+    )
+    
+    return {"success": True, "tracked": {"category": category, "action": action}}
+
+
+@router.get("/ai/recommendations/analytics", response_model=dict)
+async def get_recommendation_analytics(user = Depends(get_current_user)):
+    """
+    Get A/B testing analytics for AI recommendation categories.
+    Shows which categories are performing best.
+    """
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get category stats
+    stats = await db.ai_recommendation_stats.find().to_list(100)
+    
+    # Calculate conversion rates
+    category_performance = []
+    for stat in stats:
+        views = stat.get("actions", {}).get("view", 0)
+        copies = stat.get("actions", {}).get("copy", 0)
+        creates = stat.get("actions", {}).get("create", 0)
+        purchases = stat.get("actions", {}).get("purchase", 0)
+        
+        copy_rate = (copies / views * 100) if views > 0 else 0
+        create_rate = (creates / views * 100) if views > 0 else 0
+        purchase_rate = (purchases / views * 100) if views > 0 else 0
+        
+        category_performance.append({
+            "category": stat.get("category"),
+            "views": views,
+            "copies": copies,
+            "creates": creates,
+            "purchases": purchases,
+            "copy_rate": round(copy_rate, 2),
+            "create_rate": round(create_rate, 2),
+            "purchase_rate": round(purchase_rate, 2),
+            "total_interactions": stat.get("total_interactions", 0)
+        })
+    
+    # Sort by effectiveness (purchase rate)
+    category_performance.sort(key=lambda x: x["purchase_rate"], reverse=True)
+    
+    return {
+        "categories": category_performance,
+        "best_performing": category_performance[0]["category"] if category_performance else "trending",
+        "generated_at": datetime.now(timezone.utc).isoformat()
+    }
+
+
+# ==================== AI-POWERED SMART SEARCH SUGGESTIONS ====================
+
+@router.get("/ai/smart-suggestions", response_model=dict)
+async def get_smart_search_suggestions(
+    query: str = "",
+    user = Depends(get_current_user)
+):
+    """
+    AI-powered smart search suggestions based on user's search patterns and trending topics.
+    Predicts what protocols users might want based on their behavior.
+    """
+    user_id = str(user["_id"])
+    
+    if not EMERGENT_LLM_KEY:
+        return {"suggestions": get_fallback_smart_suggestions(query), "ai_powered": False}
+    
+    try:
+        # Get user's search history
+        user_searches = await db.search_history.find(
+            {"user_id": user_id}
+        ).sort("timestamp", -1).limit(20).to_list(20)
+        
+        recent_queries = [s.get("query", "") for s in user_searches if s.get("query")]
+        
+        # Get trending searches
+        trending = await db.search_history.aggregate([
+            {"$match": {"timestamp": {"$gte": datetime.now(timezone.utc) - timedelta(days=7)}}},
+            {"$group": {"_id": "$query", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+            {"$limit": 10}
+        ]).to_list(10)
+        
+        trending_queries = [t["_id"] for t in trending if t["_id"]]
+        
+        # Build AI prompt
+        ai_prompt = f"""Generate 5 smart search suggestions for a user on InfoPilot Explorer.
+
+Current query (if any): "{query}"
+User's recent searches: {', '.join(recent_queries[:5]) or 'None'}
+Trending searches: {', '.join(trending_queries[:5]) or 'General topics'}
+
+Generate suggestions that:
+1. Complete or enhance the current query (if provided)
+2. Relate to user's search patterns
+3. Include trending/popular topics
+4. Are actionable and specific
+
+Return ONLY a valid JSON array of suggestion objects:
+[
+  {{"suggestion": "search query here", "reason": "brief reason", "type": "completion|related|trending"}}
+]"""
+
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"smart_suggestions_{user_id}_{datetime.now().timestamp()}",
+            system_message="Generate smart, relevant search suggestions. Return only valid JSON."
+        ).with_model("openai", "gpt-5.2")
+        
+        response = await chat.send_message(UserMessage(text=ai_prompt))
+        
+        # Parse response
+        import json
+        try:
+            response_text = response.strip()
+            if "```" in response_text:
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+            suggestions = json.loads(response_text)
+        except:
+            return {"suggestions": get_fallback_smart_suggestions(query), "ai_powered": False}
+        
+        return {
+            "suggestions": suggestions[:5],
+            "ai_powered": True,
+            "query": query,
+            "generated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Smart suggestions error: {e}")
+        return {"suggestions": get_fallback_smart_suggestions(query), "ai_powered": False}
+
+
+def get_fallback_smart_suggestions(query: str) -> list:
+    """Fallback suggestions when AI is unavailable"""
+    base_suggestions = [
+        {"suggestion": "artificial intelligence news 2026", "reason": "Trending topic", "type": "trending"},
+        {"suggestion": "climate change solutions", "reason": "Popular search", "type": "trending"},
+        {"suggestion": "remote work productivity tips", "reason": "High demand", "type": "related"},
+        {"suggestion": "cryptocurrency market analysis", "reason": "Growing interest", "type": "trending"},
+        {"suggestion": "space exploration updates", "reason": "Breaking news", "type": "trending"}
+    ]
+    
+    if query:
+        # Add query-specific completions
+        completions = [
+            {"suggestion": f"{query} latest news", "reason": "Get latest updates", "type": "completion"},
+            {"suggestion": f"{query} best practices", "reason": "Learn best approaches", "type": "completion"},
+            {"suggestion": f"{query} tutorial guide", "reason": "Step-by-step learning", "type": "completion"}
+        ]
+        return completions + base_suggestions[:2]
+    
+    return base_suggestions
+
+
 class ProtocolCreationRequest(BaseModel):
     category: str = "trending"  # trending, similar, gaps, seasonal, premium
 
