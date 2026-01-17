@@ -57,8 +57,17 @@ export const ABTestProvider = ({ children, testNames = [] }) => {
   }, [testNames, sessionId]);
 
   useEffect(() => {
-    fetchVariants();
-  }, [fetchVariants]);
+    // Data fetching on mount - standard React pattern
+    let mounted = true;
+    const loadVariants = async () => {
+      if (mounted) {
+        await fetchVariants();
+      }
+    };
+    loadVariants();
+    return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Track event function
   const trackEvent = useCallback(async (testId, variantId, eventType, metadata = {}) => {
