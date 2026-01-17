@@ -5,7 +5,7 @@ Refactored with modular routers
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Query, Body, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.middleware.cors import CORSMiddleware
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 from bson import ObjectId
