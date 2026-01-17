@@ -4909,6 +4909,140 @@ async def clear_dismissed_alerts(user = Depends(get_current_user_local)):
     }
 
 
+@api_router.get("/admin/domain-scoring/schedule")
+async def get_domain_scoring_schedule(user = Depends(get_current_user_local)):
+    """Get domain scoring schedule configuration"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    config = await db.domain_scoring_config.find_one({"type": "schedule"})
+    
+    if not config:
+        # Return default config
+        return {
+            "enabled": False,
+            "schedule": "daily",
+            "run_hour": 6,
+            "email_notifications": True,
+            "notification_emails": ["jjspilot24@gmail.com"],
+            "last_run": None,
+            "last_run_results": None,
+            "next_run": None
+        }
+    
+    # Calculate next run time
+    next_run = None
+    if config.get("enabled"):
+        now = datetime.utcnow()
+        run_hour = config.get("run_hour", 6)
+        schedule = config.get("schedule", "daily")
+        
+        if schedule == "daily":
+            next_run = now.replace(hour=run_hour, minute=0, second=0, microsecond=0)
+            if next_run <= now:
+                next_run += timedelta(days=1)
+        elif schedule == "weekly":
+            next_run = now.replace(hour=run_hour, minute=0, second=0, microsecond=0)
+            days_until_next = 7 - now.weekday()  # Next Monday
+            if days_until_next == 0 and now.hour >= run_hour:
+                days_until_next = 7
+            next_run += timedelta(days=days_until_next)
+        elif schedule == "hourly":
+            next_run = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    
+    return {
+        "enabled": config.get("enabled", False),
+        "schedule": config.get("schedule", "daily"),
+        "run_hour": config.get("run_hour", 6),
+        "email_notifications": config.get("email_notifications", True),
+        "notification_emails": config.get("notification_emails", ["jjspilot24@gmail.com"]),
+        "last_run": config.get("last_run").isoformat() if config.get("last_run") else None,
+        "last_run_results": config.get("last_run_results"),
+        "next_run": next_run.isoformat() if next_run else None
+    }
+
+
+@api_router.post("/admin/domain-scoring/schedule")
+async def update_domain_scoring_schedule(
+    enabled: bool = Body(..., embed=True),
+    schedule: str = Body("daily", embed=True),
+    run_hour: int = Body(6, embed=True),
+    email_notifications: bool = Body(True, embed=True),
+    notification_emails: List[str] = Body(["jjspilot24@gmail.com"], embed=True),
+    user = Depends(get_current_user_local)
+):
+    """Update domain scoring schedule configuration"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Validate schedule
+    if schedule not in ["hourly", "daily", "weekly"]:
+        raise HTTPException(status_code=400, detail="Schedule must be 'hourly', 'daily', or 'weekly'")
+    
+    # Validate run_hour
+    if not 0 <= run_hour <= 23:
+        raise HTTPException(status_code=400, detail="Run hour must be between 0 and 23")
+    
+    # Update or create config
+    await db.domain_scoring_config.update_one(
+        {"type": "schedule"},
+        {"$set": {
+            "type": "schedule",
+            "enabled": enabled,
+            "schedule": schedule,
+            "run_hour": run_hour,
+            "email_notifications": email_notifications,
+            "notification_emails": notification_emails,
+            "updated_at": datetime.utcnow(),
+            "updated_by": user.get("email")
+        }},
+        upsert=True
+    )
+    
+    logger.info(f"Domain scoring schedule updated: enabled={enabled}, schedule={schedule}, hour={run_hour}, email={email_notifications} by {user.get('email')}")
+    
+    return {
+        "success": True,
+        "message": f"Schedule updated: {'Enabled' if enabled else 'Disabled'} ({schedule} at {run_hour}:00 UTC)",
+        "config": {
+            "enabled": enabled,
+            "schedule": schedule,
+            "run_hour": run_hour,
+            "email_notifications": email_notifications,
+            "notification_emails": notification_emails
+        }
+    }
+
+
+@api_router.post("/admin/domain-scoring/test-email")
+async def test_domain_scoring_email(user = Depends(get_current_user_local)):
+    """Send a test email notification for domain scoring alerts"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        from services.domain_scoring_scheduler import send_alert_notification
+        
+        config = await db.domain_scoring_config.find_one({"type": "schedule"})
+        if not config:
+            config = {"notification_emails": [user.get("email", "jjspilot24@gmail.com")]}
+        
+        # Create test alerts
+        test_alerts = [
+            {"domain": "test-critical.example.com", "level": "critical", "score": 25.0},
+            {"domain": "test-warning.example.com", "level": "warning", "score": 40.0}
+        ]
+        
+        await send_alert_notification(config, 1, 1, test_alerts)
+        
+        return {
+            "success": True,
+            "message": f"Test email sent to {config.get('notification_emails', [])}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send test email: {str(e)}")
+
+
 # ============== PROTOCOL TEMPLATES ==============
 
 @api_router.get("/protocol-templates")
