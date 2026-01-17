@@ -96,6 +96,8 @@ const MainApp = () => {
 
   // Pages that should have minimal headers (admin/analytics/utility pages)
   const isAdminPage = ['admin', 'analytics', 'legal', 'wallet', 'personal-reports', 'subscribe'].includes(currentPage);
+  // Pages where AI News should show
+  const showAiNews = ['search', 'marketplace', 'social'].includes(currentPage);
   
   return (
     <div className="app-container">
@@ -107,6 +109,8 @@ const MainApp = () => {
         {!isAdminPage && <QuoteOfTheDay />}
         {renderPage()}
       </main>
+      {/* AI News Ticker - Shows on main pages */}
+      {showAiNews && <AINewsTicker />}
       {toast && (
         <Toast
           message={toast.message}
