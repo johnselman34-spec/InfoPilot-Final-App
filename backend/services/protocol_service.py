@@ -83,8 +83,20 @@ class ProtocolParser:
         # Note: has_and could be checked with: '&' in protocol or bool(re.search(r'\s+and\s+', protocol, re.IGNORECASE))
         # but it's not required for basic validation since single-group protocols are valid
         
-        if not has_or:
-            return False, "Protocol must contain 'or' operators within groups"
+        # Single-term groups are valid (e.g., "(aviation) & (news)+")
+        # OR is only required within a group if there are multiple terms
+        # Check if there's content in the groups
+        groups = re.findall(r'\(([^)]+)\)', protocol)
+        if not groups:
+            return False, "Protocol must contain at least one group with terms"
+        
+        # Validate each group has valid content
+        for group in groups:
+            group_content = group.strip()
+            if not group_content:
+                return False, "Empty groups are not allowed"
+            # If group has multiple words and no 'or', it might be intentional (exact phrase)
+            # So we allow it
         
         return True, "Valid protocol"
     
