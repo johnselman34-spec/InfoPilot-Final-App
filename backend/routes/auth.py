@@ -177,3 +177,87 @@ async def get_session_data(session_id: str):
     except Exception as e:
         logger.error(f"Session verification error: {e}")
         raise HTTPException(status_code=500, detail="Failed to verify Google session")
+
+
+
+@router.put("/auth/update-email", response_model=dict)
+async def update_email(
+    new_email: str,
+    password: str,
+    user = Depends(get_current_user)
+):
+    """Update user email - requires password verification"""
+    from bson import ObjectId
+    
+    # Validate new email format
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_regex, new_email):
+        raise HTTPException(status_code=400, detail="Invalid email format")
+    
+    # Check if email already exists (case-insensitive)
+    existing = await db.users.find_one({
+        "email": {"$regex": f"^{re.escape(new_email)}$", "$options": "i"},
+        "_id": {"$ne": user["_id"]}
+    })
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already in use by another account")
+    
+    # Verify password
+    if user.get("password_hash"):
+        if not AuthService.verify_password(password, user["password_hash"]):
+            raise HTTPException(status_code=400, detail="Incorrect password")
+    else:
+        # Google OAuth user without password - require them to set one first
+        raise HTTPException(status_code=400, detail="Please set a password first before changing email")
+    
+    # Update email
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"email": new_email.lower(), "updated_at": datetime.utcnow()}}
+    )
+    
+    logger.info(f"User {user['_id']} changed email from {user.get('email')} to {new_email}")
+    
+    # Fetch updated user
+    updated_user = await db.users.find_one({"_id": user["_id"]})
+    
+    return {
+        "success": True,
+        "message": "Email updated successfully!",
+        "user": AuthService.format_user_response(updated_user)
+    }
+
+
+@router.put("/auth/change-password", response_model=dict)
+async def change_password(
+    current_password: str = None,
+    new_password: str = None,
+    user = Depends(get_current_user)
+):
+    """Change or set password"""
+    from bson import ObjectId
+    
+    if not new_password or len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+    
+    # If user has a password, verify the current one
+    if user.get("password_hash"):
+        if not current_password:
+            raise HTTPException(status_code=400, detail="Current password is required")
+        if not AuthService.verify_password(current_password, user["password_hash"]):
+            raise HTTPException(status_code=400, detail="Incorrect current password")
+    
+    # Hash and save new password
+    new_hash = AuthService.hash_password(new_password)
+    
+    await db.users.update_one(
+        {"_id": user["_id"]},
+        {"$set": {"password_hash": new_hash, "updated_at": datetime.utcnow()}}
+    )
+    
+    logger.info(f"User {user['_id']} changed password")
+    
+    return {
+        "success": True,
+        "message": "Password updated successfully!"
+    }
