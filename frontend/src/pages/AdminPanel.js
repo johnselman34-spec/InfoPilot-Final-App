@@ -1071,6 +1071,10 @@ const AdminPanel = ({ showToast }) => {
           <ContentQualityReport showToast={showToast} />
         )}
 
+        {activeTab === 'alerts' && (
+          <ViolationAlerts showToast={showToast} />
+        )}
+
         {activeTab === 'price-controls' && (
           <PriceControlsAdmin showToast={showToast} />
         )}
