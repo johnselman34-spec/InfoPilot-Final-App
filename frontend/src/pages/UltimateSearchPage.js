@@ -240,13 +240,12 @@ const UltimateSearchPage = ({ showToast }) => {
       });
       if (res.ok) {
         const data = await res.json();
-        console.log('Fetched categories:', data.length, 'User ID:', user?.id || user?._id);
         setCategories(data);
       }
     } catch (e) {
       console.error('Failed to fetch categories:', e);
     }
-  }, [token, user]);
+  }, [token]);
 
   const fetchSearchResults = useCallback(async () => {
     try {
