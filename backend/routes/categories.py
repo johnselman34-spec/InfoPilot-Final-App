@@ -111,6 +111,14 @@ async def create_category(category: CategoryCreate, user = Depends(get_current_u
     # Check for banned words in name and protocol
     has_banned_name, banned_in_name = await check_banned_words(category.name)
     if has_banned_name:
+        # Log the violation
+        await db.content_violations.insert_one({
+            "word": banned_in_name[0] if banned_in_name else "unknown",
+            "content_type": "category",
+            "attempted_text": category.name[:500],
+            "user_id": str(user["_id"]),
+            "created_at": datetime.now(timezone.utc)
+        })
         raise HTTPException(
             status_code=400, 
             detail=f"Category name contains banned words: {', '.join(banned_in_name)}"
@@ -118,6 +126,14 @@ async def create_category(category: CategoryCreate, user = Depends(get_current_u
     
     has_banned_protocol, banned_in_protocol = await check_banned_words(category.protocol)
     if has_banned_protocol:
+        # Log the violation
+        await db.content_violations.insert_one({
+            "word": banned_in_protocol[0] if banned_in_protocol else "unknown",
+            "content_type": "protocol",
+            "attempted_text": category.protocol[:500],
+            "user_id": str(user["_id"]),
+            "created_at": datetime.now(timezone.utc)
+        })
         raise HTTPException(
             status_code=400, 
             detail=f"Protocol contains banned words: {', '.join(banned_in_protocol)}"
