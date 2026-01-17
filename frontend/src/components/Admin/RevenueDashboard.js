@@ -1,8 +1,9 @@
 /**
  * Revenue Dashboard Component
  * Unified view of protocol sales, subscription revenue, and A/B test conversion rates
+ * With PDF Export functionality
  */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { API } from '../../utils/api';
@@ -13,11 +14,151 @@ const RevenueDashboard = ({ showToast }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState(30);
+  const [exporting, setExporting] = useState(false);
+  const dashboardRef = useRef(null);
   
   const bgColor = isDarkMode ? 'rgba(15, 10, 35, 0.95)' : 'rgba(255, 255, 255, 0.98)';
   const cardBg = isDarkMode ? 'rgba(30, 20, 50, 0.7)' : 'rgba(248, 250, 252, 0.9)';
   const textColor = isDarkMode ? '#e2e8f0' : '#1e293b';
   const mutedColor = isDarkMode ? '#a1a1aa' : '#64748b';
+  
+  // PDF Export function
+  const exportToPDF = async () => {
+    setExporting(true);
+    showToast && showToast('Generating PDF report...', 'info');
+    
+    try {
+      // Create a printable HTML document
+      const printContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <title>InfoPilot Revenue Report - ${new Date().toLocaleDateString()}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; }
+    .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #7c3aed; padding-bottom: 20px; }
+    .logo { font-size: 28px; font-weight: bold; color: #7c3aed; }
+    .subtitle { color: #64748b; margin-top: 5px; }
+    .period { background: #f3e8ff; padding: 8px 16px; border-radius: 20px; display: inline-block; margin-top: 10px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+    .summary-card { background: #f8fafc; border-radius: 12px; padding: 20px; text-align: center; border: 1px solid #e2e8f0; }
+    .summary-value { font-size: 24px; font-weight: bold; color: #10b981; }
+    .summary-label { font-size: 12px; color: #64748b; margin-top: 5px; }
+    .section { margin-bottom: 30px; }
+    .section-title { font-size: 18px; font-weight: bold; color: #7c3aed; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f8fafc; font-weight: 600; color: #64748b; }
+    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px; }
+    @media print { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">✈️ InfoPilot Explorer</div>
+    <div class="subtitle">Revenue Dashboard Report</div>
+    <div class="period">📅 Last ${period} Days (${new Date(data.generated_at).toLocaleDateString()})</div>
+  </div>
+  
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-value">$${data.summary.total_revenue.toFixed(2)}</div>
+      <div class="summary-label">Total Revenue</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value" style="color: #7c3aed;">$${data.summary.protocol_revenue.toFixed(2)}</div>
+      <div class="summary-label">Protocol Sales</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value" style="color: #ec4899;">$${data.summary.subscription_revenue.toFixed(2)}</div>
+      <div class="summary-label">Subscriptions</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-value" style="color: #3b82f6;">${data.summary.total_users}</div>
+      <div class="summary-label">Total Users (+${data.summary.new_users} new)</div>
+    </div>
+  </div>
+  
+  <div class="section">
+    <div class="section-title">🏆 Top Selling Protocols</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Protocol Name</th>
+          <th>Revenue</th>
+          <th>Sales</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.protocol_sales.top_sellers.map((seller, idx) => `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${seller.name}</td>
+            <td>$${seller.revenue.toFixed(2)}</td>
+            <td>${seller.sales}</td>
+          </tr>
+        `).join('')}
+        ${data.protocol_sales.top_sellers.length === 0 ? '<tr><td colspan="4" style="text-align: center; color: #64748b;">No sales in this period</td></tr>' : ''}
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="section">
+    <div class="section-title">🧠 AI Recommendation Performance</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Views</th>
+          <th>Copies</th>
+          <th>Creates</th>
+          <th>Purchases</th>
+          <th>Copy Rate</th>
+          <th>Purchase Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.ai_recommendations.map(rec => `
+          <tr>
+            <td>${rec.category}</td>
+            <td>${rec.views}</td>
+            <td>${rec.copies}</td>
+            <td>${rec.creates}</td>
+            <td>${rec.purchases}</td>
+            <td>${rec.copy_rate}%</td>
+            <td>${rec.purchase_rate}%</td>
+          </tr>
+        `).join('')}
+        ${data.ai_recommendations.length === 0 ? '<tr><td colspan="7" style="text-align: center; color: #64748b;">No recommendation data yet</td></tr>' : ''}
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="footer">
+    <p>Generated by InfoPilot Explorer™ on ${new Date().toLocaleString()}</p>
+    <p>© ${new Date().getFullYear()} Top Pilot Enterprises, Inc. All rights reserved.</p>
+  </div>
+</body>
+</html>`;
+      
+      // Open print dialog
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      
+      // Wait for content to load then print
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+      
+      showToast && showToast('PDF ready! Use "Save as PDF" in print dialog.', 'success');
+    } catch (e) {
+      console.error('PDF export error:', e);
+      showToast && showToast('Failed to generate PDF', 'error');
+    }
+    setExporting(false);
+  };
   
   const fetchDashboard = useCallback(async () => {
     if (!token) return;
