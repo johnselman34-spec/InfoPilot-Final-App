@@ -321,9 +321,15 @@ async def clean_category(
     - 'delete': Deletes search results that ONLY belong to this category (preserves multi-category results)
     - 'delete_all': Deletes ALL search results associated with this category (including multi-category)
     """
+    # Validate ObjectId format
+    try:
+        cat_oid = ObjectId(category_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid category ID format")
+    
     # Verify category ownership
     if user.get("is_admin"):
-        category = await db.categories.find_one({"_id": ObjectId(category_id)})
+        category = await db.categories.find_one({"_id": cat_oid})
     else:
         category = await db.categories.find_one({
             "_id": ObjectId(category_id),
