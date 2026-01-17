@@ -303,7 +303,7 @@ const AdminPanel = ({ showToast }) => {
               onClick={() => setActiveTab(tab)}
               data-testid={`admin-tab-${tab}`}
             >
-              {tab === 'revenue' ? '💰 Revenue' : tab === 'ab-testing' ? 'A/B Testing' : tab === 'email-reports' ? 'Email Reports' : tab === 'tutorials' ? '🎬 Tutorials' : tab === 'optimizer' ? '🤖 Optimizer' : tab === 'forecast' ? '📈 Forecast' : tab === 'protocol-forecast' ? '🔮 Protocol Forecast' : tab === 'moderation' ? '🛡️ Moderation' : tab === 'banned-words' ? '🚫 Banned Words' : tab === 'price-controls' ? '💰 Price Controls' : tab === 'doctype-settings' ? '📄 Doc Types' : tab === 'category-analytics' ? '📊 Cat Analytics' : tab === 'quality-analytics' ? '📊 Quality' : tab === 'clean-categories' ? '🧹 Clean' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'revenue' ? '💰 Revenue' : tab === 'ab-testing' ? 'A/B Testing' : tab === 'email-reports' ? 'Email Reports' : tab === 'tutorials' ? '🎬 Tutorials' : tab === 'optimizer' ? '🤖 Optimizer' : tab === 'forecast' ? '📈 Forecast' : tab === 'protocol-forecast' ? '🔮 Protocol Forecast' : tab === 'moderation' ? '🛡️ Moderation' : tab === 'banned-words' ? '🚫 Banned Words' : tab === 'quality-report' ? '📊 Quality Report' : tab === 'price-controls' ? '💰 Price Controls' : tab === 'doctype-settings' ? '📄 Doc Types' : tab === 'category-analytics' ? '📊 Cat Analytics' : tab === 'quality-analytics' ? '📊 Quality' : tab === 'clean-categories' ? '🧹 Clean' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </div>
           ))}
         </div>
