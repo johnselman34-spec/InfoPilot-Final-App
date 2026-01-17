@@ -197,6 +197,50 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
     }
     setPasswordLoading(false);
   };
+
+  // Handle email change
+  const handleChangeEmail = async () => {
+    // Validation
+    if (!newEmail || !newEmail.includes('@')) {
+      showToast('Please enter a valid email address', 'error');
+      return;
+    }
+    if (!emailPassword) {
+      showToast('Password is required to change email', 'error');
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      const res = await fetch(`${API}/auth/update-email`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({
+          new_email: newEmail,
+          password: emailPassword
+        })
+      });
+
+      const data = await res.json();
+      
+      if (res.ok) {
+        showToast('Email updated successfully!', 'success');
+        setNewEmail('');
+        setEmailPassword('');
+        setShowEmailSection(false);
+        // Refresh user data
+        if (refreshUser) refreshUser();
+      } else {
+        showToast(data.detail || 'Failed to change email', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to change email', 'error');
+    }
+    setEmailLoading(false);
+  };
   
   // Category Management Functions
   const handleEditCategory = async (cat) => {
