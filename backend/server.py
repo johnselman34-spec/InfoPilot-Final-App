@@ -5043,6 +5043,197 @@ async def test_domain_scoring_email(user = Depends(get_current_user_local)):
         raise HTTPException(status_code=500, detail=f"Failed to send test email: {str(e)}")
 
 
+# ============== REVENUE DASHBOARD ==============
+
+@api_router.get("/admin/revenue-dashboard")
+async def get_revenue_dashboard(
+    days: int = Query(30, ge=1, le=365),
+    user = Depends(get_current_user_local)
+):
+    """
+    Unified Revenue Dashboard showing:
+    - Protocol sales revenue
+    - Subscription revenue  
+    - A/B test conversion rates
+    - Performance trends
+    """
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    from datetime import datetime, timedelta, timezone
+    
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
+    
+    # 1. Protocol Sales Revenue
+    protocol_sales = await db.protocol_purchases.aggregate([
+        {"$match": {"created_at": {"$gte": start_date}}},
+        {"$group": {
+            "_id": None,
+            "total_revenue": {"$sum": "$price"},
+            "total_sales": {"$sum": 1},
+            "unique_buyers": {"$addToSet": "$buyer_id"}
+        }}
+    ]).to_list(1)
+    
+    protocol_revenue = protocol_sales[0] if protocol_sales else {"total_revenue": 0, "total_sales": 0, "unique_buyers": []}
+    
+    # Protocol sales by day
+    protocol_by_day = await db.protocol_purchases.aggregate([
+        {"$match": {"created_at": {"$gte": start_date}}},
+        {"$group": {
+            "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+            "revenue": {"$sum": "$price"},
+            "sales": {"$sum": 1}
+        }},
+        {"$sort": {"_id": 1}}
+    ]).to_list(days)
+    
+    # Top selling protocols
+    top_protocols = await db.protocol_purchases.aggregate([
+        {"$match": {"created_at": {"$gte": start_date}}},
+        {"$group": {
+            "_id": "$protocol_id",
+            "revenue": {"$sum": "$price"},
+            "sales": {"$sum": 1}
+        }},
+        {"$sort": {"revenue": -1}},
+        {"$limit": 10}
+    ]).to_list(10)
+    
+    # Get protocol names
+    for p in top_protocols:
+        if p["_id"]:
+            try:
+                protocol = await db.categories.find_one({"_id": ObjectId(p["_id"])})
+                p["name"] = protocol.get("name", "Unknown") if protocol else "Unknown"
+            except:
+                p["name"] = "Unknown"
+    
+    # 2. Subscription Revenue
+    subscription_revenue = await db.subscriptions.aggregate([
+        {"$match": {"created_at": {"$gte": start_date}, "status": "active"}},
+        {"$group": {
+            "_id": None,
+            "total_revenue": {"$sum": "$amount"},
+            "total_subscriptions": {"$sum": 1},
+            "monthly": {"$sum": {"$cond": [{"$eq": ["$plan", "monthly"]}, "$amount", 0]}},
+            "yearly": {"$sum": {"$cond": [{"$eq": ["$plan", "yearly"]}, "$amount", 0]}}
+        }}
+    ]).to_list(1)
+    
+    sub_revenue = subscription_revenue[0] if subscription_revenue else {"total_revenue": 0, "total_subscriptions": 0, "monthly": 0, "yearly": 0}
+    
+    # Subscription by day
+    sub_by_day = await db.subscriptions.aggregate([
+        {"$match": {"created_at": {"$gte": start_date}, "status": "active"}},
+        {"$group": {
+            "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+            "revenue": {"$sum": "$amount"},
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"_id": 1}}
+    ]).to_list(days)
+    
+    # 3. A/B Test Conversion Rates
+    ab_test_stats = await db.ab_test_events.aggregate([
+        {"$match": {"timestamp": {"$gte": start_date}}},
+        {"$group": {
+            "_id": {"test": "$test_name", "variant": "$variant_id"},
+            "impressions": {"$sum": {"$cond": [{"$eq": ["$event_type", "impression"]}, 1, 0]}},
+            "conversions": {"$sum": {"$cond": [{"$eq": ["$event_type", "conversion"]}, 1, 0]}}
+        }}
+    ]).to_list(100)
+    
+    # Calculate conversion rates
+    ab_performance = {}
+    for stat in ab_test_stats:
+        test_name = stat["_id"]["test"]
+        if test_name not in ab_performance:
+            ab_performance[test_name] = {"variants": [], "total_impressions": 0, "total_conversions": 0}
+        
+        impressions = stat.get("impressions", 0)
+        conversions = stat.get("conversions", 0)
+        rate = round((conversions / impressions * 100), 2) if impressions > 0 else 0
+        
+        ab_performance[test_name]["variants"].append({
+            "variant_id": stat["_id"]["variant"],
+            "impressions": impressions,
+            "conversions": conversions,
+            "conversion_rate": rate
+        })
+        ab_performance[test_name]["total_impressions"] += impressions
+        ab_performance[test_name]["total_conversions"] += conversions
+    
+    # Calculate overall rate for each test
+    for test_name, data in ab_performance.items():
+        if data["total_impressions"] > 0:
+            data["overall_conversion_rate"] = round((data["total_conversions"] / data["total_impressions"] * 100), 2)
+        else:
+            data["overall_conversion_rate"] = 0
+    
+    # 4. AI Recommendation Performance (from A/B testing)
+    ai_rec_stats = await db.ai_recommendation_stats.find().to_list(100)
+    ai_performance = []
+    for stat in ai_rec_stats:
+        views = stat.get("actions", {}).get("view", 0)
+        copies = stat.get("actions", {}).get("copy", 0)
+        creates = stat.get("actions", {}).get("create", 0)
+        purchases = stat.get("actions", {}).get("purchase", 0)
+        
+        ai_performance.append({
+            "category": stat.get("category"),
+            "views": views,
+            "copies": copies,
+            "creates": creates,
+            "purchases": purchases,
+            "copy_rate": round((copies / views * 100), 2) if views > 0 else 0,
+            "purchase_rate": round((purchases / views * 100), 2) if views > 0 else 0
+        })
+    
+    # 5. Summary Metrics
+    total_revenue = protocol_revenue.get("total_revenue", 0) + sub_revenue.get("total_revenue", 0)
+    
+    # User growth
+    new_users = await db.users.count_documents({"created_at": {"$gte": start_date}})
+    total_users = await db.users.count_documents({})
+    
+    # Active users (logged in last 7 days)
+    active_users = await db.users.count_documents({
+        "last_login": {"$gte": datetime.now(timezone.utc) - timedelta(days=7)}
+    })
+    
+    return {
+        "period_days": days,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "summary": {
+            "total_revenue": round(total_revenue, 2),
+            "protocol_revenue": round(protocol_revenue.get("total_revenue", 0), 2),
+            "subscription_revenue": round(sub_revenue.get("total_revenue", 0), 2),
+            "total_sales": protocol_revenue.get("total_sales", 0),
+            "unique_buyers": len(protocol_revenue.get("unique_buyers", [])),
+            "active_subscriptions": sub_revenue.get("total_subscriptions", 0),
+            "new_users": new_users,
+            "total_users": total_users,
+            "active_users": active_users
+        },
+        "protocol_sales": {
+            "total_revenue": round(protocol_revenue.get("total_revenue", 0), 2),
+            "total_sales": protocol_revenue.get("total_sales", 0),
+            "by_day": [{"date": d["_id"], "revenue": round(d["revenue"], 2), "sales": d["sales"]} for d in protocol_by_day],
+            "top_sellers": [{"name": p.get("name", "Unknown"), "revenue": round(p["revenue"], 2), "sales": p["sales"]} for p in top_protocols]
+        },
+        "subscriptions": {
+            "total_revenue": round(sub_revenue.get("total_revenue", 0), 2),
+            "active_count": sub_revenue.get("total_subscriptions", 0),
+            "monthly_revenue": round(sub_revenue.get("monthly", 0), 2),
+            "yearly_revenue": round(sub_revenue.get("yearly", 0), 2),
+            "by_day": [{"date": d["_id"], "revenue": round(d["revenue"], 2), "count": d["count"]} for d in sub_by_day]
+        },
+        "ab_testing": ab_performance,
+        "ai_recommendations": ai_performance
+    }
+
+
 # ============== PROTOCOL TEMPLATES ==============
 
 @api_router.get("/protocol-templates")
