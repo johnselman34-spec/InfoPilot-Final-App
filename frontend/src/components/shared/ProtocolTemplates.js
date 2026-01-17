@@ -65,10 +65,17 @@ const ProtocolTemplates = ({ showToast, onApplyTemplate }) => {
   }, []);
 
   useEffect(() => {
-    fetchTemplates();
-    fetchPopularTemplates();
-    fetchCategories();
-  }, [fetchTemplates, fetchPopularTemplates, fetchCategories]);
+    // Initial data loading
+    let mounted = true;
+    const loadData = async () => {
+      if (mounted) {
+        await Promise.all([fetchTemplates(), fetchPopularTemplates(), fetchCategories()]);
+      }
+    };
+    loadData();
+    return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const createTemplate = async () => {
     if (!newTemplate.name || !newTemplate.protocol) {
