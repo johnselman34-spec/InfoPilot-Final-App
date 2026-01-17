@@ -233,8 +233,8 @@ const RevenueDashboard = ({ showToast }) => {
           </p>
         </div>
         
-        {/* Period Selector */}
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        {/* Period Selector and Export */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ color: mutedColor, fontSize: '0.85rem' }}>Period:</span>
           {[7, 30, 90, 365].map(days => (
             <button
@@ -256,6 +256,31 @@ const RevenueDashboard = ({ showToast }) => {
               {days}d
             </button>
           ))}
+          
+          {/* PDF Export Button */}
+          <button
+            onClick={exportToPDF}
+            disabled={exporting || !data}
+            style={{
+              background: exporting 
+                ? 'rgba(16, 185, 129, 0.5)'
+                : 'linear-gradient(135deg, #10b981, #059669)',
+              border: 'none',
+              borderRadius: 8,
+              padding: '8px 16px',
+              color: '#fff',
+              fontWeight: 600,
+              cursor: exporting ? 'wait' : 'pointer',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              marginLeft: 10
+            }}
+            data-testid="export-pdf-btn"
+          >
+            {exporting ? '⏳ Generating...' : '📄 Export PDF'}
+          </button>
         </div>
       </div>
       
