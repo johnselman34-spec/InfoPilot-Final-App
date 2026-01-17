@@ -8,6 +8,7 @@ import './i18n'; // i18n multi-language support
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider, useTheme, ThemeToggle } from './contexts/ThemeContext';
 import { Toast, Sidebar, QuoteOfTheDay, BookPromoBanner } from './components/shared';
+import AINewsTicker from './components/shared/AINewsTicker';
 import { LaughProvider } from './components/Gamification/LaughOMeter';
 import { FloatingEasterEggsController } from './components/Gamification/FloatingEasterEggs';
 import { 
