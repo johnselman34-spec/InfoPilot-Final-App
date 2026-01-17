@@ -105,11 +105,35 @@ const EditCategoryModal = ({
   onDelete,
   onCleanCategory
 }) => {
+  // Track if click started on the overlay (not modal content)
+  const [clickedOnOverlay, setClickedOnOverlay] = React.useState(false);
+  
   if (!editingCategory) return null;
 
+  // Only close if both mousedown and mouseup happened on the overlay
+  const handleOverlayMouseDown = (e) => {
+    if (e.target === e.currentTarget) {
+      setClickedOnOverlay(true);
+    } else {
+      setClickedOnOverlay(false);
+    }
+  };
+
+  const handleOverlayClick = (e) => {
+    // Only close if click started AND ended on the overlay
+    if (e.target === e.currentTarget && clickedOnOverlay) {
+      onClose();
+    }
+    setClickedOnOverlay(false);
+  };
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
+    <div 
+      className="modal-overlay" 
+      onMouseDown={handleOverlayMouseDown}
+      onClick={handleOverlayClick}
+    >
+      <div className="modal" onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
         <div className="modal-header">
           <h2>Edit Category</h2>
           <button className="modal-close" onClick={onClose}>×</button>
