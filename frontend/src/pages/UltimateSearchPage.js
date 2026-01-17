@@ -242,33 +242,49 @@ const UltimateSearchPage = ({ showToast }) => {
     };
   }, []);
   
-  // Fetch categories using token from useAuth
-  const fetchCategories = useCallback(async () => {
-    console.log('fetchCategories called, token:', token ? 'present' : 'missing');
-    if (!token) {
-      console.log('fetchCategories: No token, returning early');
-      return;
-    }
-    
-    try {
-      console.log('fetchCategories: Making API call...');
-      const res = await fetch(`${API}/categories`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      console.log('fetchCategories: Response status:', res.status);
-      if (res.ok) {
-        const data = await res.json();
-        console.log('fetchCategories: Got', data.length, 'categories, isMounted:', isMountedRef.current);
-        if (isMountedRef.current) {
-          setCategories(data);
-          console.log('fetchCategories: State updated with', data.length, 'categories');
-        }
-      } else {
-        console.error('fetchCategories: Response not OK:', res.status);
+  // Fetch categories using XMLHttpRequest to avoid Emergent platform fetch interception
+  const fetchCategories = useCallback(() => {
+    return new Promise((resolve, reject) => {
+      console.log('fetchCategories called, token:', token ? 'present' : 'missing');
+      if (!token) {
+        console.log('fetchCategories: No token, returning early');
+        resolve();
+        return;
       }
-    } catch (e) {
-      console.error('Failed to fetch categories:', e);
-    }
+      
+      console.log('fetchCategories: Making API call via XHR...');
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', `${API}/categories`, true);
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      
+      xhr.onload = function() {
+        console.log('fetchCategories: XHR Response status:', xhr.status);
+        if (xhr.status === 200) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            console.log('fetchCategories: Got', data.length, 'categories, isMounted:', isMountedRef.current);
+            if (isMountedRef.current) {
+              setCategories(data);
+              console.log('fetchCategories: State updated with', data.length, 'categories');
+            }
+            resolve(data);
+          } catch (e) {
+            console.error('fetchCategories: JSON parse error:', e);
+            reject(e);
+          }
+        } else {
+          console.error('fetchCategories: Response not OK:', xhr.status);
+          reject(new Error(`HTTP ${xhr.status}`));
+        }
+      };
+      
+      xhr.onerror = function() {
+        console.error('fetchCategories: XHR error');
+        reject(new Error('XHR error'));
+      };
+      
+      xhr.send();
+    });
   }, [token]);
 
   const fetchSearchResults = useCallback(async () => {
