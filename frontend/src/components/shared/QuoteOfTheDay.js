@@ -107,7 +107,9 @@ const QuoteOfTheDay = ({ compact = false }) => {
   const [showShareOptions, setShowShareOptions] = useState(false);
 
   useEffect(() => {
-    setQuote(getQuoteOfTheDay());
+    // Set quote on mount - pure function, no async
+    const dailyQuote = getQuoteOfTheDay();
+    setQuote(dailyQuote);
   }, []);
 
   const handleShare = async (platform) => {
