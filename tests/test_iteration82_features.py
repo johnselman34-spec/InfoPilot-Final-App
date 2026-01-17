@@ -162,13 +162,13 @@ class TestBannedWordsIntegration:
             headers={"Authorization": f"Bearer {auth_token}"}
         )
         data = response.json()
-        # API returns a list directly
-        words = [bw["word"] for bw in data]
-        assert test_word in words, "Banned word not found after adding"
+        # API returns a list directly, and words are stored lowercase
+        words = [bw["word"].lower() for bw in data]
+        assert test_word.lower() in words, "Banned word not found after adding"
         
         # Clean up - delete the test banned word
         for bw in data:
-            if bw["word"] == test_word:
+            if bw["word"].lower() == test_word.lower():
                 delete_response = requests.delete(
                     f"{BASE_URL}/api/admin/banned-words/{bw['id']}",
                     headers={"Authorization": f"Bearer {auth_token}"}
