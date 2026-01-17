@@ -182,6 +182,14 @@ async def update_category(category_id: str, update: CategoryUpdate, user = Depen
         # Check for banned words in name
         has_banned, banned_words = await check_banned_words(update.name)
         if has_banned:
+            # Log the violation
+            await db.content_violations.insert_one({
+                "word": banned_words[0] if banned_words else "unknown",
+                "content_type": "category",
+                "attempted_text": update.name[:500],
+                "user_id": str(user["_id"]),
+                "created_at": datetime.now(timezone.utc)
+            })
             raise HTTPException(
                 status_code=400, 
                 detail=f"Category name contains banned words: {', '.join(banned_words)}"
@@ -194,6 +202,14 @@ async def update_category(category_id: str, update: CategoryUpdate, user = Depen
         # Check for banned words in protocol
         has_banned, banned_words = await check_banned_words(update.protocol)
         if has_banned:
+            # Log the violation
+            await db.content_violations.insert_one({
+                "word": banned_words[0] if banned_words else "unknown",
+                "content_type": "protocol",
+                "attempted_text": update.protocol[:500],
+                "user_id": str(user["_id"]),
+                "created_at": datetime.now(timezone.utc)
+            })
             raise HTTPException(
                 status_code=400, 
                 detail=f"Protocol contains banned words: {', '.join(banned_words)}"
