@@ -55,8 +55,17 @@ const AdminPanel = ({ showToast }) => {
   }, [token]);
 
   useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+    // Data fetching on mount with cleanup
+    let mounted = true;
+    const loadSettings = async () => {
+      if (mounted) {
+        await fetchSettings();
+      }
+    };
+    loadSettings();
+    return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const updateSetting = async (key, value) => {
     try {
