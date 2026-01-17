@@ -233,32 +233,31 @@ const UltimateSearchPage = ({ showToast }) => {
   };
 
   const fetchCategories = useCallback(async () => {
-    if (!token) {
-      console.log('[fetchCategories] No token available, skipping');
+    // Get token directly from localStorage to avoid stale closure
+    const currentToken = localStorage.getItem('token');
+    if (!currentToken) {
+      console.log('[fetchCategories] No token in localStorage');
       return;
     }
-    console.log('[fetchCategories] Starting fetch...');
+    console.log('[fetchCategories] Starting fetch with localStorage token');
     try {
       const url = `${API}/categories`;
-      console.log('[fetchCategories] URL:', url);
       const res = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${currentToken}` }
       });
-      console.log('[fetchCategories] Response received, status:', res.status);
+      console.log('[fetchCategories] Response status:', res.status);
       if (res.ok) {
         const data = await res.json();
-        console.log('[fetchCategories] Categories parsed, count:', data.length);
+        console.log('[fetchCategories] Categories loaded:', data.length);
         setCategories(data);
-        console.log('[fetchCategories] State updated with', data.length, 'categories');
       } else {
         const errorText = await res.text();
-        console.error('[fetchCategories] Response not ok:', res.status, errorText);
+        console.error('[fetchCategories] Error response:', errorText);
       }
     } catch (e) {
-      console.error('[fetchCategories] Exception:', e.message, e);
+      console.error('[fetchCategories] Exception:', e);
     }
-    console.log('[fetchCategories] Done');
-  }, [token]);
+  }, []); // Remove token dependency - we get it fresh from localStorage
 
   const fetchSearchResults = useCallback(async () => {
     try {
