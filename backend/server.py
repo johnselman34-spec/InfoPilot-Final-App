@@ -5284,7 +5284,7 @@ async def add_banned_word(
         "word": word,
         "reason": reason,
         "banned_by": user.get("email", "admin"),
-        "created_at": datetime.now(timezone.utc)
+        "created_at": datetime.utcnow()
     })
     
     return {
