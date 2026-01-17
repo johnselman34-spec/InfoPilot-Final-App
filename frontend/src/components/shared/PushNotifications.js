@@ -29,6 +29,7 @@ const PushNotifications = ({ showToast }) => {
       setPermission(Notification.permission);
       checkExistingSubscription();
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, [checkExistingSubscription]);
 
   // Request notification permission and subscribe
