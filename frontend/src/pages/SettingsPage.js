@@ -22,6 +22,12 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   
+  // Email change state
+  const [showEmailSection, setShowEmailSection] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
+  
   // Promotion message state
   const [promoSettings, setPromoSettings] = useState(null);
   
