@@ -37,12 +37,7 @@ const webpackConfig = {
     enable: true,
     mode: 'extends',
     configure: (eslintConfig) => {
-      // Remove conflicting extends to avoid plugin conflicts
-      eslintConfig.rules = {
-        ...eslintConfig.rules,
-        "react-hooks/rules-of-hooks": "error",
-        "react-hooks/exhaustive-deps": "warn",
-      };
+      // Use default eslint config from react-scripts
       return eslintConfig;
     },
   },
