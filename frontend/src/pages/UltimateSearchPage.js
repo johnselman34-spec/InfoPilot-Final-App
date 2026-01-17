@@ -242,20 +242,9 @@ const UltimateSearchPage = ({ showToast }) => {
     console.log('[fetchCategories] Starting fetch...');
     try {
       const url = `${API}/categories`;
-      
-      // Add timeout with AbortController
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.log('[fetchCategories] Timeout - aborting request');
-        controller.abort();
-      }, 10000);
-      
       const res = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${currentToken}` },
-        signal: controller.signal
+        headers: { 'Authorization': `Bearer ${currentToken}` }
       });
-      
-      clearTimeout(timeoutId);
       console.log('[fetchCategories] Response status:', res.status);
       
       if (res.ok) {
@@ -267,11 +256,7 @@ const UltimateSearchPage = ({ showToast }) => {
         console.error('[fetchCategories] Error response:', res.status, errorText);
       }
     } catch (e) {
-      if (e.name === 'AbortError') {
-        console.error('[fetchCategories] Request timed out');
-      } else {
-        console.error('[fetchCategories] Exception:', e.name, e.message);
-      }
+      console.error('[fetchCategories] Exception:', e.name, e.message);
     }
   }, []); // Remove token dependency - we get it fresh from localStorage
 
