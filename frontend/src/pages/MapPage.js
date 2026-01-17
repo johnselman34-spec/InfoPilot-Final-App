@@ -159,12 +159,18 @@ const MapPage = ({ showToast, setCurrentPage }) => {
   const fetchMapResults = useCallback(async (showLoadingState = true) => {
     if (showLoadingState) setLoading(true);
     try {
-      const res = await fetch(`${API}/ultimate-search?limit=100`, {
+      // Use different endpoint based on data source
+      const endpoint = dataSource === 'worldwide' 
+        ? `${API}/map/worldwide?limit=500` 
+        : `${API}/ultimate-search?limit=100`;
+      
+      const res = await fetch(endpoint, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        const resultsWithLocation = data.results
+        const results = data.results || data;
+        const resultsWithLocation = (Array.isArray(results) ? results : [])
           .map((r) => {
             if (r.latitude && r.longitude && 
                 r.latitude >= -90 && r.latitude <= 90 &&
@@ -191,7 +197,7 @@ const MapPage = ({ showToast, setCurrentPage }) => {
       console.error('Failed to fetch map results:', e);
     }
     if (showLoadingState) setLoading(false);
-  }, [token, extractLocation]);
+  }, [token, extractLocation, dataSource]);
 
   // Export map data as CSV or JSON
   const exportMapData = (format) => {
