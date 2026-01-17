@@ -5323,6 +5323,14 @@ async def startup_db_client():
         logger.info("📬 Tri-weekly newsletter scheduler started successfully!")
     except Exception as e:
         logger.error(f"Failed to start tri-weekly newsletter scheduler: {e}")
+    
+    # Start the domain scoring scheduler
+    try:
+        from services.domain_scoring_scheduler import start_domain_scoring_scheduler
+        start_domain_scoring_scheduler()
+        logger.info("🔍 Domain scoring scheduler started successfully!")
+    except Exception as e:
+        logger.error(f"Failed to start domain scoring scheduler: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
