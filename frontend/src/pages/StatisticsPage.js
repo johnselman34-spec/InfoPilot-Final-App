@@ -285,6 +285,9 @@ const StatisticsPage = ({ showToast }) => {
   const [mapMarkers, setMapMarkers] = useState([]);
   const [selectedStatType, setSelectedStatType] = useState(null);
   
+  // Data source toggle: 'worldwide' or 'personal'
+  const [dataSource, setDataSource] = useState('worldwide');
+  
   // Easter Egg Statistics state
   const [easterEggStats, setEasterEggStats] = useState(null);
   const [userEasterEggStats, setUserEasterEggStats] = useState(null);
