@@ -451,6 +451,55 @@ const MapPage = ({ showToast, setCurrentPage }) => {
       <div className="card-header">
         <h2>🗺️ Interactive World Map</h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 15, flexWrap: 'wrap' }}>
+          {/* Data Source Toggle */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            background: 'rgba(30, 20, 50, 0.6)', 
+            borderRadius: 20, 
+            padding: '3px',
+            border: '1px solid rgba(124, 58, 237, 0.3)'
+          }} data-testid="data-source-toggle">
+            <button
+              onClick={() => { setDataSource('worldwide'); }}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 18,
+                border: 'none',
+                background: dataSource === 'worldwide' 
+                  ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' 
+                  : 'transparent',
+                color: dataSource === 'worldwide' ? '#fff' : '#a1a1aa',
+                fontWeight: dataSource === 'worldwide' ? 600 : 400,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              data-testid="data-source-worldwide"
+            >
+              🌍 Worldwide
+            </button>
+            <button
+              onClick={() => { setDataSource('personal'); }}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 18,
+                border: 'none',
+                background: dataSource === 'personal' 
+                  ? 'linear-gradient(135deg, #10b981, #059669)' 
+                  : 'transparent',
+                color: dataSource === 'personal' ? '#fff' : '#a1a1aa',
+                fontWeight: dataSource === 'personal' ? 600 : 400,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              data-testid="data-source-personal"
+            >
+              👤 My Data
+            </button>
+          </div>
+          
           <span style={{ color: '#10b981', fontSize: '0.9rem' }}>
             {mapResults.length} results mapped • Click markers to open articles
           </span>
