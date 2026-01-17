@@ -165,9 +165,14 @@ async def create_category(category: CategoryCreate, user = Depends(get_current_u
 @router.put("/categories/{category_id}", response_model=dict)
 async def update_category(category_id: str, update: CategoryUpdate, user = Depends(get_current_user)):
     """Update a category - supports full hierarchy editing"""
+    try:
+        cat_oid = ObjectId(category_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid category ID format")
+    
     # Admin can edit any category, regular users can only edit their own
     if user.get("is_admin"):
-        category = await db.categories.find_one({"_id": ObjectId(category_id)})
+        category = await db.categories.find_one({"_id": cat_oid})
     else:
         category = await db.categories.find_one({
             "_id": cat_oid,
