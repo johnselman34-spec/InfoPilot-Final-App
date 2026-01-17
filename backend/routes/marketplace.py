@@ -18,6 +18,33 @@ from services.protocol_service import ProtocolParser
 
 router = APIRouter(prefix="/marketplace", tags=["Protocol Marketplace"])
 
+# Reserved protocol keywords that cannot be banned
+RESERVED_KEYWORDS = ['or', 'and', '&', '(', ')', '+']
+
+
+async def check_banned_words(text: str) -> tuple:
+    """
+    Check if text contains banned words/phrases.
+    Returns (has_banned, list_of_found_banned_words)
+    """
+    if not text:
+        return False, []
+    
+    text_lower = text.lower()
+    banned_list = await db.banned_words.find().to_list(1000)
+    
+    found = []
+    for banned in banned_list:
+        word = banned["word"].lower()
+        # Skip reserved keywords
+        if word in RESERVED_KEYWORDS:
+            continue
+        if word in text_lower:
+            found.append(banned["word"])
+    
+    return len(found) > 0, found
+
+
 # PayPal Payment Configuration
 # =============================
 # PayPal requires minimum $1.00 for transactions
