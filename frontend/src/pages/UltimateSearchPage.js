@@ -280,11 +280,14 @@ const UltimateSearchPage = ({ showToast }) => {
   }, [token, selectedCategories, aggregation]);
 
   useEffect(() => {
+    // Only load data if token is available
+    if (!token) return;
+    
     const loadData = async () => {
       await Promise.all([fetchCategories(), fetchSearchResults(), fetchBatches()]);
     };
     loadData();
-  }, [fetchCategories, fetchSearchResults, fetchBatches]);
+  }, [token, fetchCategories, fetchSearchResults, fetchBatches]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
