@@ -232,6 +232,9 @@ const UltimateSearchPage = ({ showToast }) => {
     }
   };
 
+  // Track if categories are being fetched
+  const categoriesAbortRef = useRef(null);
+  
   const fetchCategories = useCallback(async () => {
     // Get token directly from localStorage to avoid stale closure
     const currentToken = localStorage.getItem('token');
@@ -239,11 +242,21 @@ const UltimateSearchPage = ({ showToast }) => {
       console.log('[fetchCategories] No token in localStorage');
       return;
     }
+    
+    // Cancel any previous request
+    if (categoriesAbortRef.current) {
+      categoriesAbortRef.current.abort();
+    }
+    
+    const controller = new AbortController();
+    categoriesAbortRef.current = controller;
+    
     console.log('[fetchCategories] Starting fetch...');
     try {
       const url = `${API}/categories`;
       const res = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${currentToken}` }
+        headers: { 'Authorization': `Bearer ${currentToken}` },
+        signal: controller.signal
       });
       console.log('[fetchCategories] Response status:', res.status);
       
@@ -256,9 +269,17 @@ const UltimateSearchPage = ({ showToast }) => {
         console.error('[fetchCategories] Error response:', res.status, errorText);
       }
     } catch (e) {
-      console.error('[fetchCategories] Exception:', e.name, e.message);
+      if (e.name === 'AbortError') {
+        console.log('[fetchCategories] Request cancelled (expected in StrictMode)');
+      } else {
+        console.error('[fetchCategories] Exception:', e.name, e.message);
+      }
+    } finally {
+      if (categoriesAbortRef.current === controller) {
+        categoriesAbortRef.current = null;
+      }
     }
-  }, []); // Remove token dependency - we get it fresh from localStorage
+  }, []);
 
   const fetchSearchResults = useCallback(async () => {
     try {
