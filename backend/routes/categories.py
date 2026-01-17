@@ -13,6 +13,32 @@ from services.protocol_service import ProtocolParser
 
 router = APIRouter(tags=["Categories"])
 
+# Reserved protocol keywords that cannot be banned
+RESERVED_KEYWORDS = ['or', 'and', '&', '(', ')', '+']
+
+
+async def check_banned_words(text: str) -> tuple:
+    """
+    Check if text contains banned words/phrases.
+    Returns (has_banned, list_of_found_banned_words)
+    """
+    if not text:
+        return False, []
+    
+    text_lower = text.lower()
+    banned_list = await db.banned_words.find().to_list(1000)
+    
+    found = []
+    for banned in banned_list:
+        word = banned["word"].lower()
+        # Skip reserved keywords (they shouldn't be in banned list but double check)
+        if word in RESERVED_KEYWORDS:
+            continue
+        if word in text_lower:
+            found.append(banned["word"])
+    
+    return len(found) > 0, found
+
 
 async def format_category_with_count(cat: dict, user_id: str = None) -> dict:
     """Format category for API response with result count"""
