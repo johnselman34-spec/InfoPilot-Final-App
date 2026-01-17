@@ -1738,6 +1738,91 @@ Response: { "blocked_count": 2, "skipped_count": 0, "total_results_removed": 25 
 - **Test Report**: `/app/test_reports/iteration_73.json`
 - **Test File**: `/app/tests/test_iteration73_domain_blocklist.py`
 
+---
+
+## Update Session - January 17, 2026 (Iteration 74) - Automatic Domain Scoring
+
+### 1. Automatic Domain Scoring System ✅
+**Proactive alerting system that identifies domains with consistently low quality scores**
+
+**How It Works**:
+1. Analyzes all domains with 5+ search results
+2. Calculates average quality score for each domain
+3. Creates alerts based on score thresholds
+4. Provides actionable insights for content curation
+
+**Alert Thresholds**:
+| Level | Score Range | Color | Description |
+|-------|-------------|-------|-------------|
+| 🔴 Critical | < 30 | Red | Very low quality, immediate action needed |
+| 🟡 Warning | < 45 | Yellow | Below average quality |
+| 🔵 Watch | < 55 | Blue | Quality declining, monitor |
+
+**Backend API Endpoints**:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/admin/domain-scoring/run` | POST | Run analysis, create/update alerts |
+| `/api/admin/domain-alerts` | GET | List all active alerts with summary |
+| `/api/admin/domain-alerts/{id}/dismiss` | POST | Dismiss a single alert |
+| `/api/admin/domain-alerts/{id}/block` | POST | Block domain directly from alert |
+| `/api/admin/domain-alerts/clear-dismissed` | DELETE | Clear all dismissed alerts |
+
+**API Response Example** (domain-scoring/run):
+```json
+{
+  "success": true,
+  "alerts_created": 43,
+  "alerts_updated": 0,
+  "summary": { "total_alerts": 43, "critical": 0, "warning": 0, "watch": 43 },
+  "thresholds": { "critical": "< 30", "warning": "< 45", "watch": "< 55" },
+  "last_run": "2026-01-17T00:20:00.000Z"
+}
+```
+
+**Frontend Features**:
+- 🔍 "Run Analysis" button to trigger domain scoring
+- Alert summary badges (Critical/Warning/Watch counts)
+- Alert list with domain details (avg score, result count, range)
+- 🚫 Block button on each alert to block domain
+- Dismiss button to hide alerts
+- Real-time updates after actions
+
+**Database Collection**: `domain_alerts`
+```json
+{
+  "domain": "string",
+  "alert_level": "critical|warning|watch",
+  "avg_score": "float",
+  "result_count": "int",
+  "min_score": "float",
+  "max_score": "float",
+  "message": "string",
+  "dismissed": "bool",
+  "blocked": "bool",
+  "created_at": "datetime",
+  "updated_at": "datetime"
+}
+```
+
+### Testing Results - Iteration 74
+- **Backend**: 19/19 tests passed
+- **Frontend**: Verified via screenshots - Domain Quality Alerts section visible with 40 watch-level alerts
+- **Test Report**: `/app/test_reports/iteration_74.json`
+- **Test File**: `/app/tests/test_iteration74_domain_scoring.py`
+
+### All Features Summary (Complete)
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Content Quality Prioritization | ✅ | Valuable content sorted first |
+| Content Quality Badges | ✅ | Premium/High Quality/Good badges |
+| Quality Score Filtering | ✅ | 4-level filter UI |
+| Quality Score Analytics | ✅ | Distribution charts & insights |
+| Domain Blocklist Management | ✅ | Block low-quality domains |
+| Automatic Domain Scoring | ✅ | Proactive quality alerts |
+| Protocol Performance Insights | ✅ | Creator trending data |
+| Community Leaderboard | ✅ | Top creators & protocols |
+
 
 ## Update Session - January 16, 2026 (Iteration 62) - Theme Gallery, Comments, Content Filter
 
