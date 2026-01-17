@@ -769,14 +769,6 @@ const UltimateSearchPage = ({ showToast }) => {
         }}
       />
 
-      {/* First in Flight - Search Monetization Banner */}
-      <FirstInFlightBanner 
-        onLearnMore={() => {
-          window.location.hash = '#marketplace';
-          showToast('🚀 Welcome to the Protocol Marketplace!', 'success');
-        }} 
-      />
-
       {/* Interactive Map */}
       {showMap && (
         <div className="card" style={{ marginBottom: 20 }}>
