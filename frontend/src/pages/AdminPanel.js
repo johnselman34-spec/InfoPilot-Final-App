@@ -22,18 +22,14 @@ const AdminPanel = ({ showToast }) => {
   const [activeTab, setActiveTab] = useState('general');
 
   const fetchSettings = useCallback(async () => {
-    console.log('AdminPanel: fetchSettings called, token:', !!token);
     if (!token) {
-      console.log('AdminPanel: No token, setting loading to false');
       setLoading(false);
       return;
     }
     try {
-      console.log('AdminPanel: Fetching settings...');
       const res = await fetch(`${API}/admin/settings`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('AdminPanel: Settings response status:', res.status);
       if (res.ok) {
         const data = await res.json();
         // Handle both array and object responses
@@ -46,9 +42,8 @@ const AdminPanel = ({ showToast }) => {
         }
       }
     } catch (e) {
-      console.error('AdminPanel: Failed to fetch settings:', e);
+      console.error('Failed to fetch settings:', e);
     }
-    console.log('AdminPanel: Setting loading to false');
     setLoading(false);
   }, [token]);
 
