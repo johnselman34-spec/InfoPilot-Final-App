@@ -232,20 +232,13 @@ const UltimateSearchPage = ({ showToast }) => {
     }
   };
 
-  // Track if categories are being fetched (use ref to avoid StrictMode double-fetch)
-  const categoriesLoadingRef = useRef(false);
-  
+  // Fetch categories using token from useAuth
   const fetchCategories = useCallback(async () => {
-    const currentToken = localStorage.getItem('token');
-    if (!currentToken) return;
-    
-    // Skip if already loading (prevents duplicate calls from StrictMode)
-    if (categoriesLoadingRef.current) return;
-    categoriesLoadingRef.current = true;
+    if (!token) return;
     
     try {
       const res = await fetch(`${API}/categories`, {
-        headers: { 'Authorization': `Bearer ${currentToken}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
@@ -253,10 +246,8 @@ const UltimateSearchPage = ({ showToast }) => {
       }
     } catch (e) {
       console.error('Failed to fetch categories:', e);
-    } finally {
-      categoriesLoadingRef.current = false;
     }
-  }, []);
+  }, [token]);
 
   const fetchSearchResults = useCallback(async () => {
     try {
