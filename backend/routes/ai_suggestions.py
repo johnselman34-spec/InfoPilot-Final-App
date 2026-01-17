@@ -2,7 +2,7 @@
 InfoPilot Explorer - AI-Powered Protocol Suggestions
 Uses GPT-5.2 to analyze user search history and suggest popular protocols
 """
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Body
 from datetime import datetime, timezone, timedelta
 from typing import Optional, List
 from bson import ObjectId
