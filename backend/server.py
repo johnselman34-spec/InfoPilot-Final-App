@@ -5234,6 +5234,108 @@ async def get_revenue_dashboard(
     }
 
 
+# ============== BANNED WORDS/PHRASES ==============
+
+# Reserved protocol keywords that cannot be banned
+PROTOCOL_RESERVED_KEYWORDS = {'or', 'and', '&', '(', ')', '+'}
+
+@api_router.get("/admin/banned-words")
+async def get_banned_words(user = Depends(get_current_user_local)):
+    """Get all banned words/phrases"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    banned = await db.banned_words.find().sort("created_at", -1).to_list(1000)
+    return [{
+        "id": str(b["_id"]),
+        "word": b["word"],
+        "reason": b.get("reason", ""),
+        "banned_by": b.get("banned_by", ""),
+        "created_at": b.get("created_at", datetime.now(timezone.utc)).isoformat()
+    } for b in banned]
+
+
+@api_router.post("/admin/banned-words")
+async def add_banned_word(
+    word: str = Body(...),
+    reason: str = Body(""),
+    user = Depends(get_current_user_local)
+):
+    """Add a word or phrase to the ban list"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    word = word.strip().lower()
+    
+    # Check if it's a reserved protocol keyword
+    if word in PROTOCOL_RESERVED_KEYWORDS:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Cannot ban '{word}' - it's a reserved protocol keyword"
+        )
+    
+    # Check if already banned
+    existing = await db.banned_words.find_one({"word": word})
+    if existing:
+        raise HTTPException(status_code=400, detail=f"'{word}' is already banned")
+    
+    # Add to ban list
+    result = await db.banned_words.insert_one({
+        "word": word,
+        "reason": reason,
+        "banned_by": user.get("email", "admin"),
+        "created_at": datetime.now(timezone.utc)
+    })
+    
+    return {
+        "success": True,
+        "message": f"'{word}' has been banned",
+        "id": str(result.inserted_id)
+    }
+
+
+@api_router.delete("/admin/banned-words/{word_id}")
+async def remove_banned_word(word_id: str, user = Depends(get_current_user_local)):
+    """Remove a word/phrase from the ban list"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        result = await db.banned_words.delete_one({"_id": ObjectId(word_id)})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Banned word not found")
+        return {"success": True, "message": "Word unbanned successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@api_router.post("/admin/check-banned-words")
+async def check_for_banned_words(
+    text: str = Body(..., embed=True),
+    user = Depends(get_current_user_local)
+):
+    """Check if text contains any banned words/phrases"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    text_lower = text.lower()
+    banned_list = await db.banned_words.find().to_list(1000)
+    
+    found = []
+    for banned in banned_list:
+        word = banned["word"].lower()
+        if word in text_lower:
+            found.append({
+                "word": banned["word"],
+                "reason": banned.get("reason", "")
+            })
+    
+    return {
+        "has_banned_words": len(found) > 0,
+        "banned_found": found
+    }
+
+
 # ============== PROTOCOL TEMPLATES ==============
 
 @api_router.get("/protocol-templates")
