@@ -110,6 +110,7 @@ const QuoteOfTheDay = ({ compact = false }) => {
     // Set quote on mount - pure function, no async
     const dailyQuote = getQuoteOfTheDay();
     setQuote(dailyQuote);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
   }, []);
 
   const handleShare = async (platform) => {
