@@ -1,7 +1,7 @@
 /**
  * Protocol Recommendation Engine
  * AI-powered protocol suggestions based on user search history and performance
- * Analyzes top-performing protocols and recommends similar ones to create
+ * Now with LIVE AI generation using GPT-5.2 via emergentintegrations
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -17,53 +17,42 @@ const RECOMMENDATION_CATEGORIES = [
   { id: 'premium', name: '💎 High-Value Ideas', description: 'Premium protocol opportunities' }
 ];
 
-// AI-generated protocol templates based on market analysis
-const AI_PROTOCOL_TEMPLATES = [
-  {
-    category: 'trending',
-    protocols: [
-      { name: 'AI News Tracker', protocol: '(artificial intelligence or AI or machine learning) & (breakthrough or announcement or launch) & (2025 or 2026)+', estimated_value: '$2.99-$4.99', demand: 'HIGH' },
-      { name: 'Space Exploration Updates', protocol: '(NASA or SpaceX or space mission) & (launch or discovery or milestone) & (Mars or Moon or asteroid)+', estimated_value: '$1.99-$3.99', demand: 'HIGH' },
-      { name: 'Climate Tech Innovations', protocol: '(climate or renewable energy or sustainability) & (technology or innovation or breakthrough) & (solution or investment)+', estimated_value: '$2.99-$4.99', demand: 'MEDIUM-HIGH' },
-    ]
-  },
-  {
-    category: 'similar',
-    protocols: [
-      { name: 'Aviation Career Guide', protocol: '(pilot or aviation or flight) & (career or training or certification) & (tips or guide or requirements)+', estimated_value: '$3.99-$5.99', demand: 'MEDIUM', note: 'Based on your aviation-themed protocols' },
-      { name: 'Memoir Writing Tips', protocol: '(memoir or autobiography or life story) & (writing or publishing or tips) & (bestseller or success)+', estimated_value: '$2.99-$4.99', demand: 'MEDIUM', note: 'Based on your storytelling interests' },
-    ]
-  },
-  {
-    category: 'gaps',
-    protocols: [
-      { name: 'Remote Work Productivity', protocol: '(remote work or work from home or digital nomad) & (productivity or tips or tools) & (2025 or 2026)+', estimated_value: '$1.99-$2.99', demand: 'HIGH', note: 'Underserved niche!' },
-      { name: 'Mental Health Resources', protocol: '(mental health or wellness or therapy) & (resources or tips or support) & (anxiety or depression or stress)+', estimated_value: '$2.99-$4.99', demand: 'HIGH', note: 'Growing demand!' },
-      { name: 'Cryptocurrency Regulations', protocol: '(crypto or bitcoin or blockchain) & (regulation or law or compliance) & (2025 or 2026)+', estimated_value: '$4.99-$9.99', demand: 'HIGH', note: 'Hot topic!' },
-    ]
-  },
-  {
-    category: 'seasonal',
-    protocols: [
-      { name: 'Tax Season Guide 2026', protocol: '(tax or IRS or deduction) & (2026 or filing or deadline) & (tips or guide or changes)+', estimated_value: '$4.99-$9.99', demand: 'SEASONAL HIGH', note: 'Peak: Jan-Apr' },
-      { name: 'Summer Travel Deals', protocol: '(travel or vacation or destination) & (deal or discount or cheap) & (summer or 2026)+', estimated_value: '$1.99-$3.99', demand: 'SEASONAL', note: 'Peak: May-Aug' },
-    ]
-  },
-  {
-    category: 'premium',
-    protocols: [
-      { name: 'Executive Leadership Insights', protocol: '(CEO or executive or leadership) & (strategy or insights or interview) & (Fortune 500 or startup)+', estimated_value: '$9.99-$19.99', demand: 'NICHE-HIGH', note: 'Premium audience!' },
-      { name: 'Investment Due Diligence', protocol: '(investment or due diligence or analysis) & (startup or company or fund) & (risk or opportunity)+', estimated_value: '$14.99-$29.99', demand: 'NICHE-HIGH', note: 'B2B opportunity!' },
-    ]
-  }
-];
+// Fallback static templates (used when AI is unavailable)
+const FALLBACK_TEMPLATES = {
+  trending: [
+    { name: 'AI News Tracker', protocol: '(artificial intelligence or AI or machine learning) & (breakthrough or announcement or launch) & (2025 or 2026)+', estimated_value: '$2.99-$4.99', demand: 'HIGH' },
+    { name: 'Space Exploration Updates', protocol: '(NASA or SpaceX or space mission) & (launch or discovery or milestone) & (Mars or Moon or asteroid)+', estimated_value: '$1.99-$3.99', demand: 'HIGH' },
+    { name: 'Climate Tech Innovations', protocol: '(climate or renewable energy or sustainability) & (technology or innovation or breakthrough) & (solution or investment)+', estimated_value: '$2.99-$4.99', demand: 'MEDIUM-HIGH' },
+  ],
+  similar: [
+    { name: 'Aviation Career Guide', protocol: '(pilot or aviation or flight) & (career or training or certification) & (tips or guide or requirements)+', estimated_value: '$3.99-$5.99', demand: 'MEDIUM', note: 'Based on your aviation-themed protocols' },
+    { name: 'Memoir Writing Tips', protocol: '(memoir or autobiography or life story) & (writing or publishing or tips) & (bestseller or success)+', estimated_value: '$2.99-$4.99', demand: 'MEDIUM', note: 'Based on your storytelling interests' },
+  ],
+  gaps: [
+    { name: 'Remote Work Productivity', protocol: '(remote work or work from home or digital nomad) & (productivity or tips or tools) & (2025 or 2026)+', estimated_value: '$1.99-$2.99', demand: 'HIGH', note: 'Underserved niche!' },
+    { name: 'Mental Health Resources', protocol: '(mental health or wellness or therapy) & (resources or tips or support) & (anxiety or depression or stress)+', estimated_value: '$2.99-$4.99', demand: 'HIGH', note: 'Growing demand!' },
+    { name: 'Cryptocurrency Regulations', protocol: '(crypto or bitcoin or blockchain) & (regulation or law or compliance) & (2025 or 2026)+', estimated_value: '$4.99-$9.99', demand: 'HIGH', note: 'Hot topic!' },
+  ],
+  seasonal: [
+    { name: 'Tax Season Guide 2026', protocol: '(tax or IRS or deduction) & (2026 or filing or deadline) & (tips or guide or changes)+', estimated_value: '$4.99-$9.99', demand: 'SEASONAL HIGH', note: 'Peak: Jan-Apr' },
+    { name: 'Summer Travel Deals', protocol: '(travel or vacation or destination) & (deal or discount or cheap) & (summer or 2026)+', estimated_value: '$1.99-$3.99', demand: 'SEASONAL', note: 'Peak: May-Aug' },
+  ],
+  premium: [
+    { name: 'Executive Leadership Insights', protocol: '(CEO or executive or leadership) & (strategy or insights or interview) & (Fortune 500 or startup)+', estimated_value: '$9.99-$19.99', demand: 'NICHE-HIGH', note: 'Premium audience!' },
+    { name: 'Investment Due Diligence', protocol: '(investment or due diligence or analysis) & (startup or company or fund) & (risk or opportunity)+', estimated_value: '$14.99-$29.99', demand: 'NICHE-HIGH', note: 'B2B opportunity!' },
+  ]
+};
 
 const ProtocolRecommendationEngine = ({ showToast }) => {
   const { token } = useAuth();
   const { isDarkMode, currentAccent } = useTheme();
   const [selectedCategory, setSelectedCategory] = useState('trending');
   const [userProtocols, setUserProtocols] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [isAiPowered, setIsAiPowered] = useState(false);
+  const [lastGenerated, setLastGenerated] = useState(null);
   
   const bgColor = isDarkMode ? 'rgba(15, 10, 35, 0.95)' : 'rgba(255, 255, 255, 0.98)';
   const cardBg = isDarkMode ? 'rgba(30, 20, 50, 0.7)' : 'rgba(248, 250, 252, 0.9)';
@@ -87,7 +76,55 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
     }
   }, [token]);
   
-  // Generate AI insights based on user data - use useMemo for derived state
+  // Fetch AI-powered recommendations
+  const fetchAiRecommendations = useCallback(async (category) => {
+    if (!token) {
+      // Use fallback if not logged in
+      setRecommendations(FALLBACK_TEMPLATES[category] || FALLBACK_TEMPLATES.trending);
+      setIsAiPowered(false);
+      return;
+    }
+    
+    setAiLoading(true);
+    try {
+      const res = await fetch(`${API}/ai/protocol-recommendations`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ category })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.recommendations && data.recommendations.length > 0) {
+          setRecommendations(data.recommendations);
+          setIsAiPowered(data.ai_powered);
+          setLastGenerated(data.generated_at);
+          
+          if (data.ai_powered) {
+            showToast && showToast('🤖 Fresh AI recommendations generated!', 'success');
+          }
+        } else {
+          // Use fallback
+          setRecommendations(FALLBACK_TEMPLATES[category] || FALLBACK_TEMPLATES.trending);
+          setIsAiPowered(false);
+        }
+      } else {
+        // Use fallback on error
+        setRecommendations(FALLBACK_TEMPLATES[category] || FALLBACK_TEMPLATES.trending);
+        setIsAiPowered(false);
+      }
+    } catch (e) {
+      console.error('Failed to fetch AI recommendations:', e);
+      setRecommendations(FALLBACK_TEMPLATES[category] || FALLBACK_TEMPLATES.trending);
+      setIsAiPowered(false);
+    }
+    setAiLoading(false);
+  }, [token, showToast]);
+  
+  // Generate AI insights based on user data
   const aiInsights = React.useMemo(() => {
     return {
       totalProtocols: userProtocols.length,
@@ -106,24 +143,41 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
     };
   }, [userProtocols]);
   
+  // Initial load
   useEffect(() => {
     const loadData = async () => {
       await fetchUserProtocols();
+      // Load initial recommendations with fallback first
+      setRecommendations(FALLBACK_TEMPLATES[selectedCategory] || FALLBACK_TEMPLATES.trending);
       setLoading(false);
+      
+      // Then try to fetch AI recommendations
+      fetchAiRecommendations(selectedCategory);
     };
     loadData();
-  }, [fetchUserProtocols]);
+  }, [fetchUserProtocols, fetchAiRecommendations, selectedCategory]);
   
-  // Get recommendations for selected category
-  const currentRecommendations = AI_PROTOCOL_TEMPLATES.find(t => t.category === selectedCategory)?.protocols || [];
+  // Handle category change
+  const handleCategoryChange = (categoryId) => {
+    setSelectedCategory(categoryId);
+    // Show fallback immediately, then fetch AI
+    setRecommendations(FALLBACK_TEMPLATES[categoryId] || FALLBACK_TEMPLATES.trending);
+    setIsAiPowered(false);
+    fetchAiRecommendations(categoryId);
+  };
+  
+  // Refresh recommendations
+  const handleRefresh = () => {
+    fetchAiRecommendations(selectedCategory);
+  };
   
   // Copy protocol to clipboard
   const copyProtocol = async (protocol) => {
     try {
       await navigator.clipboard.writeText(protocol);
-      showToast('📋 Protocol copied! Paste it when creating a new category.', 'success');
+      showToast && showToast('📋 Protocol copied! Paste it when creating a new category.', 'success');
     } catch (e) {
-      showToast('Failed to copy', 'error');
+      showToast && showToast('Failed to copy', 'error');
     }
   };
   
@@ -147,24 +201,63 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
             fontSize: '1.8rem',
             display: 'flex',
             alignItems: 'center',
-            gap: 12
+            gap: 12,
+            flexWrap: 'wrap'
           }}>
             🤖 Protocol Recommendation Engine
             <span style={{
-              background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+              background: isAiPowered 
+                ? 'linear-gradient(135deg, #10b981, #06b6d4)'
+                : 'linear-gradient(135deg, #7c3aed, #ec4899)',
               padding: '4px 12px',
               borderRadius: 20,
               fontSize: '0.7rem',
               color: '#fff',
-              fontWeight: 700
+              fontWeight: 700,
+              animation: isAiPowered ? 'pulse 2s infinite' : 'none'
             }}>
-              AI-POWERED
+              {isAiPowered ? '🧠 LIVE AI' : 'AI-POWERED'}
             </span>
           </h1>
           <p style={{ color: mutedColor, margin: '8px 0 0 0', fontSize: '0.95rem' }}>
-            Smart suggestions based on market trends, your history, and high-performing protocols
+            {isAiPowered 
+              ? 'Live AI recommendations tailored to your interests and market trends'
+              : 'Smart suggestions based on market trends, your history, and high-performing protocols'}
           </p>
         </div>
+        
+        {/* Refresh Button */}
+        <button
+          onClick={handleRefresh}
+          disabled={aiLoading}
+          style={{
+            background: aiLoading 
+              ? 'rgba(124, 58, 237, 0.3)'
+              : 'linear-gradient(135deg, #7c3aed, #ec4899)',
+            border: 'none',
+            borderRadius: 10,
+            padding: '10px 20px',
+            color: '#fff',
+            fontWeight: 600,
+            cursor: aiLoading ? 'wait' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: '0.9rem'
+          }}
+          data-testid="refresh-ai-recommendations"
+        >
+          {aiLoading ? (
+            <>
+              <span className="spinner-small" style={{ width: 16, height: 16 }} />
+              Generating...
+            </>
+          ) : (
+            <>
+              🔄 Get Fresh Ideas
+            </>
+          )}
+        </button>
       </div>
       
       {/* AI Insights Card */}
@@ -179,6 +272,17 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 15 }}>
             <span style={{ fontSize: '1.5rem' }}>🧠</span>
             <h3 style={{ color: accentColor, margin: 0 }}>AI Insights for You</h3>
+            {isAiPowered && lastGenerated && (
+              <span style={{ 
+                fontSize: '0.7rem', 
+                color: '#10b981',
+                background: 'rgba(16, 185, 129, 0.1)',
+                padding: '3px 8px',
+                borderRadius: 10
+              }}>
+                Updated just now
+              </span>
+            )}
           </div>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 15, marginBottom: 15 }}>
@@ -216,7 +320,8 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
         {RECOMMENDATION_CATEGORIES.map(cat => (
           <button
             key={cat.id}
-            onClick={() => setSelectedCategory(cat.id)}
+            onClick={() => handleCategoryChange(cat.id)}
+            disabled={aiLoading}
             style={{
               background: selectedCategory === cat.id 
                 ? 'linear-gradient(135deg, #7c3aed, #ec4899)'
@@ -228,9 +333,10 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
               padding: '10px 16px',
               color: selectedCategory === cat.id ? '#fff' : textColor,
               fontWeight: 600,
-              cursor: 'pointer',
+              cursor: aiLoading ? 'wait' : 'pointer',
               transition: 'all 0.2s',
-              fontSize: '0.85rem'
+              fontSize: '0.85rem',
+              opacity: aiLoading && selectedCategory !== cat.id ? 0.6 : 1
             }}
             data-testid={`rec-category-${cat.id}`}
           >
@@ -242,19 +348,44 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
       {/* Category Description */}
       <p style={{ color: mutedColor, marginBottom: 20, fontSize: '0.9rem' }}>
         {RECOMMENDATION_CATEGORIES.find(c => c.id === selectedCategory)?.description}
+        {isAiPowered && (
+          <span style={{ color: '#10b981', marginLeft: 8 }}>
+            ✨ Personalized by AI
+          </span>
+        )}
       </p>
+      
+      {/* Loading indicator for AI */}
+      {aiLoading && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(16, 185, 129, 0.1))',
+          borderRadius: 12,
+          padding: 20,
+          marginBottom: 20,
+          textAlign: 'center',
+          border: '1px solid rgba(124, 58, 237, 0.3)'
+        }}>
+          <div className="spinner" style={{ margin: '0 auto 10px' }} />
+          <p style={{ color: '#a78bfa', margin: 0 }}>
+            🤖 GPT-5.2 is analyzing market trends and your interests...
+          </p>
+        </div>
+      )}
       
       {/* Protocol Recommendations */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
-        {currentRecommendations.map((rec, idx) => (
+        {recommendations.map((rec, idx) => (
           <div 
-            key={idx}
+            key={`${selectedCategory}-${idx}`}
             style={{
               background: cardBg,
               borderRadius: 16,
               padding: 20,
-              border: `1px solid ${accentColor}20`,
-              transition: 'all 0.2s'
+              border: isAiPowered 
+                ? `1px solid rgba(16, 185, 129, 0.3)`
+                : `1px solid ${accentColor}20`,
+              transition: 'all 0.2s',
+              opacity: aiLoading ? 0.7 : 1
             }}
             data-testid={`protocol-rec-${idx}`}
           >
@@ -277,15 +408,27 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
                 )}
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {isAiPowered && (
+                  <span style={{
+                    background: 'rgba(16, 185, 129, 0.2)',
+                    color: '#10b981',
+                    padding: '4px 8px',
+                    borderRadius: 20,
+                    fontSize: '0.65rem',
+                    fontWeight: 700
+                  }}>
+                    🧠 AI
+                  </span>
+                )}
                 <span style={{
-                  background: rec.demand.includes('HIGH') ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                  color: rec.demand.includes('HIGH') ? '#ef4444' : '#f59e0b',
+                  background: rec.demand?.includes('HIGH') ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                  color: rec.demand?.includes('HIGH') ? '#ef4444' : '#f59e0b',
                   padding: '4px 10px',
                   borderRadius: 20,
                   fontSize: '0.7rem',
                   fontWeight: 700
                 }}>
-                  {rec.demand} DEMAND
+                  {rec.demand || 'MEDIUM'} DEMAND
                 </span>
               </div>
             </div>
@@ -346,8 +489,49 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
           <li><strong>Bundle Power:</strong> Bundle 5+ related protocols for $9.99+ value packs</li>
           <li><strong>Seasonal Timing:</strong> Launch tax protocols in January, travel in May</li>
           <li><strong>Trending Topics:</strong> AI, crypto, remote work are consistently hot</li>
+          {isAiPowered && (
+            <li><strong>🧠 AI Tip:</strong> Click "Get Fresh Ideas" to generate new recommendations based on current trends!</li>
+          )}
         </ul>
       </div>
+      
+      {/* AI Status Footer */}
+      <div style={{
+        marginTop: 20,
+        padding: 15,
+        background: isAiPowered ? 'rgba(16, 185, 129, 0.1)' : 'rgba(124, 58, 237, 0.1)',
+        borderRadius: 10,
+        textAlign: 'center',
+        fontSize: '0.8rem',
+        color: isAiPowered ? '#10b981' : '#a78bfa'
+      }}>
+        {isAiPowered ? (
+          <>
+            🧠 Powered by GPT-5.2 via Emergent LLM Key • Personalized recommendations based on your activity
+          </>
+        ) : (
+          <>
+            📚 Showing curated recommendations • Login to enable AI personalization
+          </>
+        )}
+      </div>
+      
+      {/* CSS for pulse animation */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        .spinner-small {
+          border: 2px solid rgba(255,255,255,0.3);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
