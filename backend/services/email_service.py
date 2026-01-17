@@ -251,7 +251,7 @@ def generate_ab_test_report_html(report_data: dict) -> str:
             
             <!-- CTA -->
             <div style="text-align: center; padding: 0 20px 30px 20px;">
-                <a href="{os.environ.get('FRONTEND_URL', 'https://infoshare-4.preview.emergentagent.com')}/#admin" 
+                <a href="{os.environ.get('FRONTEND_URL', 'https://info-pilot.preview.emergentagent.com')}/#admin" 
                    style="display: inline-block; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">
                     View Full Dashboard →
                 </a>
@@ -313,7 +313,7 @@ RECOMMENDATIONS
 - Consider promoting winning variants to 100% traffic
 - Review the A/B Dashboard for detailed breakdowns
 
-View full dashboard: {os.environ.get('FRONTEND_URL', 'https://infoshare-4.preview.emergentagent.com')}/#admin
+View full dashboard: {os.environ.get('FRONTEND_URL', 'https://info-pilot.preview.emergentagent.com')}/#admin
 """
     
     return plain

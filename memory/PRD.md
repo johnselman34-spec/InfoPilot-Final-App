@@ -915,7 +915,7 @@ Build a comprehensive web application called "InfoPilot Explorer" featuring:
 - Shareable badges
 
 ## Preview URL
-https://infoshare-4.preview.emergentagent.com
+https://info-pilot.preview.emergentagent.com
 
 ## Third-Party Integrations
 - **OpenAI GPT-5.2** - Newsletter generation (via Emergent LLM Key)
