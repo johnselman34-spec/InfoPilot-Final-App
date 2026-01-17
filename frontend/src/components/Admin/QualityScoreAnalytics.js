@@ -60,6 +60,86 @@ const QualityScoreAnalytics = ({ showToast }) => {
     }
   }, [token]);
   
+  const fetchDomainAlerts = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/admin/domain-alerts`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDomainAlerts(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch domain alerts:', e);
+    }
+  }, [token]);
+  
+  const runDomainScoring = async () => {
+    if (!token) return;
+    setRunningScoring(true);
+    
+    try {
+      const res = await fetch(`${API}/admin/domain-scoring/run`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setLastScoringRun(data);
+        showToast(`🔍 Domain scoring complete: ${data.alerts_created} new alerts, ${data.alerts_updated} updated`, 'success');
+        await fetchDomainAlerts();
+      } else {
+        showToast('Failed to run domain scoring', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to run domain scoring', 'error');
+    }
+    setRunningScoring(false);
+  };
+  
+  const handleDismissAlert = async (alertId) => {
+    if (!token) return;
+    
+    try {
+      const res = await fetch(`${API}/admin/domain-alerts/${alertId}/dismiss`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        showToast('Alert dismissed', 'success');
+        await fetchDomainAlerts();
+      }
+    } catch (e) {
+      showToast('Failed to dismiss alert', 'error');
+    }
+  };
+  
+  const handleBlockFromAlert = async (alertId, domain) => {
+    if (!token) return;
+    setBlockingDomain(domain);
+    
+    try {
+      const res = await fetch(`${API}/admin/domain-alerts/${alertId}/block`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`🚫 Blocked ${domain} - Removed ${data.results_removed} results`, 'success');
+        await Promise.all([fetchDomainAlerts(), fetchBlockedDomains(), fetchAnalytics()]);
+      } else {
+        showToast('Failed to block domain', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to block domain', 'error');
+    }
+    setBlockingDomain(null);
+  };
+  
   const handleBlockDomain = async (domain, avgScore, count) => {
     if (!token) return;
     setBlockingDomain(domain);
