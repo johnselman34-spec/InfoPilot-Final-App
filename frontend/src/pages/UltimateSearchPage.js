@@ -583,9 +583,9 @@ const UltimateSearchPage = ({ showToast }) => {
   };
 
   // Clean category (remove all results associated with the category)
-  const cleanCategory = async (categoryId) => {
+  const cleanCategory = async (categoryId, mode = 'delete_all') => {
     try {
-      const res = await fetch(`${API}/categories/${categoryId}/clean`, {
+      const res = await fetch(`${API}/categories/${categoryId}/clean?mode=${mode}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -601,6 +601,7 @@ const UltimateSearchPage = ({ showToast }) => {
         showToast(data.detail || 'Failed to clean category', 'error');
       }
     } catch (e) {
+      console.error('Clean category error:', e);
       showToast('Failed to clean category', 'error');
     }
   };
