@@ -370,8 +370,9 @@ class TestMarketplace:
         )
         assert response.status_code == 200
         data = response.json()
-        assert "protocols" in data
-        print(f"✓ Marketplace Sell & Earn tab working - {len(data['protocols'])} protocols")
+        # Response is a list of protocols directly
+        assert isinstance(data, list)
+        print(f"✓ Marketplace Sell & Earn tab working - {len(data)} protocols")
 
 
 class TestSocial:
