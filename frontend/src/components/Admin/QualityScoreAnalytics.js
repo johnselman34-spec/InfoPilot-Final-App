@@ -19,6 +19,9 @@ const QualityScoreAnalytics = ({ showToast }) => {
   const [domainAlerts, setDomainAlerts] = useState({ alerts: [], summary: {} });
   const [runningScoring, setRunningScoring] = useState(false);
   const [lastScoringRun, setLastScoringRun] = useState(null);
+  const [scheduleConfig, setScheduleConfig] = useState(null);
+  const [showScheduleSettings, setShowScheduleSettings] = useState(false);
+  const [savingSchedule, setSavingSchedule] = useState(false);
   
   const bgColor = isDarkMode ? 'rgba(15, 10, 35, 0.95)' : 'rgba(255, 255, 255, 0.98)';
   const cardBg = isDarkMode ? 'rgba(30, 20, 50, 0.7)' : 'rgba(248, 250, 252, 0.9)';
