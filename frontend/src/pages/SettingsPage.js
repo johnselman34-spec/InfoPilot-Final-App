@@ -637,6 +637,55 @@ const SettingsPage = ({ showToast, setCurrentPage }) => {
           <p><strong>Username:</strong> {user?.username}</p>
           <p><strong>Email:</strong> {user?.email}</p>
           <p><strong>Status:</strong> {user?.is_admin ? 'Admin' : (user?.is_paid ? 'Premium' : 'Free')}</p>
+          
+          {/* Email Change Section */}
+          <div style={{ marginTop: 15, paddingTop: 15, borderTop: '1px solid rgba(124, 58, 237, 0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>Change Email Address</span>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setShowEmailSection(!showEmailSection)}
+                style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                data-testid="toggle-email-section-btn"
+              >
+                {showEmailSection ? 'Cancel' : 'Change'}
+              </button>
+            </div>
+            
+            {showEmailSection && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+                <input
+                  type="email"
+                  placeholder="New Email Address"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="input"
+                  data-testid="new-email-input"
+                />
+                <input
+                  type="password"
+                  placeholder="Confirm with Password"
+                  value={emailPassword}
+                  onChange={(e) => setEmailPassword(e.target.value)}
+                  className="input"
+                  data-testid="email-password-input"
+                />
+                <button 
+                  className="btn btn-primary"
+                  onClick={handleChangeEmail}
+                  disabled={emailLoading}
+                  data-testid="change-email-btn"
+                >
+                  {emailLoading ? 'Updating...' : 'Update Email'}
+                </button>
+                {!hasPassword && (
+                  <p style={{ color: '#f59e0b', fontSize: '0.75rem', margin: 0 }}>
+                    ⚠️ You must set a password first before changing email (Google-only accounts)
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Category Management Section */}
