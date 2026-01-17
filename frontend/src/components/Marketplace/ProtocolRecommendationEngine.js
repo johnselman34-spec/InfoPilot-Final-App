@@ -474,7 +474,7 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
-                  onClick={() => copyProtocol(rec.protocol)}
+                  onClick={() => copyProtocol(rec.protocol, rec.name)}
                   style={{
                     background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
                     border: 'none',
