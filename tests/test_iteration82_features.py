@@ -146,7 +146,7 @@ class TestBannedWordsIntegration:
     
     def test_add_test_banned_word(self, auth_token):
         """Test adding a banned word"""
-        test_word = "TEST_BANNED_WORD_82"
+        test_word = f"TEST_BANNED_WORD_82_{int(time.time())}"
         
         # Add banned word
         response = requests.post(
