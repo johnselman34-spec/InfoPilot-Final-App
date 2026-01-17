@@ -141,7 +141,8 @@ class TestBannedWordsIntegration:
         )
         assert response.status_code == 200, f"Get banned words failed: {response.text}"
         data = response.json()
-        assert "banned_words" in data, "Missing banned_words in response"
+        # API returns a list directly
+        assert isinstance(data, list), "Banned words should be a list"
     
     def test_add_test_banned_word(self, auth_token):
         """Test adding a banned word"""
@@ -161,11 +162,12 @@ class TestBannedWordsIntegration:
             headers={"Authorization": f"Bearer {auth_token}"}
         )
         data = response.json()
-        words = [bw["word"] for bw in data.get("banned_words", [])]
+        # API returns a list directly
+        words = [bw["word"] for bw in data]
         assert test_word in words, "Banned word not found after adding"
         
         # Clean up - delete the test banned word
-        for bw in data.get("banned_words", []):
+        for bw in data:
             if bw["word"] == test_word:
                 delete_response = requests.delete(
                     f"{BASE_URL}/api/admin/banned-words/{bw['id']}",
@@ -206,7 +208,8 @@ class TestBannedWordsIntegration:
                 f"{BASE_URL}/api/admin/banned-words",
                 headers={"Authorization": f"Bearer {auth_token}"}
             )
-            for bw in get_response.json().get("banned_words", []):
+            # API returns a list directly
+            for bw in get_response.json():
                 if bw["word"] == test_banned_word:
                     requests.delete(
                         f"{BASE_URL}/api/admin/banned-words/{bw['id']}",
