@@ -754,6 +754,13 @@ const UltimateSearchPage = ({ showToast }) => {
           filterInfo={filterInfo}
         />
 
+        {/* Smart Search Suggestions - AI-powered */}
+        <SmartSearchSuggestions 
+          query={searchQuery}
+          onSuggestionClick={(suggestion) => setSearchQuery(suggestion)}
+          showToast={showToast}
+        />
+
         {/* Protocol Debugger */}
         {showDebugger && <ProtocolDebugger showToast={showToast} />}
         
