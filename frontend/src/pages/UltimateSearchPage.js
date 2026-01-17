@@ -300,16 +300,18 @@ const UltimateSearchPage = ({ showToast }) => {
     }
     console.log('[loadData] Token available, loading data...');
     
-    const loadData = async () => {
-      try {
-        console.log('[loadData] Starting parallel data load');
-        await Promise.all([fetchCategories(), fetchSearchResults(), fetchBatches()]);
-        console.log('[loadData] Data load complete');
-      } catch (e) {
+    // Load categories first, then others
+    fetchCategories()
+      .then(() => {
+        console.log('[loadData] Categories loaded, now loading search results and batches');
+        return Promise.all([fetchSearchResults(), fetchBatches()]);
+      })
+      .then(() => {
+        console.log('[loadData] All data loaded');
+      })
+      .catch((e) => {
         console.error('[loadData] Error during data load:', e);
-      }
-    };
-    loadData();
+      });
   }, [token, fetchCategories, fetchSearchResults, fetchBatches]);
 
   const handleSearch = async () => {
