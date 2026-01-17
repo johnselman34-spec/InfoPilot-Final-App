@@ -5251,7 +5251,7 @@ async def get_banned_words(user = Depends(get_current_user_local)):
         "word": b["word"],
         "reason": b.get("reason", ""),
         "banned_by": b.get("banned_by", ""),
-        "created_at": b.get("created_at", datetime.now(timezone.utc)).isoformat()
+        "created_at": b.get("created_at", datetime.utcnow()).isoformat()
     } for b in banned]
 
 
