@@ -271,6 +271,186 @@ const QualityScoreAnalytics = ({ showToast }) => {
         </p>
       </div>
       
+      {/* Domain Quality Alerts Section */}
+      <div style={{ 
+        background: domainAlerts.summary?.critical > 0 
+          ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05))'
+          : domainAlerts.summary?.warning > 0
+            ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05))'
+            : 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05))',
+        borderRadius: 16, 
+        padding: 20, 
+        marginBottom: 25,
+        border: domainAlerts.summary?.critical > 0 
+          ? '2px solid rgba(239, 68, 68, 0.4)'
+          : domainAlerts.summary?.warning > 0
+            ? '2px solid rgba(245, 158, 11, 0.4)'
+            : '2px solid rgba(16, 185, 129, 0.4)'
+      }} data-testid="domain-alerts-section">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+          <div>
+            <h3 style={{ 
+              color: domainAlerts.summary?.critical > 0 ? '#ef4444' : domainAlerts.summary?.warning > 0 ? '#f59e0b' : '#10b981', 
+              margin: 0, 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 10 
+            }}>
+              🔔 Domain Quality Alerts
+              {domainAlerts.summary?.total > 0 && (
+                <span style={{
+                  background: domainAlerts.summary?.critical > 0 ? '#ef4444' : '#f59e0b',
+                  color: '#fff',
+                  padding: '2px 10px',
+                  borderRadius: 12,
+                  fontSize: '0.8rem',
+                  fontWeight: 700
+                }}>
+                  {domainAlerts.summary?.total} Active
+                </span>
+              )}
+            </h3>
+            <p style={{ color: mutedColor, margin: '5px 0 0 0', fontSize: '0.85rem' }}>
+              Automatic scoring identifies domains with consistently low quality content
+            </p>
+          </div>
+          <button
+            onClick={runDomainScoring}
+            disabled={runningScoring}
+            style={{
+              background: runningScoring ? 'rgba(156, 163, 175, 0.3)' : 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+              border: 'none',
+              color: '#fff',
+              padding: '10px 20px',
+              borderRadius: 10,
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              cursor: runningScoring ? 'wait' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+            data-testid="run-domain-scoring"
+          >
+            {runningScoring ? '⏳ Analyzing...' : '🔍 Run Analysis'}
+          </button>
+        </div>
+        
+        {/* Alert Summary Badges */}
+        <div style={{ display: 'flex', gap: 15, marginBottom: 15, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: 'rgba(239, 68, 68, 0.2)', borderRadius: 20 }}>
+            <span style={{ color: '#ef4444', fontWeight: 700 }}>🔴 Critical:</span>
+            <span style={{ color: '#ef4444' }}>{domainAlerts.summary?.critical || 0}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: 'rgba(245, 158, 11, 0.2)', borderRadius: 20 }}>
+            <span style={{ color: '#f59e0b', fontWeight: 700 }}>🟡 Warning:</span>
+            <span style={{ color: '#f59e0b' }}>{domainAlerts.summary?.warning || 0}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: 'rgba(59, 130, 246, 0.2)', borderRadius: 20 }}>
+            <span style={{ color: '#3b82f6', fontWeight: 700 }}>🔵 Watch:</span>
+            <span style={{ color: '#3b82f6' }}>{domainAlerts.summary?.watch || 0}</span>
+          </div>
+        </div>
+        
+        {/* Alerts List */}
+        {domainAlerts.alerts?.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 300, overflowY: 'auto' }}>
+            {domainAlerts.alerts.map((alert) => (
+              <div 
+                key={alert.id}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '12px 15px',
+                  background: alert.alert_level === 'critical' 
+                    ? 'rgba(239, 68, 68, 0.15)' 
+                    : alert.alert_level === 'warning'
+                      ? 'rgba(245, 158, 11, 0.15)'
+                      : 'rgba(59, 130, 246, 0.15)',
+                  borderRadius: 10,
+                  border: `1px solid ${
+                    alert.alert_level === 'critical' ? 'rgba(239, 68, 68, 0.3)' :
+                    alert.alert_level === 'warning' ? 'rgba(245, 158, 11, 0.3)' : 'rgba(59, 130, 246, 0.3)'
+                  }`
+                }}
+                data-testid={`alert-${alert.id}`}
+              >
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                    <span style={{ fontSize: '1.1rem' }}>
+                      {alert.alert_level === 'critical' ? '🔴' : alert.alert_level === 'warning' ? '🟡' : '🔵'}
+                    </span>
+                    <span style={{ color: textColor, fontWeight: 600 }}>{alert.domain}</span>
+                    <span style={{
+                      background: alert.alert_level === 'critical' ? '#ef4444' : alert.alert_level === 'warning' ? '#f59e0b' : '#3b82f6',
+                      color: '#fff',
+                      padding: '2px 8px',
+                      borderRadius: 6,
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase'
+                    }}>
+                      {alert.alert_level}
+                    </span>
+                  </div>
+                  <div style={{ color: mutedColor, fontSize: '0.8rem' }}>
+                    Avg Score: <strong style={{ color: alert.avg_score < 30 ? '#ef4444' : alert.avg_score < 45 ? '#f59e0b' : '#3b82f6' }}>{alert.avg_score}</strong> | 
+                    Results: {alert.result_count} | 
+                    Range: {alert.min_score} - {alert.max_score}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => handleBlockFromAlert(alert.id, alert.domain)}
+                    disabled={blockingDomain === alert.domain}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.3)',
+                      border: 'none',
+                      color: '#fff',
+                      padding: '6px 12px',
+                      borderRadius: 6,
+                      fontSize: '0.8rem',
+                      cursor: blockingDomain === alert.domain ? 'wait' : 'pointer',
+                      fontWeight: 600
+                    }}
+                    data-testid={`block-alert-${alert.id}`}
+                  >
+                    {blockingDomain === alert.domain ? '...' : '🚫 Block'}
+                  </button>
+                  <button
+                    onClick={() => handleDismissAlert(alert.id)}
+                    style={{
+                      background: 'rgba(156, 163, 175, 0.3)',
+                      border: 'none',
+                      color: mutedColor,
+                      padding: '6px 12px',
+                      borderRadius: 6,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer'
+                    }}
+                    data-testid={`dismiss-alert-${alert.id}`}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: 20, color: '#10b981' }}>
+            ✅ No quality alerts! All domains meet quality standards.
+          </div>
+        )}
+        
+        {lastScoringRun && (
+          <div style={{ marginTop: 15, padding: 10, background: 'rgba(124, 58, 237, 0.1)', borderRadius: 8, fontSize: '0.8rem', color: mutedColor }}>
+            Last analysis: Created {lastScoringRun.alerts_created} alerts, updated {lastScoringRun.alerts_updated} | 
+            Thresholds: Critical &lt;30, Warning &lt;45, Watch &lt;55
+          </div>
+        )}
+      </div>
+      
       {/* Key Metrics */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 15, marginBottom: 25 }}>
         <div style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05))', borderRadius: 12, padding: 20, border: '1px solid rgba(16, 185, 129, 0.3)', textAlign: 'center' }}>
