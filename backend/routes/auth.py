@@ -235,12 +235,14 @@ async def update_email(
 
 @router.put("/auth/change-password", response_model=dict)
 async def change_password(
-    current_password: str = None,
-    new_password: str = None,
+    request: dict,
     user = Depends(get_current_user)
 ):
     """Change or set password"""
     from bson import ObjectId
+    
+    current_password = request.get("current_password")
+    new_password = request.get("new_password")
     
     if not new_password or len(new_password) < 6:
         raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
