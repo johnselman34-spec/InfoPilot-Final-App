@@ -53,11 +53,19 @@ const AINewsTicker = ({ compact = false }) => {
   }, [token]);
   
   useEffect(() => {
-    fetchNews();
-    // Refresh news every 30 minutes
-    const interval = setInterval(fetchNews, 30 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [fetchNews]);
+    // Initial fetch and refresh interval
+    let mounted = true;
+    const loadNews = async () => {
+      if (mounted) await fetchNews();
+    };
+    loadNews();
+    const interval = setInterval(loadNews, 30 * 60 * 1000);
+    return () => { 
+      mounted = false;
+      clearInterval(interval); 
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   // Auto-scroll through headlines when compact
   useEffect(() => {
