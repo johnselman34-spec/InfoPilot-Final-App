@@ -287,9 +287,14 @@ async def update_children_levels(parent_id: str, new_level: int):
 @router.delete("/categories/{category_id}")
 async def delete_category(category_id: str, user = Depends(get_current_user)):
     """Delete a category and its children"""
+    try:
+        cat_oid = ObjectId(category_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid category ID format")
+    
     # Admin can delete any category, regular users can only delete their own
     if user.get("is_admin"):
-        category = await db.categories.find_one({"_id": ObjectId(category_id)})
+        category = await db.categories.find_one({"_id": cat_oid})
     else:
         category = await db.categories.find_one({
             "_id": cat_oid,
