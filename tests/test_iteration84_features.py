@@ -362,16 +362,16 @@ class TestMarketplace:
         assert "purchases" in data
         print(f"✓ Marketplace My Purchases tab working - {len(data['purchases'])} purchases")
     
-    def test_marketplace_my_listings(self, auth_token):
-        """Test marketplace my listings (Sell & Earn tab)"""
+    def test_marketplace_my_protocols(self, auth_token):
+        """Test marketplace my protocols (Sell & Earn tab)"""
         response = requests.get(
-            f"{BASE_URL}/api/marketplace/my-listings",
+            f"{BASE_URL}/api/marketplace/my-protocols",
             headers={"Authorization": f"Bearer {auth_token}"}
         )
         assert response.status_code == 200
         data = response.json()
-        assert "listings" in data
-        print(f"✓ Marketplace Sell & Earn tab working - {len(data['listings'])} listings")
+        assert "protocols" in data
+        print(f"✓ Marketplace Sell & Earn tab working - {len(data['protocols'])} protocols")
 
 
 class TestSocial:
