@@ -1675,9 +1675,68 @@ All core features implemented and tested.
 | Content Quality Badges | ✅ Working | SearchResultsList.js |
 | Quality Score Filtering | ✅ Working | UltimateSearchPage.js |
 | Quality Score Analytics | ✅ Working | AdminPanel - Quality tab |
+| Domain Blocklist Management | ✅ Working | AdminPanel - Quality tab |
 | Protocol Performance Insights | ✅ Working | MarketplacePage - Dashboard |
 | Community Leaderboard | ✅ Working | MarketplacePage - Leaderboard |
 | All Admin Panel Features | ✅ Working | AdminPanel.js (19 tabs) |
+
+---
+
+## Update Session - January 16, 2026 (Iteration 73) - Domain Blocklist Management
+
+### 1. ML Dependency Clarification ✅
+**The ML dependency is NOT blocked** - `emergentintegrations` library is installed and working:
+- Version: 0.1.0
+- Used for: GPT-5.2 chat, OpenAI Whisper, AI suggestions
+- The Protocol Recommendation Engine uses static AI-generated templates (not blocked)
+
+### 2. Domain Blocklist Management ✅
+**New feature allowing admins to block low-quality domains**
+
+**Backend API Endpoints**:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/admin/blocked-domains` | GET | List all blocked domains |
+| `/api/admin/blocked-domains` | POST | Add domain to blocklist |
+| `/api/admin/blocked-domains/{domain}` | DELETE | Remove from blocklist |
+| `/api/admin/blocked-domains/bulk` | POST | Block multiple domains |
+
+**Request/Response Examples**:
+```json
+// POST /api/admin/blocked-domains
+Request: { "domain": "lowquality.com", "reason": "Low quality", "avg_score": 25 }
+Response: { "success": true, "results_removed": 15, "blocked_domain": {...} }
+
+// POST /api/admin/blocked-domains/bulk
+Request: { "domains": [{"domain": "bad1.com"}, {"domain": "bad2.com"}] }
+Response: { "blocked_count": 2, "skipped_count": 0, "total_results_removed": 25 }
+```
+
+**Frontend Features**:
+- Individual 🚫 block buttons next to each low-quality domain
+- "Block All" button to bulk block all improvement opportunities
+- "Blocked Domains" section with Show/Hide toggle
+- Unblock buttons to restore domains
+- Real-time updates after blocking/unblocking
+
+**Database Collection**: `blocked_domains`
+```json
+{
+  "domain": "string",
+  "reason": "string",
+  "avg_score": "float",
+  "result_count": "int",
+  "blocked_by": "string (email)",
+  "blocked_at": "datetime"
+}
+```
+
+### Testing Results - Iteration 73
+- **Backend**: 20/20 tests passed (1 skipped for non-admin test)
+- **Frontend**: 100% - All Domain Blocklist UI elements verified
+- **Test Report**: `/app/test_reports/iteration_73.json`
+- **Test File**: `/app/tests/test_iteration73_domain_blocklist.py`
 
 
 ## Update Session - January 16, 2026 (Iteration 62) - Theme Gallery, Comments, Content Filter
