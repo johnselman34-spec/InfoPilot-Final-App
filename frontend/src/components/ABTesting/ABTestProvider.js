@@ -113,14 +113,15 @@ export const ABTest = ({
   const [variant, setVariant] = useState(null);
   const [hasTrackedImpression, setHasTrackedImpression] = useState(false);
 
+  // Set variant when loaded
   useEffect(() => {
     if (!isLoading && variants[testName]) {
-      setVariant(variants[testName]);
-      if (onVariantLoad) {
-        onVariantLoad(variants[testName]);
-      }
+      const currentVariant = variants[testName];
+      setVariant(currentVariant);
+      onVariantLoad?.(currentVariant);
     }
-  }, [isLoading, variants, testName, onVariantLoad]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, variants, testName]);
 
   // Track impression once
   useEffect(() => {
@@ -128,7 +129,8 @@ export const ABTest = ({
       trackEvent(testName, variant.variant_id, 'impression');
       setHasTrackedImpression(true);
     }
-  }, [variant, trackImpression, hasTrackedImpression, trackEvent, testName]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variant, trackImpression, hasTrackedImpression]);
 
   // Provide click tracking helper
   const handleClick = () => {
