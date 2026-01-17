@@ -26,8 +26,15 @@ const DataExport = ({ showToast }) => {
   }, [token]);
 
   useEffect(() => {
-    fetchSummary();
-  }, [fetchSummary]);
+    // Data fetch on mount
+    let mounted = true;
+    const loadSummary = async () => {
+      if (mounted) await fetchSummary();
+    };
+    loadSummary();
+    return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleExport = async () => {
     setExporting(true);
