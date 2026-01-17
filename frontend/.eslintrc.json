@@ -1,7 +1,15 @@
 {
   "extends": ["react-app"],
+  "plugins": [],
   "rules": {
     "react/no-unescaped-entities": "off",
-    "react/no-unstable-nested-components": "warn"
+    "react/no-unstable-nested-components": "warn",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
   }
 }
