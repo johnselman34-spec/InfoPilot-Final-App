@@ -78,6 +78,69 @@ const QualityScoreAnalytics = ({ showToast }) => {
     }
   }, [token]);
   
+  const fetchScheduleConfig = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API}/admin/domain-scoring/schedule`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setScheduleConfig(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch schedule config:', e);
+    }
+  }, [token]);
+  
+  const updateScheduleConfig = async (newConfig) => {
+    if (!token) return;
+    setSavingSchedule(true);
+    
+    try {
+      const res = await fetch(`${API}/admin/domain-scoring/schedule`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify(newConfig)
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`⏰ ${data.message}`, 'success');
+        await fetchScheduleConfig();
+      } else {
+        showToast('Failed to update schedule', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to update schedule', 'error');
+    }
+    setSavingSchedule(false);
+  };
+  
+  const sendTestEmail = async () => {
+    if (!token) return;
+    
+    try {
+      const res = await fetch(`${API}/admin/domain-scoring/test-email`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        showToast(`📧 ${data.message}`, 'success');
+      } else {
+        const error = await res.json();
+        showToast(error.detail || 'Failed to send test email', 'error');
+      }
+    } catch (e) {
+      showToast('Failed to send test email', 'error');
+    }
+  };
+  
   const runDomainScoring = async () => {
     if (!token) return;
     setRunningScoring(true);
