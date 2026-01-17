@@ -34,6 +34,9 @@ const MapPage = ({ showToast, setCurrentPage }) => {
   const mapContainerRef = useRef(null);
   const refreshIntervalRef = useRef(null);
   
+  // Data source toggle: 'worldwide' or 'personal'
+  const [dataSource, setDataSource] = useState('worldwide');
+  
   // Category filtering state
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
