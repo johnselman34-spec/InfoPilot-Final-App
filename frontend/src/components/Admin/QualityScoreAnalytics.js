@@ -565,14 +565,6 @@ const QualityScoreAnalytics = ({ showToast }) => {
             )}
           </div>
         )}
-              alignItems: 'center',
-              gap: 8
-            }}
-            data-testid="run-domain-scoring"
-          >
-            {runningScoring ? '⏳ Analyzing...' : '🔍 Run Analysis'}
-          </button>
-        </div>
         
         {/* Alert Summary Badges */}
         <div style={{ display: 'flex', gap: 15, marginBottom: 15, flexWrap: 'wrap' }}>
