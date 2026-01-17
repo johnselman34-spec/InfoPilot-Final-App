@@ -60,7 +60,7 @@ document.addEventListener('mouseup', (e) => {
     `;
     
     floatingButton.addEventListener('click', () => {
-      const API_BASE = 'https://insightshare-app.preview.emergentagent.com';
+      const API_BASE = 'https://infoshare-4.preview.emergentagent.com';
       window.open(`${API_BASE}/search?q=${encodeURIComponent(selection)}&source=extension`, '_blank');
       floatingButton.remove();
       floatingButton = null;

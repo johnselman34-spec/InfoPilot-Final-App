@@ -174,7 +174,7 @@ async def share_achievement(achievement_id: str, user = Depends(get_current_user
 
 {achievement['icon']} {achievement['description']}
 
-Join me on InfoPilot and start your journey: https://insightshare-app.preview.emergentagent.com
+Join me on InfoPilot and start your journey: https://infoshare-4.preview.emergentagent.com
 
 #InfoPilot #Achievement #{achievement['category'].replace(' ', '')}"""
 
@@ -183,7 +183,7 @@ Join me on InfoPilot and start your journey: https://insightshare-app.preview.em
         "achievement": achievement,
         "platforms": {
             "twitter": f"https://twitter.com/intent/tweet?text={share_message[:280]}",
-            "facebook": "https://www.facebook.com/sharer/sharer.php?u=https://insightshare-app.preview.emergentagent.com",
+            "facebook": "https://www.facebook.com/sharer/sharer.php?u=https://infoshare-4.preview.emergentagent.com",
         }
     }
 
