@@ -450,3 +450,185 @@ def get_fallback_protocol_recommendations(category: str) -> list:
         ]
     }
     return fallbacks.get(category, fallbacks["trending"])
+
+
+# ==================== AI NEWS ARTICLES ====================
+
+NEWS_TOPICS = [
+    "Technology", "Science", "Business", "Health", "Politics", 
+    "Environment", "Space", "Finance", "Education", "Sports"
+]
+
+@router.get("/ai/news", response_model=dict)
+async def get_ai_news_articles():
+    """
+    Get AI-generated top 10 news headlines across different topics.
+    Excludes entertainment news. Each article is about a different topic.
+    """
+    if not EMERGENT_LLM_KEY:
+        logger.warning("EMERGENT_LLM_KEY not configured for AI news")
+        return {"articles": get_fallback_news(), "ai_powered": False}
+    
+    try:
+        # Build AI prompt
+        ai_prompt = f"""Generate exactly 10 realistic, current news headlines about different global topics.
+        
+REQUIREMENTS:
+1. Each headline MUST be about a DIFFERENT topic from this list: {', '.join(NEWS_TOPICS)}
+2. NO entertainment or celebrity news
+3. Headlines should feel like real breaking news from today
+4. Include a brief 1-sentence summary for each
+5. Assign a category/topic to each
+
+Return ONLY a valid JSON array in this exact format (no other text):
+[
+  {{"headline": "Major headline here", "summary": "Brief summary of the news.", "topic": "Technology", "emoji": "🔬"}},
+  ...
+]
+
+Make headlines diverse: include technology breakthroughs, scientific discoveries, business news, 
+health updates, political developments, environmental news, space exploration, financial markets, 
+education policy, and sports achievements. Each must be a DIFFERENT topic."""
+
+        # Call GPT-5.2
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"ai_news_{datetime.now().timestamp()}",
+            system_message="You are a professional news editor. Generate realistic, diverse news headlines. Return only valid JSON."
+        ).with_model("openai", "gpt-5.2")
+        
+        response = await chat.send_message(UserMessage(text=ai_prompt))
+        
+        # Parse AI response
+        import json
+        try:
+            response_text = response.strip()
+            if "```" in response_text:
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+                response_text = response_text.strip()
+            
+            articles = json.loads(response_text)
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse AI news response: {response[:200]}")
+            return {"articles": get_fallback_news(), "ai_powered": False}
+        
+        # Validate and ensure different topics
+        validated = []
+        seen_topics = set()
+        
+        for article in articles:
+            if isinstance(article, dict) and "headline" in article:
+                topic = article.get("topic", "General")
+                if topic.lower() not in seen_topics:
+                    seen_topics.add(topic.lower())
+                    validated.append({
+                        "headline": article.get("headline", ""),
+                        "summary": article.get("summary", ""),
+                        "topic": topic,
+                        "emoji": article.get("emoji", "📰")
+                    })
+                    if len(validated) >= 10:
+                        break
+        
+        return {
+            "articles": validated,
+            "ai_powered": True,
+            "generated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"AI news error: {e}")
+        return {"articles": get_fallback_news(), "ai_powered": False, "error": str(e)}
+
+
+def get_fallback_news() -> list:
+    """Return static fallback news when AI is unavailable"""
+    return [
+        {"headline": "AI Breakthrough: New Model Achieves Human-Level Reasoning", "summary": "Researchers announce a major milestone in artificial intelligence development.", "topic": "Technology", "emoji": "🤖"},
+        {"headline": "Mars Mission Update: First Samples Return to Earth", "summary": "NASA confirms successful retrieval of Martian soil samples for analysis.", "topic": "Space", "emoji": "🚀"},
+        {"headline": "Global Markets Rally on Economic Recovery Signs", "summary": "Stock indices reach new highs as inflation concerns ease worldwide.", "topic": "Finance", "emoji": "📈"},
+        {"headline": "Climate Summit Reaches Historic Agreement", "summary": "World leaders commit to ambitious emissions reduction targets.", "topic": "Environment", "emoji": "🌍"},
+        {"headline": "Medical Breakthrough: New Treatment Shows Promise", "summary": "Clinical trials reveal effective therapy for previously untreatable condition.", "topic": "Health", "emoji": "🏥"},
+        {"headline": "Education Reform Bill Passes Legislature", "summary": "New law aims to modernize curriculum and increase funding for schools.", "topic": "Education", "emoji": "📚"},
+        {"headline": "Tech Giant Announces Revolutionary Product", "summary": "Company unveils device expected to transform the industry.", "topic": "Business", "emoji": "💼"},
+        {"headline": "Scientific Discovery Rewrites History Books", "summary": "Archaeological findings challenge long-held theories about ancient civilizations.", "topic": "Science", "emoji": "🔬"},
+        {"headline": "International Summit Addresses Global Security", "summary": "World leaders convene to discuss cooperative defense strategies.", "topic": "Politics", "emoji": "🏛️"},
+        {"headline": "Historic Championship Victory Celebrated", "summary": "Underdog team achieves remarkable win in major sporting event.", "topic": "Sports", "emoji": "🏆"}
+    ]
+
+
+# ==================== RELEVANT HASHTAGS ====================
+
+@router.post("/ai/generate-hashtags", response_model=dict)
+async def generate_relevant_hashtags(
+    content: str = Body(..., embed=True),
+    category_name: str = Body(None, embed=True),
+    protocol: str = Body(None, embed=True),
+    user = Depends(get_current_user)
+):
+    """
+    Generate hashtags that are relevant to both the content AND the category/protocol.
+    """
+    if not EMERGENT_LLM_KEY:
+        return {"hashtags": extract_basic_hashtags(content), "ai_powered": False}
+    
+    try:
+        context = f"Content: {content[:500]}"
+        if category_name:
+            context += f"\nCategory: {category_name}"
+        if protocol:
+            context += f"\nSearch Protocol: {protocol[:200]}"
+        
+        ai_prompt = f"""Generate 5-8 highly relevant hashtags for this search result.
+
+{context}
+
+REQUIREMENTS:
+1. Hashtags must be directly relevant to BOTH the content AND the category/protocol
+2. Include a mix of broad and specific hashtags
+3. Use popular, searchable terms
+4. No spaces in hashtags, use CamelCase for multi-word tags
+5. Start each with # symbol
+
+Return ONLY a JSON array of hashtags:
+["#Hashtag1", "#Hashtag2", ...]"""
+
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"hashtags_{datetime.now().timestamp()}",
+            system_message="Generate relevant, popular hashtags. Return only valid JSON array."
+        ).with_model("openai", "gpt-5.2")
+        
+        response = await chat.send_message(UserMessage(text=ai_prompt))
+        
+        import json
+        try:
+            response_text = response.strip()
+            if "```" in response_text:
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+            hashtags = json.loads(response_text)
+            if isinstance(hashtags, list):
+                return {"hashtags": hashtags[:8], "ai_powered": True}
+        except:
+            pass
+        
+        return {"hashtags": extract_basic_hashtags(content), "ai_powered": False}
+        
+    except Exception as e:
+        logger.error(f"AI hashtags error: {e}")
+        return {"hashtags": extract_basic_hashtags(content), "ai_powered": False}
+
+
+def extract_basic_hashtags(content: str) -> list:
+    """Extract basic hashtags from content"""
+    import re
+    words = re.findall(r'\b[A-Z][a-z]+(?:[A-Z][a-z]+)*\b', content)
+    common_words = {'The', 'And', 'For', 'With', 'From', 'This', 'That', 'What', 'When', 'Where', 'How', 'Why'}
+    hashtags = [f"#{w}" for w in words[:15] if w not in common_words and len(w) > 3]
+    return hashtags[:8]
+    }
+    return fallbacks.get(category, fallbacks["trending"])
