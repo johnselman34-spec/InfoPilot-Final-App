@@ -15,6 +15,7 @@ import DoctypeTestingTool from '../components/Admin/DoctypeTestingTool';
 import CleanAllCategoriesAdmin from '../components/Admin/CleanAllCategoriesAdmin';
 import QualityScoreAnalytics from '../components/Admin/QualityScoreAnalytics';
 import RevenueDashboard from '../components/Admin/RevenueDashboard';
+import BannedWordsAdmin from '../components/Admin/BannedWordsAdmin';
 
 const AdminPanel = ({ showToast }) => {
   const { token } = useAuth();
