@@ -69,10 +69,23 @@ export const WorldWideMap = ({ protocols, categories, selectedCategories, onSele
   const [hoveredProtocol, setHoveredProtocol] = React.useState(null);
   const [hoverPosition, setHoverPosition] = React.useState({ x: 0, y: 0 });
   const [isMaximized, setIsMaximized] = React.useState(false);
+  const [mapWidth, setMapWidth] = React.useState(600);
   const timeoutRef = React.useRef(null);
   const mapRef = React.useRef(null);
   
   const filteredProtocols = protocols.filter(p => selectedCategories.length === 0 || selectedCategories.includes(p.category));
+  
+  // Track map width
+  React.useEffect(() => {
+    const updateWidth = () => {
+      if (mapRef.current) {
+        setMapWidth(mapRef.current.clientWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
   
   // Clear timeout
   const clearHoverTimeout = () => {
@@ -127,7 +140,11 @@ export const WorldWideMap = ({ protocols, categories, selectedCategories, onSele
   
   // Cleanup
   React.useEffect(() => {
-    return () => clearHoverTimeout();
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, []);
   
   return (
