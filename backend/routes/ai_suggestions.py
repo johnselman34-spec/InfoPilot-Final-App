@@ -288,3 +288,165 @@ async def get_fallback_suggestions(user_id: str, limit: int = 5) -> dict:
 async def refresh_suggestions(user = Depends(get_current_user)):
     """Force refresh AI suggestions (bypasses cache)"""
     return await get_ai_protocol_suggestions(limit=5, user=user)
+
+
+class ProtocolCreationRequest(BaseModel):
+    category: str = "trending"  # trending, similar, gaps, seasonal, premium
+
+
+@router.post("/ai/protocol-recommendations", response_model=dict)
+async def get_ai_protocol_creation_recommendations(
+    request: ProtocolCreationRequest,
+    user = Depends(get_current_user)
+):
+    """
+    Get AI-powered recommendations for creating NEW protocols.
+    Returns protocol ideas with names, InfoJet 2.0 syntax, pricing suggestions, and demand analysis.
+    """
+    user_id = str(user["_id"])
+    category = request.category
+    
+    if not EMERGENT_LLM_KEY:
+        logger.warning("EMERGENT_LLM_KEY not configured for AI recommendations")
+        return {"recommendations": [], "ai_powered": False, "error": "AI not configured"}
+    
+    try:
+        # Get user context for personalization
+        context = await get_user_search_context(user_id)
+        
+        # Get existing marketplace protocols to avoid duplicates
+        existing_protocols = await db.categories.find(
+            {"is_marketplace": True}
+        ).limit(50).to_list(50)
+        
+        existing_names = [p.get("name", "").lower() for p in existing_protocols]
+        
+        # Category-specific prompts
+        category_prompts = {
+            "trending": "Focus on currently trending topics in 2025-2026: AI, space exploration, climate tech, cryptocurrency regulation, remote work, mental health, emerging technologies.",
+            "similar": f"Based on user's interests: {', '.join(context['search_terms'][:5]) or 'general topics'} and categories: {', '.join(context['category_names'][:3]) or 'various'}. Suggest protocols similar to what they already work with.",
+            "gaps": "Focus on underserved niches with high demand but low supply: specialized professional topics, niche hobbies, regional interests, emerging industries.",
+            "seasonal": "Focus on seasonal opportunities: tax season (Jan-Apr), summer travel (May-Aug), back to school (Aug-Sep), holiday shopping (Nov-Dec), New Year resolutions (Jan).",
+            "premium": "Focus on high-value B2B or professional topics: executive insights, investment analysis, legal compliance, industry reports, enterprise solutions."
+        }
+        
+        prompt_context = category_prompts.get(category, category_prompts["trending"])
+        
+        # Build the AI prompt
+        ai_prompt = f"""You are an expert at creating search protocols for InfoPilot Explorer marketplace.
+Generate 5 unique, marketable protocol ideas for the "{category}" category.
+
+Context: {prompt_context}
+
+Existing protocols to avoid (don't duplicate these names): {', '.join(existing_names[:20]) if existing_names else 'None'}
+
+For each protocol, provide:
+1. A catchy, marketable name
+2. An InfoJet 2.0 protocol string using this syntax:
+   - Use parentheses for word groups: (word1 or word2)
+   - Use & to connect required groups: (group1) & (group2)
+   - Use + at end for recency bias: (terms)+
+   - Example: (artificial intelligence or AI) & (breakthrough or news) & (2025 or 2026)+
+
+3. Estimated price range (consider: FREE, $0.99-$1.99, $2.99-$4.99, $5.99-$9.99, $14.99+)
+4. Demand level: LOW, MEDIUM, MEDIUM-HIGH, HIGH, VERY HIGH
+5. A brief note explaining why this is valuable (max 50 words)
+
+Return ONLY a valid JSON array in this exact format:
+[
+  {{
+    "name": "Protocol Name",
+    "protocol": "(term1 or term2) & (term3 or term4)+",
+    "estimated_value": "$2.99-$4.99",
+    "demand": "HIGH",
+    "note": "Brief explanation of value"
+  }}
+]
+
+Make the protocols specific, actionable, and valuable to searchers. Focus on quality over generality."""
+
+        # Call GPT-5.2
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"protocol_rec_{user_id}_{category}_{datetime.now().timestamp()}",
+            system_message="You are an expert protocol marketplace analyst. Return only valid JSON arrays."
+        ).with_model("openai", "gpt-5.2")
+        
+        response = await chat.send_message(UserMessage(text=ai_prompt))
+        
+        # Parse AI response
+        import json
+        try:
+            response_text = response.strip()
+            # Clean markdown code blocks if present
+            if "```" in response_text:
+                response_text = response_text.split("```")[1]
+                if response_text.startswith("json"):
+                    response_text = response_text[4:]
+                response_text = response_text.strip()
+            
+            recommendations = json.loads(response_text)
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse AI response: {response[:300]}")
+            return {
+                "recommendations": get_fallback_protocol_recommendations(category),
+                "ai_powered": False,
+                "category": category,
+                "error": "Failed to parse AI response"
+            }
+        
+        # Validate and clean recommendations
+        validated = []
+        for rec in recommendations:
+            if isinstance(rec, dict) and "name" in rec and "protocol" in rec:
+                validated.append({
+                    "name": rec.get("name", "Unnamed Protocol"),
+                    "protocol": rec.get("protocol", "(search) & (terms)+"),
+                    "estimated_value": rec.get("estimated_value", "$1.99-$2.99"),
+                    "demand": rec.get("demand", "MEDIUM"),
+                    "note": rec.get("note", "AI-generated recommendation")
+                })
+        
+        return {
+            "recommendations": validated[:5],
+            "ai_powered": True,
+            "category": category,
+            "generated_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"AI protocol recommendations error: {e}")
+        return {
+            "recommendations": get_fallback_protocol_recommendations(category),
+            "ai_powered": False,
+            "category": category,
+            "error": str(e)
+        }
+
+
+def get_fallback_protocol_recommendations(category: str) -> list:
+    """Return static fallback recommendations when AI is unavailable"""
+    fallbacks = {
+        "trending": [
+            {"name": "AI News Tracker", "protocol": "(artificial intelligence or AI or machine learning) & (breakthrough or announcement) & (2025 or 2026)+", "estimated_value": "$2.99-$4.99", "demand": "HIGH", "note": "AI is consistently trending"},
+            {"name": "Space Exploration Updates", "protocol": "(NASA or SpaceX or space mission) & (launch or discovery) & (Mars or Moon)+", "estimated_value": "$1.99-$3.99", "demand": "HIGH", "note": "Space news always attracts readers"},
+            {"name": "Climate Tech Innovations", "protocol": "(climate or renewable energy) & (technology or innovation) & (solution or investment)+", "estimated_value": "$2.99-$4.99", "demand": "MEDIUM-HIGH", "note": "Growing interest in sustainability"},
+        ],
+        "gaps": [
+            {"name": "Remote Work Productivity", "protocol": "(remote work or work from home) & (productivity or tips or tools)+", "estimated_value": "$1.99-$2.99", "demand": "HIGH", "note": "Underserved niche with high demand"},
+            {"name": "Mental Health Resources", "protocol": "(mental health or wellness) & (resources or support) & (anxiety or stress)+", "estimated_value": "$2.99-$4.99", "demand": "HIGH", "note": "Growing demand for mental health content"},
+        ],
+        "seasonal": [
+            {"name": "Tax Season Guide 2026", "protocol": "(tax or IRS or deduction) & (2026 or filing or deadline)+", "estimated_value": "$4.99-$9.99", "demand": "SEASONAL HIGH", "note": "Peak demand Jan-Apr"},
+            {"name": "Summer Travel Deals", "protocol": "(travel or vacation) & (deal or discount) & (summer or 2026)+", "estimated_value": "$1.99-$3.99", "demand": "SEASONAL", "note": "Peak demand May-Aug"},
+        ],
+        "premium": [
+            {"name": "Executive Leadership Insights", "protocol": "(CEO or executive or leadership) & (strategy or interview) & (Fortune 500)+", "estimated_value": "$9.99-$19.99", "demand": "NICHE-HIGH", "note": "Premium B2B audience"},
+            {"name": "Investment Due Diligence", "protocol": "(investment or due diligence) & (analysis or risk) & (startup or fund)+", "estimated_value": "$14.99-$29.99", "demand": "NICHE-HIGH", "note": "High-value professional content"},
+        ],
+        "similar": [
+            {"name": "Aviation Career Guide", "protocol": "(pilot or aviation) & (career or training or certification)+", "estimated_value": "$3.99-$5.99", "demand": "MEDIUM", "note": "Based on aviation interests"},
+            {"name": "Memoir Writing Tips", "protocol": "(memoir or autobiography) & (writing or publishing) & (bestseller)+", "estimated_value": "$2.99-$4.99", "demand": "MEDIUM", "note": "Based on storytelling interests"},
+        ]
+    }
+    return fallbacks.get(category, fallbacks["trending"])
