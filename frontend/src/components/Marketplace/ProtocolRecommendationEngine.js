@@ -164,6 +164,8 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
     setRecommendations(FALLBACK_TEMPLATES[categoryId] || FALLBACK_TEMPLATES.trending);
     setIsAiPowered(false);
     fetchAiRecommendations(categoryId);
+    // Track category view for A/B testing
+    trackRecommendationAction(categoryId, 'view', null);
   };
   
   // Refresh recommendations
@@ -171,11 +173,30 @@ const ProtocolRecommendationEngine = ({ showToast }) => {
     fetchAiRecommendations(selectedCategory);
   };
   
+  // Track recommendation interactions for A/B testing
+  const trackRecommendationAction = async (category, action, recommendationName) => {
+    if (!token) return;
+    try {
+      await fetch(`${API}/ai/recommendations/track`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ category, action, recommendation_name: recommendationName })
+      });
+    } catch (e) {
+      console.error('Failed to track recommendation:', e);
+    }
+  };
+  
   // Copy protocol to clipboard
-  const copyProtocol = async (protocol) => {
+  const copyProtocol = async (protocol, recName) => {
     try {
       await navigator.clipboard.writeText(protocol);
       showToast && showToast('📋 Protocol copied! Paste it when creating a new category.', 'success');
+      // Track copy action for A/B testing
+      trackRecommendationAction(selectedCategory, 'copy', recName);
     } catch (e) {
       showToast && showToast('Failed to copy', 'error');
     }
