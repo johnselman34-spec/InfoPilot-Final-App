@@ -168,7 +168,10 @@ async def websocket_notifications(websocket: WebSocket, token: str = None):
     except WebSocketDisconnect:
         manager.disconnect(websocket)
     except Exception as e:
-        logger.error(f"WebSocket error: {e}")
+        # Only log non-close-frame errors (close frame errors are normal during disconnection)
+        error_msg = str(e).lower()
+        if "close frame" not in error_msg and "connection closed" not in error_msg:
+            logger.error(f"WebSocket error: {e}")
         manager.disconnect(websocket)
 
 
