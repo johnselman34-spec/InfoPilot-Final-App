@@ -234,11 +234,16 @@ const UltimateSearchPage = ({ showToast }) => {
 
   // Track if component is mounted to prevent state updates after unmount
   const isMountedRef = useRef(true);
+  const abortControllerRef = useRef(null);
   
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      // Cancel any pending requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
     };
   }, []);
   
@@ -250,10 +255,19 @@ const UltimateSearchPage = ({ showToast }) => {
       return;
     }
     
+    // Cancel any previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+    
     try {
       console.log('fetchCategories: Making API call...');
       const res = await fetch(`${API}/categories`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}` },
+        signal: abortControllerRef.current.signal
       });
       console.log('fetchCategories: Response status:', res.status);
       if (res.ok) {
@@ -267,7 +281,11 @@ const UltimateSearchPage = ({ showToast }) => {
         console.error('fetchCategories: Response not OK:', res.status);
       }
     } catch (e) {
-      console.error('Failed to fetch categories:', e);
+      if (e.name === 'AbortError') {
+        console.log('fetchCategories: Request was aborted');
+      } else {
+        console.error('Failed to fetch categories:', e);
+      }
     }
   }, [token]);
 
