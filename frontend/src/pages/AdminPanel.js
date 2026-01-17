@@ -17,6 +17,7 @@ import QualityScoreAnalytics from '../components/Admin/QualityScoreAnalytics';
 import RevenueDashboard from '../components/Admin/RevenueDashboard';
 import BannedWordsAdmin from '../components/Admin/BannedWordsAdmin';
 import ContentQualityReport from '../components/Admin/ContentQualityReport';
+import ViolationAlerts from '../components/Admin/ViolationAlerts';
 
 const AdminPanel = ({ showToast }) => {
   const { token } = useAuth();
