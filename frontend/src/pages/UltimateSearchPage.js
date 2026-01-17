@@ -606,9 +606,14 @@ const UltimateSearchPage = ({ showToast }) => {
   };
 
   const toggleCategorySelection = (catId) => {
-    setSelectedCategories(prev => 
-      prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId]
-    );
+    setSelectedCategories(prev => {
+      const newSelection = prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId];
+      // Automatically show filtered results when categories are selected
+      if (newSelection.length > 0) {
+        setShowFilteredResults(true);
+      }
+      return newSelection;
+    });
   };
 
   const addReaction = async (resultId, reactionType) => {
