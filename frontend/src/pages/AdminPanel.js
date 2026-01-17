@@ -14,6 +14,7 @@ import DoctypeSettingsAdmin from '../components/Admin/DoctypeSettingsAdmin';
 import DoctypeTestingTool from '../components/Admin/DoctypeTestingTool';
 import CleanAllCategoriesAdmin from '../components/Admin/CleanAllCategoriesAdmin';
 import QualityScoreAnalytics from '../components/Admin/QualityScoreAnalytics';
+import RevenueDashboard from '../components/Admin/RevenueDashboard';
 
 const AdminPanel = ({ showToast }) => {
   const { token } = useAuth();
