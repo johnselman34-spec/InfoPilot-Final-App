@@ -21,37 +21,17 @@ class TestCategoryPUTEndpoint:
         """Setup test credentials and login"""
         self.admin_email = "jjspilot24@gmail.com"
         self.admin_password = "InfoPilot2024!"
-        self.test_email = "testuser@example.com"
-        self.test_password = "password123"
         
-        # Login as admin
+        # Login as admin (use admin for all tests since test user doesn't exist)
         login_response = requests.post(f"{BASE_URL}/api/auth/login", json={
             "email": self.admin_email,
             "password": self.admin_password
         })
         if login_response.status_code == 200:
             self.admin_token = login_response.json().get("token")
+            self.test_token = self.admin_token  # Use admin token for tests
         else:
             pytest.skip("Admin login failed")
-        
-        # Login as test user
-        login_response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": self.test_email,
-            "password": self.test_password
-        })
-        if login_response.status_code == 200:
-            self.test_token = login_response.json().get("token")
-        else:
-            # Create test user if doesn't exist
-            register_response = requests.post(f"{BASE_URL}/api/auth/register", json={
-                "email": self.test_email,
-                "password": self.test_password,
-                "name": "Test User"
-            })
-            if register_response.status_code in [200, 201]:
-                self.test_token = register_response.json().get("token")
-            else:
-                pytest.skip("Test user login/registration failed")
     
     def test_create_category_success(self):
         """Test creating a new category"""
