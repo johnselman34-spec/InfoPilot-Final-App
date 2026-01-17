@@ -233,17 +233,25 @@ const UltimateSearchPage = ({ showToast }) => {
   };
 
   const fetchCategories = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      console.log('[fetchCategories] No token available, skipping');
+      return;
+    }
+    console.log('[fetchCategories] Fetching categories with token:', token.substring(0, 10) + '...');
     try {
       const res = await fetch(`${API}/categories`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      console.log('[fetchCategories] Response status:', res.status);
       if (res.ok) {
         const data = await res.json();
+        console.log('[fetchCategories] Categories received:', data.length);
         setCategories(data);
+      } else {
+        console.error('[fetchCategories] Response not ok:', res.status);
       }
     } catch (e) {
-      console.error('Failed to fetch categories:', e);
+      console.error('[fetchCategories] Failed to fetch categories:', e);
     }
   }, [token]);
 
