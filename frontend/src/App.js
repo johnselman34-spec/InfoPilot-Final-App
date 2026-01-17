@@ -93,14 +93,17 @@ const MainApp = () => {
     }
   };
 
+  // Pages that should have minimal headers (admin/analytics/utility pages)
+  const isAdminPage = ['admin', 'analytics', 'legal', 'wallet', 'personal-reports', 'subscribe'].includes(currentPage);
+  
   return (
     <div className="app-container">
       <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} showToast={showToast} />
       <main className="main-content pt-16 md:pt-0">
-        {/* Book Promotion Banner - Always visible */}
-        <BookPromoBanner />
-        {/* Quote of the Day - Rotating manuscript quotes */}
-        <QuoteOfTheDay />
+        {/* Book Promotion Banner - Hide on admin/analytics pages for cleaner UX */}
+        {!isAdminPage && <BookPromoBanner />}
+        {/* Quote of the Day - Hide on admin/analytics pages */}
+        {!isAdminPage && <QuoteOfTheDay />}
         {renderPage()}
       </main>
       {toast && (
