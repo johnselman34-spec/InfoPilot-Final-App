@@ -34,12 +34,16 @@ if (config.enableHealthCheck) {
 
 const webpackConfig = {
   eslint: {
-    configure: {
-      extends: ["plugin:react-hooks/recommended"],
-      rules: {
+    enable: true,
+    mode: 'extends',
+    configure: (eslintConfig) => {
+      // Remove conflicting extends to avoid plugin conflicts
+      eslintConfig.rules = {
+        ...eslintConfig.rules,
         "react-hooks/rules-of-hooks": "error",
         "react-hooks/exhaustive-deps": "warn",
-      },
+      };
+      return eslintConfig;
     },
   },
   webpack: {
