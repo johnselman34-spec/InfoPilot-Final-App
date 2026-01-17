@@ -210,9 +210,25 @@ class TestAINews:
 class TestSmartSearchSuggestions:
     """Smart Search Suggestions API tests"""
     
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Get token for authenticated requests"""
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": ADMIN_EMAIL,
+            "password": ADMIN_PASSWORD
+        })
+        if response.status_code == 200:
+            self.token = response.json().get("token")
+            self.headers = {"Authorization": f"Bearer {self.token}"}
+        else:
+            pytest.skip("Authentication failed")
+    
     def test_smart_suggestions_endpoint(self):
         """Test smart search suggestions endpoint"""
-        response = requests.get(f"{BASE_URL}/api/ai/smart-suggestions?query=health")
+        response = requests.get(
+            f"{BASE_URL}/api/ai/smart-suggestions?query=health",
+            headers=self.headers
+        )
         assert response.status_code == 200, f"Smart suggestions failed: {response.text}"
         data = response.json()
         
@@ -230,7 +246,10 @@ class TestSmartSearchSuggestions:
     
     def test_smart_suggestions_different_query(self):
         """Test smart suggestions with different query"""
-        response = requests.get(f"{BASE_URL}/api/ai/smart-suggestions?query=technology")
+        response = requests.get(
+            f"{BASE_URL}/api/ai/smart-suggestions?query=technology",
+            headers=self.headers
+        )
         assert response.status_code == 200, f"Smart suggestions failed: {response.text}"
         print(f"✅ Smart suggestions works with different queries")
 
