@@ -63,10 +63,72 @@ export const FreeBanner = ({ message }) => (
 );
 
 /**
- * WorldWideMap - Visual map showing protocol distribution
+ * WorldWideMap - Visual map showing protocol distribution with improved popup behavior
  */
 export const WorldWideMap = ({ protocols, categories, selectedCategories, onSelectAll, onDeselectAll }) => {
+  const [hoveredProtocol, setHoveredProtocol] = React.useState(null);
+  const [hoverPosition, setHoverPosition] = React.useState({ x: 0, y: 0 });
+  const [isMaximized, setIsMaximized] = React.useState(false);
+  const timeoutRef = React.useRef(null);
+  const mapRef = React.useRef(null);
+  
   const filteredProtocols = protocols.filter(p => selectedCategories.length === 0 || selectedCategories.includes(p.category));
+  
+  // Clear timeout
+  const clearHoverTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+  
+  // Handle dot hover - INSTANT popup switching
+  const handleDotHover = (protocol, e) => {
+    clearHoverTimeout();
+    if (mapRef.current) {
+      const rect = mapRef.current.getBoundingClientRect();
+      setHoverPosition({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
+    setHoveredProtocol(protocol);
+    setIsMaximized(false);
+  };
+  
+  // Handle dot leave - delayed hide
+  const handleDotLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setHoveredProtocol(null);
+      setIsMaximized(false);
+    }, 200);
+  };
+  
+  // Keep popup open when hovering it
+  const handlePopupEnter = () => clearHoverTimeout();
+  
+  // Hide popup when leaving it
+  const handlePopupLeave = () => {
+    timeoutRef.current = setTimeout(() => {
+      setHoveredProtocol(null);
+      setIsMaximized(false);
+    }, 150);
+  };
+  
+  // Close popup immediately
+  const closePopup = () => {
+    clearHoverTimeout();
+    setHoveredProtocol(null);
+    setIsMaximized(false);
+  };
+  
+  // Toggle maximize
+  const toggleMaximize = () => setIsMaximized(prev => !prev);
+  
+  // Cleanup
+  React.useEffect(() => {
+    return () => clearHoverTimeout();
+  }, []);
   
   return (
     <div style={{ background: 'linear-gradient(135deg, rgba(20, 10, 40, 0.95), rgba(30, 20, 60, 0.95))', borderRadius: 15, padding: 20, marginBottom: 20, border: '2px solid rgba(124, 58, 237, 0.4)' }}>
@@ -81,7 +143,10 @@ export const WorldWideMap = ({ protocols, categories, selectedCategories, onSele
         </div>
       </div>
       
-      <div style={{ background: 'linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%)', borderRadius: 12, height: 280, position: 'relative', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.5)' }}>
+      <div 
+        ref={mapRef}
+        style={{ background: 'linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%)', borderRadius: 12, height: 280, position: 'relative', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.5)' }}
+      >
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(124, 58, 237, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(124, 58, 237, 0.1) 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
         
         {filteredProtocols.map((protocol, index) => {
@@ -89,14 +154,134 @@ export const WorldWideMap = ({ protocols, categories, selectedCategories, onSele
           const x = ((loc.lng + 180) / 360) * 100;
           const y = ((90 - loc.lat) / 180) * 100;
           const color = CATEGORY_COLORS[protocol.category] || '#7c3aed';
+          const isActive = hoveredProtocol?.id === protocol.id;
           
           return (
-            <div key={protocol.id} style={{ position: 'absolute', left: `${Math.min(92, Math.max(8, x))}%`, top: `${Math.min(88, Math.max(12, y))}%`, transform: 'translate(-50%, -50%)', cursor: 'pointer', zIndex: 10 }} title={`${protocol.name} (${protocol.category})`}>
-              <div style={{ width: 16, height: 16, borderRadius: '50%', background: color, border: '2px solid white', boxShadow: `0 0 12px ${color}80`, animation: 'pulse 2s infinite' }} />
+            <div 
+              key={protocol.id} 
+              data-testid={`map-dot-${index}`}
+              onMouseEnter={(e) => handleDotHover(protocol, e)}
+              onMouseLeave={handleDotLeave}
+              style={{ 
+                position: 'absolute', 
+                left: `${Math.min(92, Math.max(8, x))}%`, 
+                top: `${Math.min(88, Math.max(12, y))}%`, 
+                transform: 'translate(-50%, -50%)', 
+                cursor: 'pointer', 
+                zIndex: isActive ? 100 : 10,
+                transition: 'z-index 0.1s'
+              }} 
+              title={`${protocol.name} (${protocol.category})`}
+            >
+              <div style={{ 
+                width: isActive ? 20 : 16, 
+                height: isActive ? 20 : 16, 
+                borderRadius: '50%', 
+                background: color, 
+                border: `2px solid ${isActive ? '#fff' : 'rgba(255,255,255,0.8)'}`, 
+                boxShadow: isActive ? `0 0 20px ${color}, 0 0 40px ${color}60` : `0 0 12px ${color}80`, 
+                animation: isActive ? 'dotPulse 1s infinite' : 'none',
+                transition: 'all 0.15s ease-out'
+              }} />
             </div>
           );
         })}
         
+        {/* Enhanced Popup with Close/Maximize buttons */}
+        {hoveredProtocol && (
+          <div
+            data-testid="marketplace-map-popup"
+            onMouseEnter={handlePopupEnter}
+            onMouseLeave={handlePopupLeave}
+            style={{
+              position: 'absolute',
+              left: Math.min(hoverPosition.x + 15, (mapRef.current?.clientWidth || 600) - (isMaximized ? 350 : 280)),
+              top: Math.max(hoverPosition.y - (isMaximized ? 180 : 120), 10),
+              width: isMaximized ? 330 : 260,
+              background: 'linear-gradient(145deg, rgba(15, 10, 35, 0.98), rgba(25, 15, 50, 0.98))',
+              borderRadius: 10,
+              border: `2px solid ${CATEGORY_COLORS[hoveredProtocol.category] || '#7c3aed'}`,
+              boxShadow: `0 8px 24px rgba(0,0,0,0.6), 0 0 15px ${CATEGORY_COLORS[hoveredProtocol.category] || '#7c3aed'}40`,
+              zIndex: 1000,
+              overflow: 'hidden',
+              animation: 'popupFadeIn 0.15s ease-out',
+              backdropFilter: 'blur(8px)'
+            }}
+          >
+            {/* Header with controls */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '6px 10px',
+              background: `linear-gradient(90deg, ${CATEGORY_COLORS[hoveredProtocol.category] || '#7c3aed'}30, transparent)`,
+              borderBottom: '1px solid rgba(255,255,255,0.1)'
+            }}>
+              <span style={{
+                background: CATEGORY_COLORS[hoveredProtocol.category] || '#7c3aed',
+                padding: '2px 8px', borderRadius: 8,
+                fontSize: '0.6rem', fontWeight: 600, color: '#fff'
+              }}>
+                {hoveredProtocol.category}
+              </span>
+              
+              {/* Control buttons */}
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleMaximize(); }}
+                  title={isMaximized ? 'Minimize' : 'Maximize'}
+                  style={{
+                    width: 22, height: 22,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: 'none', borderRadius: 4,
+                    color: '#a1a1aa', cursor: 'pointer', fontSize: '0.8rem'
+                  }}
+                >
+                  {isMaximized ? '⊟' : '⊞'}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); closePopup(); }}
+                  title="Close"
+                  style={{
+                    width: 22, height: 22,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    border: 'none', borderRadius: 4,
+                    color: '#ef4444', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 'bold'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            {/* Content */}
+            <div style={{ padding: 10, maxHeight: isMaximized ? 220 : 140, overflowY: 'auto' }}>
+              <h4 style={{ color: '#fff', margin: '0 0 6px 0', fontSize: isMaximized ? '0.9rem' : '0.8rem', lineHeight: 1.3 }}>
+                {isMaximized ? hoveredProtocol.name : (hoveredProtocol.name?.substring(0, 50) || 'Untitled') + (hoveredProtocol.name?.length > 50 ? '...' : '')}
+              </h4>
+              <p style={{ color: '#a1a1aa', fontSize: '0.7rem', margin: '0 0 8px 0', lineHeight: 1.4 }}>
+                {isMaximized 
+                  ? hoveredProtocol.description 
+                  : (hoveredProtocol.description?.substring(0, 80) || 'No description') + (hoveredProtocol.description?.length > 80 ? '...' : '')}
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ 
+                  color: hoveredProtocol.price === 0 ? '#10b981' : '#f59e0b', 
+                  fontWeight: 700, fontSize: '0.85rem' 
+                }}>
+                  {hoveredProtocol.price === 0 ? '🆓 FREE' : `$${hoveredProtocol.price?.toFixed(2)}`}
+                </span>
+                <span style={{ color: '#71717a', fontSize: '0.65rem' }}>
+                  {hoveredProtocol.downloads || 0} copies
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Category legend */}
         <div style={{ position: 'absolute', bottom: 10, right: 10, background: 'rgba(0,0,0,0.8)', padding: '10px 15px', borderRadius: 10, maxWidth: 200, maxHeight: 150, overflowY: 'auto' }}>
           <div style={{ color: '#fff', fontSize: '0.7rem', fontWeight: 600, marginBottom: 8 }}>Categories:</div>
           {categories.slice(0, 6).map((cat, i) => (
@@ -110,6 +295,18 @@ export const WorldWideMap = ({ protocols, categories, selectedCategories, onSele
         <div style={{ position: 'absolute', top: 10, left: 10, background: 'linear-gradient(135deg, #10b981, #059669)', padding: '6px 12px', borderRadius: 20, color: '#fff', fontSize: '0.7rem', fontWeight: 700, boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)' }}>
           🆓 100% FREE TO BROWSE!
         </div>
+        
+        {/* CSS Animations */}
+        <style>{`
+          @keyframes popupFadeIn {
+            from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes dotPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+          }
+        `}</style>
       </div>
     </div>
   );
