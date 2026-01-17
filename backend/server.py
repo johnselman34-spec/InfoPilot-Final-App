@@ -4640,6 +4640,275 @@ async def bulk_block_domains(
     }
 
 
+# ============== AUTOMATIC DOMAIN SCORING & ALERTS ==============
+
+@api_router.post("/admin/domain-scoring/run")
+async def run_domain_scoring(user = Depends(get_current_user_local)):
+    """
+    Run automatic domain scoring analysis.
+    Identifies domains with consistently low quality scores and creates alerts.
+    """
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get domains with their average quality scores (minimum 5 results)
+    domain_analysis_pipeline = [
+        {"$match": {"root_domain": {"$exists": True, "$ne": ""}}},
+        {"$group": {
+            "_id": "$root_domain",
+            "avg_score": {"$avg": {"$ifNull": ["$content_quality_score", 50]}},
+            "result_count": {"$sum": 1},
+            "min_score": {"$min": {"$ifNull": ["$content_quality_score", 50]}},
+            "max_score": {"$max": {"$ifNull": ["$content_quality_score", 50]}},
+            "latest_result": {"$max": "$created_at"}
+        }},
+        {"$match": {"result_count": {"$gte": 5}}},  # At least 5 results
+        {"$sort": {"avg_score": 1}}
+    ]
+    
+    all_domains = await db.search_results.aggregate(domain_analysis_pipeline).to_list(1000)
+    
+    # Get already blocked domains
+    blocked = await db.blocked_domains.distinct("domain")
+    blocked_set = set(blocked)
+    
+    # Define alert thresholds
+    CRITICAL_THRESHOLD = 30  # Score < 30 is critical
+    WARNING_THRESHOLD = 45   # Score < 45 is warning
+    WATCH_THRESHOLD = 55     # Score < 55 is watch
+    
+    alerts_created = 0
+    alerts_updated = 0
+    
+    for domain_data in all_domains:
+        domain = domain_data["_id"]
+        avg_score = domain_data["avg_score"]
+        result_count = domain_data["result_count"]
+        
+        # Skip already blocked domains
+        if domain in blocked_set:
+            continue
+        
+        # Determine alert level
+        if avg_score < CRITICAL_THRESHOLD:
+            alert_level = "critical"
+            alert_message = f"Critical: {domain} has very low quality (avg: {avg_score:.1f})"
+        elif avg_score < WARNING_THRESHOLD:
+            alert_level = "warning"
+            alert_message = f"Warning: {domain} has below-average quality (avg: {avg_score:.1f})"
+        elif avg_score < WATCH_THRESHOLD:
+            alert_level = "watch"
+            alert_message = f"Watch: {domain} quality is declining (avg: {avg_score:.1f})"
+        else:
+            # Remove any existing alert for this domain if quality improved
+            await db.domain_alerts.delete_one({"domain": domain})
+            continue
+        
+        # Check for existing alert
+        existing_alert = await db.domain_alerts.find_one({"domain": domain})
+        
+        if existing_alert:
+            # Update existing alert
+            await db.domain_alerts.update_one(
+                {"domain": domain},
+                {"$set": {
+                    "alert_level": alert_level,
+                    "avg_score": round(avg_score, 1),
+                    "result_count": result_count,
+                    "min_score": round(domain_data["min_score"], 1),
+                    "max_score": round(domain_data["max_score"], 1),
+                    "message": alert_message,
+                    "latest_result": domain_data.get("latest_result"),
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+            alerts_updated += 1
+        else:
+            # Create new alert
+            await db.domain_alerts.insert_one({
+                "domain": domain,
+                "alert_level": alert_level,
+                "avg_score": round(avg_score, 1),
+                "result_count": result_count,
+                "min_score": round(domain_data["min_score"], 1),
+                "max_score": round(domain_data["max_score"], 1),
+                "message": alert_message,
+                "latest_result": domain_data.get("latest_result"),
+                "dismissed": False,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            })
+            alerts_created += 1
+    
+    # Get summary counts
+    total_alerts = await db.domain_alerts.count_documents({"dismissed": False})
+    critical_count = await db.domain_alerts.count_documents({"alert_level": "critical", "dismissed": False})
+    warning_count = await db.domain_alerts.count_documents({"alert_level": "warning", "dismissed": False})
+    watch_count = await db.domain_alerts.count_documents({"alert_level": "watch", "dismissed": False})
+    
+    logger.info(f"Domain scoring completed: {alerts_created} new alerts, {alerts_updated} updated")
+    
+    return {
+        "success": True,
+        "alerts_created": alerts_created,
+        "alerts_updated": alerts_updated,
+        "summary": {
+            "total_alerts": total_alerts,
+            "critical": critical_count,
+            "warning": warning_count,
+            "watch": watch_count
+        },
+        "thresholds": {
+            "critical": f"< {CRITICAL_THRESHOLD}",
+            "warning": f"< {WARNING_THRESHOLD}",
+            "watch": f"< {WATCH_THRESHOLD}"
+        },
+        "last_run": datetime.utcnow().isoformat()
+    }
+
+
+@api_router.get("/admin/domain-alerts")
+async def get_domain_alerts(
+    include_dismissed: bool = Query(False),
+    alert_level: Optional[str] = Query(None),
+    user = Depends(get_current_user_local)
+):
+    """Get all domain quality alerts"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    query = {}
+    if not include_dismissed:
+        query["dismissed"] = {"$ne": True}
+    if alert_level:
+        query["alert_level"] = alert_level
+    
+    alerts = await db.domain_alerts.find(query).sort([
+        ("alert_level", 1),  # critical first
+        ("avg_score", 1)     # then by score ascending
+    ]).to_list(500)
+    
+    # Get summary counts
+    total = await db.domain_alerts.count_documents({"dismissed": {"$ne": True}})
+    critical = await db.domain_alerts.count_documents({"alert_level": "critical", "dismissed": {"$ne": True}})
+    warning = await db.domain_alerts.count_documents({"alert_level": "warning", "dismissed": {"$ne": True}})
+    watch = await db.domain_alerts.count_documents({"alert_level": "watch", "dismissed": {"$ne": True}})
+    
+    return {
+        "alerts": [
+            {
+                "id": str(a["_id"]),
+                "domain": a["domain"],
+                "alert_level": a["alert_level"],
+                "avg_score": a["avg_score"],
+                "result_count": a["result_count"],
+                "min_score": a.get("min_score", 0),
+                "max_score": a.get("max_score", 100),
+                "message": a.get("message", ""),
+                "dismissed": a.get("dismissed", False),
+                "created_at": a.get("created_at", datetime.utcnow()).isoformat(),
+                "updated_at": a.get("updated_at", datetime.utcnow()).isoformat()
+            }
+            for a in alerts
+        ],
+        "summary": {
+            "total": total,
+            "critical": critical,
+            "warning": warning,
+            "watch": watch
+        }
+    }
+
+
+@api_router.post("/admin/domain-alerts/{alert_id}/dismiss")
+async def dismiss_domain_alert(alert_id: str, user = Depends(get_current_user_local)):
+    """Dismiss a domain alert"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        result = await db.domain_alerts.update_one(
+            {"_id": ObjectId(alert_id)},
+            {"$set": {"dismissed": True, "dismissed_by": user.get("email"), "dismissed_at": datetime.utcnow()}}
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=404, detail="Alert not found")
+        
+        return {"success": True, "message": "Alert dismissed"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@api_router.post("/admin/domain-alerts/{alert_id}/block")
+async def block_from_alert(alert_id: str, user = Depends(get_current_user_local)):
+    """Block domain directly from an alert"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    try:
+        alert = await db.domain_alerts.find_one({"_id": ObjectId(alert_id)})
+        if not alert:
+            raise HTTPException(status_code=404, detail="Alert not found")
+        
+        domain = alert["domain"]
+        
+        # Check if already blocked
+        existing = await db.blocked_domains.find_one({"domain": domain})
+        if existing:
+            # Just dismiss the alert
+            await db.domain_alerts.update_one(
+                {"_id": ObjectId(alert_id)},
+                {"$set": {"dismissed": True, "dismissed_by": user.get("email"), "dismissed_at": datetime.utcnow()}}
+            )
+            return {"success": True, "message": f"Domain '{domain}' already blocked, alert dismissed"}
+        
+        # Add to blocklist
+        await db.blocked_domains.insert_one({
+            "domain": domain,
+            "reason": f"Auto-flagged: {alert.get('message', 'Low quality')}",
+            "avg_score": alert.get("avg_score", 0),
+            "result_count": alert.get("result_count", 0),
+            "blocked_by": user.get("email", "admin"),
+            "blocked_at": datetime.utcnow(),
+            "from_alert": True
+        })
+        
+        # Remove results
+        deleted = await db.search_results.delete_many({"root_domain": domain})
+        
+        # Dismiss the alert
+        await db.domain_alerts.update_one(
+            {"_id": ObjectId(alert_id)},
+            {"$set": {"dismissed": True, "blocked": True, "dismissed_by": user.get("email"), "dismissed_at": datetime.utcnow()}}
+        )
+        
+        logger.info(f"Domain blocked from alert: {domain} by {user.get('email')}, removed {deleted.deleted_count} results")
+        
+        return {
+            "success": True,
+            "message": f"Domain '{domain}' blocked",
+            "results_removed": deleted.deleted_count
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@api_router.delete("/admin/domain-alerts/clear-dismissed")
+async def clear_dismissed_alerts(user = Depends(get_current_user_local)):
+    """Clear all dismissed alerts"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.domain_alerts.delete_many({"dismissed": True})
+    
+    return {
+        "success": True,
+        "deleted_count": result.deleted_count,
+        "message": f"Cleared {result.deleted_count} dismissed alerts"
+    }
+
+
 # ============== PROTOCOL TEMPLATES ==============
 
 @api_router.get("/protocol-templates")
