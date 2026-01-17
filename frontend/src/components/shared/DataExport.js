@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { API } from '../../utils/api';
 
@@ -10,11 +10,7 @@ const DataExport = ({ showToast }) => {
   const [exportType, setExportType] = useState('all');
   const [format, setFormat] = useState('json');
 
-  useEffect(() => {
-    fetchSummary();
-  }, []);
-
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     try {
       const res = await fetch(`${API}/export/summary`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -27,7 +23,11 @@ const DataExport = ({ showToast }) => {
       console.error('Failed to fetch export summary:', e);
     }
     setLoading(false);
-  };
+  }, [token]);
+
+  useEffect(() => {
+    fetchSummary();
+  }, [fetchSummary]);
 
   const handleExport = async () => {
     setExporting(true);
