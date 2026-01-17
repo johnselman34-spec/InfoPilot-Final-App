@@ -170,7 +170,7 @@ async def update_category(category_id: str, update: CategoryUpdate, user = Depen
         category = await db.categories.find_one({"_id": ObjectId(category_id)})
     else:
         category = await db.categories.find_one({
-            "_id": ObjectId(category_id),
+            "_id": cat_oid,
             "user_id": str(user["_id"])
         })
     
@@ -287,7 +287,7 @@ async def delete_category(category_id: str, user = Depends(get_current_user)):
         category = await db.categories.find_one({"_id": ObjectId(category_id)})
     else:
         category = await db.categories.find_one({
-            "_id": ObjectId(category_id),
+            "_id": cat_oid,
             "user_id": str(user["_id"])
         })
     
@@ -332,7 +332,7 @@ async def clean_category(
         category = await db.categories.find_one({"_id": cat_oid})
     else:
         category = await db.categories.find_one({
-            "_id": ObjectId(category_id),
+            "_id": cat_oid,
             "user_id": str(user["_id"])
         })
     
@@ -408,7 +408,7 @@ async def get_category_results_count(category_id: str, user = Depends(get_curren
         category = await db.categories.find_one({"_id": ObjectId(category_id)})
     else:
         category = await db.categories.find_one({
-            "_id": ObjectId(category_id),
+            "_id": cat_oid,
             "user_id": str(user["_id"])
         })
     
