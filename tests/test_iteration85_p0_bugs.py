@@ -356,17 +356,17 @@ class TestCleanupTestData:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup test credentials and login"""
-        self.test_email = "testuser@example.com"
-        self.test_password = "password123"
+        self.admin_email = "jjspilot24@gmail.com"
+        self.admin_password = "InfoPilot2024!"
         
         login_response = requests.post(f"{BASE_URL}/api/auth/login", json={
-            "email": self.test_email,
-            "password": self.test_password
+            "email": self.admin_email,
+            "password": self.admin_password
         })
         if login_response.status_code == 200:
             self.token = login_response.json().get("token")
         else:
-            pytest.skip("Test user login failed")
+            pytest.skip("Admin login failed")
     
     def test_cleanup_test_categories(self):
         """Clean up any TEST_ prefixed categories"""
