@@ -182,12 +182,17 @@ async def get_session_data(session_id: str):
 
 @router.put("/auth/update-email", response_model=dict)
 async def update_email(
-    new_email: str,
-    password: str,
+    request: dict,
     user = Depends(get_current_user)
 ):
     """Update user email - requires password verification"""
     from bson import ObjectId
+    
+    new_email = request.get("new_email")
+    password = request.get("password")
+    
+    if not new_email or not password:
+        raise HTTPException(status_code=400, detail="Both new_email and password are required")
     
     # Validate new email format
     email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
