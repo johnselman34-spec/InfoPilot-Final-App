@@ -389,44 +389,6 @@ const CommunityLeaderboard = ({ showToast }) => {
           </div>
         </div>
       )}
-      
-      {/* First in Flight Banner */}
-      <div style={{
-        marginTop: 25,
-        padding: 20,
-        background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.2))',
-        borderRadius: 16,
-        border: '2px solid rgba(124, 58, 237, 0.4)',
-        textAlign: 'center'
-      }} data-testid="first-in-flight-banner">
-        <div style={{ fontSize: '2rem', marginBottom: 10 }}>✈️🏆</div>
-        <h3 style={{ 
-          color: '#7c3aed', 
-          margin: '0 0 10px 0',
-          fontSize: '1.3rem',
-          fontWeight: 800
-        }}>
-          FIRST IN FLIGHT WITH SEARCH MONETIZATION
-        </h3>
-        <p style={{ color: textColor, margin: '0 0 15px 0', fontSize: '0.95rem', lineHeight: 1.6 }}>
-          So much time is spent searching for valuable information. <strong>Why not make it worth something?</strong>
-        </p>
-        <p style={{ color: mutedColor, margin: 0, fontSize: '0.9rem', fontStyle: 'italic' }}>
-          If it is valuable to businesses, then it should be valuable to <span style={{ color: '#10b981', fontWeight: 700 }}>YOU!</span>
-        </p>
-        <div style={{
-          marginTop: 15,
-          padding: 10,
-          background: 'rgba(0,0,0,0.2)',
-          borderRadius: 10
-        }}>
-          <p style={{ color: '#f59e0b', margin: 0, fontSize: '0.8rem' }}>
-            🔒 InfoPilot Explorer™ and InfoJet 2.0™ are proprietary technologies of Top Pilot Enterprises, Inc.
-            <br />
-            All code is copyrighted and protected under intellectual property law.
-          </p>
-        </div>
-      </div>
     </div>
   );
 };
