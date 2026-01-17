@@ -1061,6 +1061,10 @@ const AdminPanel = ({ showToast }) => {
           <UserModerationAdmin token={token} showToast={showToast} />
         )}
 
+        {activeTab === 'banned-words' && (
+          <BannedWordsAdmin showToast={showToast} />
+        )}
+
         {activeTab === 'price-controls' && (
           <PriceControlsAdmin showToast={showToast} />
         )}
