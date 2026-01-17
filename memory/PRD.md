@@ -3596,3 +3596,65 @@ general | search | pricing | newsletter | users | 🛡️ moderation | 💰 pric
 - ✅ PayPal Commerce - Active
 - ✅ GPT-5.2 via emergentintegrations - Active
 - ⏸️ Bing Search - Requires user API key
+
+### Batch 24 - Banned Words Feature & Integration ✅ (January 17, 2026)
+
+#### Completed:
+- [x] **Admin Banned Words Feature**
+  - Backend CRUD endpoints: GET/POST/DELETE /api/admin/banned-words
+  - Check endpoint: POST /api/admin/check-banned-words
+  - Reserved keywords protection: `or`, `and`, `&`, `(`, `)`, `+` cannot be banned
+  - Frontend component: BannedWordsAdmin.js
+  - New Admin Panel tab: "🚫 Banned Words"
+
+- [x] **Integration into Content Creation**
+  - Category creation blocks banned words in name/protocol
+  - Category updates block banned words in name/protocol
+  - Marketplace protocol creation blocks banned words in name/description/protocol
+  - Error messages clearly state which banned word was found
+
+- [x] **Revenue Dashboard PDF Export**
+  - Print-to-PDF functionality
+  - Professional formatting with InfoPilot branding
+  - Includes: Summary, Top Protocols, A/B Test Results, AI Recommendations
+
+- [x] **Bug Fix**
+  - Fixed timezone import error in server.py banned words endpoints
+
+#### Testing Results:
+- Backend: 23/23 tests passed (100%)
+- All banned words CRUD verified
+- Reserved keywords protection verified
+- Content filtering integration verified
+
+#### Admin Panel Tabs (21 total):
+Revenue, General, Search, Pricing, Newsletter, Users, Moderation, **Banned Words**, Price Controls, Doc Types, Cat Analytics, Quality, Clean, Content, Polls, A/B Testing, Optimizer, Forecast, Protocol Forecast, Email Reports, Tutorials
+
+---
+
+## App Marketplace Listing Guidance
+
+### Google Play Store (Android)
+1. Create Google Play Developer Account ($25 one-time)
+2. Use Capacitor build scripts in `/app/frontend/scripts/build-mobile.sh`
+3. Generate signed APK/AAB
+4. Prepare store listing:
+   - App name: InfoPilot Explorer
+   - Short description: Search the web with InfoJet 2.0 protocols
+   - Full description: Feature rich search, marketplace, social features
+   - Screenshots: 8-10 (phone + tablet)
+   - Feature graphic: 1024x500
+   - Privacy policy URL required
+
+### iOS App Store
+1. Requires Apple Developer Account ($99/year)
+2. Requires macOS with Xcode
+3. Build using Capacitor iOS
+4. App Store Connect submission
+
+### Other Marketplaces
+- Amazon Appstore: Similar to Play Store
+- Microsoft Store: PWA submission possible
+- Web: Already deployed at info-pilot.preview.emergentagent.com
+
+**Note:** Store submissions require marketing assets, legal compliance (privacy policy, terms), and passing review processes. This is a manual marketing task.
