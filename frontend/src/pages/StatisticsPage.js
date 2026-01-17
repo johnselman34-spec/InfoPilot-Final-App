@@ -524,6 +524,67 @@ const StatisticsPage = ({ showToast }) => {
     <div style={{ padding: '20px 0' }} data-testid="statistics-page">
       <HeroBanner funnyMessage={funnyMessage} funnyFact={stats?.funny_fact} />
       
+      {/* Data Source Toggle */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center',
+        marginBottom: 25
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          background: 'rgba(30, 20, 50, 0.6)', 
+          borderRadius: 25, 
+          padding: '4px',
+          border: '1px solid rgba(124, 58, 237, 0.3)'
+        }} data-testid="stats-data-source-toggle">
+          <button
+            onClick={() => setDataSource('worldwide')}
+            style={{
+              padding: '10px 24px',
+              borderRadius: 22,
+              border: 'none',
+              background: dataSource === 'worldwide' 
+                ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' 
+                : 'transparent',
+              color: dataSource === 'worldwide' ? '#fff' : '#a1a1aa',
+              fontWeight: dataSource === 'worldwide' ? 600 : 400,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+            data-testid="stats-data-source-worldwide"
+          >
+            🌍 Worldwide Database
+          </button>
+          <button
+            onClick={() => setDataSource('personal')}
+            style={{
+              padding: '10px 24px',
+              borderRadius: 22,
+              border: 'none',
+              background: dataSource === 'personal' 
+                ? 'linear-gradient(135deg, #10b981, #059669)' 
+                : 'transparent',
+              color: dataSource === 'personal' ? '#fff' : '#a1a1aa',
+              fontWeight: dataSource === 'personal' ? 600 : 400,
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+            data-testid="stats-data-source-personal"
+          >
+            👤 My Data Only
+          </button>
+        </div>
+      </div>
+      
       {/* AI Search Section */}
       <div style={{ 
         background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(236, 72, 153, 0.15))',
