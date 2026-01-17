@@ -234,10 +234,10 @@ const QualityScoreAnalytics = ({ showToast }) => {
   
   useEffect(() => {
     const load = async () => {
-      await Promise.all([fetchAnalytics(), fetchBlockedDomains()]);
+      await Promise.all([fetchAnalytics(), fetchBlockedDomains(), fetchDomainAlerts()]);
     };
     load();
-  }, [fetchAnalytics, fetchBlockedDomains]);
+  }, [fetchAnalytics, fetchBlockedDomains, fetchDomainAlerts]);
   
   if (loading) {
     return (
