@@ -5519,6 +5519,178 @@ async def log_content_violation(
     return {"logged": True}
 
 
+# ============== VIOLATION ALERT SYSTEM ==============
+
+@api_router.get("/admin/violation-alerts/settings")
+async def get_violation_alert_settings(user = Depends(get_current_user_local)):
+    """Get admin alert settings"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    settings = await db.admin_settings.find_one({"type": "violation_alerts"})
+    if not settings:
+        # Default settings
+        settings = {
+            "enabled": False,
+            "threshold": 10,
+            "time_window_hours": 24,
+            "email_notifications": True,
+            "notification_emails": [],
+            "last_check": None,
+            "last_alert_sent": None
+        }
+    
+    return {
+        "enabled": settings.get("enabled", False),
+        "threshold": settings.get("threshold", 10),
+        "time_window_hours": settings.get("time_window_hours", 24),
+        "email_notifications": settings.get("email_notifications", True),
+        "notification_emails": settings.get("notification_emails", []),
+        "last_check": settings.get("last_check"),
+        "last_alert_sent": settings.get("last_alert_sent")
+    }
+
+
+@api_router.put("/admin/violation-alerts/settings")
+async def update_violation_alert_settings(
+    request: dict,
+    user = Depends(get_current_user_local)
+):
+    """Update admin alert settings"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    update_data = {
+        "type": "violation_alerts",
+        "enabled": request.get("enabled", False),
+        "threshold": request.get("threshold", 10),
+        "time_window_hours": request.get("time_window_hours", 24),
+        "email_notifications": request.get("email_notifications", True),
+        "notification_emails": request.get("notification_emails", []),
+        "updated_at": datetime.utcnow(),
+        "updated_by": str(user["_id"])
+    }
+    
+    await db.admin_settings.update_one(
+        {"type": "violation_alerts"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    return {"success": True, "message": "Alert settings updated"}
+
+
+@api_router.post("/admin/violation-alerts/check")
+async def check_violation_alerts(user = Depends(get_current_user_local)):
+    """
+    Manually check for violation spikes and trigger alerts if needed
+    """
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    settings = await db.admin_settings.find_one({"type": "violation_alerts"})
+    if not settings or not settings.get("enabled"):
+        return {"alert_triggered": False, "message": "Alerts are disabled"}
+    
+    threshold = settings.get("threshold", 10)
+    time_window = settings.get("time_window_hours", 24)
+    
+    # Count violations in the time window
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=time_window)
+    recent_violations = await db.content_violations.count_documents({
+        "created_at": {"$gte": cutoff}
+    })
+    
+    # Update last check time
+    await db.admin_settings.update_one(
+        {"type": "violation_alerts"},
+        {"$set": {"last_check": datetime.now(timezone.utc)}}
+    )
+    
+    if recent_violations >= threshold:
+        # Record the alert
+        alert_record = {
+            "type": "violation_spike",
+            "violations_count": recent_violations,
+            "threshold": threshold,
+            "time_window_hours": time_window,
+            "created_at": datetime.now(timezone.utc),
+            "acknowledged": False
+        }
+        await db.admin_alerts.insert_one(alert_record)
+        
+        # Update last alert sent time
+        await db.admin_settings.update_one(
+            {"type": "violation_alerts"},
+            {"$set": {"last_alert_sent": datetime.now(timezone.utc)}}
+        )
+        
+        # TODO: Send email notification if configured
+        # This would integrate with SendGrid or similar service
+        
+        return {
+            "alert_triggered": True,
+            "violations_count": recent_violations,
+            "threshold": threshold,
+            "message": f"⚠️ ALERT: {recent_violations} violations detected in the last {time_window} hours (threshold: {threshold})"
+        }
+    
+    return {
+        "alert_triggered": False,
+        "violations_count": recent_violations,
+        "threshold": threshold,
+        "message": f"All clear: {recent_violations} violations in the last {time_window} hours"
+    }
+
+
+@api_router.get("/admin/alerts")
+async def get_admin_alerts(
+    limit: int = Query(20),
+    acknowledged: Optional[bool] = None,
+    user = Depends(get_current_user_local)
+):
+    """Get admin alerts history"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    query = {}
+    if acknowledged is not None:
+        query["acknowledged"] = acknowledged
+    
+    alerts = await db.admin_alerts.find(query).sort("created_at", -1).limit(limit).to_list(limit)
+    
+    formatted = []
+    for alert in alerts:
+        formatted.append({
+            "id": str(alert["_id"]),
+            "type": alert.get("type"),
+            "violations_count": alert.get("violations_count"),
+            "threshold": alert.get("threshold"),
+            "message": f"{alert.get('violations_count', 0)} violations detected",
+            "created_at": alert.get("created_at", datetime.utcnow()).isoformat(),
+            "acknowledged": alert.get("acknowledged", False)
+        })
+    
+    return {"alerts": formatted, "count": len(formatted)}
+
+
+@api_router.put("/admin/alerts/{alert_id}/acknowledge")
+async def acknowledge_alert(alert_id: str, user = Depends(get_current_user_local)):
+    """Acknowledge an admin alert"""
+    if not user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.admin_alerts.update_one(
+        {"_id": ObjectId(alert_id)},
+        {"$set": {"acknowledged": True, "acknowledged_by": str(user["_id"]), "acknowledged_at": datetime.utcnow()}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    
+    return {"success": True, "message": "Alert acknowledged"}
+
+
 # ============== PROTOCOL TEMPLATES ==============
 
 @api_router.get("/protocol-templates")
