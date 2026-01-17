@@ -300,10 +300,10 @@ const QualityScoreAnalytics = ({ showToast }) => {
   
   useEffect(() => {
     const load = async () => {
-      await Promise.all([fetchAnalytics(), fetchBlockedDomains(), fetchDomainAlerts()]);
+      await Promise.all([fetchAnalytics(), fetchBlockedDomains(), fetchDomainAlerts(), fetchScheduleConfig()]);
     };
     load();
-  }, [fetchAnalytics, fetchBlockedDomains, fetchDomainAlerts]);
+  }, [fetchAnalytics, fetchBlockedDomains, fetchDomainAlerts, fetchScheduleConfig]);
   
   if (loading) {
     return (
