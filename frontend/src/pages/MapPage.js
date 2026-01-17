@@ -927,50 +927,159 @@ const MapPage = ({ showToast, setCurrentPage }) => {
               ))}
             </MapContainer>
 
-            {/* Hover Popup Window */}
+            {/* Enhanced Hover Popup Window with Close/Maximize buttons */}
             {hoveredResult && (
               <div 
+                data-testid="map-popup"
+                onMouseEnter={handlePopupMouseEnter}
+                onMouseLeave={handlePopupMouseLeave}
                 style={{
                   position: 'absolute',
-                  left: Math.min(hoverPosition.x + 15, containerWidth - 320),
-                  top: Math.max(hoverPosition.y - 150, 10),
-                  width: 300,
-                  background: 'rgba(15, 10, 35, 0.98)',
+                  left: Math.min(hoverPosition.x + 15, containerWidth - (isPopupMaximized ? 420 : 320)),
+                  top: Math.max(hoverPosition.y - (isPopupMaximized ? 200 : 150), 10),
+                  width: isPopupMaximized ? 400 : 300,
+                  maxHeight: isPopupMaximized ? 380 : 280,
+                  background: 'linear-gradient(145deg, rgba(15, 10, 35, 0.98), rgba(25, 15, 50, 0.98))',
                   borderRadius: 12,
                   border: `2px solid ${getMarkerColor(hoveredResult.article_type)}`,
                   boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 20px ${getMarkerColor(hoveredResult.article_type)}40`,
                   zIndex: 1000,
                   pointerEvents: 'auto',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  animation: 'popupFadeIn 0.15s ease-out',
+                  backdropFilter: 'blur(10px)'
                 }}
               >
-                {/* Header */}
+                {/* Header with Close and Maximize buttons */}
                 <div style={{
-                  padding: '10px 12px',
-                  background: `linear-gradient(135deg, ${getMarkerColor(hoveredResult.article_type)}30, transparent)`,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  background: `linear-gradient(90deg, ${getMarkerColor(hoveredResult.article_type)}30, transparent)`,
                   borderBottom: '1px solid rgba(255,255,255,0.1)'
                 }}>
-                  <span style={{
-                    background: getMarkerColor(hoveredResult.article_type),
-                    padding: '3px 8px', borderRadius: 10,
-                    fontSize: '0.65rem', fontWeight: 600, color: '#fff'
-                  }}>
-                    {hoveredResult.article_type}
-                  </span>
-                  {hoveredResult.extractedPlace && (
-                    <span style={{ color: '#10b981', fontSize: '0.7rem', marginLeft: 8 }}>
-                      📍 {hoveredResult.extractedPlace.charAt(0).toUpperCase() + hoveredResult.extractedPlace.slice(1)}
+                  {/* Article type and location */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+                    <span style={{
+                      background: getMarkerColor(hoveredResult.article_type),
+                      padding: '3px 8px', borderRadius: 10,
+                      fontSize: '0.65rem', fontWeight: 600, color: '#fff'
+                    }}>
+                      {hoveredResult.article_type}
                     </span>
-                  )}
+                    {hoveredResult.extractedPlace && (
+                      <span style={{ color: '#10b981', fontSize: '0.7rem' }}>
+                        📍 {hoveredResult.extractedPlace.charAt(0).toUpperCase() + hoveredResult.extractedPlace.slice(1)}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Control buttons */}
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {/* Maximize button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePopupMaximize();
+                      }}
+                      data-testid="popup-maximize-btn"
+                      title={isPopupMaximized ? 'Minimize' : 'Maximize'}
+                      style={{
+                        width: 24, height: 24,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(255,255,255,0.1)',
+                        border: 'none', borderRadius: 4,
+                        color: '#a1a1aa', cursor: 'pointer',
+                        fontSize: '0.85rem', transition: 'all 0.15s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(124, 58, 237, 0.3)';
+                        e.currentTarget.style.color = '#a78bfa';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                        e.currentTarget.style.color = '#a1a1aa';
+                      }}
+                    >
+                      {isPopupMaximized ? '⊟' : '⊞'}
+                    </button>
+                    
+                    {/* Close button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        closePopup();
+                      }}
+                      data-testid="popup-close-btn"
+                      title="Close"
+                      style={{
+                        width: 24, height: 24,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(239, 68, 68, 0.2)',
+                        border: 'none', borderRadius: 4,
+                        color: '#ef4444', cursor: 'pointer',
+                        fontSize: '1rem', fontWeight: 'bold', transition: 'all 0.15s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.4)';
+                        e.currentTarget.style.color = '#fff';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                        e.currentTarget.style.color = '#ef4444';
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
                 
-                {/* Content */}
-                <div style={{ padding: 12 }}>
-                  <h4 style={{ color: '#fff', margin: '0 0 8px 0', fontSize: '0.85rem', lineHeight: 1.3 }}>
-                    {hoveredResult.title?.substring(0, 70) || 'Untitled'}...
+                {/* Content area */}
+                <div style={{ 
+                  padding: 12, 
+                  overflowY: 'auto',
+                  maxHeight: isPopupMaximized ? 300 : 180
+                }}>
+                  {/* Category badges */}
+                  {hoveredResult.categories && hoveredResult.categories.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+                      {hoveredResult.categories.slice(0, isPopupMaximized ? 8 : 3).map((cat, idx) => (
+                        <span key={idx} style={{
+                          background: categoryColorMap[cat] || 'rgba(124, 58, 237, 0.3)',
+                          padding: '2px 6px', borderRadius: 8,
+                          fontSize: '0.6rem', fontWeight: 500, color: '#fff'
+                        }}>
+                          {cat}
+                        </span>
+                      ))}
+                      {!isPopupMaximized && hoveredResult.categories.length > 3 && (
+                        <span style={{ color: '#71717a', fontSize: '0.6rem' }}>
+                          +{hoveredResult.categories.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
+                  <h4 style={{ 
+                    color: '#fff', 
+                    margin: '0 0 8px 0', 
+                    fontSize: isPopupMaximized ? '0.95rem' : '0.85rem', 
+                    lineHeight: 1.3 
+                  }}>
+                    {isPopupMaximized 
+                      ? hoveredResult.title || 'Untitled'
+                      : (hoveredResult.title?.substring(0, 70) || 'Untitled') + (hoveredResult.title?.length > 70 ? '...' : '')}
                   </h4>
-                  <p style={{ color: '#a1a1aa', fontSize: '0.75rem', margin: '0 0 8px 0', lineHeight: 1.4 }}>
-                    {hoveredResult.snippet?.substring(0, 120) || 'No description'}...
+                  <p style={{ 
+                    color: '#a1a1aa', 
+                    fontSize: '0.75rem', 
+                    margin: '0 0 10px 0', 
+                    lineHeight: 1.5 
+                  }}>
+                    {isPopupMaximized
+                      ? hoveredResult.snippet || 'No description available'
+                      : (hoveredResult.snippet?.substring(0, 120) || 'No description') + (hoveredResult.snippet?.length > 120 ? '...' : '')}
                   </p>
                   
                   {/* Hashtags */}
@@ -979,16 +1088,35 @@ const MapPage = ({ showToast, setCurrentPage }) => {
                   )}
                   
                   {/* Click instruction */}
-                  <div style={{ 
-                    marginTop: 10, padding: '6px 10px', 
-                    background: `${getMarkerColor(hoveredResult.article_type)}30`,
-                    borderRadius: 6, textAlign: 'center'
-                  }}>
-                    <span style={{ color: '#fff', fontSize: '0.7rem', fontWeight: 600 }}>
-                      🖱️ Click marker to open article
+                  <div 
+                    onClick={() => handleMarkerClick(hoveredResult)}
+                    style={{ 
+                      marginTop: 10, padding: '8px 12px', 
+                      background: `${getMarkerColor(hoveredResult.article_type)}25`,
+                      borderRadius: 8, textAlign: 'center',
+                      cursor: 'pointer', transition: 'all 0.2s',
+                      border: `1px solid ${getMarkerColor(hoveredResult.article_type)}40`
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = `${getMarkerColor(hoveredResult.article_type)}40`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = `${getMarkerColor(hoveredResult.article_type)}25`;
+                    }}
+                  >
+                    <span style={{ color: '#fff', fontSize: '0.75rem', fontWeight: 600 }}>
+                      🔗 {isPopupMaximized ? 'Open Article in New Tab' : 'Click to Open'}
                     </span>
                   </div>
                 </div>
+                
+                {/* CSS Animation */}
+                <style>{`
+                  @keyframes popupFadeIn {
+                    from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+                    to { opacity: 1; transform: translateY(0) scale(1); }
+                  }
+                `}</style>
               </div>
             )}
           </div>
