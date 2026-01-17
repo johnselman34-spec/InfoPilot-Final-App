@@ -1,0 +1,8 @@
+{
+  "extends": ["react-app", "react-app/jest"],
+  "rules": {
+    "react-hooks/set-state-in-effect": "off",
+    "react/no-unescaped-entities": "off",
+    "react/no-unstable-nested-components": "warn"
+  }
+}
