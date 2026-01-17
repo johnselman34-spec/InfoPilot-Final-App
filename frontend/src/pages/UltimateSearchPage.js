@@ -234,15 +234,24 @@ const UltimateSearchPage = ({ showToast }) => {
 
   // Fetch categories using token from useAuth
   const fetchCategories = useCallback(async () => {
-    if (!token) return;
+    console.log('fetchCategories called, token:', token ? 'present' : 'missing');
+    if (!token) {
+      console.log('fetchCategories: No token, returning early');
+      return;
+    }
     
     try {
+      console.log('fetchCategories: Making API call...');
       const res = await fetch(`${API}/categories`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      console.log('fetchCategories: Response status:', res.status);
       if (res.ok) {
         const data = await res.json();
+        console.log('fetchCategories: Got', data.length, 'categories');
         setCategories(data);
+      } else {
+        console.error('fetchCategories: Response not OK:', res.status);
       }
     } catch (e) {
       console.error('Failed to fetch categories:', e);
