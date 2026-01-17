@@ -212,6 +212,154 @@ const MarketplacePage = ({ showToast }) => {
           <AISuggestions showToast={showToast} onViewProtocol={() => {}} />
           <WorldWideMap protocols={filteredProtocols} categories={categories} selectedCategories={selectedCategories} onSelectAll={() => setSelectedCategories(categories.map(c => c.name))} onDeselectAll={() => setSelectedCategories([])} />
           
+          {/* Category Filtered Results - Bottom Center Display */}
+          {selectedCategories.length > 0 && (
+            <div style={{ 
+              marginBottom: 20,
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.15))',
+              borderRadius: 16,
+              padding: 20,
+              border: '2px solid rgba(16, 185, 129, 0.4)',
+              boxShadow: '0 4px 20px rgba(16, 185, 129, 0.2)'
+            }} data-testid="marketplace-category-filtered-results">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+                <h3 style={{ color: '#10b981', margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  🏷️ Category Results ({filteredProtocols.length})
+                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                    {selectedCategories.slice(0, 3).map((cat, idx) => (
+                      <span key={idx} style={{ 
+                        fontSize: '0.7rem', 
+                        background: 'rgba(16, 185, 129, 0.2)', 
+                        padding: '3px 10px', 
+                        borderRadius: 20,
+                        color: '#10b981'
+                      }}>
+                        {cat}
+                      </span>
+                    ))}
+                    {selectedCategories.length > 3 && (
+                      <span style={{ fontSize: '0.7rem', color: '#71717a' }}>+{selectedCategories.length - 3} more</span>
+                    )}
+                  </div>
+                </h3>
+                <button 
+                  onClick={() => setSelectedCategories([])}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: '#f87171',
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  ✕ Clear Filters
+                </button>
+              </div>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+                gap: 12, 
+                maxHeight: 300, 
+                overflowY: 'auto',
+                paddingRight: 5
+              }}>
+                {filteredProtocols.slice(0, 20).map((protocol, idx) => {
+                  const categoryColor = protocol.category ? 
+                    ['#f472b6', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'][categories.findIndex(c => c.name === protocol.category) % 8] 
+                    : '#7c3aed';
+                  
+                  return (
+                    <div 
+                      key={protocol.id || `filtered-protocol-${idx}`}
+                      data-testid={`filtered-marketplace-result-${idx}`}
+                      style={{
+                        padding: 12,
+                        background: 'rgba(15, 10, 35, 0.8)',
+                        borderRadius: 10,
+                        border: `2px solid ${categoryColor}40`,
+                        cursor: 'pointer', 
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = categoryColor;
+                        e.currentTarget.style.boxShadow = `0 0 15px ${categoryColor}40`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = `${categoryColor}40`;
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <div style={{
+                          width: 10, height: 10, borderRadius: '50%',
+                          background: categoryColor,
+                          boxShadow: `0 0 8px ${categoryColor}`
+                        }} />
+                        <span style={{ 
+                          background: protocol.price === 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(251, 191, 36, 0.2)',
+                          color: protocol.price === 0 ? '#10b981' : '#fbbf24',
+                          padding: '2px 8px',
+                          borderRadius: 10,
+                          fontSize: '0.65rem',
+                          fontWeight: 700
+                        }}>
+                          {protocol.price === 0 ? '🆓 FREE' : `$${protocol.price.toFixed(2)}`}
+                        </span>
+                        <span style={{ color: categoryColor, fontSize: '0.65rem', marginLeft: 'auto' }}>
+                          {protocol.category}
+                        </span>
+                      </div>
+                      <div style={{ color: '#fff', fontWeight: 600, fontSize: '0.85rem', marginBottom: 5, lineHeight: 1.3 }}>
+                        {protocol.name}
+                      </div>
+                      <p style={{ color: '#a1a1aa', fontSize: '0.75rem', margin: '0 0 8px 0', lineHeight: 1.4 }}>
+                        {protocol.description?.substring(0, 80) || ''}...
+                      </p>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                        {protocol.tags?.slice(0, 3).map((tag, tagIdx) => (
+                          <span key={tagIdx} style={{
+                            background: 'rgba(124, 58, 237, 0.2)',
+                            color: '#a78bfa',
+                            padding: '2px 6px',
+                            borderRadius: 4,
+                            fontSize: '0.6rem'
+                          }}>
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleCopyFreeProtocol(protocol); }}
+                          style={{
+                            flex: 1,
+                            padding: '5px 8px',
+                            background: 'linear-gradient(135deg, #10b981, #059669)',
+                            border: 'none',
+                            borderRadius: 6,
+                            color: '#fff',
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          📋 Copy Protocol
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {filteredProtocols.length === 0 && (
+                <p style={{ color: '#71717a', textAlign: 'center', padding: 20 }}>
+                  No protocols found for selected categories. Try selecting different categories!
+                </p>
+              )}
+            </div>
+          )}
+          
           <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 20 }}>
             <div>
               <CategoryTree categories={categories} selectedCategories={selectedCategories} onToggle={(cat) => setSelectedCategories(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat])} expanded={expandedCategories} onExpandToggle={(cat) => setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }))} />
