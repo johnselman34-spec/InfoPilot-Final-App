@@ -21,7 +21,11 @@ const AdminPanel = ({ showToast }) => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('general');
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch(`${API}/admin/settings`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -41,12 +45,11 @@ const AdminPanel = ({ showToast }) => {
       console.error('Failed to fetch settings:', e);
     }
     setLoading(false);
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchSettings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchSettings]);
 
   const updateSetting = async (key, value) => {
     try {
