@@ -921,7 +921,7 @@ const MapPage = ({ showToast, setCurrentPage }) => {
                   eventHandlers={{
                     click: () => handleMarkerClick(result),
                     mouseover: (e) => handleMarkerHover(result, e),
-                    mouseout: () => setHoveredResult(null)
+                    mouseout: () => handleMarkerLeave()
                   }}
                 />
               ))}
