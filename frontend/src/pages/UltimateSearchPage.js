@@ -291,25 +291,12 @@ const UltimateSearchPage = ({ showToast }) => {
   }, [token, selectedCategories, aggregation]);
 
   useEffect(() => {
-    // Only load data if token is available
-    if (!token) {
-      console.log('[loadData] No token, skipping data load');
-      return;
-    }
-    console.log('[loadData] Token available, loading data...');
+    if (!token) return;
     
     // Load categories first, then others
     fetchCategories()
-      .then(() => {
-        console.log('[loadData] Categories loaded, now loading search results and batches');
-        return Promise.all([fetchSearchResults(), fetchBatches()]);
-      })
-      .then(() => {
-        console.log('[loadData] All data loaded');
-      })
-      .catch((e) => {
-        console.error('[loadData] Error during data load:', e);
-      });
+      .then(() => Promise.all([fetchSearchResults(), fetchBatches()]))
+      .catch((e) => console.error('Error during data load:', e));
   }, [token, fetchCategories, fetchSearchResults, fetchBatches]);
 
   const handleSearch = async () => {
