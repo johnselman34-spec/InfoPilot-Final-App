@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API, triggerMapRefresh } from '../utils/api';
 import { Icons, ProtocolDebugger, ProtocolTemplates, CopyButton, AISuggestions } from '../components/shared';
+import SmartSearchSuggestions from '../components/shared/SmartSearchSuggestions';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 
