@@ -1,142 +1,183 @@
 <analysis>**original_problem_statement:**
-The user wants to continue building InfoPilot Explorer, an interactive, gamified, and monetizable information-sharing platform.
+The user wants to continue building InfoPilot Explorer, an interactive, gamified, and monetizable information-sharing platform. The primary goals are ensuring high-quality content, application stability, and implementing a large number of feature requests and bug fixes.
 
-The user's core, recurring requests are:
-1.  **Content Quality Prioritization:** Ensure high-quality content is prioritized in search results.
-2.  **Comprehensive Stability Check:** A full stability and bug check to find and eliminate all errors, hung processes, and data flow issues.
-
-In the last message, the user added several new high-priority requests:
-- Fix a critical bug where the Save Protocol function fails for categories.
-- Integrate an Export to PDF feature for the Revenue Dashboard.
-- Add an admin feature to ban specific words or phrases.
-- List the application on Google Play, iOS, and other app marketplaces.
-- Re-iterated the need for an AI News section and relevant hashtags, indicating the previous implementations may need review or were missed.
+In the most recent messages, the user has reported several critical issues and requested new features, including:
+- **Critical Bugs:**
+    - Search results not appearing on the Ultimate Search page when category checkboxes are ticked.
+    - The Edit Category modal disappears when text is highlighted.
+    - The Save Protocol function is failing again with a Failed to update category error.
+    - Inconsistent data on the Map page (e.g., an aviation article showing for a Civil War History category).
+    - Public and Private stickers are still covering up information on various screens.
+    - The Copy Protocol function in the Marketplace is failing.
+- **Feature Requests:**
+    - Implement an in-app browser for opening search results.
+    - Allow users to change their email and password from the Settings page.
+    - Ensure map results can show multiple location dots for a single search result that fulfills multiple protocols.
+    - Improve hashtag relevance to be based on protocol content rather than category names.
+    - Add a Worldwide/Owner data toggle to the Statistics page.
+    - Implement automated email alerts for admins when content violations spike.
+- **High-Level Requests:**
+    - Conduct a septuple-check for stability across all features listed in an attached Word document.
+    - List the application on various app marketplaces.
+    - Address compatibility issues with the Facebook in-app browser.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is in a highly functional state. In this session, the agent implemented several major features requested by the user. An AI-powered Protocol Recommendation engine was added to the marketplace. A new AI News Ticker component was created and now displays live headlines on the main page. The First in Flight branding was added and subsequently removed from the UI (except the legal page) as per the user's evolving requirements.
+The application is a complex, feature-rich platform with a FastAPI backend and React frontend. It includes a sophisticated Admin Panel (with 22 tabs), a user-facing Ultimate Search page, a Marketplace, and a Map View. Key systems like AI-powered suggestions, banned word moderation, content quality reporting, and automated violation alerts are in place.
 
-Significant bug fixes were also completed. A critical issue causing the Admin Panel to be stuck in a loading state was resolved. Another major bug preventing admins from updating categories due to an overly strict protocol validation was diagnosed and fixed. The agent also began implementing a word/phrase banning system for admins and a PDF export feature for the revenue dashboard.
+In this session, the agent performed a massive stability check, running over 30 API tests and an additional 37 frontend/backend tests via the testing agent, which all passed. The agent implemented several new features, including the content quality report, violation alerts, and email/password changing. It also addressed numerous bugs, such as fixing the Clean Category function, improving social media meta tags, and adding data source toggles to the Map and Statistics pages.
 
 **Last working item**:
-- **Last item agent was working:** Implementing the admin-facing feature to ban words and phrases. The agent created the backend CRUD endpoints (), the frontend UI component (), and added a new Banned Words tab to the Admin Panel.
+- **Last item agent was working:** Improving the relevance of generated hashtags. The user wants hashtags to be based on the specific  content for better revenue maximization, rather than the general . The agent was editing  in .
 - **Status:** IN PROGRESS
 - **Agent Testing Done:** N
-- **Which testing method agent to use?** Both. Use the backend testing agent to verify the CRUD API endpoints for . Use the frontend testing agent to verify the new Banned Words tab and its UI functionality within the Admin Panel.
+- **Which testing method agent to use?** Frontend testing agent. The agent should verify that on the  and in  pop-ups, the generated hashtags are now more specific and relevant to the protocol string of the associated content.
 - **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-There are no outstanding bugs. The critical issues (Failed to update category and Admin Panel stuck loading) were resolved in this session.
+- **Issue 1: Search results not displaying on Ultimate Search Page (P0)**
+- **Issue 2: Edit Category modal closes on text highlight (P0)**
+- **Issue 3: Inconsistent data/dots on Map Page (P0)**
+- **Issue 4: Save Protocol function fails with Failed to update category error (P0)**
+- **Issue 5: Public/Private stickers overlap content on multiple screens (P1)**
+- **Issue 6: Search results on Map View & Marketplace should be worldwide (P1)**
+- **Issue 7: Copy Protocol function on Easter Egg windows is not working correctly (P1)**
+- **Issue 8: Map results don't show multiple location dots for items matching multiple categories (P2)**
+- **Issue 9: Facebook browser compatibility (P2)**
 
-**In progress Task List**:
-- **Task 1: Complete Word/Phrase Banning Feature (P0)**
-    - **Where to resume:** The backend CRUD API and frontend UI are in place. The next step is to integrate the banning logic into the application's core functions. This involves modifying the search and content submission endpoints to check against the  collection and reject any input containing a banned term. The logic must also prevent protocol operators (, , , ) from being banned.
-    - **What will be achieved with this?** Admins will gain a powerful content moderation tool to maintain platform quality.
+**Issues Detail:**
+- **Issue 1: Search results not displaying on Ultimate Search Page (P0)**
+    - **Attempted fixes:** The agent previously implemented a fix in  to set  to  when a category is toggled. However, the user reports the issue persists.
+    - **Next debug checklist:**
+        1.  Verify the  function in  is correctly setting the state to show results.
+        2.  Check the  function to ensure it's being called and is receiving the correct category filters.
+        3.  Inspect the component rendering the results to see if it's conditional on a state that isn't being updated.
+    - **Why fix this issue and what will be achieved with the fix?** This is a core function of the application. Fixing it will allow users to filter and view their collated search results.
     - **Status:** IN PROGRESS
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** Frontend.
+
+- **Issue 2: Edit Category modal closes on text highlight (P0)**
+    - **Attempted fixes:** The agent modified the  logic in  to prevent clicks on the overlay from propagating when interacting with the modal's content.
+    - **Next debug checklist:**
+        1.  Review the  component again. The fix involved stopping event propagation.
+        2.  Test the text highlighting interaction manually or with the frontend testing agent to confirm the fix works as expected. The bug might be more nuanced than a simple overlay click.
+    - **Why fix this issue and what will be achieved with the fix?** Critical usability bug. Users cannot edit protocols if the modal closes unexpectedly.
+    - **Status:** IN PROGRESS
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** Frontend.
+
+- **Issue 3: Inconsistent data/dots on Map Page (P0)**
+    - **Attempted fixes:** The agent added a Worldwide vs Owner data source toggle. This might not have addressed the core issue of incorrect data mapping.
+    - **Next debug checklist:**
+        1.  Examine the  and  endpoints in .
+        2.  Trace how search results are matched to categories and protocols in the backend before being sent to the frontend. The logic might be incorrectly assigning a result to a category.
+        3.  Verify the  function in  is processing the data correctly.
+    - **Why fix this issue and what will be achieved with the fix?** This breaks user trust in the platform's data integrity. Fixing it ensures search results are relevant and accurately displayed.
+    - **Status:** IN PROGRESS
+    - **Is recurring issue?** Y
     - **Should Test frontend/backend/both after fix?** Both.
 
-- **Task 2: Finalize and Test PDF Export for Revenue Dashboard (P1)**
-    - **Where to resume:** The  function using  and a Download PDF button have been added to . The task requires thorough testing to ensure the PDF report generates correctly, is well-formatted, and accurately reflects the data from the  endpoint.
-    - **What will be achieved with this?** Admins will be able to download professional, branded revenue reports directly from the Admin Panel.
+- **Issue 4: Save Protocol function fails with Failed to update category error (P0)**
+    - **Attempted fixes:** This was fixed in a previous session by relaxing protocol validation in . The user's new report indicates the bug has returned or has a new cause.
+    - **Next debug checklist:**
+        1.  Re-examine the  endpoint in .
+        2.  Check for any new validation logic that was added, such as the banned words check, which could be the new source of failure.
+        3.  Use  to test the endpoint directly with a valid payload to isolate the issue.
+    - **Why fix this issue and what will be achieved with the fix?** This is a critical data-management function for users.
+    - **Status:** IN PROGRESS
+    - **Is recurring issue?** Y
+    - **Should Test frontend/backend/both after fix?** Backend.
+
+**In progress Task List**:
+- **Task 1: Improve Hashtag Relevance (P0)**
+    - **Where to resume:** . The agent has already modified the  function to prioritize protocol content. The next step is to remove the duplicated, old function logic and thoroughly test the change on the search and map pages.
+    - **What will be achieved with this?** Hashtags will be more specific to the content, which the user believes will maximize revenue.
     - **Status:** IN PROGRESS
     - **Should Test frontend/backend/both after fix?** Frontend.
 
 **Upcoming and Future Tasks**
 - **Upcoming Tasks:**
-    - **P0: Comprehensive Stability and Bug Check:** The user has repeatedly requested a thorough end-to-end check for all errors, flow issues, hung processes, and data/cookie validation problems. This should be the top priority after completing the in-progress tasks.
-    - **P1: Verify and Refine Hashtag Relevance:** The user re-requested this. The agent needs to verify that the generated hashtags in  are extremely relevant to the category and its protocols, potentially refining the logic in .
-    - **P1: Verify AI News Articles Section:** The user re-requested this feature, which was already implemented. The agent should confirm with the user if the current implementation () meets their expectations or if changes are needed.
+    - **P0: Implement In-App Browser:** Create a new component that opens external links within a modal or a dedicated page inside the application, similar to how social media apps handle links.
+    - **P1: Verify/Fix Easter Egg Copy Protocol:** Investigate the floating Easter Egg components and ensure their Copy Protocol functionality works correctly.
+    - **P1: Verify AI News Ticker:** Confirm the news ticker on the top-right of the screen is functioning correctly and displaying recent headlines.
 - **Future Tasks:**
-    - **P2: Full Linting Cleanup:** Over 135 non-critical linting warnings (mostly stylistic) remain. The agent should investigate creating a global  config file to suppress these warnings, as previous attempts failed.
-    - **P3: App Marketplace Listing:** This is a user-facing task involving marketing, creating assets (logo, descriptions), and submitting to app stores. The agent should inform the user this is outside the scope of direct implementation but can offer guidance.
-    - **P3: Bing Search Integration:** The user has deferred this due to cost. The integration is ready but inactive, pending the user providing an API key.
-    - **P3: Enhancement - Proactive Admin Alerts:** Implement a notification system to alert admins about significant changes in revenue or A/B test results.
+    - **P2: Full Linting Cleanup:** Address the 140+ frontend linting warnings. The testing agent suggested disabling ESLint in  if  is not being respected.
+    - **P3: App Marketplace Listing Guidance:** This is a user-facing task. The agent should provide guidance on the steps and assets needed for submission to Google Play, Apple App Store, etc.
+    - **P3: Bing Search Integration:** This is deferred, pending the user providing an API key.
 
 **Completed work in this session**
-- **AI-Powered Protocol Recommendations:** Successfully integrated an AI engine () into the  component on the Marketplace page.
-- **AI News Ticker:** Created and integrated a new component () powered by an AI backend endpoint () to display live news.
-- **Critical Bug Fix - Category Update:** Resolved the Failed to update category bug by relaxing the protocol validation logic in .
-- **Critical Bug Fix - Admin Panel Loading:** Fixed a hanging API request in  that caused it to be stuck on a loading spinner.
-- **Branding Management:** Added, and then subsequently removed, the First in Flight banner and branding from the UI as per the user's request, leaving it only in .
-- **A/B Testing Analytics:** Implemented backend and frontend tracking to monitor user interactions (view, copy, create) with AI-generated recommendations.
-- **AI-Powered Smart Search:** Added an endpoint and UI component to provide intelligent search suggestions.
-- **Deployment Readiness:** Resolved deployment blockers by fixing malformed entries in  and  files.
-- **Legacy Code Review:** Confirmed that  and  are actively used and not legacy code, preventing their accidental removal.
+- **Septuple-Check Stability Run:** Executed a comprehensive suite of 32 custom API tests and 37 automated tests via the testing agent, all of which passed, to verify core application functionality against the user's document.
+- **Critical Bug Fix (Edit Category Modal):** Implemented a fix to prevent the edit modal from closing when a user highlights text in the protocol textarea.
+- **Feature: User Account Management:** Added backend endpoints and frontend UI for users to change their email and password in the Settings page.
+- **Feature: Map & Statistics Data Toggle:** Implemented a Worldwide vs Owner data source toggle on both the Map and Statistics pages.
+- **Feature: Automated Violation Alerts:** Created the backend system and a new Admin Panel tab for configuring automated email alerts based on content violation thresholds.
+- **Bug Fix (Clean Category):** Corrected the  function by adding the required  parameter to the API call.
+- **UX Improvement (Social Sharing):** Updated  with improved Open Graph/Twitter meta tags to enhance social media sharing previews and to attempt a fix for Facebook browser compatibility.
+- **Bug Fix (UI Overlap):** Adjusted CSS in  to prevent Public/Private badges from overlapping category names.
+- **UX Improvement (Marketplace Copy):** Enhanced the Marketplace UI to show clear Purchase or Copy buttons based on protocol price, improving user feedback.
 
 **Earlier issues found/mentioned but not fixed**
-- None.
-
-**Known issue recurrence from previous fork**
-- **ML Dependency Constraint:** This was a recurring misunderstanding from previous forks.
-- **Recurrence count:** 4+
-- **Status:** RESOLVED. The  library is confirmed to be installed and working correctly.
+- The user's latest message re-iterated several critical issues that the agent had previously attempted to fix, indicating the fixes were either incomplete or incorrect. These are now listed in the All Pending/In progress Issue list.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **AI Integration (GPT-5.2):** Used the  library to add multiple AI-powered features, including protocol recommendations, news headlines, and smart search suggestions.
-- **Frontend State & Effect Hooks:** Debugged and resolved complex React  issues in  that caused hanging API requests and infinite loading states.
-- **Client-Side PDF Generation:** Integrated  and  into a React component () to create and download PDF reports.
-- **Backend Validation Logic:** Diagnosed and fixed a critical bug caused by overly strict validation rules in the backend's  service.
+- **Comprehensive API Test Suites:** Using  and  chaining to create extensive, sequential test scripts for verifying dozens of backend endpoints in a single command.
+- **State-Driven Data Toggling:** Implementing UI toggles (e.g., Worldwide vs. Owner) that update a React state variable, which is then used as a dependency in a  hook to fetch data from different endpoints without a page reload.
+- **DOM Event Propagation:** Debugging a React modal bug by modifying event handlers ( on the modal content) to stop event propagation and prevent an  on the parent overlay from firing.
+- **Meta Tag Optimization:** Editing  to add specific Open Graph and Twitter meta tags for better social media link previews and to address in-app browser rendering issues.
 
 **key DB schema**
-- **** (new): 
+- ****: (Implicitly created) Stores records of attempted banned word usage. .
+- ****: (Modified) Stores configuration for the new violation alert system.
 
 **All files of reference**
-- **New/Created:**
-  - 
-  - 
-  - 
-  - 
-  -  (Attempted, but not effective)
-- **Heavily Modified:**
-  - 
-  - 
-  - 
-  - 
-  - 
+- **/app/backend/routes/auth.py**: Added email/password change endpoints.
+- **/app/backend/server.py**: Added worldwide data endpoints and violation alert system.
+- **/app/frontend/pages/MapPage.js**: Added data source toggle and UI logic.
+- **/app/frontend/pages/SettingsPage.js**: Added UI for changing email/password.
+- **/app/frontend/pages/StatisticsPage.js**: Added data source toggle.
+- **/app/frontend/src/components/UltimateSearch/CategoryModals.js**: Fixed modal closing bug.
+- **/app/frontend/public/index.html**: Updated with new meta tags.
+- **/app/frontend/src/utils/hashtags.js**: Modified to improve hashtag relevance.
+- **/app/frontend/src/components/Admin/ContentQualityReport.js**: New component.
+- **/app/frontend/src/components/Admin/ViolationAlerts.js**: New component.
 
 **Areas that need refactoring**:
-- Over 135 frontend linting warnings persist, primarily  and . The agent's attempt to use a global  file did not work. The next agent should investigate why the linting tool is not picking up the configuration file before resorting to more inline  comments.
+- **Frontend Linting:** Over 140 non-critical linting warnings persist. The testing agent suggested adding  to a  file or modifying  to disable ESLint during the build process as a workaround if configuration files are not being respected.
+- **/app/frontend/src/utils/hashtags.js**: Contains duplicated and commented-out code from the recent refactor that should be removed for clarity.
 
 **key api endpoints**
-- **GET, POST, DELETE **: Manages the list of banned words/phrases.
-- **GET **: Provides aggregated data for the revenue dashboard (supports  query param).
-- **GET **: Fetches AI-generated news articles.
-- **POST **: Provides AI-powered search suggestions based on a query.
-- **POST **: Tracks user interaction with AI protocol recommendations for A/B testing.
-- **PUT **: (Bug Fixed) Updates a category's details.
+- **PUT **: Updates the logged-in user's email address.
+- **PUT **: Updates the logged-in user's password.
+- **GET **: Fetches map data from all public protocols.
+- **GET **: Fetches statistics from all public protocols.
+- **GET, POST **: Manages automated violation alert settings.
 
 **Critical Info for New Agent**
-- **Prioritize User Requests:** The user is now providing detailed, multi-step requests. Address critical bugs first (like the Save Protocol issue), then work through the user's list of feature requests.
-- **Re-verify Implemented Features:** The user asked for the AI News and Relevant Hashtags features again after they were implemented. Start your next interaction by confirming if the current implementations meet their needs before building new things.
-- **Admin Panel Latency:** The Admin Panel is known to load slowly (8-10+ seconds) in the preview environment due to fetching large amounts of data. This is expected latency, not a bug, as long as the data eventually loads. The timeout fix in  helps prevent it from hanging indefinitely.
-- **Chat Modules are NOT Legacy:** The agent has confirmed that  and  are critical, active parts of the application. Do not attempt to remove or refactor them under the assumption they are legacy code.
+- **Verify, Don't Trust:** The user has reported multiple bugs that previous tests and fixes did not catch. You must prioritize verifying functionality from the user's perspective, especially for UI-related issues. The 100% test pass rate is misleading.
+- **User's Word Document is Canon:** The user has provided an  file which they consider the source of truth for required functionality. You must refer to this document for feature verification.
+- **Address All Items:** The user provides long, itemized lists of requests. Do not skip any. Systematically address each bug and feature request. If you complete a batch, confirm with the user before moving on.
+- **Recurring Bugs:** Be aware that the Save Protocol failure and UI sticker overlap are recurring problems. The root cause may be deeper than the previous fixes addressed.
 
 **documents and test reports created in this job**
-- 
-- 
 - 
 - 
 - 
 -  (Continuously updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-- User requested completion of all next actions, future items, and enhancement suggestions from the agent's summary.
-- **Bug Report:** User reported the Save Protocol function was failing with a Failed to update category error. (RESOLVED)
-- **New Feature:** User requested the ability for Admins to ban any word or phrase, with exceptions for protocol operators (, , , ). (IN PROGRESS)
-- **New Feature:** User requested the ability to export the Revenue Dashboard to PDF. (IN PROGRESS)
-- **Clarification:** User provided screenshots and asked for help filling out the Azure form for Bing Search integration. The agent guided the user to the correct, cheaper Bing Search v7 resource and clarified the form fields.
-- **Decision:** The user decided to delay the Bing Search integration due to its cost and use it as a secondary option in the future.
-- **Task Cancellation:** User asked to remove the First in Flight branding from all public-facing UI. (COMPLETED)
-- **High-Level Request:** User re-iterated the need for comprehensive stability and bug checks across the entire application.
+1.  **Latest Message:** User provided a new Word document and a long list of critical bugs and feature requests. Key items include fixing map inconsistencies, search results not showing, the edit modal closing bug, implementing an in-app browser, and improving hashtag relevance. Re-iterated the need for a septuple-check for stability.
+2.  **Previous Message:** User reported the Clean Category function was not working and asked for all remaining items to be integrated, including adding meta tags for social sharing and comprehensive stability checks.
+3.  **Previous Message:** A  call from the agent was interrupted by the user with a list of bugs found via screenshots, including overlapping UI elements and a failing Copy Protocol function in the marketplace. The user also re-iterated the search result display issue and requested support for the Facebook browser.
+4.  The user has consistently emphasized the need for comprehensive stability checks and the resolution of all bugs, no matter how small.
 
 **Project Health Check:**
-- **Broken:** None.
-- **Mocked:** The  and  backend routes are still placeholders. The Bing Search integration is inactive, pending a user-provided API key.
-- **Technical Debt:** Significant frontend technical debt exists due to 135+ unresolved linting warnings.
+- **Broken:** Several core user-facing functions are reported as broken, including search result filtering, map data accuracy, and saving protocols. The disconnect between passing automated tests and the failing user experience is the biggest risk to the project.
+- **Mocked:** The Bing Search integration is implemented but inactive, awaiting a user-provided API key.
 
 **3rd Party Integrations**
 - **Brave Search API:** Active.
@@ -144,19 +185,19 @@ There are no outstanding bugs. The critical issues (Failed to update category an
 - **SerpAPI (Google):** Active.
 - **DuckDuckGo Search:** Active.
 - **Bing Search API:** Integrated but inactive (requires User API Key).
-- **OpenAI GPT (via ):** Active and heavily used for AI features with the Emergent LLM Key.
-- **jspdf / jspdf-autotable:** Added to frontend for PDF generation.
+- **OpenAI GPT (via ):** Active (uses Emergent LLM Key).
+- **jspdf / jspdf-autotable:** Active for PDF generation.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. The agent ran comprehensive tests up to .
+- **Testing agent used after significant changes:** YES. The agent ran a comprehensive test suite () covering 37 different checks, which passed 100%.
 - **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** Test files were created and used by the testing agent during its runs. The final report showed 87% pass rate, with the failures attributed to incorrect paths in the test files themselves, not application bugs.
-- **Known regressions:** None.
+- **Test files created:** Yes, the testing agent created and used multiple test files in .
+- **Known regressions:** Yes. Failed to update category, Public/Private sticker overlap, and Search results not showing are all regressions or issues that were not fully fixed.
 
 **Credentials to test flow:**
 - **Admin User:**  / 
 - **Test User:**  / 
 
 **What agent forgot to execute**
-- The user requested the **AI News Articles** and **Relevant Hashtags** features again, even though they were implemented in this session. This suggests the agent did not adequately confirm with the user that the implementations were satisfactory. The next agent must verify these with the user.
-- The user's request to **list the app on various marketplaces** is a marketing/deployment task that the agent cannot perform directly. The agent should clarify its role and offer guidance instead of implicitly accepting the task.</analysis>
+- The agent has not yet implemented the **In-App Browser**, a new key feature requested by the user.
+- The agent's fixes for several UI and backend bugs have been insufficient, as the user immediately reported them again. The agent needs to adopt a more rigorous verification process that mimics the user's workflow.</analysis>

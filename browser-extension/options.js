@@ -1,6 +1,6 @@
 // InfoJet - Options Page Script
 
-const API_BASE = 'https://info-pilot.preview.emergentagent.com/api';
+const API_BASE = 'https://info-explorer-hub.preview.emergentagent.com/api';
 
 // DOM Elements
 const accountEmail = document.getElementById('account-email');

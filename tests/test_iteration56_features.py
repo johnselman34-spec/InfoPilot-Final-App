@@ -15,7 +15,7 @@ import sys
 # Add backend to path for direct testing
 sys.path.insert(0, '/app/backend')
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://info-pilot.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://info-explorer-hub.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 ADMIN_EMAIL = "jjspilot24@gmail.com"
