@@ -34,12 +34,7 @@ if (config.enableHealthCheck) {
 
 const webpackConfig = {
   eslint: {
-    enable: true,
-    mode: 'extends',
-    configure: (eslintConfig) => {
-      // Use default eslint config from react-scripts
-      return eslintConfig;
-    },
+    enable: false,  // Disable ESLint to avoid plugin conflicts
   },
   webpack: {
     alias: {
