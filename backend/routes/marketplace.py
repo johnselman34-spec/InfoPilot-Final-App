@@ -254,6 +254,28 @@ async def create_marketplace_protocol(protocol: MarketplaceProtocolCreate, user 
     if not is_valid:
         raise HTTPException(status_code=400, detail=f"Invalid protocol: {message}")
     
+    # Check for banned words in name, description, and protocol
+    has_banned_name, banned_in_name = await check_banned_words(protocol.name)
+    if has_banned_name:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Protocol name contains banned words: {', '.join(banned_in_name)}"
+        )
+    
+    has_banned_desc, banned_in_desc = await check_banned_words(protocol.description)
+    if has_banned_desc:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Protocol description contains banned words: {', '.join(banned_in_desc)}"
+        )
+    
+    has_banned_protocol, banned_in_protocol = await check_banned_words(protocol.protocol)
+    if has_banned_protocol:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Protocol content contains banned words: {', '.join(banned_in_protocol)}"
+        )
+    
     # Determine if protocol is free
     is_free = protocol.price == 0 or protocol.price < 0.01
     
