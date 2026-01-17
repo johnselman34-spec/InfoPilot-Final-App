@@ -413,9 +413,14 @@ async def clean_category(
 @router.get("/categories/{category_id}/results-count")
 async def get_category_results_count(category_id: str, user = Depends(get_current_user)):
     """Get the count of search results in a category"""
+    try:
+        cat_oid = ObjectId(category_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid category ID format")
+    
     # Verify category exists and belongs to user
     if user.get("is_admin"):
-        category = await db.categories.find_one({"_id": ObjectId(category_id)})
+        category = await db.categories.find_one({"_id": cat_oid})
     else:
         category = await db.categories.find_one({
             "_id": cat_oid,
