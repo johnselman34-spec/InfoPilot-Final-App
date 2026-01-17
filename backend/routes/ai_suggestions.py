@@ -630,5 +630,3 @@ def extract_basic_hashtags(content: str) -> list:
     common_words = {'The', 'And', 'For', 'With', 'From', 'This', 'That', 'What', 'When', 'Where', 'How', 'Why'}
     hashtags = [f"#{w}" for w in words[:15] if w not in common_words and len(w) > 3]
     return hashtags[:8]
-    }
-    return fallbacks.get(category, fallbacks["trending"])
