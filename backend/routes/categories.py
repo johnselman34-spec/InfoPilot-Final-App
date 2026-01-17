@@ -108,6 +108,21 @@ async def create_category(category: CategoryCreate, user = Depends(get_current_u
     if not is_valid:
         raise HTTPException(status_code=400, detail=f"Invalid protocol format. {message}")
     
+    # Check for banned words in name and protocol
+    has_banned_name, banned_in_name = await check_banned_words(category.name)
+    if has_banned_name:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Category name contains banned words: {', '.join(banned_in_name)}"
+        )
+    
+    has_banned_protocol, banned_in_protocol = await check_banned_words(category.protocol)
+    if has_banned_protocol:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Protocol contains banned words: {', '.join(banned_in_protocol)}"
+        )
+    
     # Calculate level
     level = 0
     if category.parent_id:
