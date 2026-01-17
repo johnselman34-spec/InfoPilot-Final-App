@@ -331,22 +331,41 @@ const MarketplacePage = ({ showToast }) => {
                         ))}
                       </div>
                       <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleCopyFreeProtocol(protocol); }}
-                          style={{
-                            flex: 1,
-                            padding: '5px 8px',
-                            background: 'linear-gradient(135deg, #10b981, #059669)',
-                            border: 'none',
-                            borderRadius: 6,
-                            color: '#fff',
-                            fontSize: '0.7rem',
-                            fontWeight: 600,
-                            cursor: 'pointer'
-                          }}
-                        >
-                          📋 Copy Protocol
-                        </button>
+                        {(protocol.price === 0 || protocol.is_free) ? (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleCopyFreeProtocol(protocol); }}
+                            style={{
+                              flex: 1,
+                              padding: '5px 8px',
+                              background: 'linear-gradient(135deg, #10b981, #059669)',
+                              border: 'none',
+                              borderRadius: 6,
+                              color: '#fff',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            📋 Copy FREE
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handlePurchase(protocol); }}
+                            style={{
+                              flex: 1,
+                              padding: '5px 8px',
+                              background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+                              border: 'none',
+                              borderRadius: 6,
+                              color: '#fff',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            🛒 Buy ${protocol.price.toFixed(2)}
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
