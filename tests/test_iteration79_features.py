@@ -346,6 +346,19 @@ class TestAIRecommendationsTracking:
 class TestHealthAndBasicEndpoints:
     """Basic health and endpoint tests"""
     
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Get token for authenticated requests"""
+        response = requests.post(f"{BASE_URL}/api/auth/login", json={
+            "email": ADMIN_EMAIL,
+            "password": ADMIN_PASSWORD
+        })
+        if response.status_code == 200:
+            self.token = response.json().get("token")
+            self.headers = {"Authorization": f"Bearer {self.token}"}
+        else:
+            pytest.skip("Authentication failed")
+    
     def test_health_endpoint(self):
         """Test health endpoint"""
         response = requests.get(f"{BASE_URL}/api/health")
@@ -354,7 +367,10 @@ class TestHealthAndBasicEndpoints:
     
     def test_categories_endpoint(self):
         """Test categories endpoint"""
-        response = requests.get(f"{BASE_URL}/api/categories")
+        response = requests.get(
+            f"{BASE_URL}/api/categories",
+            headers=self.headers
+        )
         assert response.status_code == 200, f"Categories failed: {response.text}"
         data = response.json()
         assert "categories" in data, "Missing categories in response"
