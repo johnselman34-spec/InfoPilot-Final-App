@@ -233,7 +233,7 @@ const UltimateSearchPage = ({ showToast }) => {
   };
 
   // Track if categories are being fetched
-  const categoriesAbortRef = useRef(null);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
   
   const fetchCategories = useCallback(async () => {
     // Get token directly from localStorage to avoid stale closure
@@ -243,20 +243,18 @@ const UltimateSearchPage = ({ showToast }) => {
       return;
     }
     
-    // Cancel any previous request
-    if (categoriesAbortRef.current) {
-      categoriesAbortRef.current.abort();
+    // Skip if already loading (prevents duplicate calls from StrictMode)
+    if (categoriesLoading) {
+      console.log('[fetchCategories] Already loading, skipping');
+      return;
     }
-    
-    const controller = new AbortController();
-    categoriesAbortRef.current = controller;
+    setCategoriesLoading(true);
     
     console.log('[fetchCategories] Starting fetch...');
     try {
       const url = `${API}/categories`;
       const res = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${currentToken}` },
-        signal: controller.signal
+        headers: { 'Authorization': `Bearer ${currentToken}` }
       });
       console.log('[fetchCategories] Response status:', res.status);
       
@@ -269,17 +267,11 @@ const UltimateSearchPage = ({ showToast }) => {
         console.error('[fetchCategories] Error response:', res.status, errorText);
       }
     } catch (e) {
-      if (e.name === 'AbortError') {
-        console.log('[fetchCategories] Request cancelled (expected in StrictMode)');
-      } else {
-        console.error('[fetchCategories] Exception:', e.name, e.message);
-      }
+      console.error('[fetchCategories] Exception:', e.name, e.message);
     } finally {
-      if (categoriesAbortRef.current === controller) {
-        categoriesAbortRef.current = null;
-      }
+      setCategoriesLoading(false);
     }
-  }, []);
+  }, [categoriesLoading]);
 
   const fetchSearchResults = useCallback(async () => {
     try {
