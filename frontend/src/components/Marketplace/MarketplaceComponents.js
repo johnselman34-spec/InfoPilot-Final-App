@@ -212,7 +212,7 @@ export const WorldWideMap = ({ protocols, categories, selectedCategories, onSele
             onMouseLeave={handlePopupLeave}
             style={{
               position: 'absolute',
-              left: Math.min(hoverPosition.x + 15, (mapRef.current?.clientWidth || 600) - (isMaximized ? 350 : 280)),
+              left: Math.min(hoverPosition.x + 15, mapWidth - (isMaximized ? 350 : 280)),
               top: Math.max(hoverPosition.y - (isMaximized ? 180 : 120), 10),
               width: isMaximized ? 330 : 260,
               background: 'linear-gradient(145deg, rgba(15, 10, 35, 0.98), rgba(25, 15, 50, 0.98))',
