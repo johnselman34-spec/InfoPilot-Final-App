@@ -1177,7 +1177,7 @@ const UltimateSearchPage = ({ showToast }) => {
           <h3 style={{ marginBottom: 15, color: '#f472b6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span>📂 My Categories</span>
             <span style={{ fontSize: '0.75rem', color: '#a1a1aa', fontWeight: 'normal' }}>
-              {categories.filter(c => c.user_id === (user?.id || user?._id)).length} categories
+              {categories.length} categories
             </span>
           </h3>
           
