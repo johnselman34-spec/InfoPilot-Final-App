@@ -232,8 +232,8 @@ const UltimateSearchPage = ({ showToast }) => {
     }
   };
 
-  // Track if categories are being fetched
-  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  // Track if categories are being fetched (use ref to avoid stale closure)
+  const categoriesLoadingRef = useRef(false);
   
   const fetchCategories = useCallback(async () => {
     // Get token directly from localStorage to avoid stale closure
@@ -244,11 +244,11 @@ const UltimateSearchPage = ({ showToast }) => {
     }
     
     // Skip if already loading (prevents duplicate calls from StrictMode)
-    if (categoriesLoading) {
+    if (categoriesLoadingRef.current) {
       console.log('[fetchCategories] Already loading, skipping');
       return;
     }
-    setCategoriesLoading(true);
+    categoriesLoadingRef.current = true;
     
     console.log('[fetchCategories] Starting fetch...');
     try {
@@ -269,9 +269,9 @@ const UltimateSearchPage = ({ showToast }) => {
     } catch (e) {
       console.error('[fetchCategories] Exception:', e.name, e.message);
     } finally {
-      setCategoriesLoading(false);
+      categoriesLoadingRef.current = false;
     }
-  }, [categoriesLoading]);
+  }, []);
 
   const fetchSearchResults = useCallback(async () => {
     try {
