@@ -163,11 +163,25 @@ async def update_category(category_id: str, update: CategoryUpdate, user = Depen
     
     update_data = {}
     if update.name is not None:
+        # Check for banned words in name
+        has_banned, banned_words = await check_banned_words(update.name)
+        if has_banned:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Category name contains banned words: {', '.join(banned_words)}"
+            )
         update_data["name"] = update.name
     if update.protocol is not None:
         is_valid, message = ProtocolParser.validate_protocol(update.protocol)
         if not is_valid:
             raise HTTPException(status_code=400, detail=f"Invalid protocol format. {message}")
+        # Check for banned words in protocol
+        has_banned, banned_words = await check_banned_words(update.protocol)
+        if has_banned:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Protocol contains banned words: {', '.join(banned_words)}"
+            )
         update_data["protocol"] = update.protocol
     if update.is_public is not None:
         update_data["is_public"] = update.is_public
