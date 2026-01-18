@@ -942,7 +942,7 @@ const ContactSection = ({ showToast }) => {
             Contact Us
           </h2>
           <p className="text-xl text-white/80">
-            Questions? Compliments? Alien sightings to report? We're all ears! 👂👽
+            Questions? Compliments? Alien sightings to report? We are all ears! 👂👽
           </p>
         </div>
 
