@@ -25,10 +25,19 @@ const MarketplacePage = () => {
   });
 
   const buyMutation = useMutation({
-    mutationFn: (id) => axios.post(`${API}/marketplace/buy/${id}`),
+    mutationFn: async (protocol) => {
+      // Use the new PayPal API
+      const response = await axios.post(`${API}/paypal/create-order`, {
+        protocol_id: protocol.id,
+        amount: protocol.price
+      });
+      return response.data;
+    },
     onSuccess: (data) => {
       showToast("Redirecting to PayPal...", "success");
-      window.open(data.data.paypal_url, '_blank');
+      if (data.approval_url) {
+        window.open(data.approval_url, '_blank');
+      }
     },
     onError: (err) => showToast(err.response?.data?.detail || "Purchase failed", "error")
   });
