@@ -131,12 +131,12 @@ const UltimateSearchPage = () => {
               )}
               {!hasChildren && <span className="w-[14px]" />}
               <Checkbox checked={selectedCategories.includes(cat.id)} onCheckedChange={() => toggleCategory(cat.id)} />
-              <span className="text-white/90 text-sm flex-1">{cat.name}</span>
-              <Badge className="text-xs bg-white/10">({cat.search_result_count || 0})</Badge>
-              <div className="opacity-0 group-hover:opacity-100 flex gap-1">
-                <button onClick={() => openEditCategory(cat)} className="text-blue-400" title="Edit Protocol" data-testid={`edit-category-${cat.id}`}><Edit size={14} /></button>
-                <button onClick={() => { setNewCategory({...newCategory, parent_id: cat.id}); setShowCreateCategory(true); }} className="text-green-400" title="Add subcategory"><Plus size={14} /></button>
-                <button onClick={() => deleteCategoryMutation.mutate(cat.id)} className="text-red-400" title="Delete"><Trash2 size={14} /></button>
+              <span className="text-white/90 text-sm flex-1 truncate" title={cat.name}>{cat.name}</span>
+              <Badge className="text-xs bg-white/10 shrink-0">({cat.search_result_count || 0})</Badge>
+              <div className="flex gap-1 shrink-0">
+                <button onClick={(e) => { e.stopPropagation(); openEditCategory(cat); }} className="text-blue-400 hover:text-blue-300 p-1" title="Edit Protocol" data-testid={`edit-category-${cat.id}`}><Edit size={14} /></button>
+                <button onClick={(e) => { e.stopPropagation(); setNewCategory({...newCategory, parent_id: cat.id}); setShowCreateCategory(true); }} className="text-green-400 hover:text-green-300 p-1" title="Add subcategory"><Plus size={14} /></button>
+                <button onClick={(e) => { e.stopPropagation(); deleteCategoryMutation.mutate(cat.id); }} className="text-red-400 hover:text-red-300 p-1" title="Delete"><Trash2 size={14} /></button>
               </div>
             </div>
             {hasChildren && isExpanded && renderCategoryTree(children, depth + 1)}
