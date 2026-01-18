@@ -61,6 +61,7 @@ const ThemeProvider = ({ children }) => {
     cream: { primary: "#d97706", secondary: "#92400e", background: "#fef3c7", name: "Cream" }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     localStorage.setItem("theme", JSON.stringify(theme));
     const colors = themes[theme.preset] || themes.cosmic;
@@ -87,15 +88,17 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     if (token) {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       axios.get(`${API}/auth/me`)
-        .then(res => setUser(res.data))
-        .catch(() => { localStorage.removeItem("token"); setToken(null); })
-        .finally(() => setLoading(false));
+        .then(res => { if (isMounted) setUser(res.data); })
+        .catch(() => { if (isMounted) { localStorage.removeItem("token"); setToken(null); } })
+        .finally(() => { if (isMounted) setLoading(false); });
     } else {
       setLoading(false);
     }
+    return () => { isMounted = false; };
   }, [token]);
 
   const login = async (email, password) => {
