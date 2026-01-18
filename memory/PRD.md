@@ -15,7 +15,8 @@
 | **Stripe Payments** | ✅ **LIVE** | Primary payment provider (test mode) |
 | **Resend Email** | ✅ **LIVE** | API key configured, welcome emails sent |
 | **DuckDuckGo Search** | ✅ **LIVE** | Real web search results (unlimited, no API key) |
-| **Brave Search** | ⚠️ **READY** | Integrated, needs BRAVE_SEARCH_API_KEY (free: 2000/month) |
+| **Brave Search** | ✅ **LIVE** | API key configured, real search results |
+| **WebSocket Chat** | ✅ **LIVE** | Real-time messaging at /api/chat/ws |
 | **Bing Search** | ❌ **RETIRED** | Microsoft retired Bing Search API in Aug 2025 |
 | **PayPal** | ⚠️ **BLOCKED** | User account issues - needs resolution |
 
@@ -29,23 +30,27 @@
 - InfoJet 2.0 Protocol Parser (supports "and" as "&" synonym)
 - Category/Subcategory hierarchy
 - Select All / Deselect All buttons
+- **Category controls always visible** (Edit/Add/Delete icons)
 
 ### ✅ Multi-Engine Search Integration
 - **DuckDuckGo** - Privacy-focused search (no API key required)
-- **Brave Search** - Independent index with 30B+ pages (free tier: 2000/month)
+- **Brave Search** - Independent index with 30B+ pages (API key: configured)
 - Search engine selector dropdown on Ultimate Search page
-- Available engines status badges (configured/not configured)
+- Available engines status badges (both showing green ✓)
 - Source badges on search results (🦆 DuckDuckGo, 🦁 Brave)
 - Engine parameter: "all", "duckduckgo", or "brave"
 
+### ✅ WebSocket Real-Time Chat
+- Native FastAPI WebSocket at `/api/chat/ws`
+- Real-time message delivery
+- Online users tracking
+- Typing indicators
+- Room join/leave notifications
+- Session-based authentication
+
 ### ✅ Stripe Integration (Primary Payment) - LIVE
 - Stripe Checkout for subscriptions and marketplace purchases
-- **Subscription Management Dashboard** (`/subscription`)
-  - View current subscription status
-  - Cancel/reactivate subscription
-  - Billing history with past transactions
-  - Wallet balance from marketplace sales
-  - Change plan (monthly/yearly)
+- Subscription Management Dashboard (`/subscription`)
 - Monthly: $1.00/mo, Yearly: $9.98/yr (Save 17%)
 - 85% seller / 15% platform fee structure
 
@@ -56,9 +61,9 @@
 
 ### ✅ All Pages Working
 - HomePage, LoginPage
-- UltimateSearchPage (with multi-engine search + Select All/Deselect All)
+- UltimateSearchPage (with multi-engine search + always-visible controls)
 - MapPage (Leaflet integration)
-- ChatPage
+- ChatPage (WebSocket real-time)
 - GroupsPage, PagesPage
 - ReportsPage (with image upload + Select All/Deselect All)
 - RevenuePage (PDF/CSV export)
@@ -66,30 +71,28 @@
 - ThemesPage (12 themes)
 - TemplatesPage
 - StatsPage (leaderboards)
-- BookPage, FoodPage, InfoPilotPage
-- SubscriptionDashboard (NEW)
-- SubscriptionCheckout
+- SubscriptionDashboard
 
 ---
 
 ## 3. API Endpoints
 
+### WebSocket (`/api/chat/ws`)
+- Real-time chat connection with token auth
+- Message types: join_room, send_message, typing, get_online_users
+
 ### Search (`/api/search`)
-- `GET /engines` - Get available search engines and status (NEW)
-- `POST /collate` - Search and collate with engine parameter (UPDATED)
-- `GET /results` - Get search results with filtering
+- `GET /engines` - Get available search engines and status
+- `POST /collate` - Search and collate with engine parameter
+
+### Chat (`/api/chat`)
+- `GET /rooms` - Get chat rooms
+- `POST /rooms` - Create room
+- `POST /rooms/{id}/message` - Send message (fallback)
+- `GET /rooms/{id}/messages` - Get messages (fallback)
 
 ### Stripe (`/api/stripe`)
-- `GET /config` - Check Stripe configuration
-- `POST /create-checkout` - Create checkout session
-- `GET /subscription` - Get subscription details
-- `GET /billing-history` - Get billing history
-- `POST /cancel-subscription` - Cancel subscription
-- `POST /reactivate-subscription` - Reactivate cancelled subscription
-
-### Email (`/api/email`)
-- `POST /subscribe` - Subscribe to newsletter
-- `DELETE /unsubscribe` - Unsubscribe
+- All subscription management endpoints
 
 ---
 
@@ -108,8 +111,11 @@ STRIPE_API_KEY=sk_test_emergent
 RESEND_API_KEY=re_8pZDKmjw_BvsDbpB5nJvK8K8SVAz4TMUM
 SENDER_EMAIL=onboarding@resend.dev
 
-# Brave Search (Optional - get free key at api-dashboard.search.brave.com)
-BRAVE_SEARCH_API_KEY=
+# Brave Search - CONFIGURED ✅
+BRAVE_SEARCH_API_KEY=BSAtWLc66Hm5o8qYvBOsOfoYmNnhjWR
+
+# Frontend URL
+FRONTEND_URL=https://infojethub.preview.emergentagent.com
 
 # PayPal - BLOCKED (user account issues)
 PAYPAL_CLIENT_ID=
@@ -120,10 +126,17 @@ PAYPAL_CLIENT_SECRET=
 
 ## 5. Test Results
 
-**Latest Test: iteration_13.json**
-- Backend: **16/16 search engine tests passed (100%)**
-- Frontend: **All search engine features working**
-- Multi-engine search: DuckDuckGo ✅ LIVE, Brave ⚠️ needs API key
+**Latest Test: iteration_14.json**
+- Backend: **11/11 tests passed (100%)**
+- Frontend: **All features working (100%)**
+- Total: **22 test scenarios passed**
+
+### Verified Features:
+- ✅ Category controls visible without hover
+- ✅ Brave Search API configured and working
+- ✅ WebSocket chat connected and functioning
+- ✅ Real-time messaging
+- ✅ Online users tracking
 
 ---
 
@@ -137,52 +150,45 @@ Stripe Test Card: 4242 4242 4242 4242 (any future date, any CVC)
 
 ---
 
-## 7. Requirements from Documents (7, 8, 9)
+## 7. Code Architecture
 
-### Completed Features:
-- ✅ Multi-engine search (DuckDuckGo, Brave)
-- ✅ Subscription management dashboard
-- ✅ Protocol "and" → "&" synonym support
-- ✅ Select All / Deselect All buttons
-- ✅ Email newsletter integration
-
-### Pending Features (from documents):
-- User polls on pages/groups
-- Voice search integration
-- Browser extension
-- Identity masking in Groups/Pages/Chat
-- Quote gallery (50 quotes from manuscript)
-- Maestro Bistro advertisements
-- Mobile app wrapper
-
----
-
-## 8. Setup Instructions for Brave Search
-
-To enable Brave Search:
-1. Go to https://api-dashboard.search.brave.com
-2. Create a free account
-3. Get your API key (free tier: 2000 queries/month)
-4. Add to `/app/backend/.env`:
-   ```
-   BRAVE_SEARCH_API_KEY=your_api_key_here
-   ```
-5. Restart backend: `sudo supervisorctl restart backend`
+```
+/app
+├── backend/
+│   ├── routes/
+│   │   ├── chat.py         # REST API for chat
+│   │   ├── search.py       # Multi-engine search
+│   │   ├── stripe.py       # Payments
+│   │   └── ...
+│   ├── utils/
+│   │   ├── websocket.py    # WebSocket handler
+│   │   ├── search.py       # DuckDuckGo + Brave
+│   │   └── ...
+│   ├── server.py           # WebSocket endpoint at /api/chat/ws
+│   └── .env
+├── frontend/
+│   ├── src/pages/
+│   │   ├── ChatPage.js         # WebSocket chat
+│   │   ├── UltimateSearchPage.js
+│   │   └── ...
+│   └── ...
+└── test_reports/
+    └── iteration_14.json
+```
 
 ---
 
-## 9. Next Steps
+## 8. Next Steps
 
-- [x] Stripe Subscription Management Dashboard
-- [x] Brave Search Integration
-- [x] Multi-engine search selector
+- [x] Fix Category controls disappearing
+- [x] Add Brave Search API key
+- [x] Implement WebSocket real-time chat
 - [ ] PayPal account resolution (blocked on user)
-- [ ] WebSocket real-time chat upgrade
-- [ ] Mobile app versions
 - [ ] Voice search integration
+- [ ] Mobile app versions
 
 ---
 
 *Last Updated: January 18, 2026*  
-*Version: 3.5 - Multi-Engine Search Complete*  
-*Test Status: 100% Pass Rate (iteration_13.json)*
+*Version: 3.6 - WebSocket Chat & Brave Search Complete*  
+*Test Status: 100% Pass Rate (iteration_14.json)*
