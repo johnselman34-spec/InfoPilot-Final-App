@@ -146,3 +146,7 @@ async def root():
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "service": "InfoPilot Explorer"}
+
+
+# Mount Socket.IO app for WebSocket support
+app.mount("/ws", socket_app)
