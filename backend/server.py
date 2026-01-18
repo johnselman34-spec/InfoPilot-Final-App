@@ -148,5 +148,5 @@ async def health_check():
     return {"status": "healthy", "service": "InfoPilot Explorer"}
 
 
-# Mount Socket.IO app for WebSocket support
-app.mount("/ws", socket_app)
+# Mount Socket.IO app for WebSocket support under /api path
+app.mount("/api/ws", socket_app)
