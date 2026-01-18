@@ -94,6 +94,7 @@ const Navbar = ({ activeSection, setActiveSection, isMobileMenuOpen, setIsMobile
     { id: 'home', label: 'Home', icon: <Rocket size={18} /> },
     { id: 'book', label: 'The Book', icon: <Book size={18} /> },
     { id: 'food', label: 'Food Truck', icon: <Utensils size={18} /> },
+    { id: 'infopilot', label: 'InfoPilot', icon: <Globe size={18} /> },
     { id: 'testimonials', label: 'Reviews', icon: <Star size={18} /> },
     { id: 'contact', label: 'Contact', icon: <Mail size={18} /> }
   ];
@@ -103,7 +104,10 @@ const Navbar = ({ activeSection, setActiveSection, isMobileMenuOpen, setIsMobile
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveSection('home')} data-testid="logo">
           <Sparkles className="text-yellow-400 animate-sparkle" size={28} />
-          <span className="text-xl font-bold text-gradient-gold">InfoPilot Explorer</span>
+          <div className="flex flex-col">
+            <span className="text-xl font-bold text-gradient-gold">InfoPilot Explorer</span>
+            <span className="text-xs text-white/50">A Top Pilot Enterprises, Inc. Company</span>
+          </div>
         </div>
         
         {/* Desktop Nav */}
