@@ -194,3 +194,61 @@ async def get_recent_activity(user: Dict = Depends(require_admin)):
         "recent_purchases": recent_purchases,
         "chat_messages_24h": chat_messages_24h
     }
+
+
+@router.get("/maintenance")
+async def get_maintenance_status(user: Dict = Depends(require_admin)):
+    """Get current maintenance mode status."""
+    from utils.service_monitor import get_maintenance_mode
+    return await get_maintenance_mode()
+
+
+@router.post("/maintenance")
+async def set_maintenance_status(
+    enabled: bool = Body(...),
+    message: str = Body(None),
+    end_time: str = Body(None),
+    user: Dict = Depends(require_admin)
+):
+    """Enable or disable maintenance mode."""
+    from utils.service_monitor import set_maintenance_mode
+    result = await set_maintenance_mode(enabled, message, end_time)
+    return {
+        "message": f"Maintenance mode {'enabled' if enabled else 'disabled'}",
+        "maintenance": result
+    }
+
+
+@router.post("/health-check")
+async def run_health_check(
+    send_alerts: bool = Body(False),
+    user: Dict = Depends(require_admin)
+):
+    """Run a manual health check and optionally send alerts."""
+    from utils.service_monitor import monitor_services_once
+    
+    admin_email = user.get("email") if send_alerts else None
+    result = await monitor_services_once(admin_email)
+    
+    return {
+        "message": "Health check completed",
+        "result": result
+    }
+
+
+@router.post("/test-alert")
+async def send_test_alert(user: Dict = Depends(require_admin)):
+    """Send a test alert email to the admin."""
+    from utils.service_monitor import send_service_alert
+    
+    success = await send_service_alert(
+        "Test Service",
+        "test",
+        "This is a test alert from InfoPilot Explorer",
+        user.get("email")
+    )
+    
+    if success:
+        return {"message": f"Test alert sent to {user.get('email')}"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to send test alert. Check email configuration.")
