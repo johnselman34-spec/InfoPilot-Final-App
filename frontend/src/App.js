@@ -942,16 +942,42 @@ const FoodSection = ({ showToast }) => {
                       <span className="text-yellow-400">${getTotal().toFixed(2)}</span>
                     </div>
                   </div>
+                  
+                  {/* PayPal Payment for Food */}
+                  {!showPayPal ? (
+                    <Button 
+                      onClick={handleOrder}
+                      className="btn-gold w-full mt-4"
+                      disabled={!orderForm.name || !orderForm.phone || !orderForm.pickupTime}
+                      data-testid="proceed-to-food-payment-btn"
+                    >
+                      <CreditCard className="mr-2" /> Pay with PayPal - ${getTotal().toFixed(2)}
+                    </Button>
+                  ) : (
+                    <div className="mt-4 bg-white/10 p-4 rounded-lg">
+                      <p className="text-white/80 text-sm mb-3 text-center">
+                        Complete your order securely with PayPal
+                      </p>
+                      <PayPalButton 
+                        amount={getTotal().toFixed(2)}
+                        description={`Maestro Bistro - ${cart.length} item(s)`}
+                        onSuccess={handlePayPalSuccess}
+                        onError={handlePayPalError}
+                        buttonId="food-order"
+                      />
+                    </div>
+                  )}
                 </div>
                 <DialogFooter>
-                  <Button 
-                    onClick={handleOrder} 
-                    className="btn-gold w-full"
-                    disabled={loading}
-                    data-testid="confirm-food-order-btn"
-                  >
-                    {loading ? 'Processing...' : 'Place Order 🍽️'}
-                  </Button>
+                  {showPayPal && (
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowPayPal(false)}
+                      className="w-full border-white/30 text-white hover:bg-white/10"
+                    >
+                      ← Back to Details
+                    </Button>
+                  )}
                 </DialogFooter>
               </DialogContent>
             </Dialog>
