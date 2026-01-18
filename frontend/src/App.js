@@ -39,19 +39,29 @@ import {
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// PayPal Direct Payment Links - Reliable method that works without SDK issues
-const PAYPAL_BUSINESS_EMAIL = "sb-h7vc448665634@business.example.com";
+// PayPal Configuration - REAL ACCOUNT
+const PAYPAL_BUSINESS_EMAIL = "JJspilot24@gmail.com";
+const PAYPAL_INFOPILOT_LINK = "https://www.paypal.com/ncp/payment/LZDBN3SQU4NWQ";
+const PAYPAL_BOOK_LINK = "https://www.paypal.com/ncp/payment/LGXMXSG3D2MXU";
+const AMAZON_BOOK_LINK = "https://www.amazon.com/Letters-Evelyn-John-Selman/dp/B0F3XFG14J";
 
-// Simple PayPal Payment Link Component - Most Reliable Method
+// Simple PayPal Payment Link Component - Using REAL PayPal NCP Links
 const PayPalPaymentLink = ({ amount, description, onSuccess, productType }) => {
   const [processing, setProcessing] = useState(false);
   const [completed, setCompleted] = useState(false);
   
-  // Create PayPal payment URL using PayPal.me or direct checkout
+  // Get the appropriate PayPal link based on product type
   const getPayPalUrl = () => {
-    const encodedDescription = encodeURIComponent(description);
-    // Using PayPal hosted button directly
-    return `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${PAYPAL_BUSINESS_EMAIL}&item_name=${encodedDescription}&amount=${amount}&currency_code=USD&button_subtype=services&no_note=0&cn=Add%20special%20instructions%20to%20the%20seller&no_shipping=1&rm=1&return=${encodeURIComponent(window.location.origin)}&cancel_return=${encodeURIComponent(window.location.origin)}`;
+    // Use direct NCP payment links for better reliability
+    if (productType === 'infopilot' || productType === 'infopilot-quick') {
+      return PAYPAL_INFOPILOT_LINK;
+    } else if (productType === 'book') {
+      return PAYPAL_BOOK_LINK;
+    } else {
+      // For food orders, use the standard PayPal checkout with real email
+      const encodedDescription = encodeURIComponent(description);
+      return `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=${PAYPAL_BUSINESS_EMAIL}&item_name=${encodedDescription}&amount=${amount}&currency_code=USD&button_subtype=services&no_note=0&cn=Add%20special%20instructions%20to%20the%20seller&no_shipping=1&rm=1&return=${encodeURIComponent(window.location.origin)}&cancel_return=${encodeURIComponent(window.location.origin)}`;
+    }
   };
 
   const handlePaymentClick = () => {
