@@ -221,7 +221,7 @@ async def set_maintenance_status(
 
 @router.post("/health-check")
 async def run_health_check(
-    send_alerts: bool = Body(False),
+    send_alerts: bool = Body(False, embed=True),
     user: Dict = Depends(require_admin)
 ):
     """Run a manual health check and optionally send alerts."""
