@@ -285,32 +285,10 @@ async def get_map_data(scope: str = "personal", user: Dict = Depends(require_use
 # Top-level leaderboard endpoint (alias for /api/users/leaderboard)
 @router.get("/leaderboard")
 async def get_leaderboard_alias():
-    """Get laughter points leaderboard (top-level alias)."""
-    # Get top laughter points
-    top_laughter = await db.users.find(
-        {"laughter_points": {"$gt": 0}}, 
-        {"_id": 0, "id": 1, "username": 1, "laughter_points": 1}
-    ).sort("laughter_points", -1).limit(10).to_list(10)
+    """Get laughter points leaderboard (top-level alias).
     
-    # Get top protocol creators
-    pipeline = [
-        {"$group": {"_id": "$user_id", "protocol_count": {"$sum": 1}}},
-        {"$sort": {"protocol_count": -1}},
-        {"$limit": 10}
-    ]
-    top_creators_raw = await db.categories.aggregate(pipeline).to_list(10)
-    
-    top_protocol_creators = []
-    for tc in top_creators_raw:
-        user = await db.users.find_one({"id": tc["_id"]}, {"_id": 0, "id": 1, "username": 1})
-        if user:
-            top_protocol_creators.append({
-                "user": user,
-                "protocol_count": tc["protocol_count"]
-            })
-    
-    return {
-        "top_laughter_points": top_laughter,
-        "top_protocol_creators": top_protocol_creators
-    }
+    Optimized: Uses $lookup aggregation to avoid N+1 queries.
+    """
+    from utils.db_optimization import get_leaderboard_optimized
+    return await get_leaderboard_optimized()
 
