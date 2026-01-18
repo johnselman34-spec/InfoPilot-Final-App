@@ -1,6 +1,7 @@
 """
 InfoPilot Explorer - Revenue Routes
 Revenue dashboard and PDF/CSV export
+Optimized with aggregation pipelines
 """
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -10,42 +11,20 @@ import io
 
 from utils.db import db
 from utils.auth import require_user
+from utils.db_optimization import get_user_revenue_optimized
 
 router = APIRouter(prefix="/revenue", tags=["Revenue"])
 
 
 @router.get("/dashboard")
 async def get_revenue_dashboard(user: Dict = Depends(require_user)):
-    """Get revenue dashboard data."""
-    # Get user's sales
-    sales = await db.purchases.find({"seller_id": user["id"], "status": "completed"}, {"_id": 0}).to_list(1000)
+    """Get revenue dashboard data.
     
-    total_revenue = sum(s.get("price", 0) * 0.85 for s in sales)  # 85% to seller
-    
-    # Get monthly breakdown
-    monthly_revenue = {}
-    for sale in sales:
-        month = sale["created_at"][:7]  # YYYY-MM
-        monthly_revenue[month] = monthly_revenue.get(month, 0) + (sale["price"] * 0.85)
-    
-    # Get top selling protocols
-    protocol_sales = {}
-    for sale in sales:
-        pid = sale["protocol_id"]
-        if pid not in protocol_sales:
-            protocol_sales[pid] = {"name": sale["protocol_name"], "count": 0, "revenue": 0}
-        protocol_sales[pid]["count"] += 1
-        protocol_sales[pid]["revenue"] += sale["price"] * 0.85
-    
-    top_protocols = sorted(protocol_sales.values(), key=lambda x: x["revenue"], reverse=True)[:10]
-    
-    return {
-        "total_revenue": round(total_revenue, 2),
-        "total_sales": len(sales),
-        "monthly_revenue": monthly_revenue,
-        "top_protocols": top_protocols,
-        "wallet_balance": user.get("wallet_balance", 0)
-    }
+    Optimized: Uses aggregation pipeline for efficient calculation.
+    """
+    revenue_data = await get_user_revenue_optimized(user["id"])
+    revenue_data["wallet_balance"] = user.get("wallet_balance", 0)
+    return revenue_data
 
 
 @router.get("/export")
