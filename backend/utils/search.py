@@ -60,7 +60,54 @@ async def search_duckduckgo(query: str, max_results: int = 20) -> List[Dict]:
         return []
 
 
-async def search_all_engines(query: str, max_results: int = 40) -> List[Dict]:
+async def search_brave(query: str, max_results: int = 20) -> List[Dict]:
+    """Search using Brave Search API (free tier: 2000 queries/month)."""
+    if not BRAVE_SEARCH_API_KEY:
+        logging.warning("Brave Search API key not configured, skipping Brave search")
+        return []
+    
+    try:
+        headers = {
+            "X-Subscription-Token": BRAVE_SEARCH_API_KEY,
+            "Accept": "application/json"
+        }
+        params = {
+            "q": query,
+            "count": min(max_results, 20),  # Brave API max is 20
+            "country": "us",
+            "search_lang": "en"
+        }
+        
+        response = requests.get(
+            BRAVE_SEARCH_BASE_URL,
+            headers=headers,
+            params=params,
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        results = []
+        web_results = data.get("web", {}).get("results", [])
+        for r in web_results:
+            results.append({
+                "url": r.get("url", ""),
+                "title": r.get("title", ""),
+                "snippet": r.get("description", ""),
+                "source": "Brave"
+            })
+        
+        logging.info(f"Brave Search returned {len(results)} results for '{query}'")
+        return results
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Brave Search API error: {e}")
+        return []
+    except Exception as e:
+        logging.error(f"Brave Search error: {e}")
+        return []
+
+
+async def search_all_engines(query: str, max_results: int = 40, engine: str = "all") -> List[Dict]:
     """Search across all available search engines."""
     all_results = []
     
