@@ -218,7 +218,6 @@ def classify_document_type(content: str, title: str, admin_settings: Dict) -> st
     """Classify document type based on content analysis."""
     content_lower = content.lower()
     title_lower = title.lower()
-    full_text = f"{title_lower} {content_lower}"
     word_count = len(content.split())
     
     # PhD Informative
