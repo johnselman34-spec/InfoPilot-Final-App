@@ -101,7 +101,7 @@ PAYPAL_CLIENT_ID=         # Add for full API
 PAYPAL_CLIENT_SECRET=     # Add for full API
 PAYPAL_MODE=sandbox
 PAYPAL_BUSINESS_EMAIL=JJspilot24@gmail.com
-FRONTEND_URL=https://pilotdata.preview.emergentagent.com
+FRONTEND_URL=https://infojethub.preview.emergentagent.com
 ```
 
 ---

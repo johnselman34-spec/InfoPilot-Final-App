@@ -33,7 +33,7 @@ PAYPAL_CHECKOUT_URL = "https://www.sandbox.paypal.com" if PAYPAL_MODE == "sandbo
 PAYPAL_BUSINESS_EMAIL = os.environ.get("PAYPAL_BUSINESS_EMAIL", "JJspilot24@gmail.com")
 
 # Frontend URLs
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://pilotdata.preview.emergentagent.com")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://infojethub.preview.emergentagent.com")
 
 
 class CreateOrderRequest(BaseModel):
