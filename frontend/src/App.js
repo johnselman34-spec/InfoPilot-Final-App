@@ -499,18 +499,18 @@ const FoodSection = ({ showToast }) => {
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', email: '', pickupTime: '' });
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchMenu();
-  }, []);
-
-  const fetchMenu = async () => {
+  const fetchMenu = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/food/menu`);
       setMenu(response.data);
     } catch (error) {
       console.error('Error fetching menu:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchMenu();
+  }, [fetchMenu]);
 
   const addToCart = (item) => {
     const existing = cart.find(c => c.id === item.id);
