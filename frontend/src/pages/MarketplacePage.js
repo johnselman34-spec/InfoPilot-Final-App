@@ -85,11 +85,11 @@ const MarketplacePage = () => {
         <Card className="card-glass p-4 mb-6 border border-green-400/30" data-testid="seller-dashboard">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-green-400">Become a Seller</h3>
-              <p className="text-white/60 text-sm">Connect PayPal to receive payments for your protocols (85% commission)</p>
+              <h3 className="text-lg font-bold text-green-400">💰 Become a Seller</h3>
+              <p className="text-white/60 text-sm">List your protocols for sale and earn 85% commission on every purchase!</p>
             </div>
-            <Button onClick={() => setShowPayPalConnect(true)} className="bg-[#0070ba] hover:bg-[#003087] text-white" data-testid="connect-paypal-btn">
-              <CreditCard className="mr-2" /> Connect PayPal
+            <Button onClick={() => setShowSellerInfo(true)} className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white" data-testid="seller-info-btn">
+              <CreditCard className="mr-2" /> Learn More
             </Button>
           </div>
         </Card>
