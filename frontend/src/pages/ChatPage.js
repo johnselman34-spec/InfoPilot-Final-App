@@ -30,6 +30,7 @@ const ChatPage = () => {
   const wsRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
+  const connectFnRef = useRef(null);
 
   // Fetch rooms
   const { data: roomsData } = useQuery({
