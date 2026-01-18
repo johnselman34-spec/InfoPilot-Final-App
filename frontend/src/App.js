@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import "@/App.css";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -32,11 +32,101 @@ import {
   AlertTriangle,
   CheckCircle,
   Ship,
-  Globe
+  Globe,
+  CreditCard
 } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// PayPal Configuration
+const PAYPAL_CLIENT_ID = "BAABmhMWqe1WrfJkqJ7RRzEZwoAfxSF2bclm8_HY2BuU9C-7pnakTdjFVCvSJyWh63-wUWmKN1cT1hdMIY";
+const PAYPAL_HOSTED_BUTTON_ID = "765S46VPPEP5C";
+
+// PayPal Button Component
+const PayPalButton = ({ amount, description, onSuccess, onError, buttonId }) => {
+  const paypalRef = useRef(null);
+  const [paypalLoaded, setPaypalLoaded] = useState(false);
+
+  useEffect(() => {
+    // Check if PayPal SDK is loaded
+    if (window.paypal && paypalRef.current) {
+      setPaypalLoaded(true);
+      
+      // Clear previous buttons
+      paypalRef.current.innerHTML = '';
+      
+      // Render PayPal buttons
+      window.paypal.Buttons({
+        style: {
+          shape: 'pill',
+          color: 'gold',
+          layout: 'vertical',
+          label: 'pay'
+        },
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              description: description,
+              amount: {
+                currency_code: 'USD',
+                value: amount.toString()
+              }
+            }]
+          });
+        },
+        onApprove: async (data, actions) => {
+          const order = await actions.order.capture();
+          console.log('PayPal Order Captured:', order);
+          if (onSuccess) {
+            onSuccess(order);
+          }
+        },
+        onError: (err) => {
+          console.error('PayPal Error:', err);
+          if (onError) {
+            onError(err);
+          }
+        }
+      }).render(paypalRef.current);
+    }
+  }, [amount, description, onSuccess, onError, paypalLoaded]);
+
+  return (
+    <div className="paypal-button-container">
+      <div ref={paypalRef} data-testid={`paypal-button-${buttonId}`}></div>
+      {!paypalLoaded && (
+        <div className="text-center text-white/60 py-4">
+          <CreditCard className="animate-pulse mx-auto mb-2" size={24} />
+          <p>Loading PayPal...</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// PayPal Hosted Button Component (for the main subscription)
+const PayPalHostedButton = ({ containerId }) => {
+  const containerRef = useRef(null);
+  
+  useEffect(() => {
+    if (window.paypal && window.paypal.HostedButtons && containerRef.current) {
+      containerRef.current.innerHTML = '';
+      window.paypal.HostedButtons({
+        hostedButtonId: PAYPAL_HOSTED_BUTTON_ID,
+      }).render(containerRef.current);
+    }
+  }, []);
+
+  return (
+    <div 
+      ref={containerRef} 
+      id={containerId}
+      data-testid="paypal-hosted-button"
+      className="paypal-hosted-button-container"
+    ></div>
+  );
+};
 
 // Pre-computed star positions for consistent rendering
 const STAR_POSITIONS = Array.from({ length: 50 }, (_, i) => ({
