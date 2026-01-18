@@ -602,7 +602,7 @@ const FoodSection = ({ showToast }) => {
             className="w-full h-64 md:h-96 object-cover rounded-xl"
           />
           <p className="text-center text-white/60 mt-4 text-lg italic">
-            "Where Every Bite is a Symphony of Flavor!" 🎵
+            &quot;Where Every Bite is a Symphony of Flavor!&quot; 🎵
           </p>
         </div>
 
@@ -623,7 +623,7 @@ const FoodSection = ({ showToast }) => {
                 </div>
                 <CardTitle className="text-white">{item.name}</CardTitle>
                 <CardDescription className="text-yellow-300/80 italic">
-                  "{item.funny_tagline}"
+                  &quot;{item.funny_tagline}&quot;
                 </CardDescription>
               </CardHeader>
               <CardContent>
