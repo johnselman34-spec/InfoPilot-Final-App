@@ -2,7 +2,7 @@
  * InfoPilot Explorer - Login Page
  */
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Sparkles, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -86,7 +86,18 @@ const LoginPage = () => {
             </div>
             
             <div>
-              <Label className="text-white">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label className="text-white">Password</Label>
+                {!isRegister && (
+                  <Link 
+                    to="/forgot-password" 
+                    className="text-yellow-400 hover:underline text-xs"
+                    data-testid="forgot-password-link"
+                  >
+                    Forgot password?
+                  </Link>
+                )}
+              </div>
               <div className="relative">
                 <Input 
                   className="form-input mt-1 pr-10" 
