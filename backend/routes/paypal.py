@@ -184,13 +184,20 @@ async def create_paypal_order(request: CreateOrderRequest, user: Dict = Depends(
     
     # Fallback: Simple PayPal payment link (no API credentials needed)
     purchase_id = str(uuid.uuid4())
+    
+    # Use PayPal's standard checkout URL (more reliable than NCP)
+    encoded_name = protocol['name'].replace(' ', '+')
     simple_url = (
         f"https://www.paypal.com/cgi-bin/webscr?"
-        f"cmd=_xclick&business={PAYPAL_BUSINESS_EMAIL}"
-        f"&item_name=InfoPilot Protocol: {protocol['name']}"
-        f"&amount={request.amount:.2f}&currency_code=USD"
+        f"cmd=_xclick"
+        f"&business={PAYPAL_BUSINESS_EMAIL}"
+        f"&item_name=InfoPilot+Protocol:+{encoded_name}"
+        f"&item_number={request.protocol_id}"
+        f"&amount={request.amount:.2f}"
+        f"&currency_code=USD"
         f"&return={FRONTEND_URL}/marketplace/success?purchase_id={purchase_id}"
         f"&cancel_return={FRONTEND_URL}/marketplace/cancel"
+        f"&notify_url={FRONTEND_URL}/api/paypal/webhook"
     )
     
     # Store the pending purchase
