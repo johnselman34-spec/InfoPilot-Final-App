@@ -22,17 +22,20 @@ room_connections: Dict[str, Set[str]] = {}  # room_id -> set of connection_ids
 
 
 async def authenticate_token(token: str) -> dict:
-    """Authenticate JWT token and return user data."""
+    """Authenticate session token and return user data."""
     if not token:
         return None
     
     try:
-        SECRET_KEY = os.environ.get("JWT_SECRET", "infopilot_secret_key_2024")
-        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        user_id = payload.get("user_id")
+        # Look up session in database (same as REST API auth)
+        session = await db.sessions.find_one({"token": token})
+        if not session:
+            logger.error(f"Token auth error: Session not found")
+            return None
         
+        user_id = session.get("user_id")
         if user_id:
-            user = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+            user = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0, "hashed_password": 0})
             return user
     except Exception as e:
         logger.error(f"Token auth error: {e}")
