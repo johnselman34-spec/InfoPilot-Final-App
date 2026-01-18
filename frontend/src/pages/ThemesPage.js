@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -8,14 +8,33 @@ import StarsBackground from '../components/StarsBackground';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Moon, Sun } from 'lucide-react';
-
-const API = process.env.REACT_APP_BACKEND_URL + '/api';
+import { Switch } from '../components/ui/switch';
+import { Moon, Sun, Egg } from 'lucide-react';
+import { API } from '../utils/api';
 
 const ThemesPage = () => {
   const { user } = useAuth();
   const { theme, setTheme, themes } = useTheme();
   const showToast = useToast();
+  const [easterEggsEnabled, setEasterEggsEnabled] = useState(true);
+
+  // Load Easter Eggs preference
+  useEffect(() => {
+    const disabled = localStorage.getItem('easter-eggs-disabled') === 'true';
+    setEasterEggsEnabled(!disabled);
+  }, []);
+
+  // Toggle Easter Eggs
+  const toggleEasterEggs = (enabled) => {
+    setEasterEggsEnabled(enabled);
+    if (enabled) {
+      localStorage.removeItem('easter-eggs-disabled');
+      showToast("Easter Eggs enabled! 🥚", "success");
+    } else {
+      localStorage.setItem('easter-eggs-disabled', 'true');
+      showToast("Easter Eggs disabled", "success");
+    }
+  };
 
   if (!user) return <Navigate to="/login" />;
 
