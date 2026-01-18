@@ -2534,6 +2534,8 @@ function App() {
                   <Route path="/reports" element={<ReportsPage />} />
                   <Route path="/revenue" element={<RevenuePage />} />
                   <Route path="/themes" element={<ThemesPage />} />
+                  <Route path="/groups" element={<GroupsPage />} />
+                  <Route path="/pages" element={<PagesPage />} />
                   <Route path="/legal/user-agreement" element={<UserAgreementPage />} />
                   <Route path="/legal/privacy" element={<PrivacyPage />} />
                   <Route path="*" element={<Navigate to="/" />} />
