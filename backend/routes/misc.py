@@ -292,3 +292,11 @@ async def get_leaderboard_alias():
     from utils.cache import cached_leaderboard
     return await cached_leaderboard()
 
+
+
+# Public maintenance mode check (no auth required)
+@router.get("/maintenance-status")
+async def get_public_maintenance_status():
+    """Get maintenance mode status (public endpoint)."""
+    from utils.service_monitor import get_maintenance_mode
+    return await get_maintenance_mode()
