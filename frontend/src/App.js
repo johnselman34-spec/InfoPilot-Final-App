@@ -105,6 +105,11 @@ const AppContent = () => {
           <Route path="/templates" element={<ProtectedRoute><TemplatesPage /></ProtectedRoute>} />
           <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
           
+          {/* Stripe Payment Routes */}
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/cancel" element={<PaymentCancel />} />
+          <Route path="/subscribe" element={<ProtectedRoute><SubscriptionCheckout /></ProtectedRoute>} />
+          
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
