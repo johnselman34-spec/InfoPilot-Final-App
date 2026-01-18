@@ -865,7 +865,7 @@ const TestimonialCard = ({ testimonial }) => (
             <Star key={i} size={16} className="text-yellow-400 fill-yellow-400" />
           ))}
         </div>
-        <p className="text-white/90 italic mb-4">"{testimonial.review}"</p>
+        <p className="text-white/90 italic mb-4">&quot;{testimonial.review}&quot;</p>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-white font-semibold">{testimonial.name}</p>
