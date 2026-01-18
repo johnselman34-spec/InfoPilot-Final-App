@@ -581,16 +581,41 @@ const BookSection = ({ showToast }) => {
                         </span>
                       </div>
                     </div>
+                    
+                    {/* PayPal Payment for Book */}
+                    {!showPayPal ? (
+                      <Button 
+                        onClick={handleProceedToPayment}
+                        className="btn-gold w-full mt-4"
+                        data-testid="proceed-to-book-payment-btn"
+                      >
+                        <CreditCard className="mr-2" /> Pay with PayPal
+                      </Button>
+                    ) : (
+                      <div className="mt-4 bg-white/10 p-4 rounded-lg">
+                        <p className="text-white/80 text-sm mb-3 text-center">
+                          Complete your purchase securely with PayPal
+                        </p>
+                        <PayPalButton 
+                          amount={getBookAmount()}
+                          description={`Letters to Evelyn - ${selectedFormat} (x${quantity})`}
+                          onSuccess={handlePayPalSuccess}
+                          onError={handlePayPalError}
+                          buttonId="book-purchase"
+                        />
+                      </div>
+                    )}
                   </div>
                   <DialogFooter>
-                    <Button 
-                      onClick={handleOrder} 
-                      className="btn-gold w-full"
-                      disabled={loading}
-                      data-testid="confirm-order-btn"
-                    >
-                      {loading ? 'Processing...' : 'Confirm Order 🎉'}
-                    </Button>
+                    {showPayPal && (
+                      <Button 
+                        variant="outline"
+                        onClick={() => setShowPayPal(false)}
+                        className="w-full border-white/30 text-white hover:bg-white/10"
+                      >
+                        ← Back to Details
+                      </Button>
+                    )}
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
