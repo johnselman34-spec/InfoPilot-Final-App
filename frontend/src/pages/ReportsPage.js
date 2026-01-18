@@ -76,7 +76,7 @@ const ReportsPage = () => {
     formData.append("file", file);
     
     try {
-      const res = await axios.post(`${API}/upload/image`, formData, {
+      const res = await axios.post(`${API}/reports/upload/image`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
       setNewReport(prev => ({ ...prev, images: [...prev.images, res.data.url] }));
