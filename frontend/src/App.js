@@ -47,14 +47,18 @@ const ThemeProvider = ({ children }) => {
   });
 
   const themes = {
-    cosmic: { primary: "#fbbf24", secondary: "#8b5cf6", background: "#0f172a" },
-    royal: { primary: "#3b82f6", secondary: "#6366f1", background: "#1e1b4b" },
-    hot: { primary: "#ef4444", secondary: "#f97316", background: "#1c1917" },
-    ocean: { primary: "#06b6d4", secondary: "#0ea5e9", background: "#0c4a6e" },
-    forest: { primary: "#22c55e", secondary: "#10b981", background: "#14532d" },
-    sunset: { primary: "#f59e0b", secondary: "#ec4899", background: "#431407" },
-    ruby: { primary: "#dc2626", secondary: "#be123c", background: "#450a0a" },
-    light: { primary: "#3b82f6", secondary: "#8b5cf6", background: "#f8fafc" }
+    cosmic: { primary: "#fbbf24", secondary: "#8b5cf6", background: "#0f172a", name: "Cosmic Gold" },
+    royal: { primary: "#818cf8", secondary: "#4f46e5", background: "#0f0f23", name: "Royal Purple" },
+    hot: { primary: "#ef4444", secondary: "#f97316", background: "#18181b", name: "Hot Red" },
+    ocean: { primary: "#22d3ee", secondary: "#0284c7", background: "#042f2e", name: "Ocean Blue" },
+    forest: { primary: "#4ade80", secondary: "#15803d", background: "#052e16", name: "Forest Green" },
+    sunset: { primary: "#fb923c", secondary: "#db2777", background: "#27272a", name: "Sunset Pink" },
+    ruby: { primary: "#f43f5e", secondary: "#9f1239", background: "#1c1917", name: "Ruby Red" },
+    midnight: { primary: "#a78bfa", secondary: "#7c3aed", background: "#020617", name: "Midnight" },
+    gold: { primary: "#eab308", secondary: "#ca8a04", background: "#1a1a1a", name: "Pure Gold" },
+    cyber: { primary: "#00ff88", secondary: "#00ccff", background: "#0a0a0a", name: "Cyberpunk" },
+    light: { primary: "#2563eb", secondary: "#7c3aed", background: "#f8fafc", name: "Light Mode" },
+    cream: { primary: "#d97706", secondary: "#92400e", background: "#fef3c7", name: "Cream" }
   };
 
   useEffect(() => {
