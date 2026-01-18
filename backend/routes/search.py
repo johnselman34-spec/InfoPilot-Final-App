@@ -1,17 +1,45 @@
 """
 InfoPilot Explorer - Search Routes
-Search & Collate with DuckDuckGo integration
+Search & Collate with DuckDuckGo + Brave Search integration
 """
 from fastapi import APIRouter, HTTPException, Body, Depends, Query
 from typing import Dict, Optional, List
 from datetime import datetime, timezone
 import uuid
+import os
 
 from utils.db import db
 from utils.auth import require_user, get_current_user
 from utils.search import search_all_engines, content_matches_protocol, classify_document_type, extract_location
 
 router = APIRouter(prefix="/search", tags=["Search"])
+
+
+@router.get("/engines")
+async def get_search_engines():
+    """Get available search engines and their configuration status."""
+    brave_configured = bool(os.environ.get("BRAVE_SEARCH_API_KEY", ""))
+    
+    return {
+        "engines": [
+            {
+                "id": "duckduckgo",
+                "name": "DuckDuckGo",
+                "configured": True,
+                "description": "Privacy-focused search engine (no API key required)",
+                "free_tier": "Unlimited"
+            },
+            {
+                "id": "brave",
+                "name": "Brave Search",
+                "configured": brave_configured,
+                "description": "Independent search index with 30B+ pages",
+                "free_tier": "2,000 queries/month"
+            }
+        ],
+        "default_engine": "all",
+        "brave_configured": brave_configured
+    }
 
 
 @router.post("/collate")
