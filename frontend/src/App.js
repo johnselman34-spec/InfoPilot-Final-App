@@ -782,18 +782,18 @@ const FoodSection = ({ showToast }) => {
 const TestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState([]);
 
-  useEffect(() => {
-    fetchTestimonials();
-  }, []);
-
-  const fetchTestimonials = async () => {
+  const fetchTestimonials = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/testimonials`);
       setTestimonials(response.data.testimonials);
     } catch (error) {
       console.error('Error fetching testimonials:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTestimonials();
+  }, [fetchTestimonials]);
 
   return (
     <section className="min-h-screen py-20 px-4" data-testid="testimonials-section">
@@ -806,7 +806,7 @@ const TestimonialsSection = () => {
             Rave Reviews
           </h2>
           <p className="text-xl text-white/80">
-            Don't just take our word for it - these (totally real*) reviews speak for themselves!
+            Do not just take our word for it - these (totally real*) reviews speak for themselves!
           </p>
           <p className="text-sm text-white/40 mt-2">*Results may vary. Side effects include happiness.</p>
         </div>
