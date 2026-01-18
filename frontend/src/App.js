@@ -1,7 +1,9 @@
-import { useState, useEffect, createContext, useContext, useCallback } from "react";
+import { useState, useEffect, createContext, useContext, useCallback, useMemo } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, Link } from "react-router-dom";
 import { QueryClient, QueryClientProvider, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import "@/App.css";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -18,17 +20,15 @@ import {
   Book, ShoppingCart, Utensils, Star, Mail, MapPin, Phone, Clock, Rocket, Sparkles, Heart, 
   ChevronDown, ChevronRight, Menu, X, Send, Plus, Minus, AlertTriangle, CheckCircle, Ship, 
   Globe, CreditCard, Search, User, LogOut, Settings, Home, BarChart3, Map, Store, Egg,
-  Trophy, FileText, Users, Shield, Trash2, Edit, Copy, RefreshCw, Newspaper, Quote, Gift
+  Trophy, FileText, Users, Shield, Trash2, Edit, Copy, RefreshCw, Newspaper, Quote, Gift,
+  MessageCircle, UserPlus, Download, Palette, Sun, Moon, Layers, DollarSign, TrendingUp
 } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Query client for React Query
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { staleTime: 30000, retry: 1 }
-  }
+  defaultOptions: { queries: { staleTime: 30000, retry: 1 } }
 });
 
 // PayPal Configuration
@@ -36,9 +36,45 @@ const PAYPAL_INFOPILOT_LINK = "https://www.paypal.com/ncp/payment/LZDBN3SQU4NWQ"
 const PAYPAL_BOOK_LINK = "https://www.paypal.com/ncp/payment/LGXMXSG3D2MXU";
 const AMAZON_BOOK_LINK = "https://www.amazon.com/Letters-Evelyn-John-Selman/dp/B0F3XFG14J";
 
+// Theme Context
+const ThemeContext = createContext(null);
+export const useTheme = () => useContext(ThemeContext);
+
+const ThemeProvider = ({ children }) => {
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    return saved ? JSON.parse(saved) : { mode: "dark", preset: "cosmic" };
+  });
+
+  const themes = {
+    cosmic: { primary: "#fbbf24", secondary: "#8b5cf6", background: "#0f172a" },
+    royal: { primary: "#3b82f6", secondary: "#6366f1", background: "#1e1b4b" },
+    hot: { primary: "#ef4444", secondary: "#f97316", background: "#1c1917" },
+    ocean: { primary: "#06b6d4", secondary: "#0ea5e9", background: "#0c4a6e" },
+    forest: { primary: "#22c55e", secondary: "#10b981", background: "#14532d" },
+    sunset: { primary: "#f59e0b", secondary: "#ec4899", background: "#431407" },
+    ruby: { primary: "#dc2626", secondary: "#be123c", background: "#450a0a" },
+    light: { primary: "#3b82f6", secondary: "#8b5cf6", background: "#f8fafc" }
+  };
+
+  useEffect(() => {
+    localStorage.setItem("theme", JSON.stringify(theme));
+    const colors = themes[theme.preset] || themes.cosmic;
+    document.documentElement.style.setProperty("--color-primary", colors.primary);
+    document.documentElement.style.setProperty("--color-secondary", colors.secondary);
+    document.documentElement.style.setProperty("--color-background", colors.background);
+    document.body.className = theme.mode === "light" ? "light-mode" : "";
+  }, [theme]);
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme, themes }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
 // Auth Context
 const AuthContext = createContext(null);
-
 export const useAuth = () => useContext(AuthContext);
 
 const AuthProvider = ({ children }) => {
@@ -111,9 +147,7 @@ const ToastProvider = ({ children }) => {
           <div key={toast.id} className={`toast ${toast.type === 'success' ? 'toast-success' : 'toast-error'} flex items-center gap-2`}>
             {toast.type === 'success' ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
             <span>{toast.message}</span>
-            <button onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))} className="ml-2">
-              <X size={16} />
-            </button>
+            <button onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))} className="ml-2"><X size={16} /></button>
           </div>
         ))}
       </div>
@@ -121,7 +155,7 @@ const ToastProvider = ({ children }) => {
   );
 };
 
-// ============ FLOATING EASTER EGG COMPONENT ============
+// ============ FLOATING EASTER EGG ============
 const FloatingEasterEgg = () => {
   const [visible, setVisible] = useState(false);
   const [egg, setEgg] = useState(null);
@@ -131,7 +165,6 @@ const FloatingEasterEgg = () => {
   const showToast = useToast();
 
   useEffect(() => {
-    // Show egg randomly every 30-60 seconds
     const interval = setInterval(() => {
       if (Math.random() > 0.7) {
         setPosition({ 
@@ -145,7 +178,6 @@ const FloatingEasterEgg = () => {
       }
     }, 30000);
 
-    // Initial egg after 5 seconds
     setTimeout(() => {
       setPosition({ x: window.innerWidth - 150, y: 100 });
       axios.get(`${API}/easter-eggs/random`).then(res => {
@@ -158,44 +190,30 @@ const FloatingEasterEgg = () => {
   }, []);
 
   const catchEgg = async () => {
-    if (!user) {
-      setShowContent(true);
-      return;
-    }
+    if (!user) { setShowContent(true); return; }
     try {
       const res = await axios.post(`${API}/easter-eggs/catch`, { egg_index: 0 });
       showToast(res.data.message, "success");
       setUser(prev => ({ ...prev, laughter_points: res.data.total_points }));
       setShowContent(true);
-    } catch (e) {
-      setShowContent(true);
-    }
+    } catch (e) { setShowContent(true); }
   };
 
   if (!visible || !egg) return null;
 
   return (
-    <div 
-      className="fixed z-40 cursor-pointer animate-bounce-slow"
-      style={{ left: position.x, top: position.y }}
-    >
+    <div className="fixed z-40 cursor-pointer animate-bounce-slow" style={{ left: position.x, top: position.y }} data-testid="floating-easter-egg">
       {!showContent ? (
-        <div onClick={catchEgg} className="text-6xl hover:scale-125 transition-transform" data-testid="floating-easter-egg">
-          🥚
-        </div>
+        <div onClick={catchEgg} className="text-6xl hover:scale-125 transition-transform">🥚</div>
       ) : (
         <Card className="card-glass w-80 p-4 animate-slide-in" data-testid="easter-egg-content">
-          <button onClick={() => { setVisible(false); setShowContent(false); }} className="absolute top-2 right-2 text-white/60 hover:text-white">
-            <X size={20} />
-          </button>
+          <button onClick={() => { setVisible(false); setShowContent(false); }} className="absolute top-2 right-2 text-white/60 hover:text-white"><X size={20} /></button>
           <div className="text-center mb-3">
             <span className="text-4xl">🥚</span>
             <Badge className="ml-2 bg-yellow-400/20 text-yellow-300">+{user ? '10' : '0'} Laughter Points!</Badge>
           </div>
           <div className="space-y-3 text-sm">
-            <div className="bg-purple-500/20 p-3 rounded-lg">
-              <p className="text-white/90 italic">{egg.joke}</p>
-            </div>
+            <div className="bg-purple-500/20 p-3 rounded-lg"><p className="text-white/90 italic">{egg.joke}</p></div>
             {egg.protocol_idea && (
               <div className="bg-blue-500/20 p-3 rounded-lg">
                 <p className="text-blue-300 font-semibold text-xs mb-1">💡 Protocol Idea:</p>
@@ -205,16 +223,8 @@ const FloatingEasterEgg = () => {
                 </Button>
               </div>
             )}
-            {egg.pricing_suggestion && (
-              <div className="bg-green-500/20 p-3 rounded-lg">
-                <p className="text-green-300 font-semibold text-xs">💰 Pricing: {egg.pricing_suggestion}</p>
-              </div>
-            )}
-            {egg.map_instruction && (
-              <div className="bg-orange-500/20 p-3 rounded-lg">
-                <p className="text-orange-300 text-xs">{egg.map_instruction}</p>
-              </div>
-            )}
+            {egg.pricing_suggestion && <div className="bg-green-500/20 p-3 rounded-lg"><p className="text-green-300 font-semibold text-xs">💰 {egg.pricing_suggestion}</p></div>}
+            {egg.map_instruction && <div className="bg-orange-500/20 p-3 rounded-lg"><p className="text-orange-300 text-xs">{egg.map_instruction}</p></div>}
           </div>
         </Card>
       )}
@@ -222,7 +232,7 @@ const FloatingEasterEgg = () => {
   );
 };
 
-// ============ NEWS HEADLINES COMPONENT ============
+// ============ NEWS HEADLINES ============
 const NewsHeadlines = () => {
   const [expanded, setExpanded] = useState(false);
   const { data, refetch, isLoading } = useQuery({
@@ -232,10 +242,7 @@ const NewsHeadlines = () => {
 
   return (
     <div className="fixed top-16 right-4 z-30" data-testid="news-headlines">
-      <button 
-        onClick={() => setExpanded(!expanded)}
-        className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-sm font-semibold shadow-lg"
-      >
+      <button onClick={() => setExpanded(!expanded)} className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-sm font-semibold shadow-lg">
         <Newspaper size={16} /> Headlines {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
       </button>
       {expanded && (
@@ -265,17 +272,18 @@ const NewsHeadlines = () => {
 // ============ NAVBAR ============
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = user ? [
     { path: "/", label: "Home", icon: <Home size={18} /> },
-    { path: "/search", label: "Ultimate Search", icon: <Search size={18} /> },
-    { path: "/map", label: "Map View", icon: <Map size={18} /> },
-    { path: "/stats", label: "Statistics", icon: <BarChart3 size={18} /> },
-    { path: "/marketplace", label: "Marketplace", icon: <Store size={18} /> },
-    { path: "/book", label: "Book", icon: <Book size={18} /> },
-    { path: "/food", label: "Food", icon: <Utensils size={18} /> },
+    { path: "/search", label: "Search", icon: <Search size={18} /> },
+    { path: "/map", label: "Map", icon: <Map size={18} /> },
+    { path: "/stats", label: "Stats", icon: <BarChart3 size={18} /> },
+    { path: "/marketplace", label: "Market", icon: <Store size={18} /> },
+    { path: "/chat", label: "Chat", icon: <MessageCircle size={18} /> },
+    { path: "/templates", label: "Templates", icon: <Layers size={18} /> },
   ] : [
     { path: "/", label: "Home", icon: <Home size={18} /> },
     { path: "/book", label: "Book", icon: <Book size={18} /> },
@@ -294,55 +302,47 @@ const Navbar = () => {
           </div>
         </Link>
 
-        {/* Desktop Nav */}
-        <div className="hidden lg:flex items-center gap-4">
+        <div className="hidden lg:flex items-center gap-2">
           {navItems.map(item => (
-            <Link key={item.path} to={item.path} className="flex items-center gap-2 px-3 py-2 rounded-lg text-white/80 hover:text-yellow-400 hover:bg-yellow-400/10 transition">
-              {item.icon} <span className="text-sm">{item.label}</span>
+            <Link key={item.path} to={item.path} className="flex items-center gap-1 px-3 py-2 rounded-lg text-white/80 hover:text-yellow-400 hover:bg-yellow-400/10 transition text-sm">
+              {item.icon} <span>{item.label}</span>
             </Link>
           ))}
         </div>
 
-        {/* User Menu */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setTheme(prev => ({ ...prev, mode: prev.mode === "dark" ? "light" : "dark" }))}>
+            {theme.mode === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </Button>
+          
           {user ? (
             <>
               <Badge className="bg-yellow-400/20 text-yellow-300 hidden sm:flex items-center gap-1">
-                <Egg size={14} /> {user.laughter_points || 0} pts
+                <Egg size={14} /> {user.laughter_points || 0}
               </Badge>
               <div className="relative group">
                 <Button variant="ghost" className="flex items-center gap-2 text-white">
                   <User size={18} /> <span className="hidden sm:inline">{user.username}</span>
                 </Button>
                 <div className="absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                  <Link to="/settings" className="flex items-center gap-2 px-4 py-2 text-white/80 hover:bg-white/10">
-                    <Settings size={16} /> Settings
-                  </Link>
-                  {user.is_admin && (
-                    <Link to="/admin" className="flex items-center gap-2 px-4 py-2 text-white/80 hover:bg-white/10">
-                      <Shield size={16} /> Admin Panel
-                    </Link>
-                  )}
-                  <button onClick={logout} className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-white/10 w-full">
-                    <LogOut size={16} /> Logout
-                  </button>
+                  <Link to="/settings" className="flex items-center gap-2 px-4 py-2 text-white/80 hover:bg-white/10"><Settings size={16} /> Settings</Link>
+                  <Link to="/reports" className="flex items-center gap-2 px-4 py-2 text-white/80 hover:bg-white/10"><FileText size={16} /> My Reports</Link>
+                  <Link to="/revenue" className="flex items-center gap-2 px-4 py-2 text-white/80 hover:bg-white/10"><DollarSign size={16} /> Revenue</Link>
+                  <Link to="/themes" className="flex items-center gap-2 px-4 py-2 text-white/80 hover:bg-white/10"><Palette size={16} /> Themes</Link>
+                  {user.is_admin && <Link to="/admin" className="flex items-center gap-2 px-4 py-2 text-white/80 hover:bg-white/10"><Shield size={16} /> Admin</Link>}
+                  <button onClick={logout} className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-white/10 w-full"><LogOut size={16} /> Logout</button>
                 </div>
               </div>
             </>
           ) : (
-            <Link to="/login">
-              <Button className="btn-gold">Login / Register</Button>
-            </Link>
+            <Link to="/login"><Button className="btn-gold">Login</Button></Link>
           )}
-
-          {/* Mobile Menu */}
           <button className="lg:hidden text-white" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Nav */}
       {mobileOpen && (
         <div className="lg:hidden mt-4 pb-4 animate-slide-in">
           {navItems.map(item => (
@@ -377,94 +377,58 @@ const HomePage = () => {
   return (
     <div className="min-h-screen pt-20 px-4">
       <StarsBackground />
-      
-      {/* Hero */}
       <section className="min-h-[80vh] flex flex-col items-center justify-center relative overflow-hidden" data-testid="hero-section">
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-20 left-10 text-8xl animate-float">🚀</div>
           <div className="absolute top-40 right-20 text-7xl animate-float" style={{ animationDelay: '0.5s' }}>📚</div>
           <div className="absolute bottom-40 left-20 text-7xl animate-float" style={{ animationDelay: '1s' }}>🚢</div>
           <div className="absolute bottom-20 right-10 text-8xl animate-float" style={{ animationDelay: '1.5s' }}>🥩</div>
-          <div className="absolute top-1/3 left-1/4 text-6xl animate-bounce-slow">👽</div>
-          <div className="absolute top-1/2 right-1/4 text-6xl animate-bounce-slow" style={{ animationDelay: '0.5s' }}>⭐</div>
         </div>
 
         <div className="text-center z-10 max-w-4xl mx-auto animate-slide-in">
-          <Badge className="mb-2 bg-blue-600/30 text-blue-300 border-blue-500/30 text-xs px-3 py-1">
-            ✈️ A Top Pilot Enterprises, Inc. Company
-          </Badge>
-          <Badge className="mb-4 bg-yellow-400/20 text-yellow-400 border-yellow-400/30 text-sm px-4 py-1 ml-2">
-            🎉 First in Flight with Monetization of Searches! It's a Bear! 🐻
-          </Badge>
+          <Badge className="mb-2 bg-blue-600/30 text-blue-300 border-blue-500/30 text-xs px-3 py-1">✈️ A Top Pilot Enterprises, Inc. Company</Badge>
+          <Badge className="mb-4 bg-yellow-400/20 text-yellow-400 border-yellow-400/30 text-sm px-4 py-1 ml-2">🎉 First in Flight with Monetization of Searches! It's a Bear! 🐻</Badge>
           
-          <h1 className="hero-title text-5xl md:text-7xl font-bold mb-6 text-gradient-gold text-shadow-glow">
-            InfoPilot Explorer
-          </h1>
-          
-          <p className="hero-subtitle text-xl md:text-2xl text-white/90 mb-4">
-            Your #1 Resource for Finding Information Valuable to You!
-          </p>
-          
-          <p className="text-lg text-white/70 mb-4 max-w-2xl mx-auto">
-            A Worldwide Information Exchange Database with Boolean Search & Categorization for Scholars and Tradesmen. 
-            Plus: Letters to Evelyn & Maestro Bistro! 🌌
-          </p>
+          <h1 className="hero-title text-5xl md:text-7xl font-bold mb-6 text-gradient-gold text-shadow-glow">InfoPilot Explorer</h1>
+          <p className="hero-subtitle text-xl md:text-2xl text-white/90 mb-4">Your #1 Resource for Finding Information Valuable to You!</p>
+          <p className="text-lg text-white/70 mb-4 max-w-2xl mx-auto">A Worldwide Information Exchange Database with Boolean Search & Categorization. Plus: Letters to Evelyn & Maestro Bistro! 🌌</p>
 
           <div className="flex flex-wrap justify-center gap-2 mb-8">
-            <Badge className="bg-green-500/20 text-green-300 border-green-500/30">⭐ 19 Five-Star Reviews</Badge>
-            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">🎬 Film Production by Voyage Media!</Badge>
-            <Badge className="bg-red-500/20 text-red-300 border-red-500/30">🐻 Dangerous to the App Market!</Badge>
+            <Badge className="bg-green-500/20 text-green-300">⭐ 19 Five-Star Reviews</Badge>
+            <Badge className="bg-purple-500/20 text-purple-300">🎬 Film by Voyage Media!</Badge>
+            <Badge className="bg-red-500/20 text-red-300">🐻 Dangerous to the App Market!</Badge>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {user ? (
               <>
-                <Button onClick={() => navigate('/search')} className="btn-gold text-lg px-8 py-6" data-testid="cta-search">
-                  <Search className="mr-2" /> Ultimate Search
-                </Button>
-                <Button onClick={() => navigate('/marketplace')} className="btn-navy text-lg px-8 py-6" data-testid="cta-marketplace">
-                  <Store className="mr-2" /> Marketplace
-                </Button>
+                <Button onClick={() => navigate('/search')} className="btn-gold text-lg px-8 py-6" data-testid="cta-search"><Search className="mr-2" /> Ultimate Search</Button>
+                <Button onClick={() => navigate('/map')} className="btn-navy text-lg px-8 py-6"><Map className="mr-2" /> Map View</Button>
               </>
             ) : (
               <>
-                <Button onClick={() => navigate('/login')} className="btn-gold text-lg px-8 py-6" data-testid="cta-login">
-                  <Rocket className="mr-2" /> Get Started - $1/mo
-                </Button>
-                <Button onClick={() => navigate('/book')} className="btn-navy text-lg px-8 py-6" data-testid="cta-book">
-                  <Book className="mr-2" /> Letters to Evelyn
-                </Button>
+                <Button onClick={() => navigate('/login')} className="btn-gold text-lg px-8 py-6" data-testid="cta-login"><Rocket className="mr-2" /> Get Started - $1/mo</Button>
+                <Button onClick={() => navigate('/book')} className="btn-navy text-lg px-8 py-6"><Book className="mr-2" /> Letters to Evelyn</Button>
               </>
             )}
-            <Button onClick={() => navigate('/food')} className="bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold px-8 py-6 rounded-full hover:scale-105 transition-all" data-testid="cta-food">
+            <Button onClick={() => navigate('/food')} className="bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold px-8 py-6 rounded-full hover:scale-105 transition-all">
               <Utensils className="mr-2" /> Maestro Bistro
             </Button>
           </div>
-
-          <div className="mt-12 flex flex-wrap justify-center gap-8 text-white/60">
-            <div className="flex items-center gap-2"><Ship className="text-yellow-400" /><span>Navy Aviation</span></div>
-            <div className="flex items-center gap-2"><Globe className="text-purple-400" /><span>InfoJet 2.0 Protocols</span></div>
-            <div className="flex items-center gap-2"><Heart className="text-red-400" /><span>True Love Story</span></div>
-            <div className="flex items-center gap-2"><MapPin className="text-orange-400" /><span>Brunswick, Maine</span></div>
-          </div>
         </div>
-
-        <div className="absolute bottom-10 animate-bounce">
-          <ChevronDown size={32} className="text-yellow-400" />
-        </div>
+        <div className="absolute bottom-10 animate-bounce"><ChevronDown size={32} className="text-yellow-400" /></div>
       </section>
 
-      {/* Features Grid */}
       <section className="py-16 max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-center text-gradient-gold mb-12">What Makes InfoPilot Powerful?</h2>
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { icon: <Search size={32} />, title: "InfoJet 2.0 Protocols", desc: "Create custom Boolean search protocols to categorize ANY information from the web!" },
-            { icon: <Map size={32} />, title: "Interactive Maps", desc: "See your search results plotted on a global map with color-coded categories!" },
-            { icon: <Store size={32} />, title: "Protocol Marketplace", desc: "Sell your protocols to other users! First in Flight with Monetization of Searches!" },
-            { icon: <Egg size={32} />, title: "Easter Eggs & Laughter Points", desc: "Catch floating eggs for jokes, protocol ideas, and earn points! 🥚" },
-            { icon: <Trophy size={32} />, title: "Community Leaderboard", desc: "Compete for top protocol creator and highest laughter points!" },
-            { icon: <BarChart3 size={32} />, title: "Advanced Statistics", desc: "Analyze your data with pie charts, bar graphs, and worldwide insights!" },
+            { icon: <Search size={32} />, title: "InfoJet 2.0 Protocols", desc: "Create custom Boolean search protocols to categorize ANY information!" },
+            { icon: <Map size={32} />, title: "Interactive Maps", desc: "See results plotted on a global map with color-coded categories!" },
+            { icon: <Store size={32} />, title: "Protocol Marketplace", desc: "Sell your protocols! First in Flight with Monetization of Searches!" },
+            { icon: <Egg size={32} />, title: "Easter Eggs", desc: "Catch floating eggs for jokes, protocol ideas, and earn points! 🥚" },
+            { icon: <MessageCircle size={32} />, title: "Chat & Groups", desc: "Connect with other researchers in chat rooms and groups!" },
+            { icon: <Layers size={32} />, title: "Protocol Templates", desc: "Browse and copy proven protocol templates to get started!" },
           ].map((f, i) => (
             <Card key={i} className="card-glass p-6 card-hover">
               <div className="text-yellow-400 mb-4">{f.icon}</div>
@@ -475,57 +439,20 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Testimonials Preview */}
-      <section className="py-16 max-w-4xl mx-auto">
-        <h2 className="text-3xl font-bold text-center text-gradient-gold mb-8">What People Are Saying</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card className="card-glass p-6">
-            <div className="flex gap-1 mb-2">{[...Array(5)].map((_, i) => <Star key={i} size={16} className="text-yellow-400 fill-yellow-400" />)}</div>
-            <p className="text-white/90 italic mb-4">"Letters to Evelyn is an extraordinary book with a unique plot that captivated me from the first chapter!"</p>
-            <p className="text-yellow-400 font-semibold">- L. Jones, Readers' Favorite</p>
-          </Card>
-          <Card className="card-glass p-6">
-            <div className="flex gap-1 mb-2">{[...Array(5)].map((_, i) => <Star key={i} size={16} className="text-yellow-400 fill-yellow-400" />)}</div>
-            <p className="text-white/90 italic mb-4">"The beef rouladen at Maestro Bistro made me call my grandmother in Germany to apologize. It's THAT good!"</p>
-            <p className="text-orange-400 font-semibold">- Hans the Hungry, Brunswick</p>
-          </Card>
-        </div>
-      </section>
-
-      {/* Footer */}
       <footer className="footer py-12 px-4 mt-16">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="text-yellow-400" size={24} />
-                <span className="text-xl font-bold text-gradient-gold">InfoPilot Explorer</span>
-              </div>
-              <p className="text-white/60 text-sm">Top Pilot Enterprises, Inc. - "It's a Bear!" 🐻</p>
-              <p className="text-white/40 text-xs mt-2">First in Flight with Monetization of Searches!</p>
-            </div>
-            <div>
-              <h4 className="text-lg font-bold text-yellow-400 mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-white/60">
-                <li><Link to="/book" className="hover:text-yellow-400">📚 Letters to Evelyn</Link></li>
-                <li><Link to="/food" className="hover:text-yellow-400">🚚 Maestro Bistro</Link></li>
-                <li><Link to="/infopilot" className="hover:text-yellow-400">🌐 InfoPilot - $1/mo</Link></li>
-                <li><Link to="/legal/user-agreement" className="hover:text-yellow-400">📜 User Agreement</Link></li>
-                <li><Link to="/legal/privacy" className="hover:text-yellow-400">🔒 Privacy Policy</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-lg font-bold text-yellow-400 mb-4">Contact</h4>
-              <p className="text-white/60 text-sm">john.1976.selman@gmail.com</p>
-              <p className="text-white/60 text-sm">207-522-0894</p>
-              <p className="text-white/60 text-sm mt-2">Brunswick, Maine</p>
-            </div>
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Sparkles className="text-yellow-400" size={24} />
+            <span className="text-xl font-bold text-gradient-gold">InfoPilot Explorer</span>
           </div>
-          <Separator className="bg-yellow-400/20 mb-8" />
-          <div className="text-center text-white/40 text-sm">
-            <p>© 2014-2025 John Selman - Letters to Evelyn | © 2025 Top Pilot Enterprises, Inc.</p>
-            <p className="mt-2">🛸 No aliens were harmed in the making of this app 🛸</p>
+          <p className="text-white/60 text-sm">Top Pilot Enterprises, Inc. - "It's a Bear!" 🐻</p>
+          <div className="flex justify-center gap-4 mt-4 text-white/40 text-sm">
+            <Link to="/book" className="hover:text-yellow-400">📚 Book</Link>
+            <Link to="/food" className="hover:text-yellow-400">🚚 Food</Link>
+            <Link to="/legal/user-agreement" className="hover:text-yellow-400">📜 Terms</Link>
+            <Link to="/legal/privacy" className="hover:text-yellow-400">🔒 Privacy</Link>
           </div>
+          <p className="text-white/30 text-xs mt-4">© 2014-2025 John Selman - Letters to Evelyn | © 2025 Top Pilot Enterprises, Inc.</p>
         </div>
       </footer>
     </div>
@@ -540,7 +467,6 @@ const LoginPage = () => {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ email: "", password: "", username: "", first_name: "", last_name: "" });
   const [loading, setLoading] = useState(false);
-  const [showAgreement, setShowAgreement] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -565,32 +491,15 @@ const LoginPage = () => {
       <StarsBackground />
       <Card className="card-glass w-full max-w-md p-6" data-testid="login-card">
         <CardHeader>
-          <CardTitle className="text-2xl text-gradient-gold text-center">
-            {mode === "login" ? "Welcome Back!" : "Join InfoPilot Explorer"}
-          </CardTitle>
-          <CardDescription className="text-center text-white/70">
-            {mode === "login" ? "Login to access your Ultimate Search Page" : "Create an account to start categorizing the world!"}
-          </CardDescription>
+          <CardTitle className="text-2xl text-gradient-gold text-center">{mode === "login" ? "Welcome Back!" : "Join InfoPilot"}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "register" && (
-              <>
-                <div>
-                  <Label className="text-white">Username *</Label>
-                  <Input className="form-input mt-1" placeholder="Your unique username" value={form.username} onChange={e => setForm({...form, username: e.target.value})} required data-testid="register-username" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-white">First Name</Label>
-                    <Input className="form-input mt-1" placeholder="First name" value={form.first_name} onChange={e => setForm({...form, first_name: e.target.value})} />
-                  </div>
-                  <div>
-                    <Label className="text-white">Last Name</Label>
-                    <Input className="form-input mt-1" placeholder="Last name" value={form.last_name} onChange={e => setForm({...form, last_name: e.target.value})} />
-                  </div>
-                </div>
-              </>
+              <div>
+                <Label className="text-white">Username *</Label>
+                <Input className="form-input mt-1" placeholder="Username" value={form.username} onChange={e => setForm({...form, username: e.target.value})} required data-testid="register-username" />
+              </div>
             )}
             <div>
               <Label className="text-white">Email *</Label>
@@ -600,14 +509,6 @@ const LoginPage = () => {
               <Label className="text-white">Password *</Label>
               <Input className="form-input mt-1" type="password" placeholder="••••••••" value={form.password} onChange={e => setForm({...form, password: e.target.value})} required data-testid="login-password" />
             </div>
-            {mode === "register" && (
-              <div className="flex items-center gap-2">
-                <Checkbox id="agree" required />
-                <Label htmlFor="agree" className="text-white/70 text-sm">
-                  I agree to the <button type="button" onClick={() => setShowAgreement(true)} className="text-yellow-400 underline">User Agreement</button>
-                </Label>
-              </div>
-            )}
             <Button type="submit" className="btn-gold w-full" disabled={loading} data-testid="login-submit">
               {loading ? "Loading..." : (mode === "login" ? "Login" : "Create Account")}
             </Button>
@@ -617,50 +518,706 @@ const LoginPage = () => {
           <button onClick={() => setMode(mode === "login" ? "register" : "login")} className="text-yellow-400 text-sm hover:underline">
             {mode === "login" ? "Don't have an account? Register" : "Already have an account? Login"}
           </button>
-          <div className="text-center">
-            <p className="text-white/50 text-xs">Subscribe for just $1/month!</p>
-            <a href={PAYPAL_INFOPILOT_LINK} target="_blank" rel="noopener noreferrer" className="text-blue-400 text-xs hover:underline">
-              Subscribe via PayPal →
-            </a>
-          </div>
+          <a href={PAYPAL_INFOPILOT_LINK} target="_blank" rel="noopener noreferrer" className="text-blue-400 text-xs hover:underline">Subscribe via PayPal - $1/mo →</a>
         </CardFooter>
       </Card>
+    </div>
+  );
+};
 
-      <Dialog open={showAgreement} onOpenChange={setShowAgreement}>
-        <DialogContent className="bg-slate-900 border-yellow-400/30 max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-yellow-400">User Agreement</DialogTitle>
-          </DialogHeader>
-          <div className="text-white/80 text-sm space-y-4">
-            <p><strong>InfoPilot Explorer is FIRST IN FLIGHT with Monetization of Searches!</strong></p>
-            <p>So much time is spent searching for valuable information. Why can't it be worth anything? If it's valuable to businesses, then it should be valuable to YOU!</p>
-            <p>The code and design of InfoPilot Explorer are copyrighted and MAY NOT be emulated by any other person.</p>
-            <p>By using this service, you agree to:</p>
-            <ul className="list-disc pl-4 space-y-1">
-              <li>Use the platform for lawful purposes only</li>
-              <li>Not upload prohibited content</li>
-              <li>Respect other users and their content</li>
-            </ul>
+// ============ INTERACTIVE MAP PAGE ============
+const MapPage = () => {
+  const { user } = useAuth();
+  const [scope, setScope] = useState("personal");
+  const { data: mapData, isLoading } = useQuery({
+    queryKey: ["map-data", scope],
+    queryFn: () => axios.get(`${API}/map/data`, { params: { scope } }).then(r => r.data),
+    enabled: !!user
+  });
+  const { data: categoriesData } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => axios.get(`${API}/categories`).then(r => r.data),
+    enabled: !!user
+  });
+
+  if (!user) return <Navigate to="/login" />;
+
+  const categories = categoriesData?.categories || [];
+  const points = mapData?.points || [];
+
+  return (
+    <div className="min-h-screen pt-20 px-4">
+      <StarsBackground />
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gradient-gold">Interactive Map View</h1>
+            <p className="text-white/60">Explore search results plotted on a global map</p>
           </div>
-          <DialogFooter>
-            <Button onClick={() => setShowAgreement(false)} className="btn-gold">I Understand</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <div className="flex items-center gap-4">
+            <Select value={scope} onValueChange={setScope}>
+              <SelectTrigger className="form-input w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800">
+                <SelectItem value="personal">My Results</SelectItem>
+                <SelectItem value="worldwide">Worldwide</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Card className="card-glass overflow-hidden" data-testid="map-container">
+          {isLoading ? (
+            <div className="h-[600px] flex items-center justify-center"><RefreshCw className="animate-spin text-yellow-400" size={48} /></div>
+          ) : (
+            <MapContainer center={[40, -40]} zoom={2} style={{ height: "600px", width: "100%" }} className="rounded-lg">
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              />
+              {points.map((point, idx) => (
+                <CircleMarker
+                  key={idx}
+                  center={[point.lat, point.lng]}
+                  radius={Math.min(8 + point.result_count * 2, 20)}
+                  fillColor={point.color}
+                  color={point.color}
+                  weight={2}
+                  opacity={0.8}
+                  fillOpacity={0.6}
+                >
+                  <Popup className="custom-popup">
+                    <div className="bg-slate-900 p-3 rounded-lg min-w-[250px]">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge className="bg-blue-500/20 text-blue-300">{point.result_count} results</Badge>
+                        <span className="text-xs text-white/60">{point.category_count} categories</span>
+                      </div>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {point.results?.map((r, i) => (
+                          <div key={i} className="p-2 bg-white/5 rounded">
+                            <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-yellow-400 text-sm hover:underline font-semibold block truncate">{r.title}</a>
+                            <p className="text-white/60 text-xs mt-1 line-clamp-2">{r.snippet}</p>
+                            <Badge className="text-xs mt-1">{r.document_type}</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              ))}
+            </MapContainer>
+          )}
+        </Card>
+
+        <div className="mt-6 grid md:grid-cols-4 gap-4">
+          <Card className="card-glass p-4 text-center">
+            <MapPin className="mx-auto text-yellow-400 mb-2" size={24} />
+            <p className="text-2xl font-bold text-white">{points.length}</p>
+            <p className="text-white/60 text-sm">Locations</p>
+          </Card>
+          <Card className="card-glass p-4 text-center">
+            <FileText className="mx-auto text-blue-400 mb-2" size={24} />
+            <p className="text-2xl font-bold text-white">{points.reduce((a, p) => a + p.result_count, 0)}</p>
+            <p className="text-white/60 text-sm">Total Results</p>
+          </Card>
+          <Card className="card-glass p-4 text-center">
+            <Layers className="mx-auto text-green-400 mb-2" size={24} />
+            <p className="text-2xl font-bold text-white">{categories.length}</p>
+            <p className="text-white/60 text-sm">Categories</p>
+          </Card>
+          <Card className="card-glass p-4 text-center">
+            <Globe className="mx-auto text-purple-400 mb-2" size={24} />
+            <p className="text-2xl font-bold text-white">{scope === "personal" ? "Personal" : "Worldwide"}</p>
+            <p className="text-white/60 text-sm">View Scope</p>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============ PROTOCOL TEMPLATES PAGE ============
+const TemplatesPage = () => {
+  const { user } = useAuth();
+  const showToast = useToast();
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["templates"],
+    queryFn: () => axios.get(`${API}/templates`).then(r => r.data)
+  });
+  const [showCreate, setShowCreate] = useState(false);
+  const [newTemplate, setNewTemplate] = useState({ name: "", description: "", protocol: "", category_suggestion: "", price: "" });
+
+  const createMutation = useMutation({
+    mutationFn: (t) => axios.post(`${API}/templates`, t),
+    onSuccess: () => {
+      showToast("Template created! 🎉", "success");
+      queryClient.invalidateQueries(["templates"]);
+      setShowCreate(false);
+      setNewTemplate({ name: "", description: "", protocol: "", category_suggestion: "", price: "" });
+    },
+    onError: () => showToast("Failed to create template", "error")
+  });
+
+  const copyProtocol = (protocol) => {
+    navigator.clipboard.writeText(protocol);
+    showToast("Protocol copied to clipboard!", "success");
+  };
+
+  return (
+    <div className="min-h-screen pt-20 px-4">
+      <StarsBackground />
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gradient-gold">Protocol Template Gallery</h1>
+            <p className="text-white/60">Browse and copy proven InfoJet 2.0 protocol examples</p>
+          </div>
+          {user && (
+            <Button onClick={() => setShowCreate(true)} className="btn-gold">
+              <Plus className="mr-2" /> Create Template
+            </Button>
+          )}
+        </div>
+
+        <Tabs defaultValue="official" className="w-full">
+          <TabsList className="bg-white/10 mb-6">
+            <TabsTrigger value="official" className="data-[state=active]:bg-yellow-400/20">Official Templates</TabsTrigger>
+            <TabsTrigger value="community" className="data-[state=active]:bg-yellow-400/20">Community Templates</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="official">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {data?.official_templates?.map(t => (
+                <Card key={t.id} className="card-glass p-4" data-testid={`template-${t.id}`}>
+                  <CardHeader className="p-0 pb-4">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-white text-lg">{t.name}</CardTitle>
+                      <Badge className="bg-yellow-400/20 text-yellow-300">Official</Badge>
+                    </div>
+                    <CardDescription className="text-white/60">{t.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="bg-slate-800/50 p-3 rounded-lg font-mono text-xs text-green-400 mb-3">{t.protocol}</div>
+                    <p className="text-white/50 text-xs mb-2">Suggested: {t.category_suggestion}</p>
+                    <p className="text-white/40 text-xs">Used {t.usage_count?.toLocaleString()} times</p>
+                  </CardContent>
+                  <CardFooter className="p-0 pt-4">
+                    <Button onClick={() => copyProtocol(t.protocol)} className="btn-gold w-full">
+                      <Copy className="mr-2" size={16} /> Copy Protocol
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="community">
+            {data?.community_templates?.length === 0 ? (
+              <Card className="card-glass p-8 text-center">
+                <Layers className="mx-auto text-yellow-400 mb-4" size={48} />
+                <h3 className="text-xl text-white mb-2">No community templates yet!</h3>
+                <p className="text-white/60">Be the first to share your protocol expertise.</p>
+              </Card>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {data?.community_templates?.map(t => (
+                  <Card key={t.id} className="card-glass p-4">
+                    <CardHeader className="p-0 pb-4">
+                      <CardTitle className="text-white text-lg">{t.name}</CardTitle>
+                      <CardDescription className="text-white/60">{t.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="bg-slate-800/50 p-3 rounded-lg font-mono text-xs text-green-400 mb-3">{t.protocol}</div>
+                      {t.price && <Badge className="bg-green-500/20 text-green-300">${t.price}</Badge>}
+                    </CardContent>
+                    <CardFooter className="p-0 pt-4">
+                      <Button onClick={() => copyProtocol(t.protocol)} className="btn-gold w-full">
+                        <Copy className="mr-2" size={16} /> Copy Protocol
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent className="bg-slate-900 border-yellow-400/30">
+            <DialogHeader>
+              <DialogTitle className="text-yellow-400">Create Protocol Template</DialogTitle>
+              <DialogDescription className="text-white/70">Share your protocol expertise with the community</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="text-white">Template Name *</Label>
+                <Input className="form-input mt-1" placeholder="e.g., Tech Innovation Finder" value={newTemplate.name} onChange={e => setNewTemplate({...newTemplate, name: e.target.value})} />
+              </div>
+              <div>
+                <Label className="text-white">Description *</Label>
+                <Textarea className="form-input mt-1" placeholder="What does this protocol find?" value={newTemplate.description} onChange={e => setNewTemplate({...newTemplate, description: e.target.value})} />
+              </div>
+              <div>
+                <Label className="text-white">Protocol (InfoJet 2.0) *</Label>
+                <Textarea className="form-input mt-1 font-mono text-sm" rows={3} placeholder="(word1 or word2) & (word3)+" value={newTemplate.protocol} onChange={e => setNewTemplate({...newTemplate, protocol: e.target.value})} />
+              </div>
+              <div>
+                <Label className="text-white">Category Suggestion</Label>
+                <Input className="form-input mt-1" placeholder="e.g., Technology / AI" value={newTemplate.category_suggestion} onChange={e => setNewTemplate({...newTemplate, category_suggestion: e.target.value})} />
+              </div>
+              <div>
+                <Label className="text-white">Price (optional)</Label>
+                <Input className="form-input mt-1" type="number" step="0.01" placeholder="Leave empty for free" value={newTemplate.price} onChange={e => setNewTemplate({...newTemplate, price: e.target.value})} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button className="btn-gold" onClick={() => createMutation.mutate(newTemplate)} disabled={!newTemplate.name || !newTemplate.protocol || createMutation.isPending}>
+                {createMutation.isPending ? "Creating..." : "Create Template"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+};
+
+// ============ CHAT PAGE ============
+const ChatPage = () => {
+  const { user } = useAuth();
+  const showToast = useToast();
+  const queryClient = useQueryClient();
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [message, setMessage] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [newRoom, setNewRoom] = useState({ name: "", description: "", is_public: true });
+
+  const { data: roomsData, isLoading: loadingRooms } = useQuery({
+    queryKey: ["chat-rooms"],
+    queryFn: () => axios.get(`${API}/chat/rooms`).then(r => r.data),
+    enabled: !!user
+  });
+
+  const { data: messagesData, refetch: refetchMessages } = useQuery({
+    queryKey: ["chat-messages", selectedRoom],
+    queryFn: () => axios.get(`${API}/chat/rooms/${selectedRoom}/messages`).then(r => r.data),
+    enabled: !!selectedRoom,
+    refetchInterval: 3000
+  });
+
+  const createRoomMutation = useMutation({
+    mutationFn: (room) => axios.post(`${API}/chat/rooms`, room),
+    onSuccess: () => {
+      showToast("Room created! 🎉", "success");
+      queryClient.invalidateQueries(["chat-rooms"]);
+      setShowCreate(false);
+      setNewRoom({ name: "", description: "", is_public: true });
+    },
+    onError: () => showToast("Failed to create room", "error")
+  });
+
+  const sendMessageMutation = useMutation({
+    mutationFn: (content) => axios.post(`${API}/chat/rooms/${selectedRoom}/messages`, { content }),
+    onSuccess: () => {
+      setMessage("");
+      refetchMessages();
+    }
+  });
+
+  const joinRoomMutation = useMutation({
+    mutationFn: (roomId) => axios.post(`${API}/chat/rooms/${roomId}/join`),
+    onSuccess: () => {
+      showToast("Joined room!", "success");
+      queryClient.invalidateQueries(["chat-rooms"]);
+    }
+  });
+
+  if (!user) return <Navigate to="/login" />;
+
+  const rooms = roomsData?.rooms || [];
+  const messages = messagesData?.messages || [];
+
+  return (
+    <div className="min-h-screen pt-20 px-4">
+      <StarsBackground />
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold text-gradient-gold">Chat Rooms</h1>
+          <Button onClick={() => setShowCreate(true)} className="btn-gold"><Plus className="mr-2" /> Create Room</Button>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card className="card-glass p-4 md:col-span-1 max-h-[600px] overflow-y-auto">
+            <h3 className="text-lg font-bold text-yellow-400 mb-4">Rooms</h3>
+            {loadingRooms ? (
+              <p className="text-white/60">Loading...</p>
+            ) : rooms.length === 0 ? (
+              <p className="text-white/60 text-sm">No rooms yet. Create one!</p>
+            ) : (
+              <div className="space-y-2">
+                {rooms.map(room => (
+                  <div
+                    key={room.id}
+                    onClick={() => setSelectedRoom(room.id)}
+                    className={`p-3 rounded-lg cursor-pointer transition ${selectedRoom === room.id ? 'bg-yellow-400/20 border border-yellow-400/50' : 'bg-white/5 hover:bg-white/10'}`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-white font-semibold">{room.name}</span>
+                      <Badge className="text-xs">{room.members?.length || 0} members</Badge>
+                    </div>
+                    {room.description && <p className="text-white/50 text-xs mt-1">{room.description}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card className="card-glass p-4 md:col-span-2 flex flex-col h-[600px]">
+            {selectedRoom ? (
+              <>
+                <div className="flex-1 overflow-y-auto mb-4 space-y-3">
+                  {messages.map(msg => (
+                    <div key={msg.id} className={`p-3 rounded-lg ${msg.user_id === user.id ? 'bg-yellow-400/10 ml-8' : 'bg-white/5 mr-8'}`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-yellow-400 text-sm font-semibold">{msg.username}</span>
+                        <span className="text-white/40 text-xs">{new Date(msg.created_at).toLocaleTimeString()}</span>
+                      </div>
+                      <p className="text-white/90">{msg.content}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input className="form-input flex-1" placeholder="Type a message..." value={message} onChange={e => setMessage(e.target.value)} onKeyPress={e => e.key === 'Enter' && sendMessageMutation.mutate(message)} />
+                  <Button onClick={() => sendMessageMutation.mutate(message)} className="btn-gold" disabled={!message || sendMessageMutation.isPending}>
+                    <Send size={18} />
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <MessageCircle className="mx-auto text-yellow-400/50 mb-4" size={48} />
+                  <p className="text-white/60">Select a room to start chatting</p>
+                </div>
+              </div>
+            )}
+          </Card>
+        </div>
+
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent className="bg-slate-900 border-yellow-400/30">
+            <DialogHeader>
+              <DialogTitle className="text-yellow-400">Create Chat Room</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="text-white">Room Name *</Label>
+                <Input className="form-input mt-1" placeholder="My Chat Room" value={newRoom.name} onChange={e => setNewRoom({...newRoom, name: e.target.value})} />
+              </div>
+              <div>
+                <Label className="text-white">Description</Label>
+                <Textarea className="form-input mt-1" placeholder="What's this room about?" value={newRoom.description} onChange={e => setNewRoom({...newRoom, description: e.target.value})} />
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox checked={newRoom.is_public} onCheckedChange={checked => setNewRoom({...newRoom, is_public: checked})} />
+                <Label className="text-white">Public Room</Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button className="btn-gold" onClick={() => createRoomMutation.mutate(newRoom)} disabled={!newRoom.name || createRoomMutation.isPending}>
+                Create Room
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+};
+
+// ============ REVENUE DASHBOARD ============
+const RevenuePage = () => {
+  const { user } = useAuth();
+  const { data, isLoading } = useQuery({
+    queryKey: ["revenue"],
+    queryFn: () => axios.get(`${API}/revenue/dashboard`).then(r => r.data),
+    enabled: !!user
+  });
+
+  if (!user) return <Navigate to="/login" />;
+
+  const exportCSV = async () => {
+    window.open(`${API}/revenue/export`, '_blank');
+  };
+
+  return (
+    <div className="min-h-screen pt-20 px-4">
+      <StarsBackground />
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gradient-gold">Revenue Dashboard</h1>
+            <p className="text-white/60">Track your protocol sales and earnings</p>
+          </div>
+          <Button onClick={exportCSV} className="btn-gold"><Download className="mr-2" /> Export CSV</Button>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center py-12"><RefreshCw className="animate-spin mx-auto text-yellow-400" size={48} /></div>
+        ) : (
+          <>
+            <div className="grid md:grid-cols-4 gap-6 mb-8">
+              <Card className="card-glass p-6 text-center">
+                <DollarSign className="mx-auto text-green-400 mb-2" size={32} />
+                <p className="text-3xl font-bold text-white">${data?.total_revenue?.toFixed(2) || '0.00'}</p>
+                <p className="text-white/60 text-sm">Total Revenue</p>
+              </Card>
+              <Card className="card-glass p-6 text-center">
+                <TrendingUp className="mx-auto text-blue-400 mb-2" size={32} />
+                <p className="text-3xl font-bold text-white">{data?.total_sales || 0}</p>
+                <p className="text-white/60 text-sm">Total Sales</p>
+              </Card>
+              <Card className="card-glass p-6 text-center">
+                <Store className="mx-auto text-purple-400 mb-2" size={32} />
+                <p className="text-3xl font-bold text-white">{data?.top_protocols?.length || 0}</p>
+                <p className="text-white/60 text-sm">Products Sold</p>
+              </Card>
+              <Card className="card-glass p-6 text-center">
+                <CreditCard className="mx-auto text-yellow-400 mb-2" size={32} />
+                <p className="text-3xl font-bold text-white">${data?.wallet_balance?.toFixed(2) || '0.00'}</p>
+                <p className="text-white/60 text-sm">Wallet Balance</p>
+              </Card>
+            </div>
+
+            <Card className="card-glass p-6">
+              <h3 className="text-xl font-bold text-yellow-400 mb-4">Top Selling Protocols</h3>
+              {data?.top_protocols?.length === 0 ? (
+                <p className="text-white/60 text-center py-8">No sales yet. List your protocols in the marketplace!</p>
+              ) : (
+                <div className="space-y-3">
+                  {data?.top_protocols?.map((p, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                      <div className="flex items-center gap-4">
+                        <span className="text-2xl">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
+                        <div>
+                          <p className="text-white font-semibold">{p.name}</p>
+                          <p className="text-white/50 text-sm">{p.count} sales</p>
+                        </div>
+                      </div>
+                      <Badge className="bg-green-500/20 text-green-300 text-lg">${p.revenue?.toFixed(2)}</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ============ THEME GALLERY PAGE ============
+const ThemesPage = () => {
+  const { user } = useAuth();
+  const { theme, setTheme, themes } = useTheme();
+  const showToast = useToast();
+
+  if (!user) return <Navigate to="/login" />;
+
+  const presetList = [
+    { id: "cosmic", name: "Cosmic", emoji: "🌌" },
+    { id: "royal", name: "Royal", emoji: "👑" },
+    { id: "hot", name: "Hot", emoji: "🔥" },
+    { id: "ocean", name: "Ocean", emoji: "🌊" },
+    { id: "forest", name: "Forest", emoji: "🌲" },
+    { id: "sunset", name: "Sunset", emoji: "🌅" },
+    { id: "ruby", name: "Ruby", emoji: "💎" },
+    { id: "light", name: "Light Mode", emoji: "☀️" }
+  ];
+
+  const applyTheme = (preset) => {
+    setTheme({ mode: preset === "light" ? "light" : "dark", preset });
+    showToast(`Theme changed to ${preset}! ✨`, "success");
+    axios.put(`${API}/users/theme`, { mode: preset === "light" ? "light" : "dark", preset }).catch(() => {});
+  };
+
+  return (
+    <div className="min-h-screen pt-20 px-4">
+      <StarsBackground />
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gradient-gold mb-2">Theme Gallery</h1>
+          <p className="text-white/60">Customize your InfoPilot experience</p>
+        </div>
+
+        <div className="flex justify-center gap-4 mb-8">
+          <Button onClick={() => setTheme(prev => ({ ...prev, mode: "dark" }))} className={`${theme.mode === "dark" ? "btn-gold" : "btn-navy"}`}>
+            <Moon className="mr-2" size={18} /> Dark Mode
+          </Button>
+          <Button onClick={() => setTheme(prev => ({ ...prev, mode: "light" }))} className={`${theme.mode === "light" ? "btn-gold" : "btn-navy"}`}>
+            <Sun className="mr-2" size={18} /> Light Mode
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {presetList.map(p => (
+            <Card
+              key={p.id}
+              onClick={() => applyTheme(p.id)}
+              className={`card-glass p-4 cursor-pointer transition hover:scale-105 ${theme.preset === p.id ? 'ring-2 ring-yellow-400' : ''}`}
+              style={{ borderColor: themes[p.id]?.primary }}
+            >
+              <div className="text-center">
+                <span className="text-4xl mb-2 block">{p.emoji}</span>
+                <p className="text-white font-semibold">{p.name}</p>
+                <div className="flex justify-center gap-1 mt-2">
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: themes[p.id]?.primary }} />
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: themes[p.id]?.secondary }} />
+                  <div className="w-4 h-4 rounded-full" style={{ backgroundColor: themes[p.id]?.background }} />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <Card className="card-glass p-6 mt-8">
+          <h3 className="text-xl font-bold text-yellow-400 mb-4">Current Theme Preview</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="p-4 rounded-lg text-center" style={{ backgroundColor: themes[theme.preset]?.background }}>
+              <p className="text-white/60 text-xs">Background</p>
+              <p className="text-white font-mono text-sm">{themes[theme.preset]?.background}</p>
+            </div>
+            <div className="p-4 rounded-lg text-center" style={{ backgroundColor: themes[theme.preset]?.primary }}>
+              <p className="text-black/60 text-xs">Primary</p>
+              <p className="text-black font-mono text-sm">{themes[theme.preset]?.primary}</p>
+            </div>
+            <div className="p-4 rounded-lg text-center" style={{ backgroundColor: themes[theme.preset]?.secondary }}>
+              <p className="text-white/60 text-xs">Secondary</p>
+              <p className="text-white font-mono text-sm">{themes[theme.preset]?.secondary}</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+// ============ PERSONAL REPORTS PAGE ============
+const ReportsPage = () => {
+  const { user } = useAuth();
+  const showToast = useToast();
+  const queryClient = useQueryClient();
+  const [showCreate, setShowCreate] = useState(false);
+  const [newReport, setNewReport] = useState({ title: "", content: "", location: null });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["reports"],
+    queryFn: () => axios.get(`${API}/reports`).then(r => r.data),
+    enabled: !!user
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (report) => axios.post(`${API}/reports`, report),
+    onSuccess: () => {
+      showToast("Report created! 🎉", "success");
+      queryClient.invalidateQueries(["reports"]);
+      setShowCreate(false);
+      setNewReport({ title: "", content: "", location: null });
+    },
+    onError: () => showToast("Failed to create report", "error")
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => axios.delete(`${API}/reports/${id}`),
+    onSuccess: () => {
+      showToast("Report deleted", "success");
+      queryClient.invalidateQueries(["reports"]);
+    }
+  });
+
+  if (!user) return <Navigate to="/login" />;
+
+  return (
+    <div className="min-h-screen pt-20 px-4">
+      <StarsBackground />
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gradient-gold">My Personal Reports</h1>
+            <p className="text-white/60">Create organic reports about any topic</p>
+          </div>
+          <Button onClick={() => setShowCreate(true)} className="btn-gold"><Plus className="mr-2" /> Create Report</Button>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center py-12"><RefreshCw className="animate-spin mx-auto text-yellow-400" size={48} /></div>
+        ) : data?.reports?.length === 0 ? (
+          <Card className="card-glass p-8 text-center">
+            <FileText className="mx-auto text-yellow-400 mb-4" size={48} />
+            <h3 className="text-xl text-white mb-2">No reports yet!</h3>
+            <p className="text-white/60">Create your first personal report to share your knowledge.</p>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {data?.reports?.map(report => (
+              <Card key={report.id} className="card-glass p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-white">{report.title}</h3>
+                    <p className="text-white/70 mt-2">{report.content}</p>
+                    <div className="flex items-center gap-4 mt-3 text-white/50 text-sm">
+                      <Badge>{report.document_type}</Badge>
+                      <span>{new Date(report.created_at).toLocaleDateString()}</span>
+                      {report.location && <span className="flex items-center gap-1"><MapPin size={14} /> Location attached</span>}
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(report.id)} className="text-red-400 hover:text-red-300">
+                    <Trash2 size={18} />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent className="bg-slate-900 border-yellow-400/30">
+            <DialogHeader>
+              <DialogTitle className="text-yellow-400">Create Personal Report</DialogTitle>
+              <DialogDescription className="text-white/70">Share your knowledge on any topic (max 3 images)</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="text-white">Title *</Label>
+                <Input className="form-input mt-1" placeholder="Report title" value={newReport.title} onChange={e => setNewReport({...newReport, title: e.target.value})} />
+              </div>
+              <div>
+                <Label className="text-white">Content *</Label>
+                <Textarea className="form-input mt-1" rows={6} placeholder="Your report content..." value={newReport.content} onChange={e => setNewReport({...newReport, content: e.target.value})} />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button className="btn-gold" onClick={() => createMutation.mutate(newReport)} disabled={!newReport.title || !newReport.content || createMutation.isPending}>
+                Create Report
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };
 
 // ============ BOOK PAGE ============
 const BookPage = () => {
-  const { data: book } = useQuery({
-    queryKey: ["book"],
-    queryFn: () => axios.get(`${API}/book`).then(r => r.data)
-  });
-  const { data: prices } = useQuery({
-    queryKey: ["book-prices"],
-    queryFn: () => axios.get(`${API}/book/prices`).then(r => r.data)
-  });
+  const { data: book } = useQuery({ queryKey: ["book"], queryFn: () => axios.get(`${API}/book`).then(r => r.data) });
+  const { data: prices } = useQuery({ queryKey: ["book-prices"], queryFn: () => axios.get(`${API}/book/prices`).then(r => r.data) });
 
   if (!book) return <div className="min-h-screen pt-24 flex items-center justify-center text-white">Loading...</div>;
 
@@ -669,14 +1226,10 @@ const BookPage = () => {
       <StarsBackground />
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12 animate-slide-in">
-          <Badge className="mb-2 bg-blue-600/30 text-blue-300">✈️ John Selman Publications</Badge>
-          <Badge className="mb-4 bg-purple-500/20 text-purple-300 ml-2">📖 True Supernatural Thriller Comedy</Badge>
+          <Badge className="mb-4 bg-purple-500/20 text-purple-300">📖 True Supernatural Thriller Comedy</Badge>
           <h1 className="text-4xl md:text-5xl font-bold text-gradient-gold mb-4">{book.title}</h1>
           <p className="text-xl text-white/80">by {book.author}</p>
-          <div className="flex flex-wrap justify-center gap-2 mt-4">
-            <Badge className="bg-green-500/20 text-green-300">⭐ {book.review_count} Five-Star Reviews</Badge>
-            <Badge className="bg-red-500/20 text-red-300">🎬 {book.film_news}</Badge>
-          </div>
+          <Badge className="mt-4 bg-green-500/20 text-green-300">⭐ {book.review_count} Five-Star Reviews</Badge>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
@@ -684,14 +1237,7 @@ const BookPage = () => {
             <div className="h-48 bg-gradient-to-br from-purple-900 to-indigo-900 rounded-lg flex items-center justify-center mb-6">
               <span className="text-8xl">📚</span>
             </div>
-            <div className="flex flex-wrap gap-2 mb-4">
-              <Badge className="bg-yellow-400/20 text-yellow-300">Supernatural</Badge>
-              <Badge className="bg-blue-400/20 text-blue-300">Thriller</Badge>
-              <Badge className="bg-pink-400/20 text-pink-300">Comedy</Badge>
-              <Badge className="bg-green-400/20 text-green-300">Navy Memoir</Badge>
-            </div>
             <p className="text-white/80 mb-4">{book.long_description}</p>
-            <p className="text-white/60 text-sm">{book.copyright}</p>
           </Card>
 
           <div className="space-y-6">
@@ -705,7 +1251,6 @@ const BookPage = () => {
                   <ShoppingCart size={20} /> Amazon
                 </a>
               </div>
-              <p className="text-center text-white/50 text-sm mt-3">⭐ 19 Five-Star Reviews from Readers Favorite!</p>
             </Card>
 
             {prices && (
@@ -719,35 +1264,8 @@ const BookPage = () => {
                 ))}
               </Card>
             )}
-
-            <Card className="card-glass p-6" data-testid="warnings">
-              <h3 className="text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
-                <AlertTriangle /> Important Warnings!
-              </h3>
-              <ul className="space-y-2">
-                {book.warnings?.map((w, i) => (
-                  <li key={i} className="flex items-start gap-2 text-white/70 text-sm">
-                    <span className="text-yellow-400">⚠️</span> {w}
-                  </li>
-                ))}
-              </ul>
-            </Card>
           </div>
         </div>
-
-        {/* Reviews */}
-        <Card className="card-glass p-6 mt-8">
-          <h3 className="text-2xl font-bold text-yellow-400 mb-6">⭐ Professional Reviews</h3>
-          <div className="grid md:grid-cols-2 gap-6">
-            {book.professional_reviews?.map((r, i) => (
-              <div key={i} className="bg-white/5 p-4 rounded-lg">
-                <div className="flex gap-1 mb-2">{[...Array(5)].map((_, j) => <Star key={j} size={14} className="text-yellow-400 fill-yellow-400" />)}</div>
-                <p className="text-white/90 italic mb-2">"{r.quote}"</p>
-                <p className="text-yellow-400 text-sm font-semibold">- {r.author}, {r.source}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
       </div>
     </div>
   );
@@ -756,23 +1274,15 @@ const BookPage = () => {
 // ============ FOOD PAGE ============
 const FoodPage = () => {
   const showToast = useToast();
-  const { data: menu } = useQuery({
-    queryKey: ["food-menu"],
-    queryFn: () => axios.get(`${API}/food/menu`).then(r => r.data)
-  });
+  const { data: menu } = useQuery({ queryKey: ["food-menu"], queryFn: () => axios.get(`${API}/food/menu`).then(r => r.data) });
   const [cart, setCart] = useState([]);
 
   const addToCart = (item) => {
     const existing = cart.find(c => c.id === item.id);
-    if (existing) {
-      setCart(cart.map(c => c.id === item.id ? {...c, quantity: c.quantity + 1} : c));
-    } else {
-      setCart([...cart, { ...item, quantity: 1 }]);
-    }
+    if (existing) setCart(cart.map(c => c.id === item.id ? {...c, quantity: c.quantity + 1} : c));
+    else setCart([...cart, { ...item, quantity: 1 }]);
     showToast(`Added ${item.name} to cart! 🛒`, "success");
   };
-
-  const getTotal = () => cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   if (!menu) return <div className="min-h-screen pt-24 flex items-center justify-center text-white">Loading...</div>;
 
@@ -784,14 +1294,11 @@ const FoodPage = () => {
           <Badge className="mb-4 bg-orange-500/20 text-orange-300">🚚 Now Serving in Brunswick, Maine!</Badge>
           <h1 className="text-4xl md:text-5xl font-bold text-gradient-gold mb-4">{menu.restaurant_name}</h1>
           <p className="text-xl text-white/80">{menu.tagline}</p>
-          <div className="flex items-center justify-center gap-2 mt-4 text-white/60">
-            <MapPin className="text-yellow-400" /> <span>{menu.location}</span>
-          </div>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {menu.menu?.map(item => (
-            <Card key={item.id} className="card-glass overflow-hidden card-hover" data-testid={`menu-item-${item.id}`}>
+            <Card key={item.id} className="card-glass overflow-hidden card-hover">
               <CardHeader>
                 <div className="flex justify-between">
                   <div className="text-5xl mb-2">
@@ -806,33 +1313,19 @@ const FoodPage = () => {
                 <CardTitle className="text-white">{item.name}</CardTitle>
                 <CardDescription className="text-yellow-300/80 italic">"{item.funny_tagline}"</CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="text-white/70 text-sm">{item.description}</p>
-              </CardContent>
+              <CardContent><p className="text-white/70 text-sm">{item.description}</p></CardContent>
               <CardFooter>
-                <Button onClick={() => addToCart(item)} className="btn-gold w-full" data-testid={`add-${item.id}`}>
-                  <Plus className="mr-2" /> Add to Cart
-                </Button>
+                <Button onClick={() => addToCart(item)} className="btn-gold w-full"><Plus className="mr-2" /> Add to Cart</Button>
               </CardFooter>
             </Card>
           ))}
         </div>
 
         {cart.length > 0 && (
-          <Card className="card-glass p-6 sticky bottom-4" data-testid="cart">
+          <Card className="card-glass p-6 sticky bottom-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-yellow-400 flex items-center gap-2">
-                <ShoppingCart /> Cart ({cart.length} items)
-              </h3>
-              <span className="text-2xl font-bold text-white">${getTotal().toFixed(2)}</span>
-            </div>
-            <div className="space-y-2 mb-4">
-              {cart.map(item => (
-                <div key={item.id} className="flex items-center justify-between bg-white/5 p-3 rounded-lg">
-                  <span className="text-white">{item.name} x{item.quantity}</span>
-                  <span className="text-yellow-400">${(item.price * item.quantity).toFixed(2)}</span>
-                </div>
-              ))}
+              <h3 className="text-xl font-bold text-yellow-400 flex items-center gap-2"><ShoppingCart /> Cart ({cart.length})</h3>
+              <span className="text-2xl font-bold text-white">${cart.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}</span>
             </div>
             <p className="text-center text-white/60 text-sm">Visit us at {menu.location} to place your order!</p>
           </Card>
@@ -842,12 +1335,9 @@ const FoodPage = () => {
   );
 };
 
-// ============ INFOPILOT SUBSCRIPTION PAGE ============
+// ============ INFOPILOT PAGE ============
 const InfoPilotPage = () => {
-  const { data: plans } = useQuery({
-    queryKey: ["infopilot-plans"],
-    queryFn: () => axios.get(`${API}/infopilot/plans`).then(r => r.data)
-  });
+  const { data: plans } = useQuery({ queryKey: ["infopilot-plans"], queryFn: () => axios.get(`${API}/infopilot/plans`).then(r => r.data) });
 
   if (!plans) return <div className="min-h-screen pt-24 flex items-center justify-center text-white">Loading...</div>;
 
@@ -856,40 +1346,33 @@ const InfoPilotPage = () => {
       <StarsBackground />
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <Badge className="mb-2 bg-blue-600/30 text-blue-300">✈️ Top Pilot Enterprises, Inc.</Badge>
-          <Badge className="mb-4 bg-green-500/20 text-green-300 ml-2">🔍 Boolean Search & Categorization Platform</Badge>
           <h1 className="text-4xl md:text-5xl font-bold text-gradient-gold mb-4">InfoPilot Explorer</h1>
-          <p className="text-xl text-white/80">Mobile & Desktop Application for Information Exchange</p>
-          <p className="text-white/60 mt-2">Built for Scholars and Tradesmen - Only $1/month!</p>
+          <p className="text-xl text-white/80">Boolean Search & Categorization Platform - Only $1/month!</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <Card className="card-glass p-6 border-2 border-blue-500/30" data-testid="monthly-plan">
+          <Card className="card-glass p-6 border-2 border-blue-500/30">
             <Badge className="bg-blue-500/20 text-blue-300 mb-4">Most Popular</Badge>
-            <h3 className="text-2xl font-bold text-white mb-2">Monthly Plan</h3>
+            <h3 className="text-2xl font-bold text-white mb-2">Monthly</h3>
             <div className="text-4xl font-bold text-yellow-400 mb-4">${plans.monthly?.price}<span className="text-lg text-white/60">/mo</span></div>
             <ul className="space-y-2 mb-6">
               {plans.monthly?.features?.map((f, i) => (
                 <li key={i} className="flex items-center gap-2 text-white/80"><CheckCircle className="text-green-400" size={16} /> {f}</li>
               ))}
             </ul>
-            <a href={PAYPAL_INFOPILOT_LINK} target="_blank" rel="noopener noreferrer" className="block">
-              <Button className="btn-gold w-full">Subscribe Now</Button>
-            </a>
+            <a href={PAYPAL_INFOPILOT_LINK} target="_blank" rel="noopener noreferrer"><Button className="btn-gold w-full">Subscribe Now</Button></a>
           </Card>
 
-          <Card className="card-glass p-6 border-2 border-yellow-500/30" data-testid="yearly-plan">
+          <Card className="card-glass p-6 border-2 border-yellow-500/30">
             <Badge className="bg-yellow-500/20 text-yellow-300 mb-4">Save 17%!</Badge>
-            <h3 className="text-2xl font-bold text-white mb-2">Yearly Plan</h3>
+            <h3 className="text-2xl font-bold text-white mb-2">Yearly</h3>
             <div className="text-4xl font-bold text-yellow-400 mb-4">${plans.yearly?.price}<span className="text-lg text-white/60">/yr</span></div>
             <ul className="space-y-2 mb-6">
               {plans.yearly?.features?.map((f, i) => (
                 <li key={i} className="flex items-center gap-2 text-white/80"><CheckCircle className="text-green-400" size={16} /> {f}</li>
               ))}
             </ul>
-            <a href={PAYPAL_INFOPILOT_LINK} target="_blank" rel="noopener noreferrer" className="block">
-              <Button className="btn-gold w-full">Subscribe Now</Button>
-            </a>
+            <a href={PAYPAL_INFOPILOT_LINK} target="_blank" rel="noopener noreferrer"><Button className="btn-gold w-full">Subscribe Now</Button></a>
           </Card>
         </div>
 
@@ -923,9 +1406,7 @@ const UltimateSearchPage = () => {
 
   const { data: resultsData, isLoading: loadingResults, refetch: refetchResults } = useQuery({
     queryKey: ["search-results", selectedCategories, aggregation],
-    queryFn: () => axios.get(`${API}/search/results`, {
-      params: { category_ids: selectedCategories.join(","), aggregation }
-    }).then(r => r.data),
+    queryFn: () => axios.get(`${API}/search/results`, { params: { category_ids: selectedCategories.join(","), aggregation } }).then(r => r.data),
     enabled: !!user && selectedCategories.length > 0
   });
 
@@ -952,35 +1433,17 @@ const UltimateSearchPage = () => {
 
   const deleteCategoryMutation = useMutation({
     mutationFn: (id) => axios.delete(`${API}/categories/${id}`),
-    onSuccess: () => {
-      showToast("Category deleted", "success");
-      queryClient.invalidateQueries(["categories"]);
-    }
-  });
-
-  const cleanCategoryMutation = useMutation({
-    mutationFn: (id) => axios.post(`${API}/categories/${id}/clean`),
-    onSuccess: () => {
-      showToast("Category cleaned! All results removed.", "success");
-      queryClient.invalidateQueries(["categories"]);
-      refetchResults();
-    }
+    onSuccess: () => { showToast("Category deleted", "success"); queryClient.invalidateQueries(["categories"]); }
   });
 
   if (!user) return <Navigate to="/login" />;
 
   const categories = categoriesData?.categories || [];
   const results = resultsData?.results || [];
-
-  // Build category tree
   const categoryTree = categories.filter(c => !c.parent_id);
   const getChildren = (parentId) => categories.filter(c => c.parent_id === parentId);
 
-  const toggleCategory = (id) => {
-    setSelectedCategories(prev => 
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    );
-  };
+  const toggleCategory = (id) => setSelectedCategories(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
 
   const renderCategoryTree = (cats, depth = 0) => (
     <div className={`${depth > 0 ? 'ml-4 border-l border-white/10 pl-2' : ''}`}>
@@ -998,23 +1461,12 @@ const UltimateSearchPage = () => {
                 </button>
               )}
               {!hasChildren && <span className="w-[14px]" />}
-              <Checkbox 
-                checked={selectedCategories.includes(cat.id)}
-                onCheckedChange={() => toggleCategory(cat.id)}
-                data-testid={`cat-checkbox-${cat.id}`}
-              />
+              <Checkbox checked={selectedCategories.includes(cat.id)} onCheckedChange={() => toggleCategory(cat.id)} />
               <span className="text-white/90 text-sm flex-1">{cat.name}</span>
               <Badge className="text-xs bg-white/10">({cat.search_result_count || 0})</Badge>
               <div className="opacity-0 group-hover:opacity-100 flex gap-1">
-                <button onClick={() => { setNewCategory({...newCategory, parent_id: cat.id}); setShowCreateCategory(true); }} className="text-green-400" title="Add subcategory">
-                  <Plus size={14} />
-                </button>
-                <button onClick={() => cleanCategoryMutation.mutate(cat.id)} className="text-yellow-400" title="Clean category">
-                  <RefreshCw size={14} />
-                </button>
-                <button onClick={() => deleteCategoryMutation.mutate(cat.id)} className="text-red-400" title="Delete">
-                  <Trash2 size={14} />
-                </button>
+                <button onClick={() => { setNewCategory({...newCategory, parent_id: cat.id}); setShowCreateCategory(true); }} className="text-green-400" title="Add subcategory"><Plus size={14} /></button>
+                <button onClick={() => deleteCategoryMutation.mutate(cat.id)} className="text-red-400" title="Delete"><Trash2 size={14} /></button>
               </div>
             </div>
             {hasChildren && isExpanded && renderCategoryTree(children, depth + 1)}
@@ -1034,98 +1486,59 @@ const UltimateSearchPage = () => {
         </div>
 
         <div className="grid lg:grid-cols-4 gap-6">
-          {/* Left Sidebar - Categories */}
           <div className="lg:col-span-1">
-            <Card className="card-glass p-4" data-testid="categories-panel">
+            <Card className="card-glass p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-yellow-400">Categories</h3>
-                <Button size="sm" onClick={() => setShowCreateCategory(true)} data-testid="create-category-btn">
-                  <Plus size={14} />
-                </Button>
+                <Button size="sm" onClick={() => setShowCreateCategory(true)}><Plus size={14} /></Button>
               </div>
               
-              {loadingCategories ? (
-                <p className="text-white/60 text-sm">Loading...</p>
-              ) : categories.length === 0 ? (
-                <p className="text-white/60 text-sm">No categories yet. Create one to start!</p>
+              {loadingCategories ? <p className="text-white/60 text-sm">Loading...</p> : categories.length === 0 ? (
+                <p className="text-white/60 text-sm">No categories yet. Create one!</p>
               ) : (
                 <>
                   <div className="flex gap-2 mb-3">
                     <Button size="sm" variant="outline" onClick={() => setSelectedCategories(categories.map(c => c.id))} className="text-xs">Select All</Button>
                     <Button size="sm" variant="outline" onClick={() => setSelectedCategories([])} className="text-xs">Deselect All</Button>
                   </div>
-                  <div className="max-h-[400px] overflow-y-auto">
-                    {renderCategoryTree(categoryTree)}
-                  </div>
+                  <div className="max-h-[400px] overflow-y-auto">{renderCategoryTree(categoryTree)}</div>
                 </>
               )}
 
-              {/* Aggregation Options */}
               <div className="mt-4 pt-4 border-t border-white/10">
-                <Label className="text-white/70 text-xs">Search Aggregation:</Label>
+                <Label className="text-white/70 text-xs">Aggregation:</Label>
                 <Select value={aggregation} onValueChange={setAggregation}>
-                  <SelectTrigger className="form-input mt-1 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger className="form-input mt-1 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent className="bg-slate-800">
-                    <SelectItem value="and_or">And/Or (All selected + more)</SelectItem>
-                    <SelectItem value="and">And (Exactly selected)</SelectItem>
-                    <SelectItem value="or">Or (Any of selected)</SelectItem>
+                    <SelectItem value="and_or">And/Or</SelectItem>
+                    <SelectItem value="and">And (Exact)</SelectItem>
+                    <SelectItem value="or">Or (Any)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </Card>
           </div>
 
-          {/* Main Content */}
           <div className="lg:col-span-3">
-            {/* Search Bar */}
-            <Card className="card-glass p-4 mb-6" data-testid="search-bar">
+            <Card className="card-glass p-4 mb-6">
               <div className="flex gap-4">
-                <Input 
-                  className="form-input flex-1"
-                  placeholder="Enter search query to collate..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  data-testid="search-input"
-                />
-                <Button 
-                  onClick={() => collateMutation.mutate(searchQuery)}
-                  disabled={!searchQuery || collateMutation.isPending}
-                  className="btn-gold"
-                  data-testid="collate-btn"
-                >
-                  {collateMutation.isPending ? <RefreshCw className="animate-spin" /> : <Search className="mr-2" />}
-                  Search & Collate
-                </Button>
-                <Button 
-                  onClick={() => refetchResults()}
-                  variant="outline"
-                  data-testid="quick-search-btn"
-                >
-                  Quick Search
+                <Input className="form-input flex-1" placeholder="Enter search query..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                <Button onClick={() => collateMutation.mutate(searchQuery)} disabled={!searchQuery || collateMutation.isPending} className="btn-gold">
+                  {collateMutation.isPending ? <RefreshCw className="animate-spin" /> : <Search className="mr-2" />} Collate
                 </Button>
               </div>
             </Card>
 
-            {/* Results */}
-            <Card className="card-glass p-4" data-testid="results-panel">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-white">Search Results ({results.length})</h3>
-              </div>
-              
-              {loadingResults ? (
-                <p className="text-white/60">Loading results...</p>
-              ) : results.length === 0 ? (
-                <p className="text-white/60">No results yet. Use Search & Collate to populate!</p>
+            <Card className="card-glass p-4">
+              <h3 className="text-lg font-bold text-white mb-4">Results ({results.length})</h3>
+              {loadingResults ? <p className="text-white/60">Loading...</p> : results.length === 0 ? (
+                <p className="text-white/60">No results yet. Use Search & Collate!</p>
               ) : (
                 <div className="space-y-4 max-h-[600px] overflow-y-auto">
                   {results.map(result => (
-                    <div key={result.id} className="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition" data-testid={`result-${result.id}`}>
+                    <div key={result.id} className="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition">
                       <div className="flex items-start justify-between mb-2">
-                        <a href={result.url} target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:underline font-semibold">
-                          {result.title}
-                        </a>
+                        <a href={result.url} target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:underline font-semibold">{result.title}</a>
                         <Badge className="text-xs">{result.document_type}</Badge>
                       </div>
                       <p className="text-white/70 text-sm mb-2">{result.snippet}</p>
@@ -1135,9 +1548,6 @@ const UltimateSearchPage = () => {
                           return cat ? <Badge key={catId} className="text-xs bg-blue-500/20">{cat.name}</Badge> : null;
                         })}
                       </div>
-                      {result.location && (
-                        <p className="text-white/50 text-xs mt-2">📍 {result.location.lat.toFixed(2)}, {result.location.lng.toFixed(2)}</p>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -1146,70 +1556,36 @@ const UltimateSearchPage = () => {
           </div>
         </div>
 
-        {/* Create Category Dialog */}
         <Dialog open={showCreateCategory} onOpenChange={setShowCreateCategory}>
           <DialogContent className="bg-slate-900 border-yellow-400/30">
             <DialogHeader>
               <DialogTitle className="text-yellow-400">Create Category</DialogTitle>
-              <DialogDescription className="text-white/70">
-                Write an InfoJet 2.0 protocol to categorize web content. Use "and" or "&" between groups, "or" within groups. Use + for include all, ^ for exclude all.
-              </DialogDescription>
+              <DialogDescription className="text-white/70">Write an InfoJet 2.0 protocol. Use "and" or "&", "or" within groups, + for include all, ^ for exclude.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
                 <Label className="text-white">Category Name *</Label>
-                <Input 
-                  className="form-input mt-1"
-                  placeholder="e.g., American Civil War Heroes"
-                  value={newCategory.name}
-                  onChange={e => setNewCategory({...newCategory, name: e.target.value})}
-                  data-testid="category-name-input"
-                />
+                <Input className="form-input mt-1" placeholder="e.g., Tech Innovations" value={newCategory.name} onChange={e => setNewCategory({...newCategory, name: e.target.value})} />
               </div>
               <div>
                 <Label className="text-white">Protocol (InfoJet 2.0) *</Label>
-                <Textarea 
-                  className="form-input mt-1 font-mono text-sm"
-                  rows={4}
-                  placeholder="(word1 or word2) & (word3 or word4)+"
-                  value={newCategory.protocol}
-                  onChange={e => setNewCategory({...newCategory, protocol: e.target.value})}
-                  data-testid="category-protocol-input"
-                />
-                <p className="text-white/50 text-xs mt-1">
-                  Tip: "and" works as "&". Use + to include all words, ^ to exclude all words in a group.
-                </p>
+                <Textarea className="form-input mt-1 font-mono text-sm" rows={4} placeholder="(word1 or word2) & (word3)+" value={newCategory.protocol} onChange={e => setNewCategory({...newCategory, protocol: e.target.value})} />
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <Checkbox 
-                    checked={newCategory.is_public}
-                    onCheckedChange={checked => setNewCategory({...newCategory, is_public: checked})}
-                  />
+                  <Checkbox checked={newCategory.is_public} onCheckedChange={checked => setNewCategory({...newCategory, is_public: checked})} />
                   <Label className="text-white/80">Public</Label>
                 </div>
                 <div className="flex-1">
-                  <Label className="text-white/80 text-xs">Price (for Marketplace)</Label>
-                  <Input 
-                    className="form-input mt-1"
-                    type="number"
-                    step="0.01"
-                    placeholder="Leave empty if free"
-                    value={newCategory.price || ""}
-                    onChange={e => setNewCategory({...newCategory, price: e.target.value ? parseFloat(e.target.value) : null})}
-                  />
+                  <Label className="text-white/80 text-xs">Price ($)</Label>
+                  <Input className="form-input mt-1" type="number" step="0.01" placeholder="Free" value={newCategory.price || ""} onChange={e => setNewCategory({...newCategory, price: e.target.value ? parseFloat(e.target.value) : null})} />
                 </div>
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowCreateCategory(false)}>Cancel</Button>
-              <Button 
-                className="btn-gold"
-                onClick={() => createCategoryMutation.mutate(newCategory)}
-                disabled={!newCategory.name || !newCategory.protocol || createCategoryMutation.isPending}
-                data-testid="save-category-btn"
-              >
-                {createCategoryMutation.isPending ? "Saving..." : "Create Category"}
+              <Button className="btn-gold" onClick={() => createCategoryMutation.mutate(newCategory)} disabled={!newCategory.name || !newCategory.protocol || createCategoryMutation.isPending}>
+                {createCategoryMutation.isPending ? "Saving..." : "Create"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1219,17 +1595,11 @@ const UltimateSearchPage = () => {
   );
 };
 
-// ============ STATISTICS PAGE ============
+// ============ STATS PAGE ============
 const StatsPage = () => {
   const { user } = useAuth();
-  const { data: stats } = useQuery({
-    queryKey: ["stats"],
-    queryFn: () => axios.get(`${API}/stats`).then(r => r.data)
-  });
-  const { data: leaderboard } = useQuery({
-    queryKey: ["leaderboard"],
-    queryFn: () => axios.get(`${API}/leaderboard`).then(r => r.data)
-  });
+  const { data: stats } = useQuery({ queryKey: ["stats"], queryFn: () => axios.get(`${API}/stats`).then(r => r.data) });
+  const { data: leaderboard } = useQuery({ queryKey: ["leaderboard"], queryFn: () => axios.get(`${API}/leaderboard`).then(r => r.data) });
 
   if (!user) return <Navigate to="/login" />;
 
@@ -1258,15 +1628,13 @@ const StatsPage = () => {
           <Card className="card-glass p-6 text-center">
             <Egg className="mx-auto text-yellow-400 mb-2" size={32} />
             <p className="text-3xl font-bold text-white">{user.laughter_points || 0}</p>
-            <p className="text-white/60 text-sm">Your Laughter Points</p>
+            <p className="text-white/60 text-sm">Your Points</p>
           </Card>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
           <Card className="card-glass p-6">
-            <h3 className="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2">
-              <Trophy /> Top Laughter Points
-            </h3>
+            <h3 className="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2"><Trophy /> Top Laughter Points</h3>
             <div className="space-y-3">
               {leaderboard?.top_laughter_points?.map((u, i) => (
                 <div key={u.id} className="flex items-center gap-3 p-2 bg-white/5 rounded">
@@ -1279,9 +1647,7 @@ const StatsPage = () => {
           </Card>
 
           <Card className="card-glass p-6">
-            <h3 className="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2">
-              <Star /> Top Protocol Creators
-            </h3>
+            <h3 className="text-xl font-bold text-yellow-400 mb-4 flex items-center gap-2"><Star /> Top Protocol Creators</h3>
             <div className="space-y-3">
               {leaderboard?.top_protocol_creators?.map((tc, i) => (
                 <div key={tc.user?.id} className="flex items-center gap-3 p-2 bg-white/5 rounded">
@@ -1323,23 +1689,21 @@ const MarketplacePage = () => {
       <StarsBackground />
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
-          <Badge className="mb-4 bg-red-500/20 text-red-300">🐻 As Dangerous to the App Market as a Kodiak Bear!</Badge>
+          <Badge className="mb-4 bg-red-500/20 text-red-300">🐻 As Dangerous as a Kodiak Bear!</Badge>
           <h1 className="text-3xl font-bold text-gradient-gold mb-2">Protocol Marketplace</h1>
-          <p className="text-white/60">Buy and sell InfoJet 2.0 protocols - First in Flight with Monetization of Searches!</p>
+          <p className="text-white/60">First in Flight with Monetization of Searches!</p>
         </div>
 
-        {isLoading ? (
-          <p className="text-center text-white/60">Loading marketplace...</p>
-        ) : protocols?.protocols?.length === 0 ? (
+        {isLoading ? <p className="text-center text-white/60">Loading...</p> : protocols?.protocols?.length === 0 ? (
           <Card className="card-glass p-8 text-center">
             <Store className="mx-auto text-yellow-400 mb-4" size={48} />
             <h3 className="text-xl text-white mb-2">No protocols for sale yet!</h3>
-            <p className="text-white/60">Be the first to list your protocols in the marketplace.</p>
+            <p className="text-white/60">Be the first to list your protocols.</p>
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {protocols?.protocols?.map(p => (
-              <Card key={p.id} className="card-glass p-4" data-testid={`protocol-${p.id}`}>
+              <Card key={p.id} className="card-glass p-4">
                 <CardHeader>
                   <CardTitle className="text-white">{p.name}</CardTitle>
                   <CardDescription className="text-white/60 font-mono text-xs">{p.protocol}</CardDescription>
@@ -1352,11 +1716,7 @@ const MarketplacePage = () => {
                   <p className="text-white/60 text-sm">By: {p.owner?.username}</p>
                 </CardContent>
                 <CardFooter>
-                  <Button 
-                    onClick={() => buyMutation.mutate(p.id)}
-                    className="btn-gold w-full"
-                    disabled={buyMutation.isPending}
-                  >
+                  <Button onClick={() => buyMutation.mutate(p.id)} className="btn-gold w-full" disabled={buyMutation.isPending}>
                     <CreditCard className="mr-2" /> Buy Protocol
                   </Button>
                 </CardFooter>
@@ -1369,34 +1729,9 @@ const MarketplacePage = () => {
   );
 };
 
-// ============ MAP PAGE (Placeholder) ============
-const MapPage = () => {
-  const { user } = useAuth();
-
-  if (!user) return <Navigate to="/login" />;
-
-  return (
-    <div className="min-h-screen pt-20 px-4">
-      <StarsBackground />
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-gradient-gold mb-8 text-center">Map View</h1>
-        <Card className="card-glass p-8 text-center">
-          <Map className="mx-auto text-yellow-400 mb-4" size={64} />
-          <h3 className="text-xl text-white mb-2">Interactive Map Coming Soon!</h3>
-          <p className="text-white/60">View your search results plotted on a global map with color-coded categories.</p>
-          <p className="text-white/50 text-sm mt-4">Each dot will have a clickable popup with article details!</p>
-        </Card>
-      </div>
-    </div>
-  );
-};
-
 // ============ LEGAL PAGES ============
 const UserAgreementPage = () => {
-  const { data } = useQuery({
-    queryKey: ["user-agreement"],
-    queryFn: () => axios.get(`${API}/legal/user-agreement`).then(r => r.data)
-  });
+  const { data } = useQuery({ queryKey: ["user-agreement"], queryFn: () => axios.get(`${API}/legal/user-agreement`).then(r => r.data) });
 
   return (
     <div className="min-h-screen pt-20 px-4">
@@ -1404,9 +1739,7 @@ const UserAgreementPage = () => {
       <div className="max-w-4xl mx-auto">
         <Card className="card-glass p-8">
           <h1 className="text-3xl font-bold text-gradient-gold mb-6">{data?.title || "User Agreement"}</h1>
-          <div className="prose prose-invert max-w-none text-white/80 whitespace-pre-wrap">
-            {data?.content || "Loading..."}
-          </div>
+          <div className="prose prose-invert max-w-none text-white/80 whitespace-pre-wrap">{data?.content || "Loading..."}</div>
         </Card>
       </div>
     </div>
@@ -1414,10 +1747,7 @@ const UserAgreementPage = () => {
 };
 
 const PrivacyPage = () => {
-  const { data } = useQuery({
-    queryKey: ["privacy"],
-    queryFn: () => axios.get(`${API}/legal/privacy-policy`).then(r => r.data)
-  });
+  const { data } = useQuery({ queryKey: ["privacy"], queryFn: () => axios.get(`${API}/legal/privacy-policy`).then(r => r.data) });
 
   return (
     <div className="min-h-screen pt-20 px-4">
@@ -1425,9 +1755,7 @@ const PrivacyPage = () => {
       <div className="max-w-4xl mx-auto">
         <Card className="card-glass p-8">
           <h1 className="text-3xl font-bold text-gradient-gold mb-6">{data?.title || "Privacy Policy"}</h1>
-          <div className="prose prose-invert max-w-none text-white/80 whitespace-pre-wrap">
-            {data?.content || "Loading..."}
-          </div>
+          <div className="prose prose-invert max-w-none text-white/80 whitespace-pre-wrap">{data?.content || "Loading..."}</div>
         </Card>
       </div>
     </div>
@@ -1438,31 +1766,38 @@ const PrivacyPage = () => {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>
-          <BrowserRouter>
-            <div className="app-container">
-              <Navbar />
-              <NewsHeadlines />
-              <FloatingEasterEgg />
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/book" element={<BookPage />} />
-                <Route path="/food" element={<FoodPage />} />
-                <Route path="/infopilot" element={<InfoPilotPage />} />
-                <Route path="/search" element={<UltimateSearchPage />} />
-                <Route path="/stats" element={<StatsPage />} />
-                <Route path="/marketplace" element={<MarketplacePage />} />
-                <Route path="/map" element={<MapPage />} />
-                <Route path="/legal/user-agreement" element={<UserAgreementPage />} />
-                <Route path="/legal/privacy" element={<PrivacyPage />} />
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </div>
-          </BrowserRouter>
-        </ToastProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <div className="app-container">
+                <Navbar />
+                <NewsHeadlines />
+                <FloatingEasterEgg />
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/book" element={<BookPage />} />
+                  <Route path="/food" element={<FoodPage />} />
+                  <Route path="/infopilot" element={<InfoPilotPage />} />
+                  <Route path="/search" element={<UltimateSearchPage />} />
+                  <Route path="/stats" element={<StatsPage />} />
+                  <Route path="/marketplace" element={<MarketplacePage />} />
+                  <Route path="/map" element={<MapPage />} />
+                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/templates" element={<TemplatesPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/revenue" element={<RevenuePage />} />
+                  <Route path="/themes" element={<ThemesPage />} />
+                  <Route path="/legal/user-agreement" element={<UserAgreementPage />} />
+                  <Route path="/legal/privacy" element={<PrivacyPage />} />
+                  <Route path="*" element={<Navigate to="/" />} />
+                </Routes>
+              </div>
+            </BrowserRouter>
+          </ToastProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
