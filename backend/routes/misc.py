@@ -122,6 +122,7 @@ async def get_stats(user: Dict = Depends(get_current_user)):
     """Get platform statistics."""
     total_users = await db.users.count_documents({})
     total_categories = await db.categories.count_documents({})
+    public_categories = await db.categories.count_documents({"is_public": True})
     total_results = await db.search_results.count_documents({})
     total_reports = await db.personal_reports.count_documents({})
     
@@ -139,7 +140,8 @@ async def get_stats(user: Dict = Depends(get_current_user)):
         "global": {
             "total_users": total_users,
             "total_categories": total_categories,
-            "total_results": total_results,
+            "public_categories": public_categories,
+            "total_search_results": total_results,
             "total_reports": total_reports
         },
         "user": user_stats
