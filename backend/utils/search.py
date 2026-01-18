@@ -217,7 +217,6 @@ def content_matches_protocol(content: str, protocol: str) -> Tuple[bool, int]:
 def classify_document_type(content: str, title: str, admin_settings: Dict) -> str:
     """Classify document type based on content analysis."""
     content_lower = content.lower()
-    title_lower = title.lower()
     word_count = len(content.split())
     
     # PhD Informative
