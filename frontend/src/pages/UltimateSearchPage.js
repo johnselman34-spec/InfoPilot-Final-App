@@ -298,8 +298,8 @@ const UltimateSearchPage = () => {
                   <Label className="text-white/80">Public</Label>
                 </div>
                 <div className="flex-1">
-                  <Label className="text-white/80 text-xs">Sell Price ($)</Label>
-                  <Input className="form-input mt-1" type="number" step="0.01" min="1" placeholder="Free" value={newCategory.price || ""} onChange={e => setNewCategory({...newCategory, price: e.target.value ? parseFloat(e.target.value) : null})} />
+                  <Label className="text-white/80 text-xs">Sell Price ($) <span className="text-yellow-400">Max $24.99</span></Label>
+                  <Input className="form-input mt-1" type="number" step="0.01" min="1" max="24.99" placeholder="Free" value={newCategory.price || ""} onChange={e => setNewCategory({...newCategory, price: e.target.value ? Math.min(parseFloat(e.target.value), 24.99) : null})} />
                 </div>
               </div>
             </div>
