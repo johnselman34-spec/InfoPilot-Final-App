@@ -1369,7 +1369,7 @@ const FoodPage = () => {
                   <Badge className="bg-yellow-400/20 text-yellow-300 text-lg h-fit">${item.price}</Badge>
                 </div>
                 <CardTitle className="text-white">{item.name}</CardTitle>
-                <CardDescription className="text-yellow-300/80 italic">"{item.funny_tagline}"</CardDescription>
+                <CardDescription className="text-yellow-300/80 italic">&quot;{item.funny_tagline}&quot;</CardDescription>
               </CardHeader>
               <CardContent><p className="text-white/70 text-sm">{item.description}</p></CardContent>
               <CardFooter>
@@ -1569,7 +1569,7 @@ const UltimateSearchPage = () => {
       <StarsBackground />
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gradient-gold mb-2">{user.ultimate_search_name || user.username}'s Ultimate Search</h1>
+          <h1 className="text-3xl font-bold text-gradient-gold mb-2">{user.ultimate_search_name || user.username}&apos;s Ultimate Search</h1>
           <p className="text-white/60">Your personal InfoJet 2.0 categorization dashboard</p>
         </div>
 
@@ -1642,7 +1642,7 @@ const UltimateSearchPage = () => {
             <Card className="card-glass p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-white">Results ({filteredResults.length}{quickSearchQuery ? ` of ${results.length}` : ''})</h3>
-                {quickSearchQuery && <Badge className="bg-blue-500/20 text-blue-300">Filtered: "{quickSearchQuery}"</Badge>}
+                {quickSearchQuery && <Badge className="bg-blue-500/20 text-blue-300">Filtered: &quot;{quickSearchQuery}&quot;</Badge>}
               </div>
               {loadingResults ? <p className="text-white/60">Loading...</p> : filteredResults.length === 0 ? (
                 <p className="text-white/60">{results.length > 0 ? "No results match your quick search." : "No results yet. Use Search & Collate!"}</p>
