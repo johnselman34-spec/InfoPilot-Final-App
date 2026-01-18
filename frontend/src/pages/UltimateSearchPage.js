@@ -252,7 +252,14 @@ const UltimateSearchPage = () => {
                     <div key={result.id} className="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition" data-testid={`search-result-${result.id}`}>
                       <div className="flex items-start justify-between mb-2">
                         <a href={result.url} target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:underline font-semibold">{result.title}</a>
-                        <Badge className="text-xs">{result.document_type}</Badge>
+                        <div className="flex gap-1">
+                          {result.source && (
+                            <Badge className={`text-xs ${result.source === 'Brave' ? 'bg-orange-500/20 text-orange-300' : result.source === 'DuckDuckGo' ? 'bg-green-500/20 text-green-300' : 'bg-white/10'}`}>
+                              {result.source === 'Brave' ? '🦁' : result.source === 'DuckDuckGo' ? '🦆' : '🌐'} {result.source}
+                            </Badge>
+                          )}
+                          <Badge className="text-xs">{result.document_type}</Badge>
+                        </div>
                       </div>
                       <p className="text-white/70 text-sm mb-2">{result.snippet}</p>
                       <div className="flex flex-wrap gap-1">
