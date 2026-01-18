@@ -84,7 +84,7 @@ const ChatPage = () => {
       // Attempt reconnect after 3 seconds
       if (event.code !== 4001) { // Don't reconnect if auth failed
         reconnectTimeoutRef.current = setTimeout(() => {
-          connectWebSocket();
+          if (connectFnRef.current) connectFnRef.current();
         }, 3000);
       }
     };
