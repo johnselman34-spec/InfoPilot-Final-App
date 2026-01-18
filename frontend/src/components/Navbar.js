@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   Sparkles, LogOut, Settings, Home, BarChart3, Map, Store, 
-  MessageCircle, Users, Layers, Book, Utensils, Search, User, ChevronDown, Menu, X
+  MessageCircle, Users, Layers, Book, Utensils, Search, User, ChevronDown, Menu, X, Crown
 } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
