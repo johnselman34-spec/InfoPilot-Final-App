@@ -112,6 +112,8 @@ class InfoPilotAPITester:
                 else:
                     print(f"   ❌ Yearly price incorrect: Expected $9.99, got ${yearly_price}")
         return success, response
+
+    def test_book_order(self):
         """Test book order creation"""
         order_data = {
             "customer_name": "Test Customer",
