@@ -38,8 +38,13 @@ const StatsPage = lazy(() => import('./pages/StatsPage'));
 const BookPage = lazy(() => import('./pages/BookPage'));
 const FoodPage = lazy(() => import('./pages/FoodPage'));
 const InfoPilotPage = lazy(() => import('./pages/InfoPilotPage'));
+// Old PayPal result pages (deprecated)
 const MarketplaceSuccess = lazy(() => import('./pages/MarketplaceResultPages').then(m => ({ default: m.MarketplaceSuccess })));
 const MarketplaceCancel = lazy(() => import('./pages/MarketplaceResultPages').then(m => ({ default: m.MarketplaceCancel })));
+// New Stripe payment pages
+const PaymentSuccess = lazy(() => import('./pages/PaymentPages').then(m => ({ default: m.PaymentSuccess })));
+const PaymentCancel = lazy(() => import('./pages/PaymentPages').then(m => ({ default: m.PaymentCancel })));
+const SubscriptionCheckout = lazy(() => import('./pages/PaymentPages').then(m => ({ default: m.SubscriptionCheckout })));
 
 // CSS
 import './App.css';
