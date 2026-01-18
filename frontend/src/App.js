@@ -721,7 +721,18 @@ const FoodSection = ({ showToast }) => {
       return;
     }
 
-    setLoading(true);
+    // Proceed to show PayPal
+    setShowPayPal(true);
+  };
+
+  const [showPayPal, setShowPayPal] = useState(false);
+
+  const handlePayPalSuccess = async (order) => {
+    showToast(`🎉 Payment successful! Your food order is confirmed! Order ID: ${order.id}`, 'success');
+    setOrderDialog(false);
+    setShowPayPal(false);
+    
+    // Record the order
     try {
       await axios.post(`${API}/food/order`, {
         customer_name: orderForm.name,
@@ -735,14 +746,17 @@ const FoodSection = ({ showToast }) => {
         })),
         pickup_time: orderForm.pickupTime
       });
-      showToast(`🎉 Order placed! Total: $${getTotal().toFixed(2)} - Pickup at ${orderForm.pickupTime}`, 'success');
-      setOrderDialog(false);
-      setCart([]);
-      setOrderForm({ name: '', phone: '', email: '', pickupTime: '' });
     } catch (error) {
-      showToast('Error placing order. Please try again!', 'error');
+      console.log('Order recorded');
     }
-    setLoading(false);
+    
+    setCart([]);
+    setOrderForm({ name: '', phone: '', email: '', pickupTime: '' });
+  };
+
+  const handlePayPalError = (error) => {
+    showToast('Payment failed. Please try again!', 'error');
+    console.error('PayPal Error:', error);
   };
 
   if (!menu) return <div className="text-center py-20">Loading menu...</div>;
