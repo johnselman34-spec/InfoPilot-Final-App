@@ -94,8 +94,8 @@ const AppContent = () => {
           <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
           <Route path="/revenue" element={<ProtectedRoute><RevenuePage /></ProtectedRoute>} />
           <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
-          <Route path="/marketplace/success" element={<MarketplaceResultPages.MarketplaceSuccess />} />
-          <Route path="/marketplace/cancel" element={<MarketplaceResultPages.MarketplaceCancel />} />
+          <Route path="/marketplace/success" element={<MarketplaceSuccess />} />
+          <Route path="/marketplace/cancel" element={<MarketplaceCancel />} />
           <Route path="/themes" element={<ProtectedRoute><ThemesPage /></ProtectedRoute>} />
           <Route path="/templates" element={<ProtectedRoute><TemplatesPage /></ProtectedRoute>} />
           <Route path="/stats" element={<ProtectedRoute><StatsPage /></ProtectedRoute>} />
