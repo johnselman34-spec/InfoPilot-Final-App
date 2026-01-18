@@ -47,9 +47,10 @@ async def buy_protocol(protocol_id: str, user: Dict = Depends(require_user)):
     if category["user_id"] == user["id"]:
         raise HTTPException(status_code=400, detail="Cannot buy your own protocol")
     
-    # Create PayPal payment URL
+    # Create PayPal payment URL using environment variable for frontend URL
     price = category["price"]
-    paypal_url = f"https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business={PAYPAL_BUSINESS_EMAIL}&item_name=InfoPilot Protocol: {category['name']}&amount={price}&currency_code=USD&return=https://infopilot.com/purchase/success&cancel_return=https://infopilot.com/purchase/cancel"
+    frontend_url = os.environ.get("FRONTEND_URL", "https://infopilot.com")
+    paypal_url = f"https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business={PAYPAL_BUSINESS_EMAIL}&item_name=InfoPilot Protocol: {category['name']}&amount={price}&currency_code=USD&return={frontend_url}/purchase/success&cancel_return={frontend_url}/purchase/cancel"
     
     # Record purchase attempt
     purchase = {
