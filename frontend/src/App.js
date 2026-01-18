@@ -2148,6 +2148,365 @@ const PrivacyPage = () => {
   );
 };
 
+// ============ GROUPS PAGE ============
+const GroupsPage = () => {
+  const { user } = useAuth();
+  const showToast = useToast();
+  const queryClient = useQueryClient();
+  const [showCreate, setShowCreate] = useState(false);
+  const [newGroup, setNewGroup] = useState({ name: "", description: "", is_public: true });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["groups"],
+    queryFn: () => axios.get(`${API}/groups`).then(r => r.data),
+    enabled: !!user
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (group) => axios.post(`${API}/groups`, group),
+    onSuccess: () => {
+      showToast("Group created! 🎉", "success");
+      queryClient.invalidateQueries(["groups"]);
+      setShowCreate(false);
+      setNewGroup({ name: "", description: "", is_public: true });
+    },
+    onError: (err) => showToast(err.response?.data?.detail || "Failed to create group", "error")
+  });
+
+  const joinMutation = useMutation({
+    mutationFn: (id) => axios.post(`${API}/groups/${id}/join`),
+    onSuccess: () => {
+      showToast("Joined group! 🎉", "success");
+      queryClient.invalidateQueries(["groups"]);
+    }
+  });
+
+  const leaveMutation = useMutation({
+    mutationFn: (id) => axios.post(`${API}/groups/${id}/leave`),
+    onSuccess: () => {
+      showToast("Left group", "success");
+      queryClient.invalidateQueries(["groups"]);
+    }
+  });
+
+  if (!user) return <Navigate to="/login" />;
+
+  const groups = data?.groups || [];
+  const myGroups = groups.filter(g => g.members?.includes(user.id));
+  const otherGroups = groups.filter(g => !g.members?.includes(user.id));
+
+  return (
+    <div className="min-h-screen pt-20 px-4">
+      <StarsBackground />
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gradient-gold">Groups</h1>
+            <p className="text-white/60">Join communities and share protocols</p>
+          </div>
+          <Button onClick={() => setShowCreate(true)} className="btn-gold" data-testid="create-group-btn">
+            <Plus className="mr-2" /> Create Group
+          </Button>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center py-12"><RefreshCw className="animate-spin mx-auto text-yellow-400" size={48} /></div>
+        ) : (
+          <>
+            {/* My Groups */}
+            <div className="mb-8">
+              <h3 className="text-xl font-bold text-white mb-4">My Groups ({myGroups.length})</h3>
+              {myGroups.length === 0 ? (
+                <Card className="card-glass p-6 text-center">
+                  <Users className="mx-auto text-white/30 mb-2" size={40} />
+                  <p className="text-white/60">You haven&apos;t joined any groups yet</p>
+                </Card>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {myGroups.map(group => (
+                    <Card key={group.id} className="card-glass p-4" data-testid={`group-${group.id}`}>
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
+                          {group.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-white font-semibold">{group.name}</h4>
+                          <p className="text-white/50 text-sm line-clamp-2">{group.description}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge className="bg-white/10 text-white/70 text-xs">{group.members?.length || 0} members</Badge>
+                            {group.is_public ? <Badge className="bg-green-500/20 text-green-400 text-xs">Public</Badge> : <Badge className="bg-yellow-500/20 text-yellow-400 text-xs">Private</Badge>}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 mt-4">
+                        <Button size="sm" className="flex-1 bg-purple-600 hover:bg-purple-500">View</Button>
+                        <Button size="sm" variant="outline" onClick={() => leaveMutation.mutate(group.id)} className="text-red-400 border-red-400/30 hover:bg-red-400/10">Leave</Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Discover Groups */}
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4">Discover Groups ({otherGroups.length})</h3>
+              {otherGroups.length === 0 ? (
+                <Card className="card-glass p-6 text-center">
+                  <Search className="mx-auto text-white/30 mb-2" size={40} />
+                  <p className="text-white/60">No other groups available. Create one!</p>
+                </Card>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {otherGroups.map(group => (
+                    <Card key={group.id} className="card-glass p-4 hover:border-purple-400/50 transition">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-green-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg">
+                          {group.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-white font-semibold">{group.name}</h4>
+                          <p className="text-white/50 text-sm line-clamp-2">{group.description}</p>
+                          <Badge className="bg-white/10 text-white/70 text-xs mt-2">{group.members?.length || 0} members</Badge>
+                        </div>
+                      </div>
+                      <Button onClick={() => joinMutation.mutate(group.id)} className="w-full mt-4 btn-gold" disabled={joinMutation.isPending} data-testid={`join-group-${group.id}`}>
+                        <UserPlus className="mr-2" size={16} /> Join Group
+                      </Button>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Create Group Dialog */}
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent className="bg-slate-900 border-yellow-400/30">
+            <DialogHeader>
+              <DialogTitle className="text-yellow-400">Create New Group</DialogTitle>
+              <DialogDescription className="text-white/70">Start a community around your interests</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="text-white">Group Name *</Label>
+                <Input className="form-input mt-1" placeholder="My Awesome Group" value={newGroup.name} onChange={e => setNewGroup({...newGroup, name: e.target.value})} data-testid="group-name-input" />
+              </div>
+              <div>
+                <Label className="text-white">Description *</Label>
+                <Textarea className="form-input mt-1" rows={3} placeholder="What is this group about?" value={newGroup.description} onChange={e => setNewGroup({...newGroup, description: e.target.value})} data-testid="group-description-input" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox checked={newGroup.is_public} onCheckedChange={checked => setNewGroup({...newGroup, is_public: checked})} />
+                <Label className="text-white/80">Public Group (anyone can join)</Label>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button className="btn-gold" onClick={() => createMutation.mutate(newGroup)} disabled={!newGroup.name || !newGroup.description || createMutation.isPending} data-testid="create-group-submit">
+                {createMutation.isPending ? "Creating..." : "Create Group"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+};
+
+// ============ PAGES PAGE ============
+const PagesPage = () => {
+  const { user } = useAuth();
+  const showToast = useToast();
+  const queryClient = useQueryClient();
+  const [showCreate, setShowCreate] = useState(false);
+  const [newPage, setNewPage] = useState({ name: "", description: "", category: "general" });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["pages"],
+    queryFn: () => axios.get(`${API}/pages`).then(r => r.data),
+    enabled: !!user
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (page) => axios.post(`${API}/pages`, page),
+    onSuccess: () => {
+      showToast("Page created! 🎉", "success");
+      queryClient.invalidateQueries(["pages"]);
+      setShowCreate(false);
+      setNewPage({ name: "", description: "", category: "general" });
+    },
+    onError: (err) => showToast(err.response?.data?.detail || "Failed to create page", "error")
+  });
+
+  const followMutation = useMutation({
+    mutationFn: (id) => axios.post(`${API}/pages/${id}/follow`),
+    onSuccess: () => {
+      showToast("Now following page! 🎉", "success");
+      queryClient.invalidateQueries(["pages"]);
+    }
+  });
+
+  if (!user) return <Navigate to="/login" />;
+
+  const pages = data?.pages || [];
+  const myPages = pages.filter(p => p.owner_id === user.id);
+  const followingPages = pages.filter(p => p.followers?.includes(user.id) && p.owner_id !== user.id);
+  const discoverPages = pages.filter(p => p.owner_id !== user.id && !p.followers?.includes(user.id));
+
+  const categoryColors = {
+    general: "bg-gray-500", tech: "bg-blue-500", news: "bg-red-500", entertainment: "bg-purple-500",
+    education: "bg-green-500", business: "bg-yellow-500", science: "bg-cyan-500"
+  };
+
+  return (
+    <div className="min-h-screen pt-20 px-4">
+      <StarsBackground />
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gradient-gold">Pages</h1>
+            <p className="text-white/60">Follow pages to get curated content</p>
+          </div>
+          <Button onClick={() => setShowCreate(true)} className="btn-gold" data-testid="create-page-btn">
+            <Plus className="mr-2" /> Create Page
+          </Button>
+        </div>
+
+        {isLoading ? (
+          <div className="text-center py-12"><RefreshCw className="animate-spin mx-auto text-yellow-400" size={48} /></div>
+        ) : (
+          <>
+            {/* My Pages */}
+            {myPages.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-white mb-4">My Pages ({myPages.length})</h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {myPages.map(page => (
+                    <Card key={page.id} className="card-glass p-4" data-testid={`page-${page.id}`}>
+                      <div className="flex items-start gap-3">
+                        <div className={`w-12 h-12 rounded-lg ${categoryColors[page.category] || categoryColors.general} flex items-center justify-center text-white font-bold text-lg`}>
+                          {page.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-white font-semibold">{page.name}</h4>
+                          <p className="text-white/50 text-sm line-clamp-2">{page.description}</p>
+                          <Badge className="bg-white/10 text-white/70 text-xs mt-2">{page.followers?.length || 0} followers</Badge>
+                        </div>
+                      </div>
+                      <Button className="w-full mt-4 bg-purple-600 hover:bg-purple-500">Manage Page</Button>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Following */}
+            {followingPages.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-xl font-bold text-white mb-4">Following ({followingPages.length})</h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {followingPages.map(page => (
+                    <Card key={page.id} className="card-glass p-4">
+                      <div className="flex items-start gap-3">
+                        <div className={`w-12 h-12 rounded-lg ${categoryColors[page.category] || categoryColors.general} flex items-center justify-center text-white font-bold text-lg`}>
+                          {page.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-white font-semibold">{page.name}</h4>
+                          <p className="text-white/50 text-sm line-clamp-2">{page.description}</p>
+                          <Badge className="bg-white/10 text-white/70 text-xs mt-2">{page.followers?.length || 0} followers</Badge>
+                        </div>
+                      </div>
+                      <Badge className="mt-3 bg-green-500/20 text-green-400">Following</Badge>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Discover Pages */}
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4">Discover Pages ({discoverPages.length})</h3>
+              {discoverPages.length === 0 ? (
+                <Card className="card-glass p-6 text-center">
+                  <Layers className="mx-auto text-white/30 mb-2" size={40} />
+                  <p className="text-white/60">No pages to discover. Create one!</p>
+                </Card>
+              ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {discoverPages.map(page => (
+                    <Card key={page.id} className="card-glass p-4 hover:border-yellow-400/50 transition">
+                      <div className="flex items-start gap-3">
+                        <div className={`w-12 h-12 rounded-lg ${categoryColors[page.category] || categoryColors.general} flex items-center justify-center text-white font-bold text-lg`}>
+                          {page.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-white font-semibold">{page.name}</h4>
+                          <p className="text-white/50 text-sm line-clamp-2">{page.description}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Badge className="bg-white/10 text-white/70 text-xs">{page.followers?.length || 0} followers</Badge>
+                            <Badge className="bg-white/10 text-white/50 text-xs capitalize">{page.category}</Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <Button onClick={() => followMutation.mutate(page.id)} className="w-full mt-4 btn-gold" disabled={followMutation.isPending} data-testid={`follow-page-${page.id}`}>
+                        <Heart className="mr-2" size={16} /> Follow Page
+                      </Button>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Create Page Dialog */}
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent className="bg-slate-900 border-yellow-400/30">
+            <DialogHeader>
+              <DialogTitle className="text-yellow-400">Create New Page</DialogTitle>
+              <DialogDescription className="text-white/70">Build an audience around your content</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label className="text-white">Page Name *</Label>
+                <Input className="form-input mt-1" placeholder="My Amazing Page" value={newPage.name} onChange={e => setNewPage({...newPage, name: e.target.value})} data-testid="page-name-input" />
+              </div>
+              <div>
+                <Label className="text-white">Description *</Label>
+                <Textarea className="form-input mt-1" rows={3} placeholder="What will you share?" value={newPage.description} onChange={e => setNewPage({...newPage, description: e.target.value})} data-testid="page-description-input" />
+              </div>
+              <div>
+                <Label className="text-white">Category</Label>
+                <Select value={newPage.category} onValueChange={v => setNewPage({...newPage, category: v})}>
+                  <SelectTrigger className="form-input mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-slate-800">
+                    <SelectItem value="general">General</SelectItem>
+                    <SelectItem value="tech">Technology</SelectItem>
+                    <SelectItem value="news">News</SelectItem>
+                    <SelectItem value="entertainment">Entertainment</SelectItem>
+                    <SelectItem value="education">Education</SelectItem>
+                    <SelectItem value="business">Business</SelectItem>
+                    <SelectItem value="science">Science</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+              <Button className="btn-gold" onClick={() => createMutation.mutate(newPage)} disabled={!newPage.name || !newPage.description || createMutation.isPending} data-testid="create-page-submit">
+                {createMutation.isPending ? "Creating..." : "Create Page"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+};
+
 // ============ MAIN APP ============
 function App() {
   return (
