@@ -20,6 +20,9 @@ from utils.db import db
 # Import route modules
 from routes import auth, categories, search, groups, pages, chat, reports, marketplace, revenue, templates, users, misc, email, paypal, stripe
 
+# Import WebSocket manager
+from utils.websocket import socket_app, sio
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
