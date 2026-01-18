@@ -352,3 +352,74 @@ body {
   background: linear-gradient(180deg, transparent, rgba(26, 26, 46, 0.95));
   border-top: 1px solid rgba(255, 215, 0, 0.3);
 }
+
+/* Map Styles - Improved Popups */
+.leaflet-popup-content-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  min-width: 280px;
+}
+
+.leaflet-popup-tip {
+  background: #0f172a !important;
+}
+
+.leaflet-popup-close-button {
+  color: white !important;
+  font-size: 24px !important;
+  padding: 8px !important;
+  top: 5px !important;
+  right: 5px !important;
+  z-index: 100;
+}
+
+.leaflet-popup-close-button:hover {
+  color: #fbbf24 !important;
+}
+
+.custom-popup .leaflet-popup-content-wrapper {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Map CircleMarker Hover */
+.leaflet-interactive {
+  transition: all 0.2s ease;
+}
+
+.leaflet-interactive:hover {
+  stroke-width: 4px !important;
+  filter: brightness(1.2);
+}
+
+/* Light Mode */
+.light-mode {
+  background: #f8fafc !important;
+}
+
+.light-mode .card-glass {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.light-mode .text-white {
+  color: #1e293b !important;
+}
+
+.light-mode .text-white\/60,
+.light-mode .text-white\/70,
+.light-mode .text-white\/80,
+.light-mode .text-white\/90 {
+  color: #475569 !important;
+}
+
