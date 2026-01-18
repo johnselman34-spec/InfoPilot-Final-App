@@ -1220,7 +1220,7 @@ const ReportsPage = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [newReport, setNewReport] = useState({ title: "", content: "", images: [], location: null, category_ids: [] });
   const [uploadingImage, setUploadingImage] = useState(false);
-  const fileInputRef = React.useRef(null);
+  const fileInputRef = useRef(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["reports"],
