@@ -190,8 +190,8 @@ Stripe Test Card: 4242 4242 4242 4242 (any future date, any CVC)
 ---
 
 *Last Updated: January 18, 2026*  
-*Version: 4.2 - Forgot Password Feature*  
-*Test Status: 100% Pass Rate (iteration_21.json - 16/16 backend, 21/21 frontend)*
+*Version: 4.3 - Easter Eggs Toggle & Comprehensive Bug Fixes*  
+*Test Status: 100% Pass Rate (iteration_22.json - 11/11 backend, all frontend)*
 
 ---
 
@@ -201,6 +201,24 @@ Stripe Test Card: 4242 4242 4242 4242 (any future date, any CVC)
 - Fixed hardcoded API URL construction in 3 frontend files
 - **Removed unused dependencies**: `python-socketio` (backend), `socket.io-client` (frontend)
 - **Added database query limits**: `.limit(1000)` to search.py and categories.py
+
+### ✅ Easter Eggs Toggle (January 18, 2026)
+**Two ways to disable Easter Eggs:**
+1. Click the eye-off icon on any Easter Egg popup (`data-testid='disable-easter-eggs-btn'`)
+2. Toggle switch in Settings/Themes page (`data-testid='easter-eggs-toggle'`)
+
+**Technical implementation:**
+- localStorage key: `easter-eggs-disabled`
+- FloatingEasterEgg respects disabled state
+- ThemesPage syncs toggle with localStorage
+- Toast notification on toggle change
+
+### ✅ Comprehensive Lint Fixes (January 18, 2026)
+- **ChatPage.js**: Reordered WebSocket hooks to avoid circular dependencies
+- **StarsBackground.js**: Uses pre-generated stars with deterministic pseudo-random (render pure)
+- **PaymentPages.js**: Uses initial state function instead of setState in useEffect
+- **search.py**: Removed unused `full_text` and `title_lower` variables
+- **All pages**: Fixed unescaped entities (quotes, apostrophes)
 
 ### ✅ Forgot Password Feature (January 18, 2026)
 **Backend Endpoints:**
