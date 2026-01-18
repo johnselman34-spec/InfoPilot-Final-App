@@ -73,12 +73,12 @@ const StarsBackground = () => {
 // Toast Component
 const Toast = ({ message, type, onClose }) => {
   useEffect(() => {
-    const timer = setTimeout(onClose, 4000);
+    const timer = setTimeout(onClose, 5000);
     return () => clearTimeout(timer);
   }, [onClose]);
 
   return (
-    <div className={`toast ${type === 'success' ? 'toast-success' : 'toast-error'} flex items-center gap-2`}>
+    <div className={`toast ${type === 'success' ? 'toast-success' : 'toast-error'} flex items-center gap-2`} data-testid="toast-notification">
       {type === 'success' ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
       <span>{message}</span>
       <button onClick={onClose} className="ml-2 hover:opacity-70">
