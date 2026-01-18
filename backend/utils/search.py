@@ -108,12 +108,24 @@ async def search_brave(query: str, max_results: int = 20) -> List[Dict]:
 
 
 async def search_all_engines(query: str, max_results: int = 40, engine: str = "all") -> List[Dict]:
-    """Search across all available search engines."""
+    """Search across all available search engines.
+    
+    Args:
+        query: Search query string
+        max_results: Maximum number of results to return
+        engine: Which engine to use - "all", "duckduckgo", "brave"
+    """
     all_results = []
     
-    # DuckDuckGo (free, no API key needed)
-    ddg_results = await search_duckduckgo(query, max_results)
-    all_results.extend(ddg_results)
+    if engine in ["all", "duckduckgo"]:
+        # DuckDuckGo (free, no API key needed)
+        ddg_results = await search_duckduckgo(query, max_results // 2 if engine == "all" else max_results)
+        all_results.extend(ddg_results)
+    
+    if engine in ["all", "brave"]:
+        # Brave Search (free tier: 2000/month)
+        brave_results = await search_brave(query, max_results // 2 if engine == "all" else max_results)
+        all_results.extend(brave_results)
     
     # Deduplicate by URL
     seen_urls = set()
