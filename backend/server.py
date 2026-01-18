@@ -127,9 +127,23 @@ class Testimonial(BaseModel):
 
 # ============ BOOK PRICING ============
 BOOK_PRICES = {
-    "ebook": 9.99,
-    "paperback": 14.99,
+    "ebook": 4.99,
+    "paperback": 17.90,
     "hardcover": 24.99
+}
+
+# ============ INFOPILOT SUBSCRIPTION ============
+INFOPILOT_PLANS = {
+    "monthly": {
+        "price": 0.99,
+        "description": "InfoPilot Explorer Monthly - Boolean search and categorization for scholars and tradesmen",
+        "features": ["Unlimited searches", "Category organization", "Collaboration tools", "Priority support"]
+    },
+    "yearly": {
+        "price": 9.99,
+        "description": "InfoPilot Explorer Yearly - Save over 15%!",
+        "features": ["All monthly features", "Advanced analytics", "Custom categories", "API access"]
+    }
 }
 
 # ============ FOOD MENU ============
@@ -141,7 +155,7 @@ FOOD_MENU = [
         "price": 18.99,
         "category": "main",
         "image": "🥩",
-        "funny_tagline": "So good, even your taste buds will stand at attention and salute!"
+        "funny_tagline": "So luscious and tender, your grandmother in Germany will call to apologize!"
     },
     {
         "id": "veggie-rouladen",
@@ -155,11 +169,11 @@ FOOD_MENU = [
     {
         "id": "fish-chowder",
         "name": "Perfectly Spiced Fish Chowder",
-        "description": "Fresh Atlantic fish swimming in a creamy, perfectly spiced chowder that'll make you feel like you're on the Maine coast. Served with crusty bread. Warning: May cause spontaneous sea shanty singing!",
+        "description": "Fresh Atlantic fish swimming in a creamy, perfectly spiced chowder straight from the Maine coast. Served with crusty bread. Warning: May cause spontaneous sea shanty singing!",
         "price": 14.99,
         "category": "soup",
         "image": "🐟",
-        "funny_tagline": "The only fish story that's 100% true and delicious!"
+        "funny_tagline": "The only fish story that is 100% true and delicious!"
     },
     {
         "id": "pretzel",
@@ -181,22 +195,51 @@ FOOD_MENU = [
     }
 ]
 
+# ============ COMPANY INFO ============
+COMPANY_INFO = {
+    "corporation": "Top Pilot Enterprises, Inc.",
+    "founded": "2025",
+    "subsidiaries": [
+        {
+            "name": "InfoPilot Explorer, LLC",
+            "description": "Mobile and desktop application solution for information exchange between scholars and tradesmen using boolean search and categorization"
+        },
+        {
+            "name": "Maestro Bistro",
+            "description": "Food truck serving delectable German cuisine on the Mall in Brunswick, Maine"
+        },
+        {
+            "name": "John Selman Publications",
+            "description": "Publishing arm featuring Letters to Evelyn - a True Supernatural Thriller Comedy"
+        }
+    ],
+    "tagline": "Where Every Flight Leads to Flavor and Every Page Leads to Laughter!"
+}
+
 # ============ BOOK INFO ============
 BOOK_INFO = {
     "title": "Letters to Evelyn",
     "author": "John Selman",
-    "genre": "Supernatural Thriller Comedy",
-    "description": "A mind-bending memoir that combines Navy adventures, supernatural encounters, and enough humor to make your sides hurt! Part autobiography, part cosmic comedy, all unforgettable.",
-    "long_description": "Join John Selman on an extraordinary journey through U.S. Navy service, encounters with the unexplained, and a love story that spans galaxies. This book will make you laugh, think, and question everything you thought you knew about reality. Warning: Reading may cause uncontrollable hysterics and fits of laughter!",
+    "publisher": "John Selman Publications (A Top Pilot Enterprises, Inc. Company)",
+    "genre": "True Supernatural Thriller Comedy",
+    "description": "A True unbelievable Story! A True even more unforgettable Story! Man saves Universe with his Memoir!",
+    "long_description": "Letters to Evelyn is a hysterically heartwarming journey on a hilarious roller coaster ride to the unwitting heavens! This Naval Aviation autobiography is just the ticket to profusely jocose 'entertainment value' involved with a flight student's hysterical quest, averting jealous murder attempts from his stepmother, to find his one true soulmate. With 70 finely-crafted, deafening, zany, zesty zoo zingers causing hurricane-force winds of laughter from the most skeptical of minds!",
     "isbn_ebook": "979-8-9985974-4-2",
     "isbn_paperback": "979-8-9985974-8-0",
     "isbn_hardcover": "979-8-9985974-9-7",
     "copyright": "© 2014 John Selman",
+    "amazon_link": "https://www.amazon.com/dp/B0CTJM7HXG",
+    "google_play_link": "https://play.google.com/store/books",
+    "reedsy_link": "https://reedsy.com",
+    "review_count": 19,
+    "review_source": "Readers' Favorite - 5 Star Reviews",
+    "film_news": "Recently accepted by Voyage Media producer Ryan Heppe for production into a film. Heppe previously worked with Arnold Schwarzenegger and Bruce Willis!",
     "warnings": [
-        "Not intended for use while operating a vehicle or heavy equipment",
-        "Pregnant or breastfeeding individuals should use caution due to potential for 'uncontrollable hysterics'",
+        "Not intended for use while operating a vehicle or heavy equipment - may cause distraction!",
+        "Pregnant or breastfeeding individuals should avoid due to potential for 'uncontrollable hysterics and fits of laughter'",
         "Intended for adults only (26 years and older)",
-        "Author is not responsible for damages associated with humor or profound material"
+        "Author is not responsible for health problems or damages associated with humor or profound material",
+        "Contains 70+ jokes that may cause hurricane-force winds of laughter!"
     ],
     "chapters": [
         "Eve",
@@ -214,20 +257,46 @@ BOOK_INFO = {
         "Foraging for Air",
         "USS Nimitz and the Heavens Above",
         "The Horrors of War and the Buildup to the Prophesies",
-        "...and 10 more thrilling chapters!"
+        "...and 10 more thrilling chapters including Chapter 25: Caught in the Act of Elsewhere!"
     ],
-    "reviews": [
+    "author_bio": {
+        "name": "John Jackson Selman III",
+        "birthplace": "Albuquerque, New Mexico",
+        "hometown": "Brunswick, Maine",
+        "education": "Graduated first in NROTC at the University of Maine with a B.A. in German",
+        "service": "U.S. Navy Pilot and Division Officer",
+        "aircraft_flown": "10 different types of aircraft",
+        "world_records": [
+            "Longest time spent without sleep - more than 12 days",
+            "Steepest, highest Sarajevo Approach with lowest recovery in a T-34C"
+        ],
+        "family_legacy": "Grandfather was Deputy JAG of the U.S. Navy and an Admiral"
+    },
+    "professional_reviews": [
         {
-            "quote": "I laughed, I cried, I questioned the fabric of reality. 10/10 would question reality again!",
-            "author": "A very confused but entertained reader"
+            "quote": "Letters to Evelyn by John Selman is an extraordinary book with a unique plot that captivated me from the first chapter. The author takes quite horrific and disturbing events and turns them into great learning experiences. Each of the characters, even the minor ones, has been portrayed with care and consideration. Letters to Evelyn will never lose your interest and never fail to deliver on tension, excitement and even hints of comedy.",
+            "author": "L. Jones",
+            "source": "Readers' Favorite - 5 Stars"
         },
         {
-            "quote": "Finally, a book that combines Navy ships and alien ships in one hilarious package!",
-            "author": "Genre-bending enthusiast"
+            "quote": "The comical side of it is exceedingly brilliant, to the point that even when I wasn't busy reading, the story would creep into my mind, and I would start laughing abruptly. John's quirky style of writing, his truthfulness in his thoughts, and the unusual events in Letters to Evelyn make for an interesting and very unique book.",
+            "author": "Professional Reviewer",
+            "source": "Readers' Favorite - 5 Stars"
         },
         {
-            "quote": "Started reading at midnight. Forgot to sleep. Regrets? None!",
-            "author": "Sleep-deprived but happy reader"
+            "quote": "John Selman delivers one of the most remarkable works I have ever read... The visuals are beautiful, from the eye-catching cover to the elegant fonts and consistent format. I thoroughly enjoyed reading this book and highly recommend it to anyone seeking a truly delightful and lovable reading experience.",
+            "author": "Professional Reviewer",
+            "source": "Readers' Favorite - 5 Stars"
+        },
+        {
+            "quote": "The tour along the Intergalactic Superhighway to Neptune was one of the best stories I have recently read! I highly recommend this unique read to adult fans of memoirs, science fiction, and fantasy.",
+            "author": "Professional Reviewer",
+            "source": "Readers' Favorite - 5 Stars"
+        },
+        {
+            "quote": "This is a profound and unforgettable literary piece. Mind-bending. Exceedingly brilliant. The author's imagination is off the charts. Mind-blowing.",
+            "author": "Professional Reviewer",
+            "source": "Readers' Favorite - 5 Stars"
         }
     ]
 }
