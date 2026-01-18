@@ -10,14 +10,19 @@ import { API } from '../utils/api';
 export const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
-  const [status, setStatus] = useState('checking');
+  // Determine initial status based on sessionId
+  const getInitialStatus = () => {
+    if (!sessionId) return 'error';
+    return 'checking';
+  };
+  
+  const [status, setStatus] = useState(getInitialStatus);
   const [paymentData, setPaymentData] = useState(null);
   const [attempts, setAttempts] = useState(0);
   const maxAttempts = 5;
 
   useEffect(() => {
-    if (!sessionId) {
-      setStatus('error');
+    if (!sessionId || status === 'error') {
       return;
     }
 
