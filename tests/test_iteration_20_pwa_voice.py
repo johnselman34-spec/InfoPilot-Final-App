@@ -206,8 +206,9 @@ class TestAdminFeatures:
         response = self.session.get(f"{BASE_URL}/api/admin/system-status")
         assert response.status_code == 200, f"Admin system-status endpoint failed: {response.status_code}"
         data = response.json()
-        assert 'database' in data, "Missing database in response"
-        print(f"✓ Admin system-status endpoint working")
+        assert 'services' in data, "Missing services in response"
+        assert 'database' in data.get('services', {}), "Missing database in services"
+        print(f"✓ Admin system-status endpoint working - status: {data.get('overall_status')}")
     
     def test_admin_users_endpoint(self):
         """Test admin users endpoint works"""
