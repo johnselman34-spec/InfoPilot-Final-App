@@ -85,7 +85,7 @@ export const useAuth = () => useContext(AuthContext);
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token"));
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !!localStorage.getItem("token"));
 
   useEffect(() => {
     let isMounted = true;
@@ -95,8 +95,6 @@ const AuthProvider = ({ children }) => {
         .then(res => { if (isMounted) setUser(res.data); })
         .catch(() => { if (isMounted) { localStorage.removeItem("token"); setToken(null); } })
         .finally(() => { if (isMounted) setLoading(false); });
-    } else {
-      setLoading(false);
     }
     return () => { isMounted = false; };
   }, [token]);
