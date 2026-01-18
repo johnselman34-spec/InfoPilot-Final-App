@@ -5,8 +5,7 @@ import StarsBackground from '../components/StarsBackground';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { CheckCircle, XCircle, ArrowRight, RefreshCw, CreditCard } from 'lucide-react';
-
-const API = process.env.REACT_APP_BACKEND_URL + '/api';
+import { API } from '../utils/api';
 
 export const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();

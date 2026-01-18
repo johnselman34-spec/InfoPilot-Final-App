@@ -23,8 +23,7 @@ import {
   Wallet,
   Crown
 } from 'lucide-react';
-
-const API = process.env.REACT_APP_BACKEND_URL + '/api';
+import { API } from '../utils/api';
 
 const SubscriptionDashboard = () => {
   const { user } = useAuth();

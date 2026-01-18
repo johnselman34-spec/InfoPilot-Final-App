@@ -10,8 +10,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Store, CreditCard, Copy, CheckCircle } from 'lucide-react';
-
-const API = process.env.REACT_APP_BACKEND_URL + '/api';
+import { API } from '../utils/api';
 
 const MarketplacePage = () => {
   const { user } = useAuth();
