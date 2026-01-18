@@ -92,7 +92,7 @@ async def collate_search(
     admin_settings = await db.admin_settings.find_one({"id": "admin_settings"}) or {}
     collation_limit = admin_settings.get("collation_limit", 40)
     
-    categories = await db.categories.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
+    categories = await db.categories.find({"user_id": user["id"]}, {"_id": 0}).limit(1000).to_list(1000)
     
     # Validate engine parameter
     valid_engines = ["all", "duckduckgo", "brave"]

@@ -45,7 +45,7 @@ async def create_category(category_data: CategoryCreate, user: Dict = Depends(re
 @router.get("")
 async def get_categories(user: Dict = Depends(require_user)):
     """Get user's categories."""
-    categories = await db.categories.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
+    categories = await db.categories.find({"user_id": user["id"]}, {"_id": 0}).limit(1000).to_list(1000)
     return {"categories": categories}
 
 
