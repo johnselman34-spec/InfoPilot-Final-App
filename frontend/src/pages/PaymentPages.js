@@ -58,6 +58,7 @@ export const PaymentSuccess = () => {
     };
 
     pollPaymentStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, attempts]);
 
   return (
