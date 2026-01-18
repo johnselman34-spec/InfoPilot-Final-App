@@ -273,8 +273,10 @@ class TestExistingFeaturesNoRegression:
         )
         assert response.status_code == 200
         data = response.json()
-        assert "templates" in data
-        print(f"Templates: {len(data['templates'])} found")
+        # Templates endpoint returns official_templates and community_templates
+        assert "official_templates" in data or "templates" in data
+        template_count = len(data.get("official_templates", [])) + len(data.get("community_templates", []))
+        print(f"Templates: {template_count} found")
     
     def test_user_profile(self, auth_token):
         """Test user profile endpoint."""
