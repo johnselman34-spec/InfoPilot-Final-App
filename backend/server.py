@@ -1069,6 +1069,51 @@ async def comment_on_result(result_id: str, content: str = Body(..., embed=True)
 
 # ============ PERSONAL REPORTS ============
 
+# Image upload directory
+UPLOADS_DIR = ROOT_DIR / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
+
+@api_router.post("/upload/image")
+async def upload_image(file: UploadFile = File(...), user: Dict = Depends(require_user)):
+    """Upload an image and return its URL."""
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Allowed: JPEG, PNG, GIF, WebP")
+    
+    # Validate file size (max 5MB)
+    contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large. Maximum 5MB allowed")
+    
+    # Generate unique filename
+    ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = UPLOADS_DIR / filename
+    
+    # Save file
+    with open(filepath, "wb") as f:
+        f.write(contents)
+    
+    # Return URL (relative path)
+    image_url = f"/api/uploads/{filename}"
+    
+    return {"url": image_url, "filename": filename, "size": len(contents)}
+
+@api_router.get("/uploads/{filename}")
+async def get_uploaded_image(filename: str):
+    """Serve uploaded images."""
+    filepath = UPLOADS_DIR / filename
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    # Determine content type
+    ext = filename.split(".")[-1].lower()
+    content_types = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "gif": "image/gif", "webp": "image/webp"}
+    content_type = content_types.get(ext, "image/jpeg")
+    
+    return StreamingResponse(open(filepath, "rb"), media_type=content_type)
+
 @api_router.post("/reports")
 async def create_personal_report(
     title: str = Body(...),
