@@ -88,7 +88,10 @@ async def create_paypal_order(request: CreateOrderRequest, user: Dict = Depends(
     """Create a PayPal order for protocol purchase."""
     
     # Get the protocol being purchased
-    protocol = await db.categories.find_one({"id": request.protocol_id, "for_sale": True}, {"_id": 0})
+    protocol = await db.categories.find_one(
+        {"id": request.protocol_id, "is_public": True, "price": {"$gt": 0}}, 
+        {"_id": 0}
+    )
     if not protocol:
         raise HTTPException(status_code=404, detail="Protocol not found or not for sale")
     
