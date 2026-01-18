@@ -339,6 +339,16 @@ async def get_book_info():
 async def get_book_prices():
     return BOOK_PRICES
 
+# Company Info Routes
+@api_router.get("/company")
+async def get_company_info():
+    return COMPANY_INFO
+
+# InfoPilot Subscription Routes
+@api_router.get("/infopilot/plans")
+async def get_infopilot_plans():
+    return INFOPILOT_PLANS
+
 # Book Order Routes
 @api_router.post("/book/order", response_model=BookOrder)
 async def create_book_order(order: BookOrderCreate):
@@ -374,9 +384,10 @@ async def get_book_orders():
 async def get_food_menu():
     return {
         "restaurant_name": "Maestro Bistro",
+        "parent_company": "Top Pilot Enterprises, Inc.",
         "tagline": "Where Every Bite is a Symphony of Flavor!",
         "location": "The Mall, Brunswick, Maine",
-        "description": "Your friendly neighborhood food truck serving up German delicacies with a side of laughs!",
+        "description": "Your friendly neighborhood food truck serving up deLectaBLe German delicacies with a side of laughs! Part of Top Pilot Enterprises, Inc.",
         "menu": FOOD_MENU
     }
 
