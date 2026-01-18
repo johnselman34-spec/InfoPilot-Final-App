@@ -4,7 +4,7 @@ Protocol marketplace with PayPal integration
 Optimized with aggregation pipelines and caching
 """
 from fastapi import APIRouter, HTTPException, Body, Depends, Query
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from datetime import datetime, timezone
 import uuid
 import os
@@ -27,6 +27,91 @@ async def get_marketplace_protocols(category: Optional[str] = None):
     """
     protocols = await cached_marketplace(category)
     return {"protocols": protocols, "total": len(protocols)}
+
+
+@router.get("/check-purchase/{protocol_id}")
+async def check_protocol_purchase(protocol_id: str, user: Dict = Depends(require_user)):
+    """Check if user has purchased a specific protocol or owns it."""
+    # Check if user owns the protocol
+    owned = await db.categories.find_one(
+        {"id": protocol_id, "user_id": user["id"]},
+        {"_id": 0, "id": 1}
+    )
+    if owned:
+        return {"has_access": True, "reason": "owner"}
+    
+    # Check if user has completed a purchase for this protocol
+    purchase = await db.purchases.find_one(
+        {"buyer_id": user["id"], "protocol_id": protocol_id, "status": "completed"},
+        {"_id": 0, "id": 1}
+    )
+    if purchase:
+        return {"has_access": True, "reason": "purchased"}
+    
+    return {"has_access": False, "reason": "not_purchased"}
+
+
+@router.get("/my-purchases")
+async def get_my_purchased_protocols(user: Dict = Depends(require_user)):
+    """Get list of protocol IDs that the user has purchased."""
+    purchases = await db.purchases.find(
+        {"buyer_id": user["id"], "status": "completed"},
+        {"_id": 0, "protocol_id": 1}
+    ).to_list(1000)
+    
+    # Also get user's own protocols
+    owned = await db.categories.find(
+        {"user_id": user["id"]},
+        {"_id": 0, "id": 1}
+    ).to_list(1000)
+    
+    purchased_ids = [p["protocol_id"] for p in purchases]
+    owned_ids = [o["id"] for o in owned]
+    
+    return {
+        "purchased_protocol_ids": purchased_ids,
+        "owned_protocol_ids": owned_ids,
+        "all_accessible_ids": list(set(purchased_ids + owned_ids))
+    }
+
+
+@router.post("/copy-protocol/{protocol_id}")
+async def copy_protocol_content(protocol_id: str, user: Dict = Depends(require_user)):
+    """Get protocol content for copying - only if user has access."""
+    # Get the protocol
+    protocol = await db.categories.find_one(
+        {"id": protocol_id},
+        {"_id": 0, "id": 1, "user_id": 1, "protocol": 1, "is_public": 1, "price": 1, "name": 1}
+    )
+    
+    if not protocol:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    
+    # Check if protocol is for sale (has price > 0 and is public)
+    is_for_sale = protocol.get("is_public") and protocol.get("price", 0) > 0
+    
+    # Check if user owns the protocol
+    if protocol["user_id"] == user["id"]:
+        return {"protocol": protocol["protocol"], "access_type": "owner"}
+    
+    # If not for sale, allow copying (free templates)
+    if not is_for_sale:
+        return {"protocol": protocol["protocol"], "access_type": "free"}
+    
+    # Protocol is for sale - check if user purchased it
+    purchase = await db.purchases.find_one(
+        {"buyer_id": user["id"], "protocol_id": protocol_id, "status": "completed"},
+        {"_id": 0, "id": 1}
+    )
+    
+    if purchase:
+        return {"protocol": protocol["protocol"], "access_type": "purchased"}
+    
+    # User has not purchased - deny access
+    raise HTTPException(
+        status_code=403, 
+        detail=f"You must purchase this protocol (${protocol.get('price', 0):.2f}) to copy it"
+    )
 
 
 @router.post("/buy/{protocol_id}")
