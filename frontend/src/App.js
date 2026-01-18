@@ -148,55 +148,6 @@ const PayPalPaymentLink = ({ amount, description, onSuccess, productType }) => {
     </div>
   );
 };
-      </div>
-    );
-  }
-
-  return (
-    <div className="paypal-button-container">
-      <div ref={paypalRef} data-testid={`paypal-button-${buttonId}`}></div>
-      {!paypalReady && (
-        <div className="text-center text-white/60 py-4">
-          <CreditCard className="animate-pulse mx-auto mb-2" size={24} />
-          <p>Loading PayPal...</p>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// PayPal Hosted Button Component
-const PayPalHostedButton = ({ containerId }) => {
-  const containerRef = useRef(null);
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
-  
-  useEffect(() => {
-    let mounted = true;
-    
-    const initHostedButton = () => {
-      if (!window.paypal || !window.paypal.HostedButtons || !containerRef.current || !mounted) {
-        setTimeout(initHostedButton, 1000);
-        return;
-      }
-      
-      try {
-        containerRef.current.innerHTML = '';
-        window.paypal.HostedButtons({
-          hostedButtonId: PAYPAL_HOSTED_BUTTON_ID,
-        }).render(containerRef.current).then(() => {
-          if (mounted) setLoaded(true);
-        }).catch((err) => {
-          console.error('Hosted button error:', err);
-          if (mounted) setError(true);
-        });
-      } catch (err) {
-        console.error('Hosted button init error:', err);
-        if (mounted) setError(true);
-      }
-    };
-
-    setTimeout(initHostedButton, 500);
     
     return () => { mounted = false; };
   }, []);
