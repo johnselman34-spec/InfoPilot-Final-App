@@ -261,9 +261,11 @@ class TestExistingFeatures:
     
     def test_admin_setup_endpoint(self):
         """Test admin setup endpoint"""
-        response = self.session.post(f"{BASE_URL}/api/admin/setup")
-        # Should return 200 for setup or 400 if already setup
-        assert response.status_code in [200, 400]
+        response = self.session.post(f"{BASE_URL}/api/auth/setup-admin", json={
+            "secret_key": "infopilot_admin_setup_2024"
+        })
+        # Should return 200 (admin exists or created) or 403 (wrong key)
+        assert response.status_code in [200, 403]
         print(f"✓ Admin setup endpoint responding: {response.status_code}")
 
 
