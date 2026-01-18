@@ -38,6 +38,7 @@ const StatsPage = lazy(() => import('./pages/StatsPage'));
 const BookPage = lazy(() => import('./pages/BookPage'));
 const FoodPage = lazy(() => import('./pages/FoodPage'));
 const InfoPilotPage = lazy(() => import('./pages/InfoPilotPage'));
+const MarketplaceResultPages = lazy(() => import('./pages/MarketplaceResultPages'));
 
 // CSS
 import './App.css';
