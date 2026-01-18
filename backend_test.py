@@ -80,8 +80,8 @@ class InfoPilotAPITester:
         """Test book prices endpoint"""
         success, response = self.run_test("Book Prices", "GET", "book/prices", 200)
         if success:
-            # Verify expected prices
-            expected_prices = {"ebook": 9.99, "paperback": 14.99, "hardcover": 24.99}
+            # Verify expected prices (as per requirements)
+            expected_prices = {"ebook": 4.99, "paperback": 17.90, "hardcover": 24.99}
             for format_type, expected_price in expected_prices.items():
                 if format_type in response and response[format_type] == expected_price:
                     print(f"   ✅ {format_type}: ${response[format_type]} (correct)")
