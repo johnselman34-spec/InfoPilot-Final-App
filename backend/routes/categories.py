@@ -13,10 +13,20 @@ from utils.auth import require_user
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
 
+# Maximum price allowed in marketplace
+MAX_PROTOCOL_PRICE = 24.99
+
 
 @router.post("")
 async def create_category(category_data: CategoryCreate, user: Dict = Depends(require_user)):
     """Create a new category with InfoJet 2.0 protocol."""
+    # Validate price doesn't exceed maximum
+    if category_data.price is not None and category_data.price > MAX_PROTOCOL_PRICE:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Price cannot exceed ${MAX_PROTOCOL_PRICE}. Maximum allowed price is $24.99"
+        )
+    
     category = Category(
         user_id=user["id"],
         name=category_data.name,
