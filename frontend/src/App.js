@@ -1674,7 +1674,7 @@ const UltimateSearchPage = () => {
           <DialogContent className="bg-slate-900 border-yellow-400/30">
             <DialogHeader>
               <DialogTitle className="text-yellow-400">Create Category</DialogTitle>
-              <DialogDescription className="text-white/70">Write an InfoJet 2.0 protocol. Use "and" or "&amp;", "or" within groups, + for include all, ^ for exclude.</DialogDescription>
+              <DialogDescription className="text-white/70">Write an InfoJet 2.0 protocol. Use &quot;and&quot; or &quot;&amp;&quot;, &quot;or&quot; within groups, + for include all, ^ for exclude.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div>
