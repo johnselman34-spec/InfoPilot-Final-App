@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 from utils.db import db
 
 # Import route modules
-from routes import auth, categories, search, groups, pages, chat, reports, marketplace, revenue, templates, users, misc, email, paypal, stripe
+from routes import auth, categories, search, groups, pages, chat, reports, marketplace, revenue, templates, users, misc, email, paypal, stripe, admin
 
 # Import WebSocket handler
 from utils.websocket import websocket_handler
