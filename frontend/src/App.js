@@ -83,6 +83,7 @@ const AppContent = () => {
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
       <Navbar />
       <FloatingEasterEgg />
+      <PWAInstallPrompt />
       
       <Suspense fallback={<PageLoader />}>
         <Routes>
