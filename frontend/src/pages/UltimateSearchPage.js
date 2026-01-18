@@ -289,7 +289,28 @@ const UltimateSearchPage = () => {
           <div className="lg:col-span-3">
             <Card className="card-glass p-4 mb-6">
               <div className="flex flex-wrap gap-4 mb-4">
-                <Input className="form-input flex-1 min-w-[200px]" placeholder="Enter search query..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} data-testid="search-query-input" />
+                <div className="relative flex-1 min-w-[200px]">
+                  <Input 
+                    className="form-input pr-12" 
+                    placeholder={isListening ? "Listening..." : "Enter search query or use voice..."} 
+                    value={searchQuery} 
+                    onChange={e => setSearchQuery(e.target.value)} 
+                    data-testid="search-query-input" 
+                  />
+                  {voiceSupported && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={isListening ? stopListening : startListening}
+                      className={`absolute right-1 top-1/2 -translate-y-1/2 p-2 ${isListening ? 'text-red-400 animate-pulse' : 'text-white/50 hover:text-white'}`}
+                      title={isListening ? "Stop listening" : "Voice search"}
+                      data-testid="voice-search-btn"
+                    >
+                      {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                    </Button>
+                  )}
+                </div>
                 <Select value={searchEngine} onValueChange={setSearchEngine}>
                   <SelectTrigger className="form-input w-[180px]" data-testid="search-engine-select">
                     <SelectValue placeholder="Search Engine" />
@@ -306,6 +327,11 @@ const UltimateSearchPage = () => {
                   {collateMutation.isPending ? <RefreshCw className="animate-spin" /> : <Search className="mr-2" />} Search & Collate
                 </Button>
               </div>
+              {voiceSupported && (
+                <p className="text-xs text-white/40 mb-3 flex items-center gap-1">
+                  <Mic size={12} /> Voice search available - click the microphone to speak your query
+                </p>
+              )}
               {enginesData?.engines && (
                 <div className="flex gap-2 mb-3 text-xs text-white/50">
                   <span>Available engines:</span>
