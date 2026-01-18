@@ -231,7 +231,7 @@ const HeroSection = ({ setActiveSection }) => {
             className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold px-8 py-6 rounded-full hover:scale-105 transition-all"
             data-testid="cta-infopilot"
           >
-            <Globe className="mr-2" /> InfoPilot $0.99/mo
+            <Globe className="mr-2" /> InfoPilot $1/mo
           </Button>
         </div>
 
