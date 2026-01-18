@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { io } from 'socket.io-client';
 import { MessageCircle, Plus, Send, Users, Wifi, WifiOff, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -14,8 +13,6 @@ import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
 import { Label } from '../components/ui/label';
-
-const SOCKET_URL = process.env.REACT_APP_BACKEND_URL?.replace('/api', '').replace('https://', 'wss://').replace('http://', 'ws://') || '';
 
 const ChatPage = () => {
   const { user, token } = useAuth();
@@ -30,8 +27,9 @@ const ChatPage = () => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
   const messagesEndRef = useRef(null);
-  const socketRef = useRef(null);
+  const wsRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
 
   // Fetch rooms
   const { data: roomsData } = useQuery({
@@ -51,79 +49,142 @@ const ChatPage = () => {
     }
   });
 
-  // Initialize Socket.IO connection
-  useEffect(() => {
-    if (!user || !token) return;
+  // Build WebSocket URL
+  const getWebSocketUrl = useCallback(() => {
+    const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+    // Convert http/https to ws/wss
+    const wsUrl = backendUrl
+      .replace('https://', 'wss://')
+      .replace('http://', 'ws://')
+      .replace('/api', '');
+    return `${wsUrl}/api/chat/ws?token=${encodeURIComponent(token || '')}`;
+  }, [token]);
 
-    // Use the same base URL as API but with /api/ws path for WebSocket
-    const wsUrl = process.env.REACT_APP_BACKEND_URL?.replace('/api', '') || '';
+  // Initialize WebSocket connection
+  const connectWebSocket = useCallback(() => {
+    if (!user || !token || wsRef.current?.readyState === WebSocket.OPEN) return;
+
+    const wsUrl = getWebSocketUrl();
+    console.log('Connecting to WebSocket:', wsUrl);
     
-    socketRef.current = io(wsUrl, {
-      path: '/api/ws/socket.io',
-      auth: { token },
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
-    });
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
 
-    const socket = socketRef.current;
-
-    socket.on('connect', () => {
-      console.log('Socket connected');
+    ws.onopen = () => {
+      console.log('WebSocket connected');
       setIsConnected(true);
       showToast("Connected to chat", "success");
-    });
+    };
 
-    socket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    ws.onclose = (event) => {
+      console.log('WebSocket closed:', event.code, event.reason);
       setIsConnected(false);
-    });
+      
+      // Attempt reconnect after 3 seconds
+      if (event.code !== 4001) { // Don't reconnect if auth failed
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectWebSocket();
+        }, 3000);
+      }
+    };
 
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
       setIsConnected(false);
-    });
+    };
 
-    socket.on('new_message', (msg) => {
-      setMessages(prev => [...prev, msg]);
-    });
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        handleMessage(data);
+      } catch (e) {
+        console.error('Failed to parse message:', e);
+      }
+    };
+  }, [user, token, getWebSocketUrl, showToast]);
 
-    socket.on('user_joined', (data) => {
-      showToast(`${data.username} joined the room`, "info");
-      setOnlineUsers(prev => {
-        if (!prev.find(u => u.user_id === data.user_id)) {
-          return [...prev, { user_id: data.user_id, username: data.username }];
-        }
-        return prev;
-      });
-    });
-
-    socket.on('user_left', (data) => {
-      setOnlineUsers(prev => prev.filter(u => u.user_id !== data.user_id));
-    });
-
-    socket.on('user_typing', (data) => {
-      if (data.is_typing) {
-        setTypingUsers(prev => {
-          if (!prev.includes(data.username)) {
-            return [...prev, data.username];
+  // Handle incoming messages
+  const handleMessage = useCallback((data) => {
+    switch (data.type) {
+      case 'connected':
+        console.log('Authenticated as:', data.username);
+        break;
+      
+      case 'room_joined':
+        setMessages(data.messages || []);
+        setOnlineUsers([]);
+        // Request online users
+        sendWsMessage({ type: 'get_online_users', room_id: data.room_id });
+        break;
+      
+      case 'new_message':
+        setMessages(prev => [...prev, data]);
+        break;
+      
+      case 'user_joined':
+        showToast(`${data.username} joined the room`, "info");
+        setOnlineUsers(prev => {
+          if (!prev.find(u => u.user_id === data.user_id)) {
+            return [...prev, { user_id: data.user_id, username: data.username }];
           }
           return prev;
         });
-        // Auto-remove after 3 seconds
-        setTimeout(() => {
+        break;
+      
+      case 'user_left':
+        setOnlineUsers(prev => prev.filter(u => u.user_id !== data.user_id));
+        break;
+      
+      case 'online_users':
+        setOnlineUsers(data.users || []);
+        break;
+      
+      case 'user_typing':
+        if (data.is_typing) {
+          setTypingUsers(prev => {
+            if (!prev.includes(data.username)) {
+              return [...prev, data.username];
+            }
+            return prev;
+          });
+          // Auto-remove after 3 seconds
+          setTimeout(() => {
+            setTypingUsers(prev => prev.filter(u => u !== data.username));
+          }, 3000);
+        } else {
           setTypingUsers(prev => prev.filter(u => u !== data.username));
-        }, 3000);
-      } else {
-        setTypingUsers(prev => prev.filter(u => u !== data.username));
-      }
-    });
+        }
+        break;
+      
+      case 'error':
+        showToast(data.message || "An error occurred", "error");
+        break;
+      
+      default:
+        console.log('Unknown message type:', data.type);
+    }
+  }, [showToast]);
 
+  // Send WebSocket message
+  const sendWsMessage = useCallback((message) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(message));
+    }
+  }, []);
+
+  // Connect on mount
+  useEffect(() => {
+    connectWebSocket();
+    
     return () => {
-      socket.disconnect();
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
     };
-  }, [user, token, showToast]);
+  }, [connectWebSocket]);
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -131,8 +192,8 @@ const ChatPage = () => {
   }, [messages]);
 
   // Join room handler
-  const handleJoinRoom = useCallback(async (roomId) => {
-    if (!socketRef.current?.connected) {
+  const handleJoinRoom = useCallback((roomId) => {
+    if (!isConnected) {
       showToast("Not connected to chat server", "error");
       return;
     }
@@ -140,43 +201,29 @@ const ChatPage = () => {
     setSelectedRoom(roomId);
     setMessages([]);
     setOnlineUsers([]);
+    setTypingUsers([]);
 
-    socketRef.current.emit('join_room', { room_id: roomId }, (response) => {
-      if (response?.success) {
-        setMessages(response.messages || []);
-        showToast("Joined room", "success");
-        
-        // Get online users
-        socketRef.current.emit('get_online_users', { room_id: roomId }, (usersResponse) => {
-          setOnlineUsers(usersResponse?.users || []);
-        });
-      } else {
-        showToast(response?.error || "Failed to join room", "error");
-      }
-    });
-  }, [showToast]);
+    sendWsMessage({ type: 'join_room', room_id: roomId });
+  }, [isConnected, sendWsMessage, showToast]);
 
   // Send message handler
   const handleSendMessage = useCallback(() => {
-    if (!message.trim() || !selectedRoom || !socketRef.current?.connected) return;
+    if (!message.trim() || !selectedRoom || !isConnected) return;
 
-    socketRef.current.emit('send_message', {
+    sendWsMessage({
+      type: 'send_message',
       room_id: selectedRoom,
       content: message.trim()
-    }, (response) => {
-      if (!response?.success) {
-        showToast(response?.error || "Failed to send message", "error");
-      }
     });
 
     setMessage("");
-  }, [message, selectedRoom, showToast]);
+  }, [message, selectedRoom, isConnected, sendWsMessage]);
 
   // Typing indicator
   const handleTyping = useCallback(() => {
-    if (!selectedRoom || !socketRef.current?.connected) return;
+    if (!selectedRoom || !isConnected) return;
 
-    socketRef.current.emit('typing', { room_id: selectedRoom, is_typing: true });
+    sendWsMessage({ type: 'typing', room_id: selectedRoom, is_typing: true });
 
     // Clear previous timeout
     if (typingTimeoutRef.current) {
@@ -185,9 +232,9 @@ const ChatPage = () => {
 
     // Stop typing indicator after 2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
-      socketRef.current?.emit('typing', { room_id: selectedRoom, is_typing: false });
+      sendWsMessage({ type: 'typing', room_id: selectedRoom, is_typing: false });
     }, 2000);
-  }, [selectedRoom]);
+  }, [selectedRoom, isConnected, sendWsMessage]);
 
   if (!user) return <Navigate to="/login" />;
 
