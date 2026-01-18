@@ -1158,7 +1158,7 @@ const Footer = () => (
           <ul className="space-y-2 text-white/60">
             <li className="hover:text-yellow-400 cursor-pointer">📚 Letters to Evelyn by John Selman</li>
             <li className="hover:text-yellow-400 cursor-pointer">🚚 Maestro Bistro - Brunswick, Maine</li>
-            <li className="hover:text-yellow-400 cursor-pointer">🌐 InfoPilot Subscription - $0.99/mo</li>
+            <li className="hover:text-yellow-400 cursor-pointer">🌐 InfoPilot Subscription - $1/mo</li>
             <li className="hover:text-yellow-400 cursor-pointer">⭐ 19 Five-Star Reviews</li>
             <li className="hover:text-yellow-400 cursor-pointer">📬 Contact Us</li>
           </ul>
