@@ -180,8 +180,12 @@ const HeroSection = ({ setActiveSection }) => {
       </div>
 
       <div className="text-center z-10 max-w-4xl mx-auto animate-slide-in">
-        <Badge className="mb-4 bg-yellow-400/20 text-yellow-400 border-yellow-400/30 text-sm px-4 py-1">
-          🎉 Warning: May Cause Uncontrollable Laughter
+        <Badge className="mb-2 bg-blue-600/30 text-blue-300 border-blue-500/30 text-xs px-3 py-1">
+          ✈️ A Top Pilot Enterprises, Inc. Company
+        </Badge>
+        
+        <Badge className="mb-4 bg-yellow-400/20 text-yellow-400 border-yellow-400/30 text-sm px-4 py-1 ml-2">
+          🎉 Warning: 70+ Jokes May Cause Uncontrollable Laughter!
         </Badge>
         
         <h1 className="hero-title text-5xl md:text-7xl font-bold mb-6 text-gradient-gold text-shadow-glow">
@@ -190,13 +194,22 @@ const HeroSection = ({ setActiveSection }) => {
         
         <p className="hero-subtitle text-xl md:text-2xl text-white/90 mb-4">
           Where <span className="text-yellow-400">Supernatural Thrillers</span> Meet{" "}
-          <span className="text-orange-400">German Rouladen</span>
+          <span className="text-orange-400">deLectaBLe German Rouladen</span>
         </p>
         
-        <p className="text-lg text-white/70 mb-8 max-w-2xl mx-auto">
-          Embark on a journey through Navy adventures, cosmic encounters, and the most delectable German cuisine 
-          this side of the Milky Way! 🌌
+        <p className="text-lg text-white/70 mb-4 max-w-2xl mx-auto">
+          A True Unbelievable Story! A True Even More Unforgettable Story! 
+          Man Saves Universe with his Memoir! 🌌
         </p>
+        
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
+          <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+            ⭐ 19 Five-Star Reviews from Readers Favorite
+          </Badge>
+          <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+            🎬 Accepted by Voyage Media for Film Production!
+          </Badge>
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button 
@@ -204,33 +217,40 @@ const HeroSection = ({ setActiveSection }) => {
             className="btn-gold text-lg px-8 py-6"
             data-testid="cta-book"
           >
-            <Book className="mr-2" /> Discover The Book
+            <Book className="mr-2" /> Get Letters to Evelyn
           </Button>
           <Button 
             onClick={() => setActiveSection('food')}
             className="btn-navy text-lg px-8 py-6"
             data-testid="cta-food"
           >
-            <Utensils className="mr-2" /> Taste The Magic
+            <Utensils className="mr-2" /> Visit Maestro Bistro
+          </Button>
+          <Button 
+            onClick={() => setActiveSection('infopilot')}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold px-8 py-6 rounded-full hover:scale-105 transition-all"
+            data-testid="cta-infopilot"
+          >
+            <Globe className="mr-2" /> InfoPilot $0.99/mo
           </Button>
         </div>
 
         <div className="mt-12 flex flex-wrap justify-center gap-8 text-white/60">
           <div className="flex items-center gap-2">
             <Ship className="text-yellow-400" />
-            <span>Navy Adventures</span>
+            <span>Navy Aviation</span>
           </div>
           <div className="flex items-center gap-2">
             <Globe className="text-purple-400" />
-            <span>Alien Encounters</span>
+            <span>Intergalactic Superhighway</span>
           </div>
           <div className="flex items-center gap-2">
             <Heart className="text-red-400" />
-            <span>Love Story</span>
+            <span>True Love Story</span>
           </div>
           <div className="flex items-center gap-2">
             <Utensils className="text-orange-400" />
-            <span>German Cuisine</span>
+            <span>Brunswick, Maine</span>
           </div>
         </div>
       </div>
