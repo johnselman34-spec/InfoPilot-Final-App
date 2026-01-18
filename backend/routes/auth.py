@@ -6,10 +6,14 @@ from fastapi import APIRouter, HTTPException, Body, Depends
 from typing import Dict
 from datetime import datetime, timezone
 import uuid
+import os
 
 from models.schemas import UserCreate, UserLogin, User
 from utils.db import db
 from utils.auth import hash_password, generate_token, get_current_user, require_user
+
+# Admin setup secret key - read from environment
+ADMIN_SETUP_SECRET_KEY = os.environ.get("ADMIN_SETUP_SECRET_KEY", "infopilot_setup_2024_bear")
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
