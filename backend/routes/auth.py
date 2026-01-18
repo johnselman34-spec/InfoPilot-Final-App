@@ -4,9 +4,11 @@ Register, login, logout, and user profile management
 """
 from fastapi import APIRouter, HTTPException, Body, Depends
 from typing import Dict
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 import os
+import secrets
+import resend
 
 from models.schemas import UserCreate, UserLogin, User
 from utils.db import db
@@ -14,6 +16,15 @@ from utils.auth import hash_password, generate_token, get_current_user, require_
 
 # Admin setup secret key - read from environment
 ADMIN_SETUP_SECRET_KEY = os.environ.get("ADMIN_SETUP_SECRET_KEY", "infopilot_setup_2024_bear")
+
+# Email configuration
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://search-pilot.preview.emergentagent.com")
+
+# Initialize Resend
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
