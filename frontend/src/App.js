@@ -613,16 +613,12 @@ const BookSection = ({ showToast }) => {
                         <CreditCard className="mr-2" /> Pay with PayPal
                       </Button>
                     ) : (
-                      <div className="mt-4 bg-white/10 p-4 rounded-lg">
-                        <p className="text-white/80 text-sm mb-3 text-center">
-                          Complete your purchase securely with PayPal
-                        </p>
-                        <PayPalButton 
+                      <div className="mt-4">
+                        <PayPalPaymentLink 
                           amount={getBookAmount()}
                           description={`Letters to Evelyn - ${selectedFormat} (x${quantity})`}
                           onSuccess={handlePayPalSuccess}
-                          onError={handlePayPalError}
-                          buttonId="book-purchase"
+                          productType="book"
                         />
                       </div>
                     )}
