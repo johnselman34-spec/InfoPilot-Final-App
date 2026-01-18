@@ -18,6 +18,7 @@ import { ToastProvider } from './context/ToastContext';
 // Components
 import Navbar from './components/Navbar';
 import FloatingEasterEgg from './components/FloatingEasterEgg';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 // Eagerly loaded pages
 import HomePage from './pages/HomePage';
