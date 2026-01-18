@@ -203,12 +203,34 @@ const UltimateSearchPage = () => {
 
           <div className="lg:col-span-3">
             <Card className="card-glass p-4 mb-6">
-              <div className="flex gap-4 mb-4">
-                <Input className="form-input flex-1" placeholder="Enter search query..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} data-testid="search-query-input" />
+              <div className="flex flex-wrap gap-4 mb-4">
+                <Input className="form-input flex-1 min-w-[200px]" placeholder="Enter search query..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} data-testid="search-query-input" />
+                <Select value={searchEngine} onValueChange={setSearchEngine}>
+                  <SelectTrigger className="form-input w-[180px]" data-testid="search-engine-select">
+                    <SelectValue placeholder="Search Engine" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800">
+                    <SelectItem value="all">🌐 All Engines</SelectItem>
+                    <SelectItem value="duckduckgo">🦆 DuckDuckGo</SelectItem>
+                    <SelectItem value="brave" disabled={!enginesData?.brave_configured}>
+                      🦁 Brave {!enginesData?.brave_configured && "(Not configured)"}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
                 <Button onClick={() => collateMutation.mutate(searchQuery)} disabled={!searchQuery || collateMutation.isPending} className="btn-gold" data-testid="collate-btn">
                   {collateMutation.isPending ? <RefreshCw className="animate-spin" /> : <Search className="mr-2" />} Search & Collate
                 </Button>
               </div>
+              {enginesData?.engines && (
+                <div className="flex gap-2 mb-3 text-xs text-white/50">
+                  <span>Available engines:</span>
+                  {enginesData.engines.map(e => (
+                    <Badge key={e.id} className={`text-xs ${e.configured ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                      {e.name} {e.configured ? '✓' : '✗'}
+                    </Badge>
+                  ))}
+                </div>
+              )}
               {results.length > 0 && (
                 <div className="flex items-center gap-2" data-testid="quick-search-container">
                   <Search size={16} className="text-white/50" />
