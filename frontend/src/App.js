@@ -48,6 +48,9 @@ const PaymentCancel = lazy(() => import('./pages/PaymentPages').then(m => ({ def
 const SubscriptionCheckout = lazy(() => import('./pages/PaymentPages').then(m => ({ default: m.SubscriptionCheckout })));
 const SubscriptionDashboard = lazy(() => import('./pages/SubscriptionDashboard'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+// Password reset pages
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 
 // CSS
 import './App.css';
