@@ -80,6 +80,11 @@ const Navbar = () => {
                   
                   {dropdownOpen && (
                     <div className="absolute right-0 top-12 w-48 bg-slate-800 rounded-lg shadow-xl border border-white/10 py-2">
+                      {user.is_admin && (
+                        <Link to="/admin" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-white/10" data-testid="admin-link">
+                          <Shield size={16} /> Admin Dashboard
+                        </Link>
+                      )}
                       <Link to="/subscription" onClick={() => setDropdownOpen(false)} className="flex items-center gap-2 px-4 py-2 text-yellow-400 hover:bg-white/10" data-testid="subscription-link">
                         <Crown size={16} /> Subscription
                       </Link>
