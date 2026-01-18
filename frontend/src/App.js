@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import "@/App.css";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { 
   Book, 
@@ -32,9 +31,6 @@ import {
   Minus,
   AlertTriangle,
   CheckCircle,
-  User,
-  Anchor,
-  Plane,
   Ship,
   Globe
 } from "lucide-react";
@@ -42,15 +38,18 @@ import {
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+// Pre-computed star positions for consistent rendering
+const STAR_POSITIONS = Array.from({ length: 50 }, (_, i) => ({
+  id: i,
+  left: `${(i * 17 + 3) % 100}%`,
+  top: `${(i * 23 + 7) % 100}%`,
+  delay: `${(i * 0.06) % 3}s`,
+  size: `${1 + (i % 3)}px`
+}));
+
 // Star Background Component
 const StarsBackground = () => {
-  const stars = Array.from({ length: 50 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    delay: `${Math.random() * 3}s`,
-    size: `${Math.random() * 3 + 1}px`
-  }));
+  const stars = STAR_POSITIONS;
 
   return (
     <div className="stars-bg">
