@@ -323,13 +323,26 @@ const BookSection = ({ showToast }) => {
     <section className="min-h-screen py-20 px-4" data-testid="book-section">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12 animate-slide-in">
-          <Badge className="mb-4 bg-purple-500/20 text-purple-300 border-purple-500/30">
+          <Badge className="mb-2 bg-blue-600/30 text-blue-300 border-blue-500/30 text-xs px-3 py-1">
+            ✈️ John Selman Publications - A Top Pilot Enterprises, Inc. Company
+          </Badge>
+          <Badge className="mb-4 bg-purple-500/20 text-purple-300 border-purple-500/30 ml-2">
             📖 A True Supernatural Thriller Comedy
           </Badge>
           <h2 className="text-4xl md:text-5xl font-bold text-gradient-gold mb-4">
             Letters to Evelyn
           </h2>
           <p className="text-xl text-white/80">by John Selman</p>
+          <div className="flex flex-wrap justify-center gap-2 mt-4">
+            <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+              ⭐ {bookInfo.review_count || 19} Five-Star Reviews from Readers Favorite
+            </Badge>
+            {bookInfo.film_news && (
+              <Badge className="bg-red-500/20 text-red-300 border-red-500/30">
+                🎬 Film Production by Voyage Media!
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 items-start">
