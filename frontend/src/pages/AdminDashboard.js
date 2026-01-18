@@ -124,30 +124,6 @@ const AdminDashboard = () => {
   if (!user) return <Navigate to="/login" />;
   if (!user.is_admin) return <Navigate to="/" />;
 
-  const StatusBadge = ({ status, text }) => {
-    const variants = {
-      operational: { bg: 'bg-green-500/20', text: 'text-green-300', icon: CheckCircle },
-      healthy: { bg: 'bg-green-500/20', text: 'text-green-300', icon: CheckCircle },
-      connected: { bg: 'bg-green-500/20', text: 'text-green-300', icon: CheckCircle },
-      configured: { bg: 'bg-green-500/20', text: 'text-green-300', icon: CheckCircle },
-      not_configured: { bg: 'bg-yellow-500/20', text: 'text-yellow-300', icon: AlertTriangle },
-      blocked: { bg: 'bg-red-500/20', text: 'text-red-300', icon: XCircle },
-      error: { bg: 'bg-red-500/20', text: 'text-red-300', icon: XCircle },
-      test: { bg: 'bg-blue-500/20', text: 'text-blue-300', icon: Activity },
-      live: { bg: 'bg-green-500/20', text: 'text-green-300', icon: Zap }
-    };
-    
-    const variant = variants[status] || variants.error;
-    const Icon = variant.icon;
-    
-    return (
-      <Badge className={`${variant.bg} ${variant.text} flex items-center gap-1`}>
-        <Icon size={12} />
-        {text || status}
-      </Badge>
-    );
-  };
-
   const handleMaintenanceToggle = () => {
     if (maintenance?.enabled) {
       // Disable maintenance
