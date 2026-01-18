@@ -43,59 +43,99 @@ const API = `${BACKEND_URL}/api`;
 const PAYPAL_CLIENT_ID = "BAABmhMWqe1WrfJkqJ7RRzEZwoAfxSF2bclm8_HY2BuU9C-7pnakTdjFVCvSJyWh63-wUWmKN1cT1hdMIY";
 const PAYPAL_HOSTED_BUTTON_ID = "765S46VPPEP5C";
 
-// PayPal Button Component
+// PayPal Button Component with Error Handling
 const PayPalButton = ({ amount, description, onSuccess, onError, buttonId }) => {
   const paypalRef = useRef(null);
-  const [paypalLoaded, setPaypalLoaded] = useState(false);
+  const [paypalReady, setPaypalReady] = useState(false);
+  const [paypalError, setPaypalError] = useState(false);
 
   useEffect(() => {
-    // Check if PayPal SDK is loaded
-    if (window.paypal && paypalRef.current) {
-      setPaypalLoaded(true);
+    let mounted = true;
+    
+    const initPayPal = () => {
+      if (!window.paypal || !paypalRef.current || !mounted) {
+        // Retry after a delay if PayPal SDK not loaded yet
+        setTimeout(initPayPal, 1000);
+        return;
+      }
       
-      // Clear previous buttons
-      paypalRef.current.innerHTML = '';
-      
-      // Render PayPal buttons
-      window.paypal.Buttons({
-        style: {
-          shape: 'pill',
-          color: 'gold',
-          layout: 'vertical',
-          label: 'pay'
-        },
-        createOrder: (data, actions) => {
-          return actions.order.create({
-            purchase_units: [{
-              description: description,
-              amount: {
-                currency_code: 'USD',
-                value: amount.toString()
-              }
-            }]
-          });
-        },
-        onApprove: async (data, actions) => {
-          const order = await actions.order.capture();
-          console.log('PayPal Order Captured:', order);
-          if (onSuccess) {
-            onSuccess(order);
+      try {
+        setPaypalReady(true);
+        paypalRef.current.innerHTML = '';
+        
+        window.paypal.Buttons({
+          style: {
+            shape: 'pill',
+            color: 'gold',
+            layout: 'vertical',
+            label: 'pay'
+          },
+          createOrder: (data, actions) => {
+            return actions.order.create({
+              purchase_units: [{
+                description: description,
+                amount: {
+                  currency_code: 'USD',
+                  value: amount.toString()
+                }
+              }]
+            });
+          },
+          onApprove: async (data, actions) => {
+            try {
+              const order = await actions.order.capture();
+              console.log('PayPal Order Captured:', order);
+              if (onSuccess) onSuccess(order);
+            } catch (err) {
+              console.error('Capture error:', err);
+              if (onError) onError(err);
+            }
+          },
+          onError: (err) => {
+            console.error('PayPal Button Error:', err);
+            setPaypalError(true);
+            if (onError) onError(err);
+          },
+          onCancel: () => {
+            console.log('Payment cancelled by user');
           }
-        },
-        onError: (err) => {
-          console.error('PayPal Error:', err);
-          if (onError) {
-            onError(err);
-          }
-        }
-      }).render(paypalRef.current);
-    }
-  }, [amount, description, onSuccess, onError, paypalLoaded]);
+        }).render(paypalRef.current).catch((err) => {
+          console.error('PayPal render error:', err);
+          setPaypalError(true);
+        });
+      } catch (err) {
+        console.error('PayPal init error:', err);
+        setPaypalError(true);
+      }
+    };
+
+    // Start initialization
+    setTimeout(initPayPal, 500);
+    
+    return () => { mounted = false; };
+  }, [amount, description, onSuccess, onError]);
+
+  if (paypalError) {
+    return (
+      <div className="text-center p-4 bg-yellow-400/10 rounded-lg">
+        <p className="text-white/80 mb-2">PayPal buttons loading...</p>
+        <p className="text-white/60 text-sm">If buttons do not appear, please use the direct PayPal link below:</p>
+        <a 
+          href={`https://www.paypal.com/paypalme/TopPilotEnterprises/${amount}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-gold inline-block mt-3 px-6 py-2 rounded-full"
+        >
+          Pay ${amount} via PayPal
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="paypal-button-container">
       <div ref={paypalRef} data-testid={`paypal-button-${buttonId}`}></div>
-      {!paypalLoaded && (
+      {!paypalReady && (
         <div className="text-center text-white/60 py-4">
           <CreditCard className="animate-pulse mx-auto mb-2" size={24} />
           <p>Loading PayPal...</p>
@@ -105,26 +145,72 @@ const PayPalButton = ({ amount, description, onSuccess, onError, buttonId }) => 
   );
 };
 
-// PayPal Hosted Button Component (for the main subscription)
+// PayPal Hosted Button Component
 const PayPalHostedButton = ({ containerId }) => {
   const containerRef = useRef(null);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
   
   useEffect(() => {
-    if (window.paypal && window.paypal.HostedButtons && containerRef.current) {
-      containerRef.current.innerHTML = '';
-      window.paypal.HostedButtons({
-        hostedButtonId: PAYPAL_HOSTED_BUTTON_ID,
-      }).render(containerRef.current);
-    }
+    let mounted = true;
+    
+    const initHostedButton = () => {
+      if (!window.paypal || !window.paypal.HostedButtons || !containerRef.current || !mounted) {
+        setTimeout(initHostedButton, 1000);
+        return;
+      }
+      
+      try {
+        containerRef.current.innerHTML = '';
+        window.paypal.HostedButtons({
+          hostedButtonId: PAYPAL_HOSTED_BUTTON_ID,
+        }).render(containerRef.current).then(() => {
+          if (mounted) setLoaded(true);
+        }).catch((err) => {
+          console.error('Hosted button error:', err);
+          if (mounted) setError(true);
+        });
+      } catch (err) {
+        console.error('Hosted button init error:', err);
+        if (mounted) setError(true);
+      }
+    };
+
+    setTimeout(initHostedButton, 500);
+    
+    return () => { mounted = false; };
   }, []);
 
+  if (error) {
+    return (
+      <div className="text-center p-4">
+        <a 
+          href="https://www.paypal.com/paypalme/TopPilotEnterprises"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-gold inline-block px-6 py-3 rounded-full"
+        >
+          <CreditCard className="inline mr-2" size={18} />
+          Pay with PayPal
+        </a>
+      </div>
+    );
+  }
+
   return (
-    <div 
-      ref={containerRef} 
-      id={containerId}
-      data-testid="paypal-hosted-button"
-      className="paypal-hosted-button-container"
-    ></div>
+    <div className="paypal-hosted-button-container">
+      <div 
+        ref={containerRef} 
+        id={containerId}
+        data-testid="paypal-hosted-button"
+      ></div>
+      {!loaded && !error && (
+        <div className="text-center text-white/60 py-4">
+          <CreditCard className="animate-pulse mx-auto mb-2" size={24} />
+          <p>Loading PayPal...</p>
+        </div>
+      )}
+    </div>
   );
 };
 
