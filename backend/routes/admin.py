@@ -57,13 +57,8 @@ async def get_system_status(user: Dict = Depends(require_admin)):
     # Elasticsearch status
     es_status = {"connected": False, "configured": False}
     try:
-        from utils.elasticsearch_client import es_client, ELASTICSEARCH_CONFIGURED
-        es_status["configured"] = ELASTICSEARCH_CONFIGURED
-        if ELASTICSEARCH_CONFIGURED and es_client:
-            info = await es_client.info()
-            es_status["connected"] = True
-            es_status["cluster_name"] = info.get("cluster_name", "unknown")
-            es_status["version"] = info.get("version", {}).get("number", "unknown")
+        from utils.elasticsearch_client import get_elasticsearch_status
+        es_status = get_elasticsearch_status()
     except Exception as e:
         es_status["error"] = str(e)
     
