@@ -59,7 +59,7 @@ const UltimateSearchPage = () => {
   });
 
   const collateMutation = useMutation({
-    mutationFn: (query) => axios.post(`${API}/search/collate`, { query }),
+    mutationFn: (query) => axios.post(`${API}/search/collate`, { query, engine: searchEngine }),
     onSuccess: (data) => {
       showToast(data.data.message, "success");
       queryClient.invalidateQueries(["categories"]);
