@@ -5,8 +5,6 @@ Real-time chat using native FastAPI WebSocket
 import logging
 from datetime import datetime, timezone
 import uuid
-import jwt
-import os
 import json
 import asyncio
 from typing import Dict, Set
