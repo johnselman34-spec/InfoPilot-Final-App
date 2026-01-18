@@ -102,4 +102,7 @@ async def complete_purchase(purchase_id: str, user: Dict = Depends(require_user)
         {"$inc": {"wallet_balance": seller_share}}
     )
     
+    # Invalidate caches
+    await invalidate_marketplace_cache()
+    
     return {"message": "Purchase completed!", "new_category_id": new_category["id"]}
