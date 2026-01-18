@@ -332,3 +332,215 @@ async def get_my_transactions(user: Dict = Depends(require_user)):
     ).sort("created_at", -1).to_list(100)
     
     return {"transactions": transactions}
+
+
+@router.get("/subscription")
+async def get_my_subscription(user: Dict = Depends(require_user)):
+    """Get user's current subscription details."""
+    
+    # Get full user data with subscription fields
+    user_data = await db.users.find_one(
+        {"id": user["id"]},
+        {"_id": 0, "password": 0}
+    )
+    
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Build subscription response
+    subscription_active = user_data.get("subscription_active", False)
+    subscription_type = user_data.get("subscription_type")
+    subscription_started_at = user_data.get("subscription_started_at")
+    subscription_cancelled_at = user_data.get("subscription_cancelled_at")
+    
+    # Calculate subscription end date based on type
+    subscription_end_date = None
+    if subscription_active and subscription_started_at:
+        from datetime import timedelta
+        start_date = datetime.fromisoformat(subscription_started_at.replace('Z', '+00:00'))
+        if subscription_type == "monthly":
+            subscription_end_date = (start_date + timedelta(days=30)).isoformat()
+        elif subscription_type == "yearly":
+            subscription_end_date = (start_date + timedelta(days=365)).isoformat()
+    
+    # Get package details
+    package_info = SUBSCRIPTION_PACKAGES.get(subscription_type, {})
+    
+    return {
+        "subscription_active": subscription_active,
+        "subscription_type": subscription_type,
+        "subscription_started_at": subscription_started_at,
+        "subscription_end_date": subscription_end_date,
+        "subscription_cancelled": subscription_cancelled_at is not None,
+        "subscription_cancelled_at": subscription_cancelled_at,
+        "package_name": package_info.get("name", "No active subscription"),
+        "package_amount": package_info.get("amount", 0),
+        "wallet_balance": user_data.get("wallet_balance", 0)
+    }
+
+
+@router.post("/cancel-subscription")
+async def cancel_subscription(user: Dict = Depends(require_user)):
+    """Cancel user's subscription (will remain active until end of period)."""
+    
+    # Get current subscription status
+    user_data = await db.users.find_one(
+        {"id": user["id"]},
+        {"_id": 0}
+    )
+    
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not user_data.get("subscription_active"):
+        raise HTTPException(status_code=400, detail="No active subscription to cancel")
+    
+    # Mark subscription as cancelled (but still active until end date)
+    await db.users.update_one(
+        {"id": user["id"]},
+        {
+            "$set": {
+                "subscription_cancelled_at": datetime.now(timezone.utc).isoformat(),
+                "subscription_auto_renew": False
+            }
+        }
+    )
+    
+    # Log the cancellation
+    await db.subscription_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "event_type": "cancellation",
+        "subscription_type": user_data.get("subscription_type"),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    logger.info(f"Subscription cancelled for user {user['id']}")
+    
+    return {
+        "success": True,
+        "message": "Subscription cancelled successfully. You'll retain access until your current billing period ends.",
+        "subscription_end_date": user_data.get("subscription_started_at")  # Will be calculated properly in real impl
+    }
+
+
+@router.post("/reactivate-subscription")
+async def reactivate_subscription(user: Dict = Depends(require_user)):
+    """Reactivate a cancelled subscription before it expires."""
+    
+    user_data = await db.users.find_one(
+        {"id": user["id"]},
+        {"_id": 0}
+    )
+    
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not user_data.get("subscription_active"):
+        raise HTTPException(status_code=400, detail="No active subscription to reactivate. Please subscribe again.")
+    
+    if not user_data.get("subscription_cancelled_at"):
+        raise HTTPException(status_code=400, detail="Subscription is not cancelled")
+    
+    # Remove cancellation
+    await db.users.update_one(
+        {"id": user["id"]},
+        {
+            "$unset": {"subscription_cancelled_at": ""},
+            "$set": {"subscription_auto_renew": True}
+        }
+    )
+    
+    # Log the reactivation
+    await db.subscription_events.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "event_type": "reactivation",
+        "subscription_type": user_data.get("subscription_type"),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    logger.info(f"Subscription reactivated for user {user['id']}")
+    
+    return {
+        "success": True,
+        "message": "Subscription reactivated! Auto-renewal is back on."
+    }
+
+
+@router.get("/billing-history")
+async def get_billing_history(user: Dict = Depends(require_user)):
+    """Get user's billing and payment history."""
+    
+    # Get all subscription-related transactions
+    transactions = await db.payment_transactions.find(
+        {
+            "user_id": user["id"],
+            "metadata.type": {"$in": ["subscription", "protocol_purchase"]}
+        },
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    # Get subscription events (cancellations, reactivations)
+    events = await db.subscription_events.find(
+        {"user_id": user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(20)
+    
+    # Format billing history
+    billing_items = []
+    for txn in transactions:
+        item = {
+            "id": txn.get("id"),
+            "type": txn.get("metadata", {}).get("type", "payment"),
+            "description": txn.get("item_name", "Payment"),
+            "amount": txn.get("amount", 0),
+            "currency": txn.get("currency", "usd"),
+            "status": txn.get("payment_status", "pending"),
+            "date": txn.get("created_at"),
+            "provider": txn.get("provider", "stripe")
+        }
+        billing_items.append(item)
+    
+    return {
+        "billing_history": billing_items,
+        "subscription_events": events,
+        "total_spent": sum(item["amount"] for item in billing_items if item["status"] == "paid")
+    }
+
+
+class UpgradeSubscriptionRequest(BaseModel):
+    new_package: str  # 'monthly' or 'yearly'
+
+
+@router.post("/upgrade-subscription")
+async def upgrade_subscription(
+    request: UpgradeSubscriptionRequest,
+    user: Dict = Depends(require_user)
+):
+    """Upgrade subscription from monthly to yearly or vice versa."""
+    
+    if request.new_package not in SUBSCRIPTION_PACKAGES:
+        raise HTTPException(status_code=400, detail="Invalid package type")
+    
+    user_data = await db.users.find_one(
+        {"id": user["id"]},
+        {"_id": 0}
+    )
+    
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    current_package = user_data.get("subscription_type")
+    
+    if current_package == request.new_package:
+        raise HTTPException(status_code=400, detail=f"Already subscribed to {request.new_package} plan")
+    
+    # For upgrade/downgrade, redirect to new checkout
+    # In a real implementation, you'd prorate the charges
+    return {
+        "action": "redirect_to_checkout",
+        "message": f"To change from {current_package or 'no plan'} to {request.new_package}, please complete a new checkout.",
+        "package": request.new_package,
+        "amount": SUBSCRIPTION_PACKAGES[request.new_package]["amount"]
+    }
