@@ -523,9 +523,10 @@ async def register(user: UserCreate):
         "created_at": datetime.now(timezone.utc).isoformat()
     })
     
+    # Return user without _id and password_hash
     return {
         "token": token,
-        "user": {k: v for k, v in user_doc.items() if k != "password_hash"}
+        "user": {k: v for k, v in user_doc.items() if k not in ["password_hash", "_id"]}
     }
 
 @api_router.post("/auth/login")
