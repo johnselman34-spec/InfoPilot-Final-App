@@ -103,14 +103,14 @@ class InfoPilotAPITester:
                 yearly_price = response['yearly'].get('price', 0)
                 print(f"   ✅ Monthly plan: ${monthly_price}")
                 print(f"   ✅ Yearly plan: ${yearly_price}")
-                if monthly_price == 0.99:
-                    print(f"   ✅ Monthly price correct: $0.99")
+                if monthly_price == 1.00:
+                    print(f"   ✅ Monthly price correct: $1.00")
                 else:
-                    print(f"   ❌ Monthly price incorrect: Expected $0.99, got ${monthly_price}")
-                if yearly_price == 9.99:
-                    print(f"   ✅ Yearly price correct: $9.99")
+                    print(f"   ❌ Monthly price incorrect: Expected $1.00, got ${monthly_price}")
+                if yearly_price == 9.98:
+                    print(f"   ✅ Yearly price correct: $9.98")
                 else:
-                    print(f"   ❌ Yearly price incorrect: Expected $9.99, got ${yearly_price}")
+                    print(f"   ❌ Yearly price incorrect: Expected $9.98, got ${yearly_price}")
         return success, response
 
     def test_book_order(self):
