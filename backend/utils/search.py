@@ -1,10 +1,16 @@
 """
 InfoPilot Explorer - Search Utilities
-DuckDuckGo integration, protocol parsing, document classification
+DuckDuckGo + Brave Search integration, protocol parsing, document classification
 """
 import re
+import os
 import logging
+import requests
 from typing import List, Dict, Optional, Tuple
+
+# Brave Search API Configuration
+BRAVE_SEARCH_API_KEY = os.environ.get("BRAVE_SEARCH_API_KEY", "")
+BRAVE_SEARCH_BASE_URL = "https://api.search.brave.com/res/v1/web/search"
 
 # Location patterns for geo-extraction
 LOCATION_PATTERNS = {
