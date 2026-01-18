@@ -359,9 +359,9 @@ def classify_document_type(content: str, title: str, admin_settings: Dict) -> st
 # ============ SEARCH ENGINE INTEGRATION ============
 
 async def search_duckduckgo(query: str, max_results: int = 20) -> List[Dict]:
-    """Search using DuckDuckGo."""
+    """Search using DuckDuckGo via ddgs package."""
     try:
-        from duckduckgo_search import DDGS
+        from ddgs import DDGS
         results = []
         with DDGS() as ddgs:
             for r in ddgs.text(query, max_results=max_results):
@@ -371,6 +371,7 @@ async def search_duckduckgo(query: str, max_results: int = 20) -> List[Dict]:
                     "snippet": r.get("body", ""),
                     "source": "DuckDuckGo"
                 })
+        logging.info(f"DuckDuckGo returned {len(results)} results for '{query}'")
         return results
     except Exception as e:
         logging.error(f"DuckDuckGo search error: {e}")
@@ -386,14 +387,14 @@ async def search_all_engines(query: str, max_results: int = 40) -> List[Dict]:
     all_results = []
     
     # DuckDuckGo (free, no API key needed)
-    ddg_results = await search_duckduckgo(query, max_results // 2)
+    ddg_results = await search_duckduckgo(query, max_results)
     all_results.extend(ddg_results)
     
     # Deduplicate by URL
     seen_urls = set()
     unique_results = []
     for r in all_results:
-        if r["url"] not in seen_urls:
+        if r["url"] and r["url"] not in seen_urls:
             seen_urls.add(r["url"])
             unique_results.append(r)
     
