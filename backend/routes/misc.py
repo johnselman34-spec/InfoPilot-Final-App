@@ -210,3 +210,107 @@ async def serve_upload(filename: str):
     content_types = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "gif": "image/gif", "webp": "image/webp"}
     
     return StreamingResponse(open(filepath, "rb"), media_type=content_types.get(ext, "application/octet-stream"))
+
+
+# Map Data endpoint
+@router.get("/map/data")
+async def get_map_data(scope: str = "personal", user: Dict = Depends(require_user)):
+    """Get map data with search results plotted by location."""
+    # Build query based on scope
+    query = {}
+    if scope == "personal":
+        query["user_id"] = user["id"]
+    
+    # Only get results that have location data
+    query["location"] = {"$ne": None}
+    
+    # Get results with location
+    results = await db.search_results.find(query, {"_id": 0}).to_list(500)
+    
+    # Get user's categories for color mapping
+    categories = await db.categories.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
+    category_colors = {cat["id"]: f"hsl({hash(cat['id']) % 360}, 70%, 50%)" for cat in categories}
+    
+    # Group results by location (round lat/lng for clustering)
+    location_groups = {}
+    for result in results:
+        loc = result.get("location")
+        if not loc or "lat" not in loc or "lng" not in loc:
+            continue
+        
+        # Round to 2 decimal places for clustering
+        lat_key = round(loc.get("lat", 0), 2)
+        lng_key = round(loc.get("lng", 0), 2)
+        key = f"{lat_key},{lng_key}"
+        
+        if key not in location_groups:
+            location_groups[key] = {
+                "lat": loc.get("lat", 0),
+                "lng": loc.get("lng", 0),
+                "results": [],
+                "category_ids": set()
+            }
+        
+        location_groups[key]["results"].append({
+            "title": result.get("title", ""),
+            "url": result.get("url", ""),
+            "snippet": result.get("snippet", ""),
+            "document_type": result.get("document_type", "Article")
+        })
+        for cat_id in result.get("category_ids", []):
+            location_groups[key]["category_ids"].add(cat_id)
+    
+    # Convert to point array
+    points = []
+    for key, group in location_groups.items():
+        cat_list = list(group["category_ids"])
+        color = category_colors.get(cat_list[0], "#fbbf24") if cat_list else "#fbbf24"
+        
+        points.append({
+            "lat": group["lat"],
+            "lng": group["lng"],
+            "result_count": len(group["results"]),
+            "category_count": len(cat_list),
+            "color": color,
+            "results": group["results"][:5]  # Limit preview to 5 results
+        })
+    
+    return {
+        "points": points,
+        "total_locations": len(points),
+        "total_results": sum(p["result_count"] for p in points)
+    }
+
+
+# Top-level leaderboard endpoint (alias for /api/users/leaderboard)
+@router.get("/leaderboard")
+async def get_leaderboard_alias():
+    """Get laughter points leaderboard (top-level alias)."""
+    # Get top laughter points
+    top_laughter = await db.users.find(
+        {"laughter_points": {"$gt": 0}}, 
+        {"_id": 0, "id": 1, "username": 1, "laughter_points": 1}
+    ).sort("laughter_points", -1).limit(10).to_list(10)
+    
+    # Get top protocol creators
+    pipeline = [
+        {"$group": {"_id": "$user_id", "protocol_count": {"$sum": 1}}},
+        {"$sort": {"protocol_count": -1}},
+        {"$limit": 10}
+    ]
+    top_creators_raw = await db.categories.aggregate(pipeline).to_list(10)
+    
+    top_protocol_creators = []
+    for tc in top_creators_raw:
+        user = await db.users.find_one({"id": tc["_id"]}, {"_id": 0, "id": 1, "username": 1})
+        if user:
+            top_protocol_creators.append({
+                "user": user,
+                "protocol_count": tc["protocol_count"]
+            })
+    
+    return {
+        "top_laughter_points": top_laughter,
+        "top_protocol_creators": top_protocol_creators
+    }
+
