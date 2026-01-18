@@ -164,6 +164,35 @@ const ThemesPage = () => {
             </div>
           </div>
         </Card>
+
+        {/* Easter Eggs Settings */}
+        <Card className="card-glass p-6 mt-6" data-testid="easter-eggs-settings">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+                <Egg className="text-white" size={24} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Easter Eggs</h3>
+                <p className="text-white/60 text-sm">Fun surprises that appear while you browse</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`text-sm ${easterEggsEnabled ? 'text-green-400' : 'text-white/50'}`}>
+                {easterEggsEnabled ? 'Enabled' : 'Disabled'}
+              </span>
+              <Switch 
+                checked={easterEggsEnabled}
+                onCheckedChange={toggleEasterEggs}
+                data-testid="easter-eggs-toggle"
+              />
+            </div>
+          </div>
+          <p className="text-white/40 text-xs mt-3">
+            When enabled, you&apos;ll occasionally see floating Easter Eggs with jokes and protocol ideas. 
+            Catch them to earn Laughter Points!
+          </p>
+        </Card>
       </div>
     </div>
   );
