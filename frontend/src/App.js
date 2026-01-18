@@ -148,42 +148,6 @@ const PayPalPaymentLink = ({ amount, description, onSuccess, productType }) => {
     </div>
   );
 };
-    
-    return () => { mounted = false; };
-  }, []);
-
-  if (error) {
-    return (
-      <div className="text-center p-4">
-        <a 
-          href="https://www.paypal.com/paypalme/TopPilotEnterprises"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-gold inline-block px-6 py-3 rounded-full"
-        >
-          <CreditCard className="inline mr-2" size={18} />
-          Pay with PayPal
-        </a>
-      </div>
-    );
-  }
-
-  return (
-    <div className="paypal-hosted-button-container">
-      <div 
-        ref={containerRef} 
-        id={containerId}
-        data-testid="paypal-hosted-button"
-      ></div>
-      {!loaded && !error && (
-        <div className="text-center text-white/60 py-4">
-          <CreditCard className="animate-pulse mx-auto mb-2" size={24} />
-          <p>Loading PayPal...</p>
-        </div>
-      )}
-    </div>
-  );
-};
 
 // Pre-computed star positions for consistent rendering
 const STAR_POSITIONS = Array.from({ length: 50 }, (_, i) => ({
