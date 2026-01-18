@@ -122,6 +122,7 @@ app.include_router(users.router, prefix="/api")
 app.include_router(misc.router, prefix="/api")
 app.include_router(email.router, prefix="/api/email")
 app.include_router(paypal.router, prefix="/api/paypal")
+app.include_router(stripe.router, prefix="/api/stripe")
 
 
 # Root endpoint
