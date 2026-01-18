@@ -1570,8 +1570,7 @@ const InfoPilotSection = ({ showToast }) => {
                     <CreditCard className="mr-2" /> Proceed to PayPal Payment
                   </Button>
                 ) : (
-                  <div className="mt-4 bg-white/10 p-4 rounded-lg">
-                    <p className="text-white/80 text-sm mb-3 text-center">
+                  <div className="mt-4">
                     <PayPalPaymentLink 
                       amount={getPlanAmount()}
                       description={`InfoPilot Explorer ${selectedPlan} subscription`}
