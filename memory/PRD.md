@@ -190,8 +190,8 @@ Stripe Test Card: 4242 4242 4242 4242 (any future date, any CVC)
 ---
 
 *Last Updated: January 18, 2026*  
-*Version: 4.1 - PWA, Voice Search & Browser Extension*  
-*Test Status: 100% Pass Rate (iteration_20.json - 25/25 backend, 10/10 frontend)*
+*Version: 4.2 - Forgot Password Feature*  
+*Test Status: 100% Pass Rate (iteration_21.json - 16/16 backend, 21/21 frontend)*
 
 ---
 
@@ -201,6 +201,23 @@ Stripe Test Card: 4242 4242 4242 4242 (any future date, any CVC)
 - Fixed hardcoded API URL construction in 3 frontend files
 - **Removed unused dependencies**: `python-socketio` (backend), `socket.io-client` (frontend)
 - **Added database query limits**: `.limit(1000)` to search.py and categories.py
+
+### ✅ Forgot Password Feature (January 18, 2026)
+**Backend Endpoints:**
+- `POST /api/auth/forgot-password` - Sends reset email (always returns success to prevent enumeration)
+- `GET /api/auth/verify-reset-token` - Validates if token is valid/expired
+- `POST /api/auth/reset-password` - Resets password with valid token
+
+**Security Features:**
+- Reset tokens stored in `password_resets` collection with 1-hour expiry
+- Email enumeration attack prevented (always returns success message)
+- Password reset invalidates all existing sessions (forces re-login)
+- Minimum 6-character password requirement
+
+**Frontend Pages:**
+- `/forgot-password` - Email input form with success confirmation
+- `/reset-password?token=xxx` - Token validation + new password form
+- Login page: "Forgot password?" link added
 
 ### ✅ Progressive Web App (PWA) - Complete
 - **manifest.json** with app metadata, icons, shortcuts, and standalone display mode
