@@ -10,244 +10,224 @@
 
 ## 1. Core Product Vision
 
-InfoPilot Explorer is a Worldwide Information Exchange Database that provides users with a "3D view of the internet" through custom Boolean search protocols (InfoJet 2.0). Users can categorize web content into personal categories and subcategories, visualize results on interactive maps, and sell their protocols in a marketplace.
-
-Additionally, the app promotes:
-- **Letters to Evelyn** - A True Supernatural Thriller Comedy book by John Selman
-- **Maestro Bistro** - A German food truck in Brunswick, Maine
+InfoPilot Explorer is a Worldwide Information Exchange Database providing users a "3D view of the internet" through custom Boolean search protocols (InfoJet 2.0). Users categorize web content, visualize on maps, and sell protocols in a marketplace.
 
 ---
 
-## 2. Implemented Features (As of January 18, 2026)
+## 2. Implemented Features (January 18, 2026)
 
-### ✅ Core Platform Features
+### ✅ Core Platform
 - [x] User authentication (register/login/logout)
 - [x] JWT-based session management with MongoDB
-- [x] InfoJet 2.0 Protocol Parser (Boolean search with `&`, `or`, `+`, `^` operators)
-- [x] Category/Subcategory hierarchy system (unlimited depth)
-- [x] "and" as synonym for "&" in protocols
-- [x] Search & Collate functionality (mock data)
-- [x] **Quick Search within results** ✨ NEW
+- [x] InfoJet 2.0 Protocol Parser (`&`, `or`, `+`, `^` operators)
+- [x] Category/Subcategory hierarchy (unlimited depth)
+- [x] **Real DuckDuckGo Search Integration** ✨ NOW LIVE - Returns 20+ real results
+
+### ✅ Search & Collate
+- [x] **Real DuckDuckGo Search** - Uses `ddgs` package v9.10.0
+- [x] Automatic categorization based on protocols
+- [x] Document type classification (PhD, News, Blog, Forum, etc.)
+- [x] Location extraction from content
+- [x] Quick Search within results
 - [x] Search Aggregation modes (And/Or, And, Or)
-- [x] Select All / Deselect All category buttons
-- [x] Category result counts shown in parentheses
-- [x] **Edit Category / Save Protocol** ✨ NEW (was reported as bug, now fixed)
 
-### ✅ Protocol Templates System
-- [x] Official protocol templates (8 templates)
-- [x] **Create Protocol Template** ✨ NEW (was reported as bug, now fixed)
-- [x] Community templates gallery
-- [x] **Recommended Protocols section** ✨ NEW (shows 3 top templates)
+### ✅ Personal Reports with Image Upload ✨ NEW
+- [x] Create personal reports with title, content
+- [x] **Image upload** (up to 3 images per report, max 5MB each)
+- [x] Supported formats: JPEG, PNG, GIF, WebP
+- [x] Category tagging for reports
+- [x] Word count display
+- [x] Image preview and removal
 
-### ✅ Document Type Classification
-- [x] PhD Informative detection
-- [x] Informative detection
-- [x] News Article detection
-- [x] Blog detection
-- [x] Forum detection
-- [x] Personal Report (Organic) - user-written
-- [x] Personal Report (Collected) - auto-detected
-- [x] InfoPilot/InfoBook Exclusive
+### ✅ Groups & Social Features ✨ NEW
+- [x] **Create Groups** (public/private)
+- [x] Join groups
+- [x] Leave groups
+- [x] View member counts
+- [x] My Groups / Discover Groups sections
+- [x] Group cards with gradient avatars
 
-### ✅ Easter Eggs & Laughter Points
-- [x] Floating Easter Eggs that appear randomly
-- [x] 8 unique jokes about John's stepmother and survival story
-- [x] Protocol ideas in each egg
-- [x] Pricing suggestions in each egg
-- [x] Map instructions in eggs
-- [x] Laughter Points earned by catching eggs
-- [x] Points displayed in navbar
+### ✅ Pages & Social Features ✨ NEW
+- [x] **Create Pages** with categories (Tech, News, Education, etc.)
+- [x] Follow pages
+- [x] View follower counts
+- [x] My Pages / Following / Discover sections
+- [x] Category-based color coding
 
-### ✅ Chat System ✨ NEW
-- [x] **Create Chat Room** (was reported as bug, now fixed)
-- [x] Public and private chat rooms
-- [x] Real-time message sending
-- [x] Message history per room
-- [x] Room member tracking
+### ✅ Revenue Dashboard with PDF Export ✨ ENHANCED
+- [x] Total earnings display (85% commission)
+- [x] Total sales count
+- [x] Pending payout balance
+- [x] Top selling protocols leaderboard
+- [x] Monthly revenue chart
+- [x] **PDF Export** with InfoPilot branding
+- [x] **CSV Export** for spreadsheets
+
+### ✅ Theme Gallery (12 Themes)
+- [x] **Dark Themes (10):** Cosmic Gold, Royal Purple, Hot Red, Ocean Blue, Forest Green, Sunset Pink, Ruby Red, Midnight, Pure Gold, Cyberpunk
+- [x] **Light Themes (2):** Light Mode, Cream
+- [x] Dark/Light mode toggle
+- [x] Theme preview with component samples
 
 ### ✅ Marketplace ✨ ENHANCED
-- [x] List protocols for sale with prices
-- [x] Browse marketplace
-- [x] Buy protocols via PayPal redirect
-- [x] 85% to seller, 15% platform fee
-- [x] **Category filters** ✨ NEW (History, Technology, Science, Business, Health, Sports, Education, Entertainment)
-- [x] **PayPal Connect modal** ✨ NEW (was reported as bug, now fixed with placeholder)
+- [x] List protocols for sale
+- [x] Buy protocols via PayPal
+- [x] **Category filters** (History, Tech, Science, Business, Health, Sports, Education, Entertainment)
+- [x] **PayPal Connect** modal (85% commission info)
+- [x] Protocol preview and copy
 
-### ✅ Theme Gallery ✨ ENHANCED
-- [x] **12 distinct color themes** ✨ NEW
-  - Dark themes: Cosmic Gold, Royal Purple, Hot Red, Ocean Blue, Forest Green, Sunset Pink, Ruby Red, Midnight, Pure Gold, Cyberpunk
-  - Light themes: Light Mode, Cream
-- [x] **Dark/Light Mode Toggle** ✨ NEW
-- [x] Theme preview with color swatches
-- [x] Persistent theme storage
+### ✅ Chat System
+- [x] Create chat rooms (public/private)
+- [x] Send messages
+- [x] View message history
+- [x] Room member tracking
 
-### ✅ Statistics & Leaderboard
-- [x] Global statistics (users, categories, results)
-- [x] User statistics (points, categories)
-- [x] Top Laughter Points leaderboard
-- [x] Top Protocol Creators leaderboard
+### ✅ Protocol Templates
+- [x] 8 official templates
+- [x] Create custom templates
+- [x] Community templates gallery
+- [x] Recommended protocols section (3 templates)
+
+### ✅ Easter Eggs & Laughter Points
+- [x] Floating Easter Eggs
+- [x] 8 unique jokes
+- [x] Catch eggs for points
+- [x] Points displayed in navbar
 
 ### ✅ Interactive Map
-- [x] Leaflet map integration
+- [x] Leaflet integration
 - [x] Color-coded dots by category
-- [x] Improved popup windows ✨ ENHANCED
-- [x] Personal vs Worldwide view toggle
-- [x] Location statistics cards
+- [x] Improved popups
+- [x] Personal/Worldwide toggle
 
-### ✅ PayPal Integration
-- [x] InfoPilot subscription: $1.00/month or $9.98/year
-- [x] Book purchase via PayPal: https://www.paypal.com/ncp/payment/LGXMXSG3D2MXU
-- [x] Amazon book link: https://www.amazon.com/Letters-Evelyn-John-Selman/dp/B0F3XFG14J
-- [x] Protocol marketplace purchases via PayPal
-
-### ✅ News Headlines ✨ ENHANCED
-- [x] 10 AI-powered headlines from different topics
-- [x] **Refresh Headlines button** ✨ (was reported as bug, now working)
-- [x] Category badges for each headline
-- [x] Expandable headlines panel
-
-### ✅ Book Section (Letters to Evelyn)
-- [x] Full book information display
-- [x] Genre badges (Supernatural, Thriller, Comedy, Navy Memoir)
-- [x] Professional reviews from Readers' Favorite
-- [x] Film production mention (Voyage Media)
-- [x] Price options (ebook, paperback, hardcover)
-- [x] PayPal and Amazon buy buttons
-
-### ✅ Food Section (Maestro Bistro)
-- [x] Menu items with prices and descriptions
-- [x] German Beef Rouladen, Vegetable Rouladen, Fish Chowder
-- [x] Funny taglines for each item
-- [x] Shopping cart functionality
-
-### ✅ Personal Reports
-- [x] Create personal reports
-- [x] Title, content, location support
-- [x] Maximum 3 images per report
-- [x] Document type classification
-
-### ✅ Admin Features
-- [x] Admin settings panel concept
-- [x] Collation limit control (default 40)
-- [x] Newsletter times configuration
-- [x] Document type protocol customization
-- [x] Banned words system
-- [x] User management (ban/mute/boot/delete)
-- [x] Upgrade message customization
+### ✅ Book & Food Sections
+- [x] Letters to Evelyn - Full book info, reviews, purchase links
+- [x] Maestro Bistro - Menu items with prices and taglines
 
 ### ✅ Legal Pages
-- [x] User Agreement with "First in Flight" language
-- [x] Copyright notice (code cannot be emulated)
+- [x] User Agreement
 - [x] Privacy Policy
-- [x] PayPal minimum price ($1.00) explanation
-
-### ✅ UI/UX
-- [x] Cosmic/Space theme with stars background
-- [x] Yellow/Gold gradient branding
-- [x] Glass-morphism cards
-- [x] Responsive design
-- [x] Toast notifications
-- [x] Floating animations
 
 ---
 
 ## 3. Testing Status (January 18, 2026)
 
-### Backend API Tests: 45/45 PASSED (100%)
-- Authentication: All endpoints working
-- Categories: Create, Read, Update, Delete working
-- Templates: Create, Read working
-- Chat Rooms: Create, Read, Send Messages working
-- Marketplace: List, Filter, Buy working
-- Easter Eggs: Random, Catch working
-- All other endpoints verified
+### Backend Tests: 67+ Tests PASSED (100%)
+- iteration_6.json: 45 tests (all features)
+- iteration_7.json: 22 tests (new features)
 
-### Frontend UI Tests: All Major Features Verified
-- Registration/Login flow
-- Ultimate Search with Quick Search
-- Edit Category / Save Protocol
-- Create Template
-- Create Chat Room
-- Theme Gallery with 12 themes
-- Marketplace with filters
-- News Headlines with Refresh
+### Verified Features:
+| Feature | Status | Notes |
+|---------|--------|-------|
+| DuckDuckGo Search | ✅ LIVE | Returns 20+ real results |
+| Image Upload | ✅ Working | Max 3 images, 5MB each |
+| Groups | ✅ Working | Create/Join/Leave |
+| Pages | ✅ Working | Create/Follow |
+| PDF Export | ✅ Working | Valid PDF with branding |
+| CSV Export | ✅ Working | Valid CSV format |
 
 ---
 
-## 4. Pending/Future Features
+## 4. Technical Architecture
 
-### 🟡 P1 - High Priority
-- [ ] Real search engine integration (Google/SerpAPI, DuckDuckGo, Brave)
-- [ ] Newsletter sending system (tri-weekly at configured times)
-- [ ] Groups & Pages social features (backend exists, frontend needs work)
-- [ ] Personal Reports image upload
+### Backend Stack
+- **Framework:** FastAPI
+- **Database:** MongoDB
+- **Search:** DuckDuckGo via `ddgs` package
+- **PDF:** reportlab
 
-### 🟠 P2 - Medium Priority
-- [ ] Revenue Dashboard with PDF export (API exists, frontend needs work)
-- [ ] Quote Gallery from Letters to Evelyn
-- [ ] Community features (likes, reactions to results)
-- [ ] User search by name/email/username
-- [ ] Friend requests and messaging
+### Frontend Stack
+- **Framework:** React 18
+- **Routing:** React Router DOM
+- **State:** React Query
+- **Styling:** TailwindCSS
+- **Components:** Shadcn/UI
+- **Maps:** Leaflet
+- **Charts:** Recharts
 
-### 🟢 P3 - Future/Backlog
-- [ ] Google Play Store / Apple App Store listing
-- [ ] Samsung Marketplace listing
-- [ ] Real-time newsletter scheduling
-- [ ] In-app browser for search results
-- [ ] PayPal Connect full integration for protocol sellers
-- [ ] Bing search integration
-- [ ] App store optimization with provided keywords
+### Key Files
+- `/app/backend/server.py` - Main API (~1700 lines)
+- `/app/frontend/src/App.js` - Main frontend (~2600 lines)
+- `/app/backend/uploads/` - Image storage
 
 ---
 
-## 5. Technical Architecture
+## 5. API Endpoints
 
-### Backend (FastAPI + MongoDB)
-- `/app/backend/server.py` - Comprehensive API (~1600 lines)
-- MongoDB collections: users, sessions, categories, search_results, chat_rooms, chat_messages, protocol_templates, personal_reports, admin_settings, etc.
-- InfoJet 2.0 protocol parser with regex-based parsing
-- Document type classification system
+### Search
+- `POST /api/search/collate` - Real DuckDuckGo search
+- `GET /api/search/results` - Get filtered results
 
-### Frontend (React + TailwindCSS)
-- `/app/frontend/src/App.js` - Main application (~1900 lines)
-- React Query for data fetching
-- React Router for navigation
-- Context providers for Auth, Theme, and Toast
-- Leaflet for maps, Recharts for statistics
+### Groups
+- `POST /api/groups` - Create group
+- `GET /api/groups` - List groups
+- `POST /api/groups/{id}/join` - Join group
+- `POST /api/groups/{id}/leave` - Leave group
 
-### Environment Variables
-- `REACT_APP_BACKEND_URL` - Backend API URL
-- `MONGO_URL` - MongoDB connection string
-- `DB_NAME` - Database name
+### Pages
+- `POST /api/pages` - Create page
+- `GET /api/pages` - List pages
+- `POST /api/pages/{id}/follow` - Follow page
 
----
+### Reports & Images
+- `POST /api/reports` - Create report
+- `GET /api/reports` - Get reports
+- `POST /api/upload/image` - Upload image
+- `GET /api/uploads/{filename}` - Get image
 
-## 6. Mocked APIs
-
-| API Endpoint | Status | Notes |
-|--------------|--------|-------|
-| POST /api/search/collate | MOCKED | Returns mock search results |
-| GET /api/news/headlines | MOCKED | Returns static 10 headlines |
+### Revenue
+- `GET /api/revenue/dashboard` - Stats
+- `GET /api/revenue/export?format=pdf|csv` - Export
 
 ---
 
-## 7. PayPal Configuration
+## 6. PayPal Configuration
 
 - **Business Email:** JJspilot24@gmail.com
-- **Subscription Link:** https://www.paypal.com/ncp/payment/LZDBN3SQU4NWQ
-- **Book Purchase Link:** https://www.paypal.com/ncp/payment/LGXMXSG3D2MXU
-- **Minimum Payment:** $1.00 (PayPal requirement)
+- **Subscription:** https://www.paypal.com/ncp/payment/LZDBN3SQU4NWQ
+- **Book Purchase:** https://www.paypal.com/ncp/payment/LGXMXSG3D2MXU
+- **Amazon Book:** https://www.amazon.com/Letters-Evelyn-John-Selman/dp/B0F3XFG14J
 
 ---
 
-## 8. Contact
+## 7. Known Limitations
 
-**John Selman**
-- Email: JJSpilot24@gmail.com
-- Phone: 207-522-0894
-- Location: Brunswick, Maine
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Newsletter | MOCKED | Logged but no SMTP |
+| PayPal Connect | Placeholder | Info modal only |
+| Real-time Chat | Not yet | Uses polling |
+
+---
+
+## 8. Future/Backlog
+
+### P1 - High Priority
+- [ ] Code refactoring (split monoliths)
+- [ ] Real PayPal Connect integration
+- [ ] Real-time newsletter scheduling
+
+### P2 - Medium Priority
+- [ ] App Store listings (Google Play, Apple, Samsung)
+- [ ] Push notifications
+- [ ] Real-time WebSocket chat
+
+### P3 - Future
+- [ ] Additional search engines (Brave, Bing with API keys)
+- [ ] Advanced analytics dashboard
+- [ ] Mobile app versions
+
+---
+
+## 9. Test Credentials
+
+```
+Email: test@example.com
+Password: password123
+Admin: admin@infopilot.com / admin123
+```
 
 ---
 
 *Last Updated: January 18, 2026*
-*Version: 2.0 - Major Bug Fixes & Feature Enhancements*
+*Version: 3.0 - Real Search, Groups, Pages, Image Upload, PDF Export*
