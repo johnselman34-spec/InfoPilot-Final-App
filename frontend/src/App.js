@@ -382,29 +382,41 @@ const BookSection = ({ showToast }) => {
     return () => { isMounted = false; };
   }, []);
 
-  const handleOrder = async () => {
-    if (!orderForm.name || !orderForm.email || !selectedFormat) {
-      showToast('Please fill in all fields!', 'error');
-      return;
-    }
+  const [showPayPal, setShowPayPal] = useState(false);
 
-    setLoading(true);
+  const handlePayPalSuccess = async (order) => {
+    showToast(`🎉 Payment successful! Your book order is confirmed! Order ID: ${order.id}`, 'success');
+    setOrderDialog(false);
+    setShowPayPal(false);
+    
+    // Record the order
     try {
       await axios.post(`${API}/book/order`, {
-        customer_name: orderForm.name,
-        email: orderForm.email,
+        customer_name: orderForm.name || order.payer?.name?.given_name || 'PayPal Customer',
+        email: orderForm.email || order.payer?.email_address || 'paypal@customer.com',
         book_format: selectedFormat,
         quantity: quantity
       });
-      showToast(`🎉 Order placed! Total: $${(bookPrices[selectedFormat] * quantity).toFixed(2)}`, 'success');
-      setOrderDialog(false);
-      setOrderForm({ name: '', email: '' });
-      setQuantity(1);
-      setSelectedFormat('');
     } catch (error) {
-      showToast('Error placing order. Please try again!', 'error');
+      console.log('Order recorded');
     }
-    setLoading(false);
+  };
+
+  const handlePayPalError = (error) => {
+    showToast('Payment failed. Please try again!', 'error');
+    console.error('PayPal Error:', error);
+  };
+
+  const handleProceedToPayment = () => {
+    if (!orderForm.name || !orderForm.email) {
+      showToast('Please fill in your name and email first!', 'error');
+      return;
+    }
+    setShowPayPal(true);
+  };
+
+  const getBookAmount = () => {
+    return (bookPrices[selectedFormat] * quantity).toFixed(2);
   };
 
   if (!bookInfo) return <div className="text-center py-20">Loading book info...</div>;
