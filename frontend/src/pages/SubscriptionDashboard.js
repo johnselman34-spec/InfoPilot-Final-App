@@ -199,7 +199,7 @@ const SubscriptionDashboard = () => {
                         </div>
                         <p className="text-white/70 text-sm mb-3">
                           Your subscription was cancelled on {formatDate(subscription?.subscription_cancelled_at)}. 
-                          You'll continue to have access until your billing period ends.
+                          You&apos;ll continue to have access until your billing period ends.
                         </p>
                         <Button 
                           onClick={() => reactivateMutation.mutate()}
@@ -369,7 +369,7 @@ const SubscriptionDashboard = () => {
               <ul className="space-y-2 text-white/70 text-sm">
                 <li className="flex items-center gap-2">
                   <CheckCircle className="text-green-400" size={16} />
-                  You'll keep access until {formatDate(subscription?.subscription_end_date)}
+                  You&apos;ll keep access until {formatDate(subscription?.subscription_end_date)}
                 </li>
                 <li className="flex items-center gap-2">
                   <CheckCircle className="text-green-400" size={16} />

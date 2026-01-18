@@ -67,7 +67,7 @@ const BookPage = () => {
                   <span className="text-white font-bold">5 Stars</span>
                   <span className="text-white/50">- Readers Favorite</span>
                 </div>
-                <p className="text-white/60 text-sm italic">"An exceptional blend of supernatural elements with genuine humor..."</p>
+                <p className=&ldquo;text-white/60 text-sm italic&ldquo;>&ldquo;An exceptional blend of supernatural elements with genuine humor...&ldquo;</p>
               </div>
               
               <div className="flex flex-col gap-3">
