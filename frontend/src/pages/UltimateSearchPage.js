@@ -28,11 +28,18 @@ const UltimateSearchPage = () => {
   const [quickSearchQuery, setQuickSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [aggregation, setAggregation] = useState("and_or");
+  const [searchEngine, setSearchEngine] = useState("all");
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [showEditCategory, setShowEditCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [newCategory, setNewCategory] = useState({ name: "", protocol: "", parent_id: null, is_public: true, price: null });
   const [expandedCategories, setExpandedCategories] = useState({});
+
+  // Fetch available search engines
+  const { data: enginesData } = useQuery({
+    queryKey: ["search-engines"],
+    queryFn: () => axios.get(`${API}/search/engines`).then(r => r.data)
+  });
 
   const { data: categoriesData, isLoading: loadingCategories } = useQuery({
     queryKey: ["categories"],
