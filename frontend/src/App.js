@@ -93,6 +93,8 @@ const AppContent = () => {
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/book" element={<BookPage />} />
           <Route path="/food" element={<FoodPage />} />
           <Route path="/infopilot" element={<InfoPilotPage />} />
