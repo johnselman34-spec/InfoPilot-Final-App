@@ -50,11 +50,17 @@ const FloatingEasterEgg = () => {
     if (!egg) return;
     
     try {
-      const res = await axios.post(`${API}/laughter-points/catch`, { egg_id: egg.id });
+      const res = await axios.post(`${API}/laughter-points/catch`, { egg_id: egg.id || "random" });
       showToast(res.data.message, "success");
       setVisible(false);
-    } catch {
+    } catch (err) {
+      // If unauthorized, just hide the egg silently
+      if (err.response?.status === 401) {
+        setVisible(false);
+        return;
+      }
       showToast("Failed to catch egg!", "error");
+      setVisible(false);
     }
   };
 
