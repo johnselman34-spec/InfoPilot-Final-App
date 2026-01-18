@@ -194,8 +194,29 @@ const ReportsPage = () => {
               {/* Categories */}
               {categories.length > 0 && (
                 <div>
-                  <Label className="text-white">Categories (optional)</Label>
-                  <div className="mt-2 flex flex-wrap gap-2 max-h-24 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-white">Categories (optional)</Label>
+                    <div className="flex gap-2">
+                      <button 
+                        type="button"
+                        onClick={() => setNewReport(prev => ({...prev, category_ids: categories.map(c => c.id)}))}
+                        className="text-xs text-yellow-400 hover:text-yellow-300"
+                        data-testid="select-all-categories-btn"
+                      >
+                        Select All
+                      </button>
+                      <span className="text-white/30">|</span>
+                      <button 
+                        type="button"
+                        onClick={() => setNewReport(prev => ({...prev, category_ids: []}))}
+                        className="text-xs text-white/60 hover:text-white"
+                        data-testid="deselect-all-categories-btn"
+                      >
+                        Deselect All
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">
                     {categories.map(cat => (
                       <Badge
                         key={cat.id}
