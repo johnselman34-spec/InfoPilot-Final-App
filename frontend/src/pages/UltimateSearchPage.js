@@ -23,48 +23,50 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 // Voice Search Hook
 const useVoiceSearch = (onResult, onError) => {
   const [isListening, setIsListening] = useState(false);
-  const [isSupported, setIsSupported] = useState(false);
   const recognitionRef = useRef(null);
+  
+  // Check support synchronously during initialization
+  const isSupported = typeof window !== 'undefined' && 
+    (window.SpeechRecognition || window.webkitSpeechRecognition);
 
   useEffect(() => {
-    // Check for Web Speech API support
+    if (!isSupported) return;
+    
+    // Initialize speech recognition
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      setIsSupported(true);
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'en-US';
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.continuous = false;
+    recognitionRef.current.interimResults = true;
+    recognitionRef.current.lang = 'en-US';
 
-      recognitionRef.current.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0])
-          .map(result => result.transcript)
-          .join('');
-        
-        if (event.results[0].isFinal) {
-          onResult(transcript);
-          setIsListening(false);
-        }
-      };
-
-      recognitionRef.current.onerror = (event) => {
-        console.error('Speech recognition error:', event.error);
-        if (onError) onError(event.error);
+    recognitionRef.current.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0])
+        .map(result => result.transcript)
+        .join('');
+      
+      if (event.results[0].isFinal) {
+        onResult(transcript);
         setIsListening(false);
-      };
+      }
+    };
 
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-    }
+    recognitionRef.current.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      if (onError) onError(event.error);
+      setIsListening(false);
+    };
+
+    recognitionRef.current.onend = () => {
+      setIsListening(false);
+    };
 
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.abort();
       }
     };
-  }, [onResult, onError]);
+  }, [isSupported, onResult, onError]);
 
   const startListening = useCallback(() => {
     if (recognitionRef.current && !isListening) {
@@ -84,7 +86,7 @@ const useVoiceSearch = (onResult, onError) => {
     }
   }, [isListening]);
 
-  return { isListening, isSupported, startListening, stopListening };
+  return { isListening, isSupported: !!isSupported, startListening, stopListening };
 };
 
 const UltimateSearchPage = () => {
