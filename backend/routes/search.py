@@ -1,6 +1,7 @@
 """
 InfoPilot Explorer - Search Routes
 Search & Collate with DuckDuckGo + Brave Search integration
+Includes paywall filtering and Elasticsearch integration
 """
 from fastapi import APIRouter, HTTPException, Body, Depends, Query
 from typing import Dict, Optional, List
@@ -11,6 +12,13 @@ import os
 from utils.db import db
 from utils.auth import require_user, get_current_user
 from utils.search import search_all_engines, content_matches_protocol, classify_document_type, extract_location
+from utils.paywall_filter import get_paywall_stats
+from utils.elasticsearch_client import (
+    index_search_results, 
+    semantic_search, 
+    get_elasticsearch_status,
+    index_protocol
+)
 
 router = APIRouter(prefix="/search", tags=["Search"])
 
@@ -19,6 +27,7 @@ router = APIRouter(prefix="/search", tags=["Search"])
 async def get_search_engines():
     """Get available search engines and their configuration status."""
     brave_configured = bool(os.environ.get("BRAVE_SEARCH_API_KEY", ""))
+    es_status = get_elasticsearch_status()
     
     return {
         "engines": [
@@ -38,7 +47,33 @@ async def get_search_engines():
             }
         ],
         "default_engine": "all",
-        "brave_configured": brave_configured
+        "brave_configured": brave_configured,
+        "elasticsearch": es_status,
+        "paywall_filter": {
+            "enabled": True,
+            "blocked_domains": get_paywall_stats()["total_blocked_domains"]
+        }
+    }
+
+
+@router.get("/elasticsearch/status")
+async def elasticsearch_status():
+    """Get Elasticsearch connection status."""
+    return get_elasticsearch_status()
+
+
+@router.post("/elasticsearch/search")
+async def elasticsearch_semantic_search(
+    query: str = Body(..., embed=True),
+    limit: int = Body(20, embed=True),
+    user: Dict = Depends(require_user)
+):
+    """Perform semantic search on indexed content using Elasticsearch."""
+    results = await semantic_search(query, user["id"], limit)
+    return {
+        "query": query,
+        "results": results,
+        "count": len(results)
     }
 
 
