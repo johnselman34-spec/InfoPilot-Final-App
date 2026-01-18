@@ -947,6 +947,9 @@ const ChatPage = () => {
 // ============ REVENUE DASHBOARD ============
 const RevenuePage = () => {
   const { user } = useAuth();
+  const showToast = useToast();
+  const [exporting, setExporting] = useState(false);
+  
   const { data, isLoading } = useQuery({
     queryKey: ["revenue"],
     queryFn: () => axios.get(`${API}/revenue/dashboard`).then(r => r.data),
@@ -955,8 +958,23 @@ const RevenuePage = () => {
 
   if (!user) return <Navigate to="/login" />;
 
-  const exportCSV = async () => {
-    window.open(`${API}/revenue/export`, '_blank');
+  const exportReport = async (format) => {
+    setExporting(true);
+    try {
+      const response = await axios.get(`${API}/revenue/export?format=${format}`, { responseType: 'blob' });
+      const blob = new Blob([response.data], { type: format === 'pdf' ? 'application/pdf' : 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `revenue_report_${new Date().toISOString().split('T')[0]}.${format}`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      showToast(`${format.toUpperCase()} downloaded! 📊`, "success");
+    } catch (err) {
+      showToast("Export failed", "error");
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -966,9 +984,16 @@ const RevenuePage = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gradient-gold">Revenue Dashboard</h1>
-            <p className="text-white/60">Track your protocol sales and earnings</p>
+            <p className="text-white/60">Track your protocol sales and earnings (85% commission)</p>
           </div>
-          <Button onClick={exportCSV} className="btn-gold"><Download className="mr-2" /> Export CSV</Button>
+          <div className="flex gap-2">
+            <Button onClick={() => exportReport('csv')} className="bg-slate-700 hover:bg-slate-600" disabled={exporting} data-testid="export-csv-btn">
+              <Download className="mr-2" size={16} /> CSV
+            </Button>
+            <Button onClick={() => exportReport('pdf')} className="btn-gold" disabled={exporting} data-testid="export-pdf-btn">
+              <Download className="mr-2" size={16} /> {exporting ? "Exporting..." : "PDF Report"}
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -976,12 +1001,12 @@ const RevenuePage = () => {
         ) : (
           <>
             <div className="grid md:grid-cols-4 gap-6 mb-8">
-              <Card className="card-glass p-6 text-center">
+              <Card className="card-glass p-6 text-center" data-testid="total-revenue-card">
                 <DollarSign className="mx-auto text-green-400 mb-2" size={32} />
                 <p className="text-3xl font-bold text-white">${data?.total_revenue?.toFixed(2) || '0.00'}</p>
-                <p className="text-white/60 text-sm">Total Revenue</p>
+                <p className="text-white/60 text-sm">Your Earnings (85%)</p>
               </Card>
-              <Card className="card-glass p-6 text-center">
+              <Card className="card-glass p-6 text-center" data-testid="total-sales-card">
                 <TrendingUp className="mx-auto text-blue-400 mb-2" size={32} />
                 <p className="text-3xl font-bold text-white">{data?.total_sales || 0}</p>
                 <p className="text-white/60 text-sm">Total Sales</p>
@@ -994,18 +1019,39 @@ const RevenuePage = () => {
               <Card className="card-glass p-6 text-center">
                 <CreditCard className="mx-auto text-yellow-400 mb-2" size={32} />
                 <p className="text-3xl font-bold text-white">${data?.wallet_balance?.toFixed(2) || '0.00'}</p>
-                <p className="text-white/60 text-sm">Wallet Balance</p>
+                <p className="text-white/60 text-sm">Pending Payout</p>
               </Card>
             </div>
+
+            {/* Monthly Revenue Chart placeholder */}
+            {Object.keys(data?.monthly_revenue || {}).length > 0 && (
+              <Card className="card-glass p-6 mb-8" data-testid="monthly-revenue-chart">
+                <h3 className="text-xl font-bold text-yellow-400 mb-4">Monthly Revenue</h3>
+                <div className="grid grid-cols-6 gap-2">
+                  {Object.entries(data?.monthly_revenue || {}).slice(-6).map(([month, revenue]) => (
+                    <div key={month} className="text-center">
+                      <div className="h-24 bg-gradient-to-t from-green-500/30 to-green-500/80 rounded-t-lg flex items-end justify-center relative" style={{ height: `${Math.max(20, (revenue / (data.total_revenue || 1)) * 100)}px` }}>
+                        <span className="text-xs text-white font-bold p-1">${revenue.toFixed(0)}</span>
+                      </div>
+                      <p className="text-white/50 text-xs mt-1">{month.slice(5)}</p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
 
             <Card className="card-glass p-6">
               <h3 className="text-xl font-bold text-yellow-400 mb-4">Top Selling Protocols</h3>
               {data?.top_protocols?.length === 0 ? (
-                <p className="text-white/60 text-center py-8">No sales yet. List your protocols in the marketplace!</p>
+                <div className="text-center py-8">
+                  <Store className="mx-auto text-white/30 mb-4" size={48} />
+                  <p className="text-white/60">No sales yet. List your protocols in the marketplace!</p>
+                  <Link to="/marketplace"><Button className="btn-gold mt-4">Go to Marketplace</Button></Link>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {data?.top_protocols?.map((p, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                    <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-lg hover:bg-white/10 transition">
                       <div className="flex items-center gap-4">
                         <span className="text-2xl">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
                         <div>
