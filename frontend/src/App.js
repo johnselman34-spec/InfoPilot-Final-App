@@ -788,18 +788,21 @@ const FoodSection = ({ showToast }) => {
 const TestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState([]);
 
-  const fetchTestimonials = useCallback(async () => {
-    try {
-      const response = await axios.get(`${API}/testimonials`);
-      setTestimonials(response.data.testimonials);
-    } catch (error) {
-      console.error('Error fetching testimonials:', error);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchTestimonials();
-  }, [fetchTestimonials]);
+    let isMounted = true;
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${API}/testimonials`);
+        if (isMounted) {
+          setTestimonials(response.data.testimonials);
+        }
+      } catch (error) {
+        console.error('Error fetching testimonials:', error);
+      }
+    };
+    fetchData();
+    return () => { isMounted = false; };
+  }, []);
 
   return (
     <section className="min-h-screen py-20 px-4" data-testid="testimonials-section">
