@@ -38,7 +38,8 @@ const StatsPage = lazy(() => import('./pages/StatsPage'));
 const BookPage = lazy(() => import('./pages/BookPage'));
 const FoodPage = lazy(() => import('./pages/FoodPage'));
 const InfoPilotPage = lazy(() => import('./pages/InfoPilotPage'));
-const MarketplaceResultPages = lazy(() => import('./pages/MarketplaceResultPages'));
+const MarketplaceSuccess = lazy(() => import('./pages/MarketplaceResultPages').then(m => ({ default: m.MarketplaceSuccess })));
+const MarketplaceCancel = lazy(() => import('./pages/MarketplaceResultPages').then(m => ({ default: m.MarketplaceCancel })));
 
 // CSS
 import './App.css';
