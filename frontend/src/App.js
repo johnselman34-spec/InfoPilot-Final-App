@@ -1325,7 +1325,7 @@ const InfoPilotSection = ({ showToast }) => {
           <Dialog open={subscribeDialog} onOpenChange={setSubscribeDialog}>
             <DialogTrigger asChild>
               <Button className="btn-gold text-xl px-12 py-8" data-testid="subscribe-infopilot-btn">
-                <Rocket className="mr-2" /> Subscribe Now - {selectedPlan === 'monthly' ? '$0.99/mo' : '$9.99/yr'}
+                <Rocket className="mr-2" /> Subscribe Now - {selectedPlan === 'monthly' ? '$1.00/mo' : '$9.98/yr'}
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-slate-900 border-yellow-400/30" data-testid="subscribe-dialog">
@@ -1365,7 +1365,7 @@ const InfoPilotSection = ({ showToast }) => {
                   <div className="flex justify-between text-white mt-2">
                     <span>Price:</span>
                     <span className="text-2xl font-bold text-yellow-400">
-                      {selectedPlan === 'monthly' ? '$0.99/mo' : '$9.99/yr'}
+                      {selectedPlan === 'monthly' ? '$1.00/mo' : '$9.98/yr'}
                     </span>
                   </div>
                 </div>
