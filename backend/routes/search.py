@@ -15,15 +15,29 @@ router = APIRouter(prefix="/search", tags=["Search"])
 
 
 @router.post("/collate")
-async def collate_search(query: str = Body(..., embed=True), user: Dict = Depends(require_user)):
-    """Search and Collate function - searches the internet and categorizes results."""
+async def collate_search(
+    query: str = Body(..., embed=True), 
+    engine: str = Body("all", embed=True),  # "all", "duckduckgo", "brave"
+    user: Dict = Depends(require_user)
+):
+    """Search and Collate function - searches the internet and categorizes results.
+    
+    Args:
+        query: Search query string
+        engine: Search engine to use - "all" (default), "duckduckgo", or "brave"
+    """
     admin_settings = await db.admin_settings.find_one({"id": "admin_settings"}) or {}
     collation_limit = admin_settings.get("collation_limit", 40)
     
     categories = await db.categories.find({"user_id": user["id"]}, {"_id": 0}).to_list(1000)
     
+    # Validate engine parameter
+    valid_engines = ["all", "duckduckgo", "brave"]
+    if engine not in valid_engines:
+        engine = "all"
+    
     # Search using real search engines
-    search_results = await search_all_engines(query, collation_limit)
+    search_results = await search_all_engines(query, collation_limit, engine)
     
     if not search_results:
         # Fallback to mock data if search fails
