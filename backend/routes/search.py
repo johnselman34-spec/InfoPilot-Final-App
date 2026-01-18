@@ -155,6 +155,13 @@ async def collate_search(
         await db.search_results.insert_one(result_doc)
         categorized_results.append({k: v for k, v in result_doc.items() if k != "_id"})
     
+    # Index results to Elasticsearch (async, non-blocking)
+    try:
+        indexed_count = await index_search_results(categorized_results, user["id"], query)
+    except Exception as e:
+        indexed_count = 0
+        # Don't fail the request if Elasticsearch indexing fails
+    
     # Update category counts
     for cat in categories:
         count = await db.search_results.count_documents({"category_ids": cat["id"]})
@@ -166,7 +173,8 @@ async def collate_search(
         "message": f"Collated {len(categorized_results)} results! {categorized_count} matched your protocols.",
         "results": categorized_results,
         "total_searched": len(search_results),
-        "categorized": categorized_count
+        "categorized": categorized_count,
+        "elasticsearch_indexed": indexed_count
     }
 
 
