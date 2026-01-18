@@ -1273,13 +1273,14 @@ const Footer = () => (
   </footer>
 );
 
-// InfoPilot Section
+// InfoPilot Section with PayPal Integration
 const InfoPilotSection = ({ showToast }) => {
   const [plans, setPlans] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [subscribeDialog, setSubscribeDialog] = useState(false);
   const [subscribeForm, setSubscribeForm] = useState({ name: '', email: '' });
   const [loading, setLoading] = useState(false);
+  const [showPayPal, setShowPayPal] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -1297,29 +1298,38 @@ const InfoPilotSection = ({ showToast }) => {
     return () => { isMounted = false; };
   }, []);
 
-  const handleSubscribe = async () => {
-    if (!subscribeForm.name || !subscribeForm.email) {
-      showToast('Please fill in all fields!', 'error');
-      return;
-    }
-    setLoading(true);
+  const handlePayPalSuccess = async (order) => {
+    showToast(`🎉 Payment successful! Welcome to InfoPilot Explorer! Order ID: ${order.id}`, 'success');
+    setSubscribeDialog(false);
+    setShowPayPal(false);
+    
+    // Record the subscription
     try {
       await axios.post(`${API}/newsletter/signup`, {
-        name: subscribeForm.name,
-        email: subscribeForm.email,
-        signup_type: 'infopilot'
+        name: subscribeForm.name || order.payer?.name?.given_name || 'PayPal User',
+        email: subscribeForm.email || order.payer?.email_address || 'paypal@user.com',
+        signup_type: `infopilot_${selectedPlan}_paid`
       });
-      showToast(`🎉 Welcome to InfoPilot Explorer! Your ${selectedPlan} subscription is confirmed!`, 'success');
-      setSubscribeDialog(false);
-      setSubscribeForm({ name: '', email: '' });
     } catch (error) {
-      if (error.response?.data?.detail?.includes('already subscribed')) {
-        showToast('You are already an InfoPilot member! 🚀', 'error');
-      } else {
-        showToast('Error subscribing. Please try again!', 'error');
-      }
+      console.log('User already exists or signup recorded');
     }
-    setLoading(false);
+  };
+
+  const handlePayPalError = (error) => {
+    showToast('Payment failed. Please try again!', 'error');
+    console.error('PayPal Error:', error);
+  };
+
+  const handleProceedToPayment = () => {
+    if (!subscribeForm.name || !subscribeForm.email) {
+      showToast('Please fill in your name and email first!', 'error');
+      return;
+    }
+    setShowPayPal(true);
+  };
+
+  const getPlanAmount = () => {
+    return selectedPlan === 'monthly' ? '1.00' : '9.98';
   };
 
   return (
