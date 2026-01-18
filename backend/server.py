@@ -472,7 +472,51 @@ async def get_contact_messages():
 # Testimonials Routes
 @api_router.get("/testimonials")
 async def get_testimonials():
-    # Return some default funny testimonials
+    # Professional reviews from Readers' Favorite
+    professional_reviews = [
+        {
+            "id": str(uuid.uuid4()),
+            "name": "L. Jones",
+            "location": "Readers' Favorite",
+            "rating": 5,
+            "review": "Letters to Evelyn by John Selman is an extraordinary book with a unique plot that captivated me from the first chapter. The author takes quite horrific and disturbing events and turns them into great learning experiences. Letters to Evelyn will never lose your interest and never fail to deliver on tension, excitement and even hints of comedy.",
+            "review_type": "book",
+            "featured": True,
+            "source": "Readers' Favorite - 5 Star Professional Review"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Professional Reviewer",
+            "location": "Readers' Favorite",
+            "rating": 5,
+            "review": "The comical side of it is exceedingly brilliant, to the point that even when I wasn't busy reading, the story would creep into my mind, and I would start laughing abruptly. John's quirky style of writing, his truthfulness in his thoughts, and the unusual events make for an interesting and very unique book.",
+            "review_type": "book",
+            "featured": True,
+            "source": "Readers' Favorite - 5 Star Professional Review"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Book Critic",
+            "location": "Readers' Favorite",
+            "rating": 5,
+            "review": "John Selman delivers one of the most remarkable works I have ever read... The visuals are beautiful, from the eye-catching cover to the elegant fonts and consistent format. I thoroughly enjoyed reading this book and highly recommend it to anyone seeking a truly delightful and lovable reading experience.",
+            "review_type": "book",
+            "featured": True,
+            "source": "Readers' Favorite - 5 Star Professional Review"
+        },
+        {
+            "id": str(uuid.uuid4()),
+            "name": "Literary Reviewer",
+            "location": "Readers' Favorite",
+            "rating": 5,
+            "review": "The tour along the Intergalactic Superhighway to Neptune was one of the best stories I have recently read! I highly recommend this unique read to adult fans of memoirs, science fiction, and fantasy. Mind-bending. Exceedingly brilliant. The author's imagination is off the charts. Mind-blowing.",
+            "review_type": "book",
+            "featured": True,
+            "source": "Readers' Favorite - 5 Star Professional Review"
+        },
+    ]
+    
+    # Fun testimonials
     default_testimonials = [
         {
             "id": str(uuid.uuid4()),
@@ -488,7 +532,7 @@ async def get_testimonials():
             "name": "Hans the Hungry",
             "location": "Brunswick, ME",
             "rating": 5,
-            "review": "The beef rouladen at Maestro Bistro made me call my grandmother in Germany to apologize. It's THAT good!",
+            "review": "The beef rouladen at Maestro Bistro made me call my grandmother in Germany to apologize. It's THAT good! So luscious and tender!",
             "review_type": "food",
             "featured": True
         },
@@ -515,7 +559,7 @@ async def get_testimonials():
             "name": "Former Skeptic Steve",
             "location": "Everywhere and Nowhere",
             "rating": 5,
-            "review": "I used to not believe in anything. Now I believe in this book AND German food trucks. Life changed!",
+            "review": "I used to not believe in anything. Now I believe in this book AND German food trucks. Life changed! 70 jokes that caused hurricane-force laughter!",
             "review_type": "book",
             "featured": True
         },
