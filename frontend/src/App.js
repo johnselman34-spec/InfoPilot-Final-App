@@ -1469,20 +1469,58 @@ const InfoPilotSection = ({ showToast }) => {
                     </span>
                   </div>
                 </div>
+                
+                {/* PayPal Payment Section */}
+                {!showPayPal ? (
+                  <Button 
+                    onClick={handleProceedToPayment}
+                    className="btn-gold w-full mt-4"
+                    data-testid="proceed-to-payment-btn"
+                  >
+                    <CreditCard className="mr-2" /> Proceed to PayPal Payment
+                  </Button>
+                ) : (
+                  <div className="mt-4 bg-white/10 p-4 rounded-lg">
+                    <p className="text-white/80 text-sm mb-3 text-center">
+                      Complete your payment securely with PayPal
+                    </p>
+                    <PayPalButton 
+                      amount={getPlanAmount()}
+                      description={`InfoPilot Explorer ${selectedPlan} subscription`}
+                      onSuccess={handlePayPalSuccess}
+                      onError={handlePayPalError}
+                      buttonId="infopilot-subscription"
+                    />
+                  </div>
+                )}
               </div>
               <DialogFooter>
-                <Button 
-                  onClick={handleSubscribe} 
-                  className="btn-gold w-full"
-                  disabled={loading}
-                  data-testid="confirm-subscribe-btn"
-                >
-                  {loading ? 'Processing...' : 'Start My Subscription 🚀'}
-                </Button>
+                {showPayPal && (
+                  <Button 
+                    variant="outline"
+                    onClick={() => setShowPayPal(false)}
+                    className="w-full border-white/30 text-white hover:bg-white/10"
+                  >
+                    ← Back to Details
+                  </Button>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* PayPal Hosted Button Section */}
+        <Card className="card-glass p-6 mt-8 text-center">
+          <h3 className="text-xl font-bold text-yellow-400 mb-4">
+            <CreditCard className="inline mr-2" /> Secure Payment with PayPal
+          </h3>
+          <p className="text-white/70 mb-4">
+            Subscribe securely using PayPal - accepts all major credit cards!
+          </p>
+          <div className="max-w-md mx-auto bg-white/10 p-4 rounded-lg">
+            <PayPalHostedButton containerId="paypal-infopilot-hosted" />
+          </div>
+        </Card>
 
         {/* Features Grid */}
         <div className="mt-16 grid md:grid-cols-3 gap-6">
