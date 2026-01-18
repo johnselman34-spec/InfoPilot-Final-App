@@ -400,7 +400,7 @@ const BookSection = ({ showToast }) => {
                           {format === 'hardcover' && 'Premium collector\'s edition'}
                         </p>
                       </div>
-                      <span className="text-2xl font-bold text-yellow-400">${price}</span>
+                      <span className="text-2xl font-bold text-yellow-400">${price.toFixed(2)}</span>
                     </div>
                   </div>
                 ))}
@@ -413,7 +413,7 @@ const BookSection = ({ showToast }) => {
                     disabled={!selectedFormat}
                     data-testid="order-book-btn"
                   >
-                    Order Now {selectedFormat && `- $${bookPrices[selectedFormat]}`}
+                    Order Now {selectedFormat && `- $${bookPrices[selectedFormat]?.toFixed(2)}`}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-slate-900 border-yellow-400/30" data-testid="order-dialog">
