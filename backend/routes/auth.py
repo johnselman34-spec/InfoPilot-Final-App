@@ -164,3 +164,132 @@ async def setup_admin(secret_key: str = Body(..., embed=True)):
         "note": "Please change the password after first login"
     }
 
+
+
+@router.post("/forgot-password")
+async def forgot_password(email: str = Body(..., embed=True)):
+    """Send password reset email."""
+    # Find user by email
+    user = await db.users.find_one({"email": email})
+    
+    # Always return success to prevent email enumeration attacks
+    if not user:
+        return {"message": "If an account exists with this email, a reset link has been sent."}
+    
+    # Generate secure reset token
+    reset_token = secrets.token_urlsafe(32)
+    expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+    
+    # Store reset token in database
+    await db.password_resets.delete_many({"user_id": user["id"]})  # Remove old tokens
+    await db.password_resets.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "email": email,
+        "token": reset_token,
+        "expires_at": expiry.isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Send reset email
+    reset_url = f"{FRONTEND_URL}/reset-password?token={reset_token}"
+    
+    if RESEND_API_KEY:
+        try:
+            resend.Emails.send({
+                "from": SENDER_EMAIL,
+                "to": email,
+                "subject": "Reset Your InfoPilot Password",
+                "html": f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: #fff; padding: 20px; }}
+                        .container {{ max-width: 500px; margin: 0 auto; background: #16213e; border-radius: 12px; padding: 30px; }}
+                        .logo {{ text-align: center; font-size: 24px; font-weight: bold; color: #f59e0b; margin-bottom: 20px; }}
+                        h1 {{ color: #f59e0b; font-size: 20px; }}
+                        p {{ color: #ccc; line-height: 1.6; }}
+                        .btn {{ display: inline-block; background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }}
+                        .footer {{ margin-top: 30px; font-size: 12px; color: #666; text-align: center; }}
+                        .warning {{ background: #422006; border: 1px solid #f59e0b; padding: 10px; border-radius: 6px; font-size: 13px; margin-top: 20px; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="logo">🐻 InfoPilot Explorer</div>
+                        <h1>Reset Your Password</h1>
+                        <p>We received a request to reset your password. Click the button below to create a new password:</p>
+                        <a href="{reset_url}" class="btn">Reset Password</a>
+                        <div class="warning">
+                            ⚠️ This link expires in 1 hour. If you didn't request this reset, you can safely ignore this email.
+                        </div>
+                        <div class="footer">
+                            © Top Pilot Enterprises, Inc.<br>
+                            InfoPilot Explorer - First in Flight with Monetization of Searches!
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+            })
+        except Exception as e:
+            # Log error but don't expose it to user
+            print(f"Email send error: {e}")
+    
+    return {"message": "If an account exists with this email, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+async def reset_password(token: str = Body(...), new_password: str = Body(...)):
+    """Reset password using token from email."""
+    # Find valid reset token
+    reset_record = await db.password_resets.find_one({"token": token})
+    
+    if not reset_record:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    # Check if token is expired
+    expiry = datetime.fromisoformat(reset_record["expires_at"].replace("Z", "+00:00"))
+    if datetime.now(timezone.utc) > expiry:
+        await db.password_resets.delete_one({"token": token})
+        raise HTTPException(status_code=400, detail="Reset token has expired. Please request a new one.")
+    
+    # Validate new password
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    
+    # Update user's password
+    result = await db.users.update_one(
+        {"id": reset_record["user_id"]},
+        {"$set": {"hashed_password": hash_password(new_password)}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=400, detail="Failed to update password")
+    
+    # Delete used token
+    await db.password_resets.delete_one({"token": token})
+    
+    # Delete all sessions to force re-login
+    await db.sessions.delete_many({"user_id": reset_record["user_id"]})
+    
+    return {"message": "Password reset successfully! You can now log in with your new password."}
+
+
+@router.get("/verify-reset-token")
+async def verify_reset_token(token: str):
+    """Verify if a reset token is valid (for frontend validation)."""
+    reset_record = await db.password_resets.find_one({"token": token})
+    
+    if not reset_record:
+        raise HTTPException(status_code=400, detail="Invalid reset token")
+    
+    expiry = datetime.fromisoformat(reset_record["expires_at"].replace("Z", "+00:00"))
+    if datetime.now(timezone.utc) > expiry:
+        await db.password_resets.delete_one({"token": token})
+        raise HTTPException(status_code=400, detail="Reset token has expired")
+    
+    return {"valid": True, "email": reset_record["email"]}
+
+
