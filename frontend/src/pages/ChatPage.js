@@ -55,10 +55,11 @@ const ChatPage = () => {
   useEffect(() => {
     if (!user || !token) return;
 
+    // Use the same base URL as API but with /api/ws path for WebSocket
     const wsUrl = process.env.REACT_APP_BACKEND_URL?.replace('/api', '') || '';
     
     socketRef.current = io(wsUrl, {
-      path: '/ws/socket.io',
+      path: '/api/ws/socket.io',
       auth: { token },
       transports: ['websocket', 'polling'],
       reconnection: true,
