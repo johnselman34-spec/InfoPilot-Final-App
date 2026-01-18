@@ -392,7 +392,7 @@ const HomePage = () => {
 
         <div className="text-center z-10 max-w-4xl mx-auto animate-slide-in">
           <Badge className="mb-2 bg-blue-600/30 text-blue-300 border-blue-500/30 text-xs px-3 py-1">✈️ A Top Pilot Enterprises, Inc. Company</Badge>
-          <Badge className="mb-4 bg-yellow-400/20 text-yellow-400 border-yellow-400/30 text-sm px-4 py-1 ml-2">🎉 First in Flight with Monetization of Searches! It's a Bear! 🐻</Badge>
+          <Badge className="mb-4 bg-yellow-400/20 text-yellow-400 border-yellow-400/30 text-sm px-4 py-1 ml-2">🎉 First in Flight with Monetization of Searches! It&apos;s a Bear! 🐻</Badge>
           
           <h1 className="hero-title text-5xl md:text-7xl font-bold mb-6 text-gradient-gold text-shadow-glow">InfoPilot Explorer</h1>
           <p className="hero-subtitle text-xl md:text-2xl text-white/90 mb-4">Your #1 Resource for Finding Information Valuable to You!</p>
