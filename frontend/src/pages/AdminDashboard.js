@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import StarsBackground from '../components/StarsBackground';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { Switch } from '../components/ui/switch';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { 
   Shield,
   Server,
@@ -26,18 +29,26 @@ import {
   Activity,
   Globe,
   Filter,
-  HardDrive
+  HardDrive,
+  Bell,
+  Wrench,
+  Send,
+  Power
 } from 'lucide-react';
 import { API } from '../utils/api';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  const showToast = useToast();
+  const queryClient = useQueryClient();
+  const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState('');
 
   // Fetch system status
   const { data: systemStatus, isLoading, error, refetch } = useQuery({
     queryKey: ['admin-system-status'],
     queryFn: () => axios.get(`${API}/admin/system-status`).then(r => r.data),
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 60000,
     retry: 1
   });
 
@@ -46,6 +57,42 @@ const AdminDashboard = () => {
     queryKey: ['admin-recent-activity'],
     queryFn: () => axios.get(`${API}/admin/recent-activity`).then(r => r.data),
     refetchInterval: 30000
+  });
+
+  // Fetch maintenance status
+  const { data: maintenance } = useQuery({
+    queryKey: ['admin-maintenance'],
+    queryFn: () => axios.get(`${API}/admin/maintenance`).then(r => r.data),
+    retry: 1
+  });
+
+  // Toggle maintenance mode
+  const maintenanceMutation = useMutation({
+    mutationFn: (data) => axios.post(`${API}/admin/maintenance`, data),
+    onSuccess: (res) => {
+      showToast(res.data.message, 'success');
+      queryClient.invalidateQueries(['admin-maintenance']);
+      setShowMaintenanceDialog(false);
+    },
+    onError: (err) => showToast(err.response?.data?.detail || 'Failed to update maintenance mode', 'error')
+  });
+
+  // Run health check
+  const healthCheckMutation = useMutation({
+    mutationFn: (sendAlerts) => axios.post(`${API}/admin/health-check`, { send_alerts: sendAlerts }),
+    onSuccess: (res) => {
+      const alertCount = res.data.result?.alerts_sent?.length || 0;
+      showToast(`Health check complete. ${alertCount} alerts sent.`, 'success');
+      queryClient.invalidateQueries(['admin-system-status']);
+    },
+    onError: (err) => showToast(err.response?.data?.detail || 'Health check failed', 'error')
+  });
+
+  // Send test alert
+  const testAlertMutation = useMutation({
+    mutationFn: () => axios.post(`${API}/admin/test-alert`),
+    onSuccess: (res) => showToast(res.data.message, 'success'),
+    onError: (err) => showToast(err.response?.data?.detail || 'Failed to send test alert', 'error')
   });
 
   // Redirect if not admin
@@ -76,6 +123,23 @@ const AdminDashboard = () => {
     );
   };
 
+  const handleMaintenanceToggle = () => {
+    if (maintenance?.enabled) {
+      // Disable maintenance
+      maintenanceMutation.mutate({ enabled: false });
+    } else {
+      // Show dialog to enable
+      setShowMaintenanceDialog(true);
+    }
+  };
+
+  const handleEnableMaintenance = () => {
+    maintenanceMutation.mutate({
+      enabled: true,
+      message: maintenanceMessage || "We're performing scheduled maintenance. Please check back soon!"
+    });
+  };
+
   return (
     <div className="min-h-screen pt-20 px-4 pb-12">
       <StarsBackground />
@@ -91,10 +155,22 @@ const AdminDashboard = () => {
             </div>
             <p className="text-white/60">System status and platform management</p>
           </div>
-          <Button onClick={() => refetch()} variant="outline" className="flex items-center gap-2">
-            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-            Refresh
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => healthCheckMutation.mutate(false)} 
+              variant="outline" 
+              className="flex items-center gap-2"
+              disabled={healthCheckMutation.isPending}
+              data-testid="health-check-btn"
+            >
+              <Activity size={16} className={healthCheckMutation.isPending ? 'animate-pulse' : ''} />
+              Health Check
+            </Button>
+            <Button onClick={() => refetch()} variant="outline" className="flex items-center gap-2">
+              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -130,6 +206,81 @@ const AdminDashboard = () => {
                 <StatusBadge status={systemStatus?.overall_status} text="All Systems Operational" />
               </div>
             </Card>
+
+            {/* Admin Controls */}
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Maintenance Mode Card */}
+              <Card className={`card-glass ${maintenance?.enabled ? 'border-orange-400/50' : ''}`} data-testid="maintenance-card">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-white flex items-center gap-2 text-lg">
+                    <Wrench className={maintenance?.enabled ? 'text-orange-400' : 'text-gray-400'} size={20} />
+                    Maintenance Mode
+                  </CardTitle>
+                  <CardDescription className="text-white/50">
+                    Show maintenance message to all users
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Switch 
+                        checked={maintenance?.enabled || false}
+                        onCheckedChange={handleMaintenanceToggle}
+                        data-testid="maintenance-toggle"
+                      />
+                      <span className={maintenance?.enabled ? 'text-orange-300' : 'text-white/50'}>
+                        {maintenance?.enabled ? 'Enabled' : 'Disabled'}
+                      </span>
+                    </div>
+                    {maintenance?.enabled && (
+                      <Badge className="bg-orange-500/20 text-orange-300">
+                        <Power size={12} className="mr-1" /> Active
+                      </Badge>
+                    )}
+                  </div>
+                  {maintenance?.enabled && maintenance?.message && (
+                    <p className="mt-3 text-white/60 text-sm italic">
+                      "{maintenance.message}"
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Alert Controls Card */}
+              <Card className="card-glass" data-testid="alerts-card">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-white flex items-center gap-2 text-lg">
+                    <Bell className="text-blue-400" size={20} />
+                    Service Alerts
+                  </CardTitle>
+                  <CardDescription className="text-white/50">
+                    Email notifications for service issues
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    onClick={() => healthCheckMutation.mutate(true)}
+                    variant="outline"
+                    className="w-full justify-start"
+                    disabled={healthCheckMutation.isPending}
+                    data-testid="health-check-with-alerts-btn"
+                  >
+                    <Activity size={16} className="mr-2" />
+                    Run Health Check & Send Alerts
+                  </Button>
+                  <Button 
+                    onClick={() => testAlertMutation.mutate()}
+                    variant="outline"
+                    className="w-full justify-start"
+                    disabled={testAlertMutation.isPending}
+                    data-testid="test-alert-btn"
+                  >
+                    <Send size={16} className="mr-2" />
+                    Send Test Alert to {user?.email?.split('@')[0]}...
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Services Grid */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -430,6 +581,44 @@ const AdminDashboard = () => {
             </Card>
           </div>
         )}
+
+        {/* Maintenance Mode Dialog */}
+        <Dialog open={showMaintenanceDialog} onOpenChange={setShowMaintenanceDialog}>
+          <DialogContent className="bg-slate-900 border-orange-400/30">
+            <DialogHeader>
+              <DialogTitle className="text-orange-400 flex items-center gap-2">
+                <Wrench size={20} /> Enable Maintenance Mode
+              </DialogTitle>
+              <DialogDescription className="text-white/70">
+                Users will see a maintenance message instead of the normal site.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <label className="block text-white/70 text-sm mb-2">Maintenance Message</label>
+              <textarea
+                value={maintenanceMessage}
+                onChange={(e) => setMaintenanceMessage(e.target.value)}
+                placeholder="We're performing scheduled maintenance. Please check back soon!"
+                className="w-full p-3 bg-slate-800 border border-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:border-orange-400/50"
+                rows={3}
+                data-testid="maintenance-message-input"
+              />
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setShowMaintenanceDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleEnableMaintenance}
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+                disabled={maintenanceMutation.isPending}
+                data-testid="confirm-maintenance-btn"
+              >
+                {maintenanceMutation.isPending ? 'Enabling...' : 'Enable Maintenance'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
