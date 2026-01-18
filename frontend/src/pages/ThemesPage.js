@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -12,17 +12,17 @@ import { Switch } from '../components/ui/switch';
 import { Moon, Sun, Egg } from 'lucide-react';
 import { API } from '../utils/api';
 
+// Check Easter Eggs preference synchronously
+const getEasterEggsEnabled = () => {
+  if (typeof window === 'undefined') return true;
+  return localStorage.getItem('easter-eggs-disabled') !== 'true';
+};
+
 const ThemesPage = () => {
   const { user } = useAuth();
   const { theme, setTheme, themes } = useTheme();
   const showToast = useToast();
-  const [easterEggsEnabled, setEasterEggsEnabled] = useState(true);
-
-  // Load Easter Eggs preference
-  useEffect(() => {
-    const disabled = localStorage.getItem('easter-eggs-disabled') === 'true';
-    setEasterEggsEnabled(!disabled);
-  }, []);
+  const [easterEggsEnabled, setEasterEggsEnabled] = useState(getEasterEggsEnabled);
 
   // Toggle Easter Eggs
   const toggleEasterEggs = (enabled) => {
