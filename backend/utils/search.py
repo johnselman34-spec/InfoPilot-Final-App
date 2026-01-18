@@ -111,13 +111,14 @@ async def search_brave(query: str, max_results: int = 20) -> List[Dict]:
         return []
 
 
-async def search_all_engines(query: str, max_results: int = 40, engine: str = "all") -> List[Dict]:
+async def search_all_engines(query: str, max_results: int = 40, engine: str = "all", filter_paywalls: bool = True) -> List[Dict]:
     """Search across all available search engines.
     
     Args:
         query: Search query string
         max_results: Maximum number of results to return
         engine: Which engine to use - "all", "duckduckgo", "brave"
+        filter_paywalls: Whether to filter out paywalled content (default True)
     """
     all_results = []
     
@@ -130,6 +131,11 @@ async def search_all_engines(query: str, max_results: int = 40, engine: str = "a
         # Brave Search (free tier: 2000/month)
         brave_results = await search_brave(query, max_results // 2 if engine == "all" else max_results)
         all_results.extend(brave_results)
+    
+    # Filter out paywalled content
+    if filter_paywalls:
+        all_results = filter_paywalled_results(all_results)
+        logging.info(f"After paywall filtering: {len(all_results)} results")
     
     # Deduplicate by URL
     seen_urls = set()
