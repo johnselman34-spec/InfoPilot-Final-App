@@ -190,8 +190,8 @@ Stripe Test Card: 4242 4242 4242 4242 (any future date, any CVC)
 ---
 
 *Last Updated: January 18, 2026*  
-*Version: 3.9 - Complete Admin Dashboard with Service Monitoring*  
-*Test Status: 100% Pass Rate (iteration_18.json - 24/24 backend, 16/16 frontend)*
+*Version: 4.0 - Protocol Copy Protection*  
+*Test Status: 100% Pass Rate (iteration_19.json - 14/14 backend, 13/13 frontend)*
 
 ---
 
@@ -200,25 +200,27 @@ Stripe Test Card: 4242 4242 4242 4242 (any future date, any CVC)
 ### ✅ Resolved (January 18, 2026)
 - Fixed hardcoded API URL construction in 3 frontend files
 - **Removed unused dependencies**: `python-socketio` (backend), `socket.io-client` (frontend)
+- **Added database query limits**: `.limit(1000)` to search.py and categories.py
+
+### ✅ Protocol Copy Protection (January 18, 2026)
+**Backend Endpoints:**
+- `GET /api/marketplace/my-purchases` - Returns user's purchased and owned protocol IDs
+- `GET /api/marketplace/check-purchase/{id}` - Checks if user has access (owner/purchased/not_purchased)
+- `POST /api/marketplace/copy-protocol/{id}` - Returns 403 with price if unpurchased, protocol content if accessible
+
+**Frontend Protection Layers:**
+- Visual blur (`blur-sm`) on unpurchased protocol text
+- Hover preview (`hover:blur-none`) for temporary viewing
+- Text selection blocked (`select-none`, `user-select: none`)
+- Copy button validates access via backend before allowing copy
+- Error toast shows price info when copy is blocked
+- Lock badge with price for unpurchased, Unlock badge for purchased/owned
 
 ### ✅ Admin Dashboard Features (Complete)
-- **System Status Monitoring** (`/api/admin/system-status`)
-  - Database, Search Engines, Elasticsearch, Email, Payments, Paywall Filter, Cache
-- **Maintenance Mode Toggle** (`/api/admin/maintenance`)
-  - Enable/disable site-wide maintenance message
-  - Custom maintenance message support
-  - Public endpoint for frontend to check: `/api/maintenance-status`
-- **Service Health Check** (`/api/admin/health-check`)
-  - Manual health check with optional email alerts
-  - Checks: MongoDB, Elasticsearch, Brave Search, Stripe, Resend
-- **Test Alert** (`/api/admin/test-alert`)
-  - Send test email alert to admin
-- **Email Alerts for Service Downtime**
-  - Automatic alerts when services go down or recover
-  - 15-minute cooldown to prevent spam
-- **Admin-only Access Control**
-  - All admin endpoints return 403 for non-admin users
-  - Admin link only visible in Navbar for admin users
+- System status monitoring with all services
+- Maintenance mode toggle with custom message
+- Service health check with optional email alerts
+- Test alert endpoint
 
 ### ✅ Deployment Health Check
 - Status: **READY FOR DEPLOYMENT**
