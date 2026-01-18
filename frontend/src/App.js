@@ -112,6 +112,7 @@ const AppContent = () => {
           <Route path="/payment/cancel" element={<PaymentCancel />} />
           <Route path="/subscribe" element={<ProtectedRoute><SubscriptionCheckout /></ProtectedRoute>} />
           <Route path="/subscription" element={<ProtectedRoute><SubscriptionDashboard /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" />} />
