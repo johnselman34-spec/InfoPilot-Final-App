@@ -135,13 +135,13 @@ BOOK_PRICES = {
 # ============ INFOPILOT SUBSCRIPTION ============
 INFOPILOT_PLANS = {
     "monthly": {
-        "price": 0.99,
+        "price": 1.00,
         "description": "InfoPilot Explorer Monthly - Boolean search and categorization for scholars and tradesmen",
         "features": ["Unlimited searches", "Category organization", "Collaboration tools", "Priority support"]
     },
     "yearly": {
-        "price": 9.99,
-        "description": "InfoPilot Explorer Yearly - Save over 15%!",
+        "price": 9.98,
+        "description": "InfoPilot Explorer Yearly - Save 17%!",
         "features": ["All monthly features", "Advanced analytics", "Custom categories", "API access"]
     }
 }
