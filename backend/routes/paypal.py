@@ -100,7 +100,7 @@ async def get_test_payment_link():
     )
     
     # Alternative: PayPal.me link
-    paypalme_url = f"https://www.paypal.com/paypalme/JJspilot24/1"
+    paypalme_url = "https://www.paypal.com/paypalme/JJspilot24/1"
     
     return {
         "message": "Test these links to verify your PayPal account is working",

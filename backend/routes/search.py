@@ -158,7 +158,7 @@ async def collate_search(
     # Index results to Elasticsearch (async, non-blocking)
     try:
         indexed_count = await index_search_results(categorized_results, user["id"], query)
-    except Exception as e:
+    except Exception:
         indexed_count = 0
         # Don't fail the request if Elasticsearch indexing fails
     

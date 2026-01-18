@@ -28,7 +28,7 @@ async def authenticate_token(token: str) -> dict:
         # Look up session in database (same as REST API auth)
         session = await db.sessions.find_one({"token": token})
         if not session:
-            logger.error(f"Token auth error: Session not found")
+            logger.error("Token auth error: Session not found")
             return None
         
         user_id = session.get("user_id")
