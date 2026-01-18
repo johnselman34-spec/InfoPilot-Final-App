@@ -6,12 +6,13 @@ from fastapi import APIRouter, HTTPException, Body, Depends, Query
 from typing import Dict, Optional
 from datetime import datetime, timezone
 import uuid
+import os
 
 from utils.db import db
 from utils.auth import require_user
 
-# PayPal configuration
-PAYPAL_BUSINESS_EMAIL = "JJspilot24@gmail.com"
+# PayPal configuration - read from environment
+PAYPAL_BUSINESS_EMAIL = os.environ.get("PAYPAL_BUSINESS_EMAIL", "JJspilot24@gmail.com")
 
 router = APIRouter(prefix="/marketplace", tags=["Marketplace"])
 
