@@ -9,7 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../compone
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Store, CreditCard, Copy } from 'lucide-react';
+import { Store, CreditCard, Copy, CheckCircle } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
 
@@ -17,26 +17,27 @@ const MarketplacePage = () => {
   const { user } = useAuth();
   const showToast = useToast();
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [showPayPalConnect, setShowPayPalConnect] = useState(false);
+  const [showSellerInfo, setShowSellerInfo] = useState(false);
   
   const { data: protocols, isLoading } = useQuery({
     queryKey: ["marketplace", selectedCategory],
     queryFn: () => axios.get(`${API}/marketplace/protocols`, { params: selectedCategory !== "all" ? { category: selectedCategory } : {} }).then(r => r.data)
   });
 
+  // Use Stripe for payments
   const buyMutation = useMutation({
     mutationFn: async (protocol) => {
-      // Use the new PayPal API
-      const response = await axios.post(`${API}/paypal/create-order`, {
+      const response = await axios.post(`${API}/stripe/create-checkout`, {
         protocol_id: protocol.id,
-        amount: protocol.price
+        package_type: "protocol_purchase",
+        origin_url: window.location.origin
       });
       return response.data;
     },
     onSuccess: (data) => {
-      showToast("Redirecting to PayPal...", "success");
-      if (data.approval_url) {
-        window.open(data.approval_url, '_blank');
+      showToast("Redirecting to secure checkout...", "success");
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
       }
     },
     onError: (err) => showToast(err.response?.data?.detail || "Purchase failed", "error")
