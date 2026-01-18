@@ -130,6 +130,7 @@ app.include_router(misc.router, prefix="/api")
 app.include_router(email.router, prefix="/api/email")
 app.include_router(paypal.router, prefix="/api/paypal")
 app.include_router(stripe.router, prefix="/api/stripe")
+app.include_router(admin.router, prefix="/api")
 
 
 # Root endpoint
