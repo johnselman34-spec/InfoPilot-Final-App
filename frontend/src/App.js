@@ -61,7 +61,7 @@ const ThemeProvider = ({ children }) => {
     cream: { primary: "#d97706", secondary: "#92400e", background: "#fef3c7", name: "Cream" }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   useEffect(() => {
     localStorage.setItem("theme", JSON.stringify(theme));
     const colors = themes[theme.preset] || themes.cosmic;
