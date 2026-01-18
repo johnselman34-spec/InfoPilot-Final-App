@@ -577,7 +577,7 @@ async def get_testimonials():
     # Get any user-submitted testimonials from DB
     db_testimonials = await db.testimonials.find({}, {"_id": 0}).to_list(100)
     
-    return {"testimonials": default_testimonials + db_testimonials}
+    return {"testimonials": professional_reviews + default_testimonials + db_testimonials}
 
 # Stats for Dashboard
 @api_router.get("/stats")
