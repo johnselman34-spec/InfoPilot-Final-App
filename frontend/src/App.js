@@ -46,6 +46,7 @@ const PaymentSuccess = lazy(() => import('./pages/PaymentPages').then(m => ({ de
 const PaymentCancel = lazy(() => import('./pages/PaymentPages').then(m => ({ default: m.PaymentCancel })));
 const SubscriptionCheckout = lazy(() => import('./pages/PaymentPages').then(m => ({ default: m.SubscriptionCheckout })));
 const SubscriptionDashboard = lazy(() => import('./pages/SubscriptionDashboard'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 
 // CSS
 import './App.css';
