@@ -1006,7 +1006,7 @@ const UltimateSearchPage = () => {
               <span className="text-white/90 text-sm flex-1">{cat.name}</span>
               <Badge className="text-xs bg-white/10">({cat.search_result_count || 0})</Badge>
               <div className="opacity-0 group-hover:opacity-100 flex gap-1">
-                <button onClick={() => setNewCategory({...newCategory, parent_id: cat.id}); setShowCreateCategory(true)} className="text-green-400" title="Add subcategory">
+                <button onClick={() => { setNewCategory({...newCategory, parent_id: cat.id}); setShowCreateCategory(true); }} className="text-green-400" title="Add subcategory">
                   <Plus size={14} />
                 </button>
                 <button onClick={() => cleanCategoryMutation.mutate(cat.id)} className="text-yellow-400" title="Clean category">
