@@ -288,7 +288,8 @@ const Navbar = () => {
     { path: "/stats", label: "Stats", icon: <BarChart3 size={18} /> },
     { path: "/marketplace", label: "Market", icon: <Store size={18} /> },
     { path: "/chat", label: "Chat", icon: <MessageCircle size={18} /> },
-    { path: "/templates", label: "Templates", icon: <Layers size={18} /> },
+    { path: "/groups", label: "Groups", icon: <Users size={18} /> },
+    { path: "/pages", label: "Pages", icon: <Layers size={18} /> },
   ] : [
     { path: "/", label: "Home", icon: <Home size={18} /> },
     { path: "/book", label: "Book", icon: <Book size={18} /> },
