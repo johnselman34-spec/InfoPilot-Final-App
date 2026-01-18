@@ -131,32 +131,45 @@ const MarketplacePage = () => {
           </div>
         )}
 
-        {/* PayPal Connect Modal */}
-        <Dialog open={showPayPalConnect} onOpenChange={setShowPayPalConnect}>
+        {/* Seller Info Modal */}
+        <Dialog open={showSellerInfo} onOpenChange={setShowSellerInfo}>
           <DialogContent className="bg-slate-900 border-yellow-400/30">
             <DialogHeader>
-              <DialogTitle className="text-yellow-400">Connect PayPal Account</DialogTitle>
-              <DialogDescription className="text-white/70">Link your PayPal Business account to receive payments</DialogDescription>
+              <DialogTitle className="text-yellow-400">Sell Your Protocols 💰</DialogTitle>
+              <DialogDescription className="text-white/70">Monetize your search expertise and earn passive income!</DialogDescription>
             </DialogHeader>
             <div className="py-4 space-y-4">
-              <Card className="bg-blue-900/20 border-blue-400/30 p-4">
-                <h4 className="text-blue-400 font-semibold mb-2">How It Works</h4>
-                <ul className="text-white/70 text-sm space-y-1">
-                  <li>• You receive 85% of each protocol sale</li>
-                  <li>• InfoPilot keeps 15% platform fee</li>
-                  <li>• Minimum PayPal payment: $1.00</li>
-                  <li>• Payouts processed automatically</li>
+              <Card className="bg-green-900/20 border-green-400/30 p-4">
+                <h4 className="text-green-400 font-semibold mb-2">How It Works</h4>
+                <ul className="text-white/70 text-sm space-y-2">
+                  <li className="flex items-start gap-2"><CheckCircle className="text-green-400 mt-0.5" size={16} /> Create a protocol in Ultimate Search</li>
+                  <li className="flex items-start gap-2"><CheckCircle className="text-green-400 mt-0.5" size={16} /> Set a price and mark it "For Sale"</li>
+                  <li className="flex items-start gap-2"><CheckCircle className="text-green-400 mt-0.5" size={16} /> Buyers pay via Stripe (secure checkout)</li>
+                  <li className="flex items-start gap-2"><CheckCircle className="text-green-400 mt-0.5" size={16} /> You receive 85% of each sale</li>
                 </ul>
               </Card>
+              <Card className="bg-blue-900/20 border-blue-400/30 p-4">
+                <h4 className="text-blue-400 font-semibold mb-2">Commission Structure</h4>
+                <div className="flex justify-between text-white/70 text-sm">
+                  <span>Your Earnings:</span>
+                  <span className="text-green-400 font-bold">85%</span>
+                </div>
+                <div className="flex justify-between text-white/70 text-sm">
+                  <span>Platform Fee:</span>
+                  <span className="text-white/50">15%</span>
+                </div>
+              </Card>
               <div className="text-center">
-                <a href="https://www.paypal.com/business" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-[#0070ba] hover:bg-[#003087] text-white font-bold py-3 px-6 rounded-lg transition">
-                  <CreditCard size={20} /> Open PayPal Business
-                </a>
-                <p className="text-white/50 text-xs mt-2">PayPal integration coming soon! Your email will be linked automatically.</p>
+                <Link to="/search">
+                  <Button className="btn-gold">
+                    <Store className="mr-2" size={16} /> Go to Ultimate Search
+                  </Button>
+                </Link>
+                <p className="text-white/50 text-xs mt-2">Create and list your first protocol today!</p>
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowPayPalConnect(false)}>Close</Button>
+              <Button variant="outline" onClick={() => setShowSellerInfo(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
