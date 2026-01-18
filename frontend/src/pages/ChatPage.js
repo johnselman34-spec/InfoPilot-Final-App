@@ -61,48 +61,12 @@ const ChatPage = () => {
     return `${wsUrl}/api/chat/ws?token=${encodeURIComponent(token || '')}`;
   }, [token]);
 
-  // Initialize WebSocket connection
-  const connectWebSocket = useCallback(() => {
-    if (!user || !token || wsRef.current?.readyState === WebSocket.OPEN) return;
-
-    const wsUrl = getWebSocketUrl();
-    console.log('Connecting to WebSocket:', wsUrl);
-    
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-      setIsConnected(true);
-      showToast("Connected to chat", "success");
-    };
-
-    ws.onclose = (event) => {
-      console.log('WebSocket closed:', event.code, event.reason);
-      setIsConnected(false);
-      
-      // Attempt reconnect after 3 seconds
-      if (event.code !== 4001) { // Don't reconnect if auth failed
-        reconnectTimeoutRef.current = setTimeout(() => {
-          if (connectFnRef.current) connectFnRef.current();
-        }, 3000);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setIsConnected(false);
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        handleMessage(data);
-      } catch (e) {
-        console.error('Failed to parse message:', e);
-      }
-    };
-  }, [user, token, getWebSocketUrl, showToast]);
+  // Send WebSocket message (define first since it's used by others)
+  const sendWsMessage = useCallback((message) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(message));
+    }
+  }, []);
 
   // Handle incoming messages
   const handleMessage = useCallback((data) => {
@@ -114,8 +78,10 @@ const ChatPage = () => {
       case 'room_joined':
         setMessages(data.messages || []);
         setOnlineUsers([]);
-        // Request online users
-        sendWsMessage({ type: 'get_online_users', room_id: data.room_id });
+        // Request online users using ref to avoid circular dependency
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'get_online_users', room_id: data.room_id }));
+        }
         break;
       
       case 'new_message':
@@ -166,12 +132,48 @@ const ChatPage = () => {
     }
   }, [showToast]);
 
-  // Send WebSocket message
-  const sendWsMessage = useCallback((message) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(message));
-    }
-  }, []);
+  // Initialize WebSocket connection
+  const connectWebSocket = useCallback(() => {
+    if (!user || !token || wsRef.current?.readyState === WebSocket.OPEN) return;
+
+    const wsUrl = getWebSocketUrl();
+    console.log('Connecting to WebSocket:', wsUrl);
+    
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      setIsConnected(true);
+      showToast("Connected to chat", "success");
+    };
+
+    ws.onclose = (event) => {
+      console.log('WebSocket closed:', event.code, event.reason);
+      setIsConnected(false);
+      
+      // Attempt reconnect after 3 seconds
+      if (event.code !== 4001) { // Don't reconnect if auth failed
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (connectFnRef.current) connectFnRef.current();
+        }, 3000);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setIsConnected(false);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        handleMessage(data);
+      } catch (e) {
+        console.error('Failed to parse message:', e);
+      }
+    };
+  }, [user, token, getWebSocketUrl, showToast, handleMessage]);
 
   // Store connect function in ref
   connectFnRef.current = connectWebSocket;
