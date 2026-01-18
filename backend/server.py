@@ -5,7 +5,7 @@ First in Flight with Monetization of Searches! It's a Bear! 🐻
 
 Top Pilot Enterprises, Inc.
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, Query
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
@@ -20,8 +20,8 @@ from utils.db import db
 # Import route modules
 from routes import auth, categories, search, groups, pages, chat, reports, marketplace, revenue, templates, users, misc, email, paypal, stripe
 
-# Import WebSocket manager
-from utils.websocket import socket_app, sio
+# Import WebSocket handler
+from utils.websocket import websocket_handler
 
 
 @asynccontextmanager
