@@ -173,6 +173,9 @@ const ChatPage = () => {
     }
   }, []);
 
+  // Store connect function in ref
+  connectFnRef.current = connectWebSocket;
+
   // Connect on mount
   useEffect(() => {
     connectWebSocket();
