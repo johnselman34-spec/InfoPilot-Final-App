@@ -102,6 +102,24 @@ const UltimateSearchPage = () => {
   const [newCategory, setNewCategory] = useState({ name: "", protocol: "", parent_id: null, is_public: true, price: null });
   const [expandedCategories, setExpandedCategories] = useState({});
 
+  // Voice Search
+  const handleVoiceResult = useCallback((transcript) => {
+    setSearchQuery(transcript);
+    showToast(`Voice input: "${transcript}"`, "success");
+  }, [showToast]);
+
+  const handleVoiceError = useCallback((error) => {
+    if (error === 'not-allowed') {
+      showToast("Microphone access denied. Please enable it in browser settings.", "error");
+    } else if (error === 'no-speech') {
+      showToast("No speech detected. Please try again.", "error");
+    } else {
+      showToast(`Voice error: ${error}`, "error");
+    }
+  }, [showToast]);
+
+  const { isListening, isSupported: voiceSupported, startListening, stopListening } = useVoiceSearch(handleVoiceResult, handleVoiceError);
+
   // Fetch available search engines
   const { data: enginesData } = useQuery({
     queryKey: ["search-engines"],
