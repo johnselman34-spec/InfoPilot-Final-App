@@ -148,5 +148,8 @@ async def health_check():
     return {"status": "healthy", "service": "InfoPilot Explorer"}
 
 
-# Mount Socket.IO app for WebSocket support under /api path
-app.mount("/api/ws", socket_app)
+# WebSocket endpoint for real-time chat
+@app.websocket("/api/chat/ws")
+async def websocket_endpoint(websocket: WebSocket, token: str = Query(None)):
+    """WebSocket endpoint for real-time chat."""
+    await websocket_handler(websocket, token)
