@@ -207,28 +207,34 @@ async def semantic_search(query: str, user_id: Optional[str] = None, limit: int 
         return []
     
     try:
-        # Build query
-        must_clauses = [
-            {
-                "multi_match": {
-                    "query": query,
-                    "fields": ["title^2", "snippet", "url"],
-                    "type": "best_fields",
-                    "fuzziness": "AUTO"
-                }
-            }
-        ]
-        
-        # Add user filter if specified
-        filter_clauses = []
-        if user_id:
-            filter_clauses.append({"term": {"user_id": user_id}})
-        
+        # Build query - search across title, snippet, and url
         search_body = {
             "query": {
                 "bool": {
-                    "must": must_clauses,
-                    "filter": filter_clauses
+                    "should": [
+                        {
+                            "multi_match": {
+                                "query": query,
+                                "fields": ["title^3", "snippet^2", "url"],
+                                "type": "best_fields",
+                                "fuzziness": "AUTO"
+                            }
+                        },
+                        {
+                            "match_phrase": {
+                                "title": {
+                                    "query": query,
+                                    "boost": 2
+                                }
+                            }
+                        },
+                        {
+                            "match_phrase": {
+                                "snippet": query
+                            }
+                        }
+                    ],
+                    "minimum_should_match": 1
                 }
             },
             "size": limit,
@@ -237,6 +243,10 @@ async def semantic_search(query: str, user_id: Optional[str] = None, limit: int 
                 {"created_at": "desc"}
             ]
         }
+        
+        # Optionally filter by user_id (commented out for now to allow global search)
+        # if user_id:
+        #     search_body["query"]["bool"]["filter"] = [{"term": {"user_id": user_id}}]
         
         response = client.search(
             index=SEARCH_RESULTS_INDEX,
