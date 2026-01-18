@@ -1132,37 +1132,267 @@ const Footer = () => (
             <Sparkles className="text-yellow-400" size={24} />
             <span className="text-xl font-bold text-gradient-gold">InfoPilot Explorer</span>
           </div>
-          <p className="text-white/60">
-            Where supernatural thrillers meet German cuisine. 
-            Because why choose when you can have both? 🚀🥩
+          <p className="text-white/60 text-sm">
+            A Top Pilot Enterprises, Inc. Company<br/>
+            Where supernatural thrillers meet German cuisine!
           </p>
+          <div className="mt-2 text-xs text-white/40">
+            <p>InfoPilot Explorer, LLC | Maestro Bistro | John Selman Publications</p>
+          </div>
         </div>
         <div>
           <h4 className="text-lg font-bold text-yellow-400 mb-4">Quick Links</h4>
           <ul className="space-y-2 text-white/60">
-            <li className="hover:text-yellow-400 cursor-pointer">📚 Letters to Evelyn</li>
-            <li className="hover:text-yellow-400 cursor-pointer">🚚 Maestro Bistro</li>
-            <li className="hover:text-yellow-400 cursor-pointer">⭐ Reviews</li>
-            <li className="hover:text-yellow-400 cursor-pointer">📬 Contact</li>
+            <li className="hover:text-yellow-400 cursor-pointer">📚 Letters to Evelyn by John Selman</li>
+            <li className="hover:text-yellow-400 cursor-pointer">🚚 Maestro Bistro - Brunswick, Maine</li>
+            <li className="hover:text-yellow-400 cursor-pointer">🌐 InfoPilot Subscription - $0.99/mo</li>
+            <li className="hover:text-yellow-400 cursor-pointer">⭐ 19 Five-Star Reviews</li>
+            <li className="hover:text-yellow-400 cursor-pointer">📬 Contact Us</li>
           </ul>
         </div>
         <div>
           <h4 className="text-lg font-bold text-yellow-400 mb-4">Legal Stuff</h4>
           <p className="text-white/60 text-sm">
-            © 2014 John Selman - Letters to Evelyn<br/>
+            © 2014-2025 John Selman - Letters to Evelyn<br/>
+            © 2025 Top Pilot Enterprises, Inc.<br/>
             All rights reserved. Reading while operating heavy machinery is strongly discouraged. 
-            Side effects of this website may include uncontrollable laughter and sudden cravings for rouladen.
+            Side effects may include uncontrollable laughter and sudden cravings for rouladen.
           </p>
         </div>
       </div>
       <Separator className="bg-yellow-400/20 mb-8" />
       <div className="text-center text-white/40 text-sm">
-        <p>Made with 💛 and questionable amounts of caffeine</p>
+        <p>Made with 💛 by Top Pilot Enterprises, Inc.</p>
         <p className="mt-2">🛸 No aliens were harmed in the making of this website 🛸</p>
+        <p className="mt-1 text-xs">Contains 70+ zany, zesty zoo zingers causing hurricane-force winds of laughter!</p>
       </div>
     </div>
   </footer>
 );
+
+// InfoPilot Section
+const InfoPilotSection = ({ showToast }) => {
+  const [plans, setPlans] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState('monthly');
+  const [subscribeDialog, setSubscribeDialog] = useState(false);
+  const [subscribeForm, setSubscribeForm] = useState({ name: '', email: '' });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPlans = async () => {
+      try {
+        const response = await axios.get(`${API}/infopilot/plans`);
+        if (isMounted) {
+          setPlans(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching plans:', error);
+      }
+    };
+    fetchPlans();
+    return () => { isMounted = false; };
+  }, []);
+
+  const handleSubscribe = async () => {
+    if (!subscribeForm.name || !subscribeForm.email) {
+      showToast('Please fill in all fields!', 'error');
+      return;
+    }
+    setLoading(true);
+    try {
+      await axios.post(`${API}/newsletter/signup`, {
+        name: subscribeForm.name,
+        email: subscribeForm.email,
+        signup_type: 'infopilot'
+      });
+      showToast(`🎉 Welcome to InfoPilot Explorer! Your ${selectedPlan} subscription is confirmed!`, 'success');
+      setSubscribeDialog(false);
+      setSubscribeForm({ name: '', email: '' });
+    } catch (error) {
+      if (error.response?.data?.detail?.includes('already subscribed')) {
+        showToast('You are already an InfoPilot member! 🚀', 'error');
+      } else {
+        showToast('Error subscribing. Please try again!', 'error');
+      }
+    }
+    setLoading(false);
+  };
+
+  return (
+    <section className="min-h-screen py-20 px-4" data-testid="infopilot-section">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-12 animate-slide-in">
+          <Badge className="mb-2 bg-blue-600/30 text-blue-300 border-blue-500/30 text-xs px-3 py-1">
+            ✈️ A Top Pilot Enterprises, Inc. Company
+          </Badge>
+          <Badge className="mb-4 bg-purple-500/20 text-purple-300 border-purple-500/30 ml-2">
+            🌐 Boolean Search & Categorization Platform
+          </Badge>
+          <h2 className="text-4xl md:text-5xl font-bold text-gradient-gold mb-4">
+            InfoPilot Explorer
+          </h2>
+          <p className="text-xl text-white/80">
+            Mobile & Desktop Application for Information Exchange
+          </p>
+          <p className="text-lg text-white/60 mt-2">
+            Built for Scholars and Tradesmen - Only $0.99/month!
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8 mb-12">
+          {/* Monthly Plan */}
+          <Card 
+            className={`card-glass p-6 cursor-pointer transition-all ${selectedPlan === 'monthly' ? 'border-2 border-yellow-400 scale-105' : 'border border-white/20'}`}
+            onClick={() => setSelectedPlan('monthly')}
+            data-testid="plan-monthly"
+          >
+            <div className="text-center">
+              <Badge className="bg-green-500/20 text-green-300 mb-4">Most Popular</Badge>
+              <h3 className="text-2xl font-bold text-white mb-2">Monthly Plan</h3>
+              <div className="text-5xl font-bold text-yellow-400 mb-4">
+                $0.99<span className="text-lg text-white/60">/mo</span>
+              </div>
+              <ul className="text-left space-y-3 text-white/80">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-400" size={18} />
+                  Unlimited Boolean Searches
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-400" size={18} />
+                  Category Organization
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-400" size={18} />
+                  Collaboration Tools
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-400" size={18} />
+                  Priority Support
+                </li>
+              </ul>
+            </div>
+          </Card>
+
+          {/* Yearly Plan */}
+          <Card 
+            className={`card-glass p-6 cursor-pointer transition-all ${selectedPlan === 'yearly' ? 'border-2 border-yellow-400 scale-105' : 'border border-white/20'}`}
+            onClick={() => setSelectedPlan('yearly')}
+            data-testid="plan-yearly"
+          >
+            <div className="text-center">
+              <Badge className="bg-yellow-500/20 text-yellow-300 mb-4">Save 15%</Badge>
+              <h3 className="text-2xl font-bold text-white mb-2">Yearly Plan</h3>
+              <div className="text-5xl font-bold text-yellow-400 mb-4">
+                $9.99<span className="text-lg text-white/60">/yr</span>
+              </div>
+              <ul className="text-left space-y-3 text-white/80">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-400" size={18} />
+                  All Monthly Features
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-400" size={18} />
+                  Advanced Analytics
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-400" size={18} />
+                  Custom Categories
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="text-green-400" size={18} />
+                  API Access
+                </li>
+              </ul>
+            </div>
+          </Card>
+        </div>
+
+        <div className="text-center">
+          <Dialog open={subscribeDialog} onOpenChange={setSubscribeDialog}>
+            <DialogTrigger asChild>
+              <Button className="btn-gold text-xl px-12 py-8" data-testid="subscribe-infopilot-btn">
+                <Rocket className="mr-2" /> Subscribe Now - {selectedPlan === 'monthly' ? '$0.99/mo' : '$9.99/yr'}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-slate-900 border-yellow-400/30" data-testid="subscribe-dialog">
+              <DialogHeader>
+                <DialogTitle className="text-yellow-400 text-2xl">Join InfoPilot Explorer</DialogTitle>
+                <DialogDescription className="text-white/70">
+                  Start your journey to better information management!
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label className="text-white">Full Name</Label>
+                  <Input 
+                    className="form-input mt-2"
+                    placeholder="Enter your name"
+                    value={subscribeForm.name}
+                    onChange={(e) => setSubscribeForm({...subscribeForm, name: e.target.value})}
+                    data-testid="subscribe-name"
+                  />
+                </div>
+                <div>
+                  <Label className="text-white">Email</Label>
+                  <Input 
+                    className="form-input mt-2"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={subscribeForm.email}
+                    onChange={(e) => setSubscribeForm({...subscribeForm, email: e.target.value})}
+                    data-testid="subscribe-email"
+                  />
+                </div>
+                <div className="bg-yellow-400/10 p-4 rounded-lg">
+                  <div className="flex justify-between text-white">
+                    <span>Plan:</span>
+                    <span className="capitalize font-semibold">{selectedPlan}</span>
+                  </div>
+                  <div className="flex justify-between text-white mt-2">
+                    <span>Price:</span>
+                    <span className="text-2xl font-bold text-yellow-400">
+                      {selectedPlan === 'monthly' ? '$0.99/mo' : '$9.99/yr'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  onClick={handleSubscribe} 
+                  className="btn-gold w-full"
+                  disabled={loading}
+                  data-testid="confirm-subscribe-btn"
+                >
+                  {loading ? 'Processing...' : 'Start My Subscription 🚀'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Features Grid */}
+        <div className="mt-16 grid md:grid-cols-3 gap-6">
+          <Card className="card-glass p-6 text-center">
+            <div className="text-4xl mb-4">🔍</div>
+            <h4 className="text-xl font-bold text-yellow-400 mb-2">Boolean Search</h4>
+            <p className="text-white/70">Advanced search capabilities for scholars and researchers</p>
+          </Card>
+          <Card className="card-glass p-6 text-center">
+            <div className="text-4xl mb-4">📂</div>
+            <h4 className="text-xl font-bold text-yellow-400 mb-2">Smart Categories</h4>
+            <p className="text-white/70">Organize information with intelligent categorization</p>
+          </Card>
+          <Card className="card-glass p-6 text-center">
+            <div className="text-4xl mb-4">🤝</div>
+            <h4 className="text-xl font-bold text-yellow-400 mb-2">Collaboration</h4>
+            <p className="text-white/70">Share and collaborate with fellow tradesmen</p>
+          </Card>
+        </div>
+      </div>
+    </section>
+  );
+};
 
 // Main App Component
 function App() {
@@ -1199,6 +1429,8 @@ function App() {
         return <BookSection showToast={showToast} />;
       case 'food':
         return <FoodSection showToast={showToast} />;
+      case 'infopilot':
+        return <InfoPilotSection showToast={showToast} />;
       case 'testimonials':
         return <TestimonialsSection />;
       case 'contact':
