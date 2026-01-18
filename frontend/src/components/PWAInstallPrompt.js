@@ -2,22 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Download, X, Smartphone } from 'lucide-react';
 
+// Check if installed synchronously
+const checkIsInstalled = () => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(display-mode: standalone)').matches;
+};
+
+// Check if iOS
+const checkIsIOS = () => {
+  if (typeof navigator === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+};
+
 const PWAInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPrompt, setShowPrompt] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [isInstalled, setIsInstalled] = useState(false);
+  
+  // Initialize values synchronously
+  const isInstalled = checkIsInstalled();
+  const isIOS = checkIsIOS();
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setIsInstalled(true);
-      return;
-    }
-
-    // Check if iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    setIsIOS(isIOSDevice);
+    // Skip if already installed
+    if (isInstalled) return;
 
     // Listen for the beforeinstallprompt event
     const handleBeforeInstall = (e) => {
@@ -40,14 +47,14 @@ const PWAInstallPrompt = () => {
     }
 
     // Show iOS prompt after delay
-    if (isIOSDevice && !window.matchMedia('(display-mode: standalone)').matches) {
+    if (isIOS) {
       setTimeout(() => setShowPrompt(true), 5000);
     }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
     };
-  }, []);
+  }, [isInstalled, isIOS]);
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
