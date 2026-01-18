@@ -110,6 +110,7 @@ const AppContent = () => {
           <Route path="/payment/success" element={<PaymentSuccess />} />
           <Route path="/payment/cancel" element={<PaymentCancel />} />
           <Route path="/subscribe" element={<ProtectedRoute><SubscriptionCheckout /></ProtectedRoute>} />
+          <Route path="/subscription" element={<ProtectedRoute><SubscriptionDashboard /></ProtectedRoute>} />
           
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" />} />
