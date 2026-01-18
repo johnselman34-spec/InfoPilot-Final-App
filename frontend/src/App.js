@@ -1249,7 +1249,7 @@ const InfoPilotSection = ({ showToast }) => {
             Mobile & Desktop Application for Information Exchange
           </p>
           <p className="text-lg text-white/60 mt-2">
-            Built for Scholars and Tradesmen - Only $0.99/month!
+            Built for Scholars and Tradesmen - Only $1/month!
           </p>
         </div>
 
@@ -1264,7 +1264,7 @@ const InfoPilotSection = ({ showToast }) => {
               <Badge className="bg-green-500/20 text-green-300 mb-4">Most Popular</Badge>
               <h3 className="text-2xl font-bold text-white mb-2">Monthly Plan</h3>
               <div className="text-5xl font-bold text-yellow-400 mb-4">
-                $0.99<span className="text-lg text-white/60">/mo</span>
+                $1.00<span className="text-lg text-white/60">/mo</span>
               </div>
               <ul className="text-left space-y-3 text-white/80">
                 <li className="flex items-center gap-2">
@@ -1294,10 +1294,10 @@ const InfoPilotSection = ({ showToast }) => {
             data-testid="plan-yearly"
           >
             <div className="text-center">
-              <Badge className="bg-yellow-500/20 text-yellow-300 mb-4">Save 15%</Badge>
+              <Badge className="bg-yellow-500/20 text-yellow-300 mb-4">Save 17%</Badge>
               <h3 className="text-2xl font-bold text-white mb-2">Yearly Plan</h3>
               <div className="text-5xl font-bold text-yellow-400 mb-4">
-                $9.99<span className="text-lg text-white/60">/yr</span>
+                $9.98<span className="text-lg text-white/60">/yr</span>
               </div>
               <ul className="text-left space-y-3 text-white/80">
                 <li className="flex items-center gap-2">
