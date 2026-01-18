@@ -175,11 +175,10 @@ const ChatPage = () => {
     };
   }, [user, token, getWebSocketUrl, showToast, handleMessage]);
 
-  // Store connect function in ref
-  connectFnRef.current = connectWebSocket;
-
   // Connect on mount
   useEffect(() => {
+    // Store connect function in ref for reconnection
+    connectFnRef.current = connectWebSocket;
     connectWebSocket();
     
     return () => {
