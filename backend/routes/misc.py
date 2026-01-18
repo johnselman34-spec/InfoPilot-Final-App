@@ -287,8 +287,8 @@ async def get_map_data(scope: str = "personal", user: Dict = Depends(require_use
 async def get_leaderboard_alias():
     """Get laughter points leaderboard (top-level alias).
     
-    Optimized: Uses $lookup aggregation to avoid N+1 queries.
+    Optimized: Uses $lookup aggregation and caching.
     """
-    from utils.db_optimization import get_leaderboard_optimized
-    return await get_leaderboard_optimized()
+    from utils.cache import cached_leaderboard
+    return await cached_leaderboard()
 
