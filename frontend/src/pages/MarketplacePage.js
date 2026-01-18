@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -9,18 +9,26 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../compone
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Store, CreditCard, Copy, CheckCircle } from 'lucide-react';
+import { Store, CreditCard, Copy, CheckCircle, Lock, Unlock } from 'lucide-react';
 import { API } from '../utils/api';
 
 const MarketplacePage = () => {
   const { user } = useAuth();
   const showToast = useToast();
+  const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showSellerInfo, setShowSellerInfo] = useState(false);
   
   const { data: protocols, isLoading } = useQuery({
     queryKey: ["marketplace", selectedCategory],
     queryFn: () => axios.get(`${API}/marketplace/protocols`, { params: selectedCategory !== "all" ? { category: selectedCategory } : {} }).then(r => r.data)
+  });
+
+  // Fetch user's purchased/owned protocols
+  const { data: accessData } = useQuery({
+    queryKey: ["my-purchases"],
+    queryFn: () => axios.get(`${API}/marketplace/my-purchases`).then(r => r.data),
+    enabled: !!user
   });
 
   // Use Stripe for payments
@@ -42,7 +50,43 @@ const MarketplacePage = () => {
     onError: (err) => showToast(err.response?.data?.detail || "Purchase failed", "error")
   });
 
+  // Copy protocol mutation - validates access on backend
+  const copyMutation = useMutation({
+    mutationFn: async (protocolId) => {
+      const response = await axios.post(`${API}/marketplace/copy-protocol/${protocolId}`);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      navigator.clipboard.writeText(data.protocol);
+      showToast("Protocol copied to clipboard!", "success");
+    },
+    onError: (err) => {
+      const detail = err.response?.data?.detail || "Cannot copy this protocol";
+      showToast(detail, "error");
+    }
+  });
+
   if (!user) return <Navigate to="/login" />;
+
+  // Check if user has access to a protocol (owns or purchased)
+  const hasAccess = (protocolId, protocolUserId) => {
+    if (protocolUserId === user.id) return true; // User owns it
+    if (!accessData) return false;
+    return accessData.all_accessible_ids?.includes(protocolId) || false;
+  };
+
+  // Handle copy click
+  const handleCopy = (protocol) => {
+    const canAccess = hasAccess(protocol.id, protocol.user_id);
+    if (canAccess) {
+      // Direct copy for owned/purchased protocols
+      navigator.clipboard.writeText(protocol.protocol);
+      showToast("Protocol copied to clipboard!", "success");
+    } else {
+      // Try to copy via backend (will return error with price info)
+      copyMutation.mutate(protocol.id);
+    }
+  };
 
   // Extract unique category keywords for filtering
   const categoryKeywords = ["History", "Technology", "Science", "Business", "Health", "Sports", "Education", "Entertainment"];
@@ -102,31 +146,85 @@ const MarketplacePage = () => {
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {protocolList.map(p => (
-              <Card key={p.id} className="card-glass p-4 hover:border-yellow-400/50 transition" data-testid={`protocol-${p.id}`}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-white text-lg">{p.name}</CardTitle>
-                    <Badge className="bg-green-500/20 text-green-300 font-bold">${p.price?.toFixed(2)}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="py-2">
-                  <div className="bg-slate-800/50 p-2 rounded font-mono text-xs text-green-400 mb-3 max-h-16 overflow-y-auto">{p.protocol}</div>
-                  <div className="flex items-center justify-between text-white/50 text-xs">
-                    <span>By: {p.owner?.username || "Anonymous"}</span>
-                    <span>{p.search_result_count || 0} results</span>
-                  </div>
-                </CardContent>
-                <CardFooter className="pt-2 flex gap-2">
-                  <Button onClick={() => buyMutation.mutate(p)} className="btn-gold flex-1" disabled={buyMutation.isPending || p.user_id === user.id} data-testid={`buy-protocol-${p.id}`}>
-                    <CreditCard className="mr-2" size={16} /> {p.user_id === user.id ? "Your Protocol" : "Buy Protocol"}
-                  </Button>
-                  <Button variant="outline" onClick={() => { navigator.clipboard.writeText(p.protocol); showToast("Protocol copied!", "success"); }} title="Copy Protocol">
-                    <Copy size={16} />
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+            {protocolList.map(p => {
+              const canAccess = hasAccess(p.id, p.user_id);
+              const isOwner = p.user_id === user.id;
+              
+              return (
+                <Card key={p.id} className="card-glass p-4 hover:border-yellow-400/50 transition" data-testid={`protocol-${p.id}`}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-white text-lg">{p.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        {canAccess ? (
+                          <Badge className="bg-green-500/20 text-green-300" title={isOwner ? "Your protocol" : "Purchased"}>
+                            <Unlock size={12} className="mr-1" /> {isOwner ? "Owned" : "Purchased"}
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-orange-500/20 text-orange-300" title="Purchase required to copy">
+                            <Lock size={12} className="mr-1" /> ${p.price?.toFixed(2)}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="py-2">
+                    {/* Protocol display - blur if not purchased */}
+                    <div 
+                      className={`bg-slate-800/50 p-2 rounded font-mono text-xs text-green-400 mb-3 max-h-16 overflow-y-auto ${!canAccess ? 'select-none blur-sm hover:blur-none transition-all duration-300' : ''}`}
+                      style={!canAccess ? { userSelect: 'none', WebkitUserSelect: 'none' } : {}}
+                      onCopy={(e) => {
+                        if (!canAccess) {
+                          e.preventDefault();
+                          showToast(`Purchase this protocol ($${p.price?.toFixed(2)}) to copy it`, "error");
+                        }
+                      }}
+                    >
+                      {p.protocol}
+                    </div>
+                    {!canAccess && (
+                      <p className="text-orange-400/80 text-xs mb-2 flex items-center gap-1">
+                        <Lock size={12} /> Purchase to copy this protocol
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between text-white/50 text-xs">
+                      <span>By: {p.owner?.username || "Anonymous"}</span>
+                      <span>{p.search_result_count || 0} results</span>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="pt-2 flex gap-2">
+                    {isOwner ? (
+                      <Button variant="outline" className="flex-1" disabled>
+                        Your Protocol
+                      </Button>
+                    ) : canAccess ? (
+                      <Button variant="outline" className="flex-1 border-green-400/50 text-green-400" disabled>
+                        <CheckCircle className="mr-2" size={16} /> Already Purchased
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={() => buyMutation.mutate(p)} 
+                        className="btn-gold flex-1" 
+                        disabled={buyMutation.isPending} 
+                        data-testid={`buy-protocol-${p.id}`}
+                      >
+                        <CreditCard className="mr-2" size={16} /> Buy ${p.price?.toFixed(2)}
+                      </Button>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleCopy(p)} 
+                      title={canAccess ? "Copy Protocol" : "Purchase required"}
+                      disabled={copyMutation.isPending}
+                      className={!canAccess ? 'opacity-50' : ''}
+                      data-testid={`copy-protocol-${p.id}`}
+                    >
+                      {canAccess ? <Copy size={16} /> : <Lock size={16} />}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         )}
 
@@ -142,7 +240,7 @@ const MarketplacePage = () => {
                 <h4 className="text-green-400 font-semibold mb-2">How It Works</h4>
                 <ul className="text-white/70 text-sm space-y-2">
                   <li className="flex items-start gap-2"><CheckCircle className="text-green-400 mt-0.5" size={16} /> Create a protocol in Ultimate Search</li>
-                  <li className="flex items-start gap-2"><CheckCircle className="text-green-400 mt-0.5" size={16} /> Set a price and mark it "For Sale"</li>
+                  <li className="flex items-start gap-2"><CheckCircle className="text-green-400 mt-0.5" size={16} /> Set a price and mark it &ldquo;For Sale&rdquo;</li>
                   <li className="flex items-start gap-2"><CheckCircle className="text-green-400 mt-0.5" size={16} /> Buyers pay via Stripe (secure checkout)</li>
                   <li className="flex items-start gap-2"><CheckCircle className="text-green-400 mt-0.5" size={16} /> You receive 85% of each sale</li>
                 </ul>
@@ -157,6 +255,15 @@ const MarketplacePage = () => {
                   <span>Platform Fee:</span>
                   <span className="text-white/50">15%</span>
                 </div>
+              </Card>
+              <Card className="bg-orange-900/20 border-orange-400/30 p-4">
+                <h4 className="text-orange-400 font-semibold mb-2 flex items-center gap-2">
+                  <Lock size={16} /> Copy Protection
+                </h4>
+                <p className="text-white/70 text-sm">
+                  Protocols for sale are protected from copying. Only buyers who complete 
+                  their purchase can copy the protocol to their clipboard.
+                </p>
               </Card>
               <div className="text-center">
                 <Link to="/search">
