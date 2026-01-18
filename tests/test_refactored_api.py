@@ -7,7 +7,7 @@ import requests
 import os
 import io
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://infojethub.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://search-pilot.preview.emergentagent.com').rstrip('/')
 
 # Test credentials - using new test user
 TEST_EMAIL = "testuser_new@example.com"

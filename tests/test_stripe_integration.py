@@ -7,7 +7,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://infojethub.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://search-pilot.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 TEST_USER_EMAIL = "testuser_new@example.com"
@@ -88,7 +88,7 @@ class TestStripeCheckoutSubscription:
         """POST /api/stripe/create-checkout with package_type:monthly"""
         response = authenticated_client.post(f"{BASE_URL}/api/stripe/create-checkout", json={
             "package_type": "monthly",
-            "origin_url": "https://infojethub.preview.emergentagent.com"
+            "origin_url": "https://search-pilot.preview.emergentagent.com"
         })
         
         assert response.status_code == 200
@@ -113,7 +113,7 @@ class TestStripeCheckoutSubscription:
         """POST /api/stripe/create-checkout with package_type:yearly"""
         response = authenticated_client.post(f"{BASE_URL}/api/stripe/create-checkout", json={
             "package_type": "yearly",
-            "origin_url": "https://infojethub.preview.emergentagent.com"
+            "origin_url": "https://search-pilot.preview.emergentagent.com"
         })
         
         assert response.status_code == 200
@@ -137,7 +137,7 @@ class TestStripeCheckoutSubscription:
         """POST /api/stripe/create-checkout with invalid package_type should fail"""
         response = authenticated_client.post(f"{BASE_URL}/api/stripe/create-checkout", json={
             "package_type": "invalid_package",
-            "origin_url": "https://infojethub.preview.emergentagent.com"
+            "origin_url": "https://search-pilot.preview.emergentagent.com"
         })
         
         # Should return 400 for invalid package type
@@ -152,7 +152,7 @@ class TestStripeCheckoutSubscription:
         
         response = unauthenticated.post(f"{BASE_URL}/api/stripe/create-checkout", json={
             "package_type": "monthly",
-            "origin_url": "https://infojethub.preview.emergentagent.com"
+            "origin_url": "https://search-pilot.preview.emergentagent.com"
         })
         
         # Should return 401 or 403 for unauthenticated request
@@ -168,7 +168,7 @@ class TestStripeCheckoutProtocol:
         response = authenticated_client.post(f"{BASE_URL}/api/stripe/create-checkout", json={
             "protocol_id": "non_existent_protocol_id",
             "package_type": "protocol_purchase",
-            "origin_url": "https://infojethub.preview.emergentagent.com"
+            "origin_url": "https://search-pilot.preview.emergentagent.com"
         })
         
         # Should return 404 for non-existent protocol
@@ -179,7 +179,7 @@ class TestStripeCheckoutProtocol:
         """POST /api/stripe/create-checkout with protocol_purchase but no protocol_id should fail"""
         response = authenticated_client.post(f"{BASE_URL}/api/stripe/create-checkout", json={
             "package_type": "protocol_purchase",
-            "origin_url": "https://infojethub.preview.emergentagent.com"
+            "origin_url": "https://search-pilot.preview.emergentagent.com"
         })
         
         # Should return 400 for missing protocol_id

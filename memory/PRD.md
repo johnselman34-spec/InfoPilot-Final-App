@@ -115,7 +115,7 @@ SENDER_EMAIL=onboarding@resend.dev
 BRAVE_SEARCH_API_KEY=BSAtWLc66Hm5o8qYvBOsOfoYmNnhjWR
 
 # Frontend URL
-FRONTEND_URL=https://infojethub.preview.emergentagent.com
+FRONTEND_URL=https://search-pilot.preview.emergentagent.com
 
 # PayPal - BLOCKED (user account issues)
 PAYPAL_CLIENT_ID=
