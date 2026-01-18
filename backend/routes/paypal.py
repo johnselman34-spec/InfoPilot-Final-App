@@ -79,7 +79,40 @@ async def get_paypal_config():
         "mode": PAYPAL_MODE,
         "business_email": PAYPAL_BUSINESS_EMAIL,
         "client_id_preview": PAYPAL_CLIENT_ID[:10] + "..." if PAYPAL_CLIENT_ID else None,
-        "simple_payments_enabled": True  # Always enabled via direct PayPal links
+        "simple_payments_enabled": True,  # Always enabled via direct PayPal links
+        "api_url": PAYPAL_API_URL,
+        "frontend_url": FRONTEND_URL
+    }
+
+
+@router.get("/test-payment-link")
+async def get_test_payment_link():
+    """Generate a test PayPal payment link to verify the business account works."""
+    test_url = (
+        f"https://www.paypal.com/cgi-bin/webscr?"
+        f"cmd=_xclick"
+        f"&business={PAYPAL_BUSINESS_EMAIL}"
+        f"&item_name=InfoPilot+Test+Payment"
+        f"&amount=1.00"
+        f"&currency_code=USD"
+        f"&return={FRONTEND_URL}/marketplace/success?test=true"
+        f"&cancel_return={FRONTEND_URL}/marketplace/cancel"
+    )
+    
+    # Alternative: PayPal.me link
+    paypalme_url = f"https://www.paypal.com/paypalme/JJspilot24/1"
+    
+    return {
+        "message": "Test these links to verify your PayPal account is working",
+        "standard_checkout_url": test_url,
+        "paypalme_url": paypalme_url,
+        "business_email": PAYPAL_BUSINESS_EMAIL,
+        "instructions": [
+            "1. Click one of the test links below",
+            "2. If you see 'Something went wrong', your PayPal account may need configuration",
+            "3. Log into PayPal.com and check for any account alerts or verification requirements",
+            "4. Make sure your account can receive payments"
+        ]
     }
 
 
