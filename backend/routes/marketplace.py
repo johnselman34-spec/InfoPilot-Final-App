@@ -1,7 +1,7 @@
 """
 InfoPilot Explorer - Marketplace Routes
 Protocol marketplace with PayPal integration
-Optimized with aggregation pipelines to avoid N+1 queries
+Optimized with aggregation pipelines and caching
 """
 from fastapi import APIRouter, HTTPException, Body, Depends, Query
 from typing import Dict, Optional
@@ -11,7 +11,7 @@ import os
 
 from utils.db import db
 from utils.auth import require_user
-from utils.db_optimization import get_marketplace_protocols_optimized
+from utils.cache import cached_marketplace, invalidate_marketplace_cache
 
 # PayPal configuration - read from environment
 PAYPAL_BUSINESS_EMAIL = os.environ.get("PAYPAL_BUSINESS_EMAIL", "JJspilot24@gmail.com")
@@ -23,9 +23,9 @@ router = APIRouter(prefix="/marketplace", tags=["Marketplace"])
 async def get_marketplace_protocols(category: Optional[str] = None):
     """Get protocols available in the marketplace.
     
-    Optimized: Uses aggregation pipeline with $lookup to avoid N+1 queries.
+    Optimized: Uses aggregation pipeline with $lookup and caching.
     """
-    protocols = await get_marketplace_protocols_optimized(category, limit=100)
+    protocols = await cached_marketplace(category)
     return {"protocols": protocols, "total": len(protocols)}
 
 
