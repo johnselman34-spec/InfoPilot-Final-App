@@ -150,7 +150,7 @@ async def monitor_services_once(admin_email: Optional[str] = None) -> Dict:
                     sent = await send_service_alert(
                         service_name,
                         "recovered",
-                        f"Service is back online",
+                        "Service is back online",
                         admin_email
                     )
                     if sent:
