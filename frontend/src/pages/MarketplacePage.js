@@ -118,7 +118,7 @@ const MarketplacePage = () => {
                   </div>
                 </CardContent>
                 <CardFooter className="pt-2 flex gap-2">
-                  <Button onClick={() => buyMutation.mutate(p.id)} className="btn-gold flex-1" disabled={buyMutation.isPending || p.user_id === user.id} data-testid={`buy-protocol-${p.id}`}>
+                  <Button onClick={() => buyMutation.mutate(p)} className="btn-gold flex-1" disabled={buyMutation.isPending || p.user_id === user.id} data-testid={`buy-protocol-${p.id}`}>
                     <CreditCard className="mr-2" size={16} /> {p.user_id === user.id ? "Your Protocol" : "Buy Protocol"}
                   </Button>
                   <Button variant="outline" onClick={() => { navigator.clipboard.writeText(p.protocol); showToast("Protocol copied!", "success"); }} title="Copy Protocol">
