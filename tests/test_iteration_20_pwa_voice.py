@@ -153,7 +153,7 @@ class TestExistingFeatures:
     
     def test_marketplace_endpoint(self):
         """Test marketplace endpoint works"""
-        response = self.session.get(f"{BASE_URL}/api/marketplace")
+        response = self.session.get(f"{BASE_URL}/api/marketplace/protocols")
         assert response.status_code == 200, f"Marketplace endpoint failed: {response.status_code}"
         data = response.json()
         assert 'protocols' in data, "Missing protocols in response"
