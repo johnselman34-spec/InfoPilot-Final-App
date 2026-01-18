@@ -96,7 +96,7 @@ class TestCategoriesCRUD:
         # First create a category to update
         test_category = {
             "name": "TEST_SaveProtocol_Category",
-            "protocol": "original OR protocol",
+            "protocol": "(original or protocol)",
             "is_public": False
         }
         
@@ -107,7 +107,7 @@ class TestCategoriesCRUD:
         # Now update the category (Save Protocol)
         update_data = {
             "name": "TEST_SaveProtocol_Updated",
-            "protocol": "updated OR protocol OR test",
+            "protocol": "(updated or protocol or test)",
             "is_public": True
         }
         
@@ -130,7 +130,7 @@ class TestCategoriesCRUD:
         # Create a category to delete
         test_category = {
             "name": "TEST_Delete_Category",
-            "protocol": "delete OR test",
+            "protocol": "(delete or test)",
             "is_public": False
         }
         
