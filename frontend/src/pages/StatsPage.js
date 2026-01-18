@@ -13,7 +13,7 @@ const API = process.env.REACT_APP_BACKEND_URL + '/api';
 const StatsPage = () => {
   const { user } = useAuth();
   const { data: stats } = useQuery({ queryKey: ["stats"], queryFn: () => axios.get(`${API}/stats`).then(r => r.data) });
-  const { data: leaderboard } = useQuery({ queryKey: ["leaderboard"], queryFn: () => axios.get(`${API}/users/leaderboard`).then(r => r.data) });
+  const { data: leaderboard } = useQuery({ queryKey: ["leaderboard"], queryFn: () => axios.get(`${API}/leaderboard`).then(r => r.data) });
 
   if (!user) return <Navigate to="/login" />;
 
