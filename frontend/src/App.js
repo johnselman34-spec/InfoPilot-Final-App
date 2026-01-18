@@ -45,6 +45,7 @@ const MarketplaceCancel = lazy(() => import('./pages/MarketplaceResultPages').th
 const PaymentSuccess = lazy(() => import('./pages/PaymentPages').then(m => ({ default: m.PaymentSuccess })));
 const PaymentCancel = lazy(() => import('./pages/PaymentPages').then(m => ({ default: m.PaymentCancel })));
 const SubscriptionCheckout = lazy(() => import('./pages/PaymentPages').then(m => ({ default: m.SubscriptionCheckout })));
+const SubscriptionDashboard = lazy(() => import('./pages/SubscriptionDashboard'));
 
 // CSS
 import './App.css';
