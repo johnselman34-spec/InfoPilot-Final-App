@@ -98,7 +98,7 @@ async def setup_admin(secret_key: str = Body(..., embed=True)):
     Requires a secret key for security.
     """
     # Security check - use a secret key to prevent unauthorized access
-    if secret_key != "infopilot_setup_2024_bear":
+    if secret_key != ADMIN_SETUP_SECRET_KEY:
         raise HTTPException(status_code=403, detail="Invalid setup key")
     
     # Check if admin already exists
