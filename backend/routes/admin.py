@@ -99,9 +99,13 @@ async def get_system_status(user: Dict = Depends(require_admin)):
     # Cache status
     cache_status = {"enabled": False}
     try:
-        from utils.cache import _cache
+        from utils.cache import marketplace_cache, leaderboard_cache, search_cache
         cache_status["enabled"] = True
-        cache_status["entries"] = len(_cache)
+        cache_status["entries"] = (
+            marketplace_cache.stats().get("total_entries", 0) +
+            leaderboard_cache.stats().get("total_entries", 0) +
+            search_cache.stats().get("total_entries", 0)
+        )
     except Exception:
         pass
     
