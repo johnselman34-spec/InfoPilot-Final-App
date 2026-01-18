@@ -22,6 +22,7 @@ from routes import auth, categories, search, groups, pages, chat, reports, marke
 
 # Import WebSocket handler
 from utils.websocket import websocket_handler
+from utils.db_optimization import create_indexes
 
 
 @asynccontextmanager
@@ -29,7 +30,10 @@ async def lifespan(app: FastAPI):
     """Application startup and shutdown events."""
     logger.info("🚀 InfoPilot Explorer API starting...")
     
-    # Create indexes for better performance
+    # Create comprehensive indexes for better performance
+    await create_indexes()
+    
+    # Legacy indexes (kept for backward compatibility)
     await db.users.create_index("email", unique=True)
     await db.users.create_index("username", unique=True)
     await db.users.create_index("id", unique=True)
