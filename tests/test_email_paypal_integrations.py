@@ -221,8 +221,8 @@ class TestRestoredPages:
         assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
         
         data = response.json()
-        assert "total_earnings" in data or "earnings" in data, "Response should have earnings data"
-        print(f"✓ Revenue dashboard API working")
+        assert "total_revenue" in data or "total_earnings" in data, "Response should have revenue data"
+        print(f"✓ Revenue dashboard API working: {list(data.keys())}")
     
     def test_templates_api(self, api_client, auth_token):
         """GET /api/templates - Templates page API"""
