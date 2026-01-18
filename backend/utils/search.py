@@ -1,12 +1,16 @@
 """
 InfoPilot Explorer - Search Utilities
 DuckDuckGo + Brave Search integration, protocol parsing, document classification
+Includes paywall filtering and Elasticsearch integration
 """
 import re
 import os
 import logging
 import requests
 from typing import List, Dict, Optional, Tuple
+
+# Import paywall filter
+from utils.paywall_filter import filter_paywalled_results
 
 # Brave Search API Configuration
 BRAVE_SEARCH_API_KEY = os.environ.get("BRAVE_SEARCH_API_KEY", "")
