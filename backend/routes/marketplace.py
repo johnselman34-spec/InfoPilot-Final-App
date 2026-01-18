@@ -1,6 +1,7 @@
 """
 InfoPilot Explorer - Marketplace Routes
 Protocol marketplace with PayPal integration
+Optimized with aggregation pipelines to avoid N+1 queries
 """
 from fastapi import APIRouter, HTTPException, Body, Depends, Query
 from typing import Dict, Optional
@@ -10,6 +11,7 @@ import os
 
 from utils.db import db
 from utils.auth import require_user
+from utils.db_optimization import get_marketplace_protocols_optimized
 
 # PayPal configuration - read from environment
 PAYPAL_BUSINESS_EMAIL = os.environ.get("PAYPAL_BUSINESS_EMAIL", "JJspilot24@gmail.com")
@@ -19,29 +21,21 @@ router = APIRouter(prefix="/marketplace", tags=["Marketplace"])
 
 @router.get("/protocols")
 async def get_marketplace_protocols(category: Optional[str] = None):
-    """Get protocols available in the marketplace."""
-    query = {"is_public": True, "price": {"$gt": 0}}
+    """Get protocols available in the marketplace.
     
-    if category and category != "all":
-        query["$or"] = [
-            {"name": {"$regex": category, "$options": "i"}},
-            {"protocol": {"$regex": category, "$options": "i"}}
-        ]
-    
-    categories = await db.categories.find(query, {"_id": 0}).to_list(100)
-    
-    # Enrich with owner info
-    for cat in categories:
-        owner = await db.users.find_one({"id": cat["user_id"]}, {"_id": 0, "username": 1})
-        cat["owner"] = owner
-    
-    return {"protocols": categories, "total": len(categories)}
+    Optimized: Uses aggregation pipeline with $lookup to avoid N+1 queries.
+    """
+    protocols = await get_marketplace_protocols_optimized(category, limit=100)
+    return {"protocols": protocols, "total": len(protocols)}
 
 
 @router.post("/buy/{protocol_id}")
 async def buy_protocol(protocol_id: str, user: Dict = Depends(require_user)):
     """Initiate purchase of a protocol."""
-    category = await db.categories.find_one({"id": protocol_id, "is_public": True, "price": {"$gt": 0}})
+    category = await db.categories.find_one(
+        {"id": protocol_id, "is_public": True, "price": {"$gt": 0}},
+        {"_id": 0}
+    )
     if not category:
         raise HTTPException(status_code=404, detail="Protocol not found or not for sale")
     
@@ -72,12 +66,15 @@ async def buy_protocol(protocol_id: str, user: Dict = Depends(require_user)):
 @router.post("/purchase/complete/{purchase_id}")
 async def complete_purchase(purchase_id: str, user: Dict = Depends(require_user)):
     """Complete a purchase and copy protocol to buyer."""
-    purchase = await db.purchases.find_one({"id": purchase_id, "buyer_id": user["id"], "status": "pending"})
+    purchase = await db.purchases.find_one(
+        {"id": purchase_id, "buyer_id": user["id"], "status": "pending"},
+        {"_id": 0}
+    )
     if not purchase:
         raise HTTPException(status_code=404, detail="Purchase not found")
     
     # Get original category
-    original = await db.categories.find_one({"id": purchase["protocol_id"]})
+    original = await db.categories.find_one({"id": purchase["protocol_id"]}, {"_id": 0})
     if not original:
         raise HTTPException(status_code=404, detail="Original protocol not found")
     
