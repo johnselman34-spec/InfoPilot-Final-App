@@ -241,7 +241,7 @@ const AdminDashboard = () => {
                   </div>
                   {maintenance?.enabled && maintenance?.message && (
                     <p className="mt-3 text-white/60 text-sm italic">
-                      "{maintenance.message}"
+                      &ldquo;{maintenance.message}&rdquo;
                     </p>
                   )}
                 </CardContent>
