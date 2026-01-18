@@ -50,6 +50,11 @@ SUBSCRIPTION_PACKAGES = {
         "name": "InfoPilot Yearly", 
         "amount": 9.98,
         "description": "Yearly subscription to InfoPilot Explorer (save 17%!)"
+    },
+    "book": {
+        "name": "Letters to Evelyn - eBook",
+        "amount": 9.98,
+        "description": "Digital copy of Letters to Evelyn by John Selman"
     }
 }
 
