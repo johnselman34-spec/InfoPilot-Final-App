@@ -89,7 +89,29 @@ class InfoPilotAPITester:
                     print(f"   ❌ {format_type}: Expected ${expected_price}, got ${response.get(format_type, 'missing')}")
         return success, response
 
-    def test_book_order(self):
+    def test_company_info(self):
+        """Test company information endpoint"""
+        return self.run_test("Company Info", "GET", "company", 200)
+
+    def test_infopilot_plans(self):
+        """Test InfoPilot subscription plans endpoint"""
+        success, response = self.run_test("InfoPilot Plans", "GET", "infopilot/plans", 200)
+        if success:
+            # Verify expected plans
+            if 'monthly' in response and 'yearly' in response:
+                monthly_price = response['monthly'].get('price', 0)
+                yearly_price = response['yearly'].get('price', 0)
+                print(f"   ✅ Monthly plan: ${monthly_price}")
+                print(f"   ✅ Yearly plan: ${yearly_price}")
+                if monthly_price == 0.99:
+                    print(f"   ✅ Monthly price correct: $0.99")
+                else:
+                    print(f"   ❌ Monthly price incorrect: Expected $0.99, got ${monthly_price}")
+                if yearly_price == 9.99:
+                    print(f"   ✅ Yearly price correct: $9.99")
+                else:
+                    print(f"   ❌ Yearly price incorrect: Expected $9.99, got ${yearly_price}")
+        return success, response
         """Test book order creation"""
         order_data = {
             "customer_name": "Test Customer",
