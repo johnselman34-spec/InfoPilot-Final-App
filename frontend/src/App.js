@@ -972,15 +972,11 @@ const FoodSection = ({ showToast }) => {
                     </Button>
                   ) : (
                     <div className="mt-4 bg-white/10 p-4 rounded-lg">
-                      <p className="text-white/80 text-sm mb-3 text-center">
-                        Complete your order securely with PayPal
-                      </p>
-                      <PayPalButton 
+                      <PayPalPaymentLink 
                         amount={getTotal().toFixed(2)}
                         description={`Maestro Bistro - ${cart.length} item(s)`}
                         onSuccess={handlePayPalSuccess}
-                        onError={handlePayPalError}
-                        buttonId="food-order"
+                        productType="food"
                       />
                     </div>
                   )}
