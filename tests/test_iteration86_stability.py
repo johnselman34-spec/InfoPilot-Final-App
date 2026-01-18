@@ -76,7 +76,7 @@ class TestCategoriesCRUD:
         """Test POST /api/categories - Create new category"""
         test_category = {
             "name": "TEST_Iteration86_Category",
-            "protocol": "test OR iteration86",
+            "protocol": "(test or iteration86)",
             "is_public": False
         }
         
