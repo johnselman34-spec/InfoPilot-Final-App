@@ -1171,11 +1171,19 @@ const ReportsPage = () => {
   const showToast = useToast();
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
-  const [newReport, setNewReport] = useState({ title: "", content: "", location: null });
+  const [newReport, setNewReport] = useState({ title: "", content: "", images: [], location: null, category_ids: [] });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = React.useRef(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["reports"],
     queryFn: () => axios.get(`${API}/reports`).then(r => r.data),
+    enabled: !!user
+  });
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => axios.get(`${API}/categories`).then(r => r.data),
     enabled: !!user
   });
 
@@ -1185,9 +1193,9 @@ const ReportsPage = () => {
       showToast("Report created! 🎉", "success");
       queryClient.invalidateQueries(["reports"]);
       setShowCreate(false);
-      setNewReport({ title: "", content: "", location: null });
+      setNewReport({ title: "", content: "", images: [], location: null, category_ids: [] });
     },
-    onError: () => showToast("Failed to create report", "error")
+    onError: (err) => showToast(err.response?.data?.detail || "Failed to create report", "error")
   });
 
   const deleteMutation = useMutation({
@@ -1198,7 +1206,44 @@ const ReportsPage = () => {
     }
   });
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (newReport.images.length >= 3) {
+      showToast("Maximum 3 images allowed", "error");
+      return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Image too large. Max 5MB", "error");
+      return;
+    }
+    
+    setUploadingImage(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    
+    try {
+      const res = await axios.post(`${API}/upload/image`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      setNewReport(prev => ({ ...prev, images: [...prev.images, res.data.url] }));
+      showToast("Image uploaded! 📸", "success");
+    } catch (err) {
+      showToast(err.response?.data?.detail || "Upload failed", "error");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const removeImage = (index) => {
+    setNewReport(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+  };
+
   if (!user) return <Navigate to="/login" />;
+
+  const categories = categoriesData?.categories || [];
 
   return (
     <div className="min-h-screen pt-20 px-4">
@@ -1207,15 +1252,15 @@ const ReportsPage = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gradient-gold">My Personal Reports</h1>
-            <p className="text-white/60">Create organic reports about any topic</p>
+            <p className="text-white/60">Create organic reports about any topic with photos</p>
           </div>
-          <Button onClick={() => setShowCreate(true)} className="btn-gold"><Plus className="mr-2" /> Create Report</Button>
+          <Button onClick={() => setShowCreate(true)} className="btn-gold" data-testid="create-report-btn"><Plus className="mr-2" /> Create Report</Button>
         </div>
 
         {isLoading ? (
           <div className="text-center py-12"><RefreshCw className="animate-spin mx-auto text-yellow-400" size={48} /></div>
         ) : data?.reports?.length === 0 ? (
-          <Card className="card-glass p-8 text-center">
+          <Card className="card-glass p-8 text-center" data-testid="reports-empty">
             <FileText className="mx-auto text-yellow-400 mb-4" size={48} />
             <h3 className="text-xl text-white mb-2">No reports yet!</h3>
             <p className="text-white/60">Create your first personal report to share your knowledge.</p>
@@ -1223,18 +1268,26 @@ const ReportsPage = () => {
         ) : (
           <div className="space-y-4">
             {data?.reports?.map(report => (
-              <Card key={report.id} className="card-glass p-4">
+              <Card key={report.id} className="card-glass p-4" data-testid={`report-${report.id}`}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-white">{report.title}</h3>
-                    <p className="text-white/70 mt-2">{report.content}</p>
-                    <div className="flex items-center gap-4 mt-3 text-white/50 text-sm">
+                    <p className="text-white/70 mt-2 whitespace-pre-wrap">{report.content}</p>
+                    {report.images?.length > 0 && (
+                      <div className="flex gap-2 mt-3">
+                        {report.images.map((img, i) => (
+                          <img key={i} src={BACKEND_URL + img} alt="" className="w-24 h-24 object-cover rounded-lg border border-white/10" />
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2 mt-3 text-white/50 text-sm">
                       <Badge>{report.document_type}</Badge>
                       <span>{new Date(report.created_at).toLocaleDateString()}</span>
-                      {report.location && <span className="flex items-center gap-1"><MapPin size={14} /> Location attached</span>}
+                      {report.location && <span className="flex items-center gap-1"><MapPin size={14} /> {report.location.city || "Location"}</span>}
+                      {report.images?.length > 0 && <span className="flex items-center gap-1"><Camera size={14} /> {report.images.length} photo(s)</span>}
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(report.id)} className="text-red-400 hover:text-red-300">
+                  <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(report.id)} className="text-red-400 hover:text-red-300" data-testid={`delete-report-${report.id}`}>
                     <Trash2 size={18} />
                   </Button>
                 </div>
@@ -1244,25 +1297,76 @@ const ReportsPage = () => {
         )}
 
         <Dialog open={showCreate} onOpenChange={setShowCreate}>
-          <DialogContent className="bg-slate-900 border-yellow-400/30">
+          <DialogContent className="bg-slate-900 border-yellow-400/30 max-w-lg">
             <DialogHeader>
               <DialogTitle className="text-yellow-400">Create Personal Report</DialogTitle>
-              <DialogDescription className="text-white/70">Share your knowledge on any topic (max 3 images)</DialogDescription>
+              <DialogDescription className="text-white/70">Share your knowledge with up to 3 photos</DialogDescription>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
               <div>
                 <Label className="text-white">Title *</Label>
-                <Input className="form-input mt-1" placeholder="Report title" value={newReport.title} onChange={e => setNewReport({...newReport, title: e.target.value})} />
+                <Input className="form-input mt-1" placeholder="Report title" value={newReport.title} onChange={e => setNewReport({...newReport, title: e.target.value})} data-testid="report-title-input" />
               </div>
               <div>
                 <Label className="text-white">Content *</Label>
-                <Textarea className="form-input mt-1" rows={6} placeholder="Your report content..." value={newReport.content} onChange={e => setNewReport({...newReport, content: e.target.value})} />
+                <Textarea className="form-input mt-1" rows={5} placeholder="Your report content... (minimum 75 words recommended)" value={newReport.content} onChange={e => setNewReport({...newReport, content: e.target.value})} data-testid="report-content-input" />
+                <p className="text-white/40 text-xs mt-1">{newReport.content.split(/\s+/).filter(w => w).length} words</p>
               </div>
+              
+              {/* Image Upload */}
+              <div>
+                <Label className="text-white">Images (Max 3)</Label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {newReport.images.map((img, i) => (
+                    <div key={i} className="relative">
+                      <img src={BACKEND_URL + img} alt="" className="w-20 h-20 object-cover rounded-lg border border-white/20" />
+                      <button onClick={() => removeImage(i)} className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1 hover:bg-red-600" type="button">
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  {newReport.images.length < 3 && (
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingImage}
+                      className="w-20 h-20 border-2 border-dashed border-white/30 rounded-lg flex items-center justify-center text-white/50 hover:border-yellow-400 hover:text-yellow-400 transition"
+                      type="button"
+                      data-testid="upload-image-btn"
+                    >
+                      {uploadingImage ? <RefreshCw className="animate-spin" size={24} /> : <Plus size={24} />}
+                    </button>
+                  )}
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+              </div>
+
+              {/* Categories */}
+              {categories.length > 0 && (
+                <div>
+                  <Label className="text-white">Categories (optional)</Label>
+                  <div className="mt-2 flex flex-wrap gap-2 max-h-24 overflow-y-auto">
+                    {categories.map(cat => (
+                      <Badge
+                        key={cat.id}
+                        className={`cursor-pointer transition ${newReport.category_ids.includes(cat.id) ? "bg-yellow-400/30 text-yellow-300" : "bg-white/10 text-white/60 hover:bg-white/20"}`}
+                        onClick={() => setNewReport(prev => ({
+                          ...prev,
+                          category_ids: prev.category_ids.includes(cat.id)
+                            ? prev.category_ids.filter(id => id !== cat.id)
+                            : [...prev.category_ids, cat.id]
+                        }))}
+                      >
+                        {cat.name}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
-              <Button className="btn-gold" onClick={() => createMutation.mutate(newReport)} disabled={!newReport.title || !newReport.content || createMutation.isPending}>
-                Create Report
+              <Button variant="outline" onClick={() => { setShowCreate(false); setNewReport({ title: "", content: "", images: [], location: null, category_ids: [] }); }}>Cancel</Button>
+              <Button className="btn-gold" onClick={() => createMutation.mutate(newReport)} disabled={!newReport.title || !newReport.content || createMutation.isPending} data-testid="submit-report-btn">
+                {createMutation.isPending ? "Creating..." : "Create Report"}
               </Button>
             </DialogFooter>
           </DialogContent>
