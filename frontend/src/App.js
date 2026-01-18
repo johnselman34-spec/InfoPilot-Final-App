@@ -21,7 +21,7 @@ import {
   ChevronDown, ChevronRight, Menu, X, Send, Plus, Minus, AlertTriangle, CheckCircle, Ship, 
   Globe, CreditCard, Search, User, LogOut, Settings, Home, BarChart3, Map, Store, Egg,
   Trophy, FileText, Users, Shield, Trash2, Edit, Copy, RefreshCw, Newspaper, Quote, Gift,
-  MessageCircle, UserPlus, Download, Palette, Sun, Moon, Layers, DollarSign, TrendingUp
+  MessageCircle, UserPlus, Download, Palette, Sun, Moon, Layers, DollarSign, TrendingUp, Camera
 } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
