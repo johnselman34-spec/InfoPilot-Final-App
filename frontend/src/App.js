@@ -502,18 +502,21 @@ const FoodSection = ({ showToast }) => {
   const [orderForm, setOrderForm] = useState({ name: '', phone: '', email: '', pickupTime: '' });
   const [loading, setLoading] = useState(false);
 
-  const fetchMenu = useCallback(async () => {
-    try {
-      const response = await axios.get(`${API}/food/menu`);
-      setMenu(response.data);
-    } catch (error) {
-      console.error('Error fetching menu:', error);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchMenu();
-  }, [fetchMenu]);
+    let isMounted = true;
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${API}/food/menu`);
+        if (isMounted) {
+          setMenu(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching menu:', error);
+      }
+    };
+    fetchData();
+    return () => { isMounted = false; };
+  }, []);
 
   const addToCart = (item) => {
     const existing = cart.find(c => c.id === item.id);
