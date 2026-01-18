@@ -248,11 +248,7 @@ const BookSection = ({ showToast }) => {
   const [orderForm, setOrderForm] = useState({ name: '', email: '' });
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchBookInfo();
-  }, []);
-
-  const fetchBookInfo = async () => {
+  const fetchBookInfo = useCallback(async () => {
     try {
       const [bookRes, pricesRes] = await Promise.all([
         axios.get(`${API}/book`),
@@ -263,7 +259,11 @@ const BookSection = ({ showToast }) => {
     } catch (error) {
       console.error('Error fetching book info:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchBookInfo();
+  }, [fetchBookInfo]);
 
   const handleOrder = async () => {
     if (!orderForm.name || !orderForm.email || !selectedFormat) {
