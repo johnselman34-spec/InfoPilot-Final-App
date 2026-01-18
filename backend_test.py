@@ -224,6 +224,12 @@ class InfoPilotAPITester:
         # Basic API tests
         self.test_root_endpoint()
         
+        # Company and InfoPilot tests
+        print("\n🏢 COMPANY & INFOPILOT TESTS")
+        print("-" * 30)
+        self.test_company_info()
+        self.test_infopilot_plans()
+        
         # Book-related tests
         print("\n📚 BOOK TESTS")
         print("-" * 30)
