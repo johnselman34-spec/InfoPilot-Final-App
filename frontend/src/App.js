@@ -450,7 +450,7 @@ const HomePage = () => {
             <Sparkles className="text-yellow-400" size={24} />
             <span className="text-xl font-bold text-gradient-gold">InfoPilot Explorer</span>
           </div>
-          <p className="text-white/60 text-sm">Top Pilot Enterprises, Inc. - "It's a Bear!" 🐻</p>
+          <p className="text-white/60 text-sm">Top Pilot Enterprises, Inc. - It&apos;s a Bear! 🐻</p>
           <div className="flex justify-center gap-4 mt-4 text-white/40 text-sm">
             <Link to="/book" className="hover:text-yellow-400">📚 Book</Link>
             <Link to="/food" className="hover:text-yellow-400">🚚 Food</Link>
