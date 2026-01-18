@@ -65,6 +65,13 @@ async def update_category(category_id: str, updates: Dict = Body(...), user: Dic
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
     
+    # Validate price doesn't exceed maximum
+    if "price" in updates and updates["price"] is not None and updates["price"] > MAX_PROTOCOL_PRICE:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Price cannot exceed ${MAX_PROTOCOL_PRICE}. Maximum allowed price is $24.99"
+        )
+    
     allowed = ["name", "protocol", "is_public", "price", "parent_id"]
     filtered = {k: v for k, v in updates.items() if k in allowed}
     
