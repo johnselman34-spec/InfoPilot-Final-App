@@ -380,7 +380,7 @@ const BookSection = ({ showToast }) => {
                   <DialogHeader>
                     <DialogTitle className="text-yellow-400 text-2xl">Complete Your Order</DialogTitle>
                     <DialogDescription className="text-white/70">
-                      You're about to embark on an unforgettable journey!
+                      You are about to embark on an unforgettable journey!
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
