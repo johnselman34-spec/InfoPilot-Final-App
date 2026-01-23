@@ -1,0 +1,154 @@
+{
+  "identity": {
+    "name": "InfoPilot Explorer",
+    "persona": "The Anti-AI Designer (E1)",
+    "tone": "Professional, Witty, High-Speed, Futuristic yet Retro",
+    "theme_mode": "light",
+    "principles": [
+      "Fusion over Imitation",
+      "Emotion First",
+      "Content is King",
+      "Zoom In",
+      "Negative Space",
+      "Contrast"
+    ]
+  },
+  "typography": {
+    "primary_font": "Outfit",
+    "secondary_font": "DM Sans",
+    "mono_font": "JetBrains Mono",
+    "scale": {
+      "h1": "text-6xl md:text-7xl font-bold tracking-tight",
+      "h2": "text-4xl md:text-5xl font-semibold tracking-tight",
+      "h3": "text-2xl md:text-3xl font-medium",
+      "body": "text-base md:text-lg leading-relaxed",
+      "caption": "text-sm font-medium tracking-wide uppercase"
+    },
+    "imports": [
+      "@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;900&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap');"
+    ]
+  },
+  "colors": {
+    "palette": {
+      "background": "#FFFFF0",
+      "foreground": "#1A1A1A",
+      "primary": "#007AFF",
+      "primary_foreground": "#FFFFFF",
+      "secondary": "#34C759",
+      "secondary_foreground": "#FFFFFF",
+      "accent": "#FFD60A",
+      "accent_foreground": "#1A1A1A",
+      "muted": "#F2F2F7",
+      "muted_foreground": "#6C6C70",
+      "border": "#E5E5EA",
+      "input": "#E5E5EA",
+      "ring": "#007AFF"
+    },
+    "gradients": {
+      "hero": "linear-gradient(135deg, #FFFFF0 0%, #F0F8FF 100%)",
+      "glow": "radial-gradient(circle at center, rgba(0, 122, 255, 0.15) 0%, transparent 70%)"
+    },
+    "usage": {
+      "body_bg": "bg-[#FFFFF0]",
+      "card_bg": "bg-white/80 backdrop-blur-md border border-white/20 shadow-sm",
+      "primary_btn": "bg-[#007AFF] hover:bg-[#0062CC] text-white shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-0.5",
+      "secondary_btn": "bg-[#34C759] hover:bg-[#248A3D] text-white shadow-lg shadow-green-500/30"
+    }
+  },
+  "layout": {
+    "spacing": {
+      "container_padding": "p-6 md:p-12 lg:p-24",
+      "section_gap": "gap-12 md:gap-24",
+      "element_gap": "gap-4 md:gap-8"
+    },
+    "grids": {
+      "marketing": "grid grid-cols-1 md:grid-cols-12 gap-8",
+      "dashboard": "grid grid-cols-1 md:grid-cols-4 gap-6 auto-rows-[minmax(180px,auto)]"
+    },
+    "containers": {
+      "main": "max-w-7xl mx-auto w-full",
+      "narrow": "max-w-3xl mx-auto w-full"
+    }
+  },
+  "components": {
+    "buttons": {
+      "default": "h-12 px-8 rounded-full font-medium transition-all duration-300",
+      "ghost": "hover:bg-blue-50 text-blue-600"
+    },
+    "cards": {
+      "glass": "bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl rounded-2xl",
+      "solid": "bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md transition-shadow"
+    },
+    "inputs": {
+      "default": "h-12 bg-white/50 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl transition-all"
+    },
+    "navigation": {
+      "wrapper": "fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100/50",
+      "link": "text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+    }
+  },
+  "visual_enhancers": {
+    "shadows": {
+      "soft": "0 8px 30px rgba(0,0,0,0.04)",
+      "glow_blue": "0 0 20px rgba(0, 122, 255, 0.3)",
+      "glow_green": "0 0 20px rgba(52, 199, 89, 0.3)"
+    },
+    "borders": {
+      "subtle": "1px solid rgba(0,0,0,0.05)",
+      "highlight": "1px solid rgba(0, 122, 255, 0.2)"
+    },
+    "animations": {
+      "hover_lift": "hover:-translate-y-1 transition-transform duration-300 ease-out",
+      "fade_in": "animate-in fade-in duration-700",
+      "slide_up": "animate-in slide-in-from-bottom-8 duration-700"
+    }
+  },
+  "media": {
+    "images": {
+      "hero_globe": {
+        "url": "https://images.unsplash.com/photo-1765527977786-93d61f48a963?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODd8MHwxfHNlYXJjaHwyfHwzZCUyMGRpZ2l0YWwlMjBnbG9iZSUyMG5ldHdvcmslMjB3aGl0ZSUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzY5MjEyNjE2fDA&ixlib=rb-4.1.0&q=85",
+        "alt": "3D Digital Globe Network",
+        "usage": "Hero section background or main visual"
+      },
+      "abstract_data": {
+        "url": "https://images.unsplash.com/photo-1754341669892-27a96743d526?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGRhdGElMjB2aXN1YWxpemF0aW9uJTIwYmx1ZSUyMGdyZWVuJTIwd2hpdGUlMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc2OTIxMjYyMXww&ixlib=rb-4.1.0&q=85",
+        "alt": "Abstract Data Visualization",
+        "usage": "Background for statistics or data sections"
+      },
+      "team_collaboration": {
+        "url": "https://images.unsplash.com/photo-1758873271761-6cfe9b4f000c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBkaXZlcnNlJTIwdGVhbSUyMHdvcmtpbmclMjBtb2Rlcm4lMjBvZmZpY2V8ZW58MHx8fHwxNzY5MjEyNjE4fDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Diverse Team Collaboration",
+        "usage": "About page or community section"
+      },
+      "office_environment": {
+        "url": "https://images.unsplash.com/photo-1718220216044-006f43e3a9b1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjBkaXZlcnNlJTIwdGVhbSUyMHdvcmtpbmclMjBtb2Rlcm4lMjBvZmZpY2V8ZW58MHx8fHwxNzY5MjEyNjE4fDA&ixlib=rb-4.1.0&q=85",
+        "alt": "Modern Office Environment",
+        "usage": "Background for enterprise or business sections"
+      }
+    },
+    "3d_libraries": {
+      "primary": "react-globe.gl",
+      "secondary": "framer-motion",
+      "charts": "recharts"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Implement the 'InfoJet 2.0' protocol interface using a custom terminal-like component with JetBrains Mono font.",
+    "Use 'react-globe.gl' for the '3D view of the internet' on the landing page and map view.",
+    "Ensure the 'Ivory' background (#FFFFF0) is used as the main body background to distinguish from standard white SaaS apps.",
+    "Use 'Bright Blue' (#007AFF) for primary actions and 'Green' (#34C759) for success states and financial indicators.",
+    "Inject 'Easter Eggs' (e.g., Konami code listener, funny console logs, hidden tooltips) as requested.",
+    "Maintain a 'Professional but Witty' tone in all copy placeholders.",
+    "Use 'Outfit' font for all headings to give a modern, tech-forward look.",
+    "Ensure all interactive elements have 'data-testid' attributes.",
+    "Do NOT use gradients for backgrounds; use them sparingly for accents or text clips only.",
+    "Prioritize speed: Use lazy loading for the 3D globe and heavy images."
+  ],
+  "universal_guidelines": [
+    "Avoid generic 'AI slop' designs; push for asymmetry and unique layouts.",
+    "Use 2-3x more spacing than typical designs.",
+    "Micro-animations are mandatory for all interactions.",
+    "Never use pure black (#000000); use dark charcoal (#1A1A1A) instead.",
+    "Ensure accessibility contrast ratios are met, especially with the ivory background."
+  ]
+}
