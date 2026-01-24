@@ -319,16 +319,57 @@ const LandingPage = () => {
 
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <Globe className="w-6 h-6 text-[#007AFF]" />
-            <span className="font-bold font-['Outfit']">InfoPilot Explorer</span>
-            <span className="text-gray-500">by Top Pilot Enterprises Inc.</span>
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Globe className="w-6 h-6 text-[#007AFF]" />
+                <span className="font-bold font-['Outfit']">InfoPilot Explorer</span>
+              </div>
+              <p className="text-sm text-gray-500">First in Flight with Monetization of Searches</p>
+              <p className="text-xs text-gray-400 mt-2">Top Pilot Enterprises Inc.</p>
+            </div>
+            
+            {/* Legal */}
+            <div>
+              <h4 className="font-semibold mb-4">Legal</h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <Link to="/privacy-policy" className="block hover:text-[#007AFF]" data-testid="footer-privacy">Privacy Policy</Link>
+                <Link to="/terms-of-service" className="block hover:text-[#007AFF]" data-testid="footer-terms">Terms of Service</Link>
+              </div>
+            </div>
+            
+            {/* Download Apps */}
+            <div>
+              <h4 className="font-semibold mb-4">Download</h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <a href="https://play.google.com/store/apps/details?id=com.infopilot.explorer" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-[#007AFF]" data-testid="download-android">
+                  <Smartphone className="w-4 h-4" /> Android App
+                </a>
+                <a href="https://apps.apple.com/app/infojet" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-[#007AFF]" data-testid="download-ios">
+                  <Smartphone className="w-4 h-4" /> iOS App
+                </a>
+                <a href="https://www.infopilotexplorer.biz/download" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-[#007AFF]" data-testid="download-desktop">
+                  <Monitor className="w-4 h-4" /> Desktop App
+                </a>
+              </div>
+            </div>
+            
+            {/* Contact */}
+            <div>
+              <h4 className="font-semibold mb-4">Contact</h4>
+              <div className="space-y-2 text-sm text-gray-600">
+                <p>Brunswick, Maine</p>
+                <p>JJSpilot24@gmail.com</p>
+                <p>(207) 522-0894</p>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-6 text-sm text-gray-600">
-            <a href="#" className="hover:text-[#007AFF]">Privacy Policy</a>
-            <a href="#" className="hover:text-[#007AFF]">Terms of Service</a>
-            <a href="#" className="hover:text-[#007AFF]">Contact</a>
+          
+          <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-gray-500">© 2025-2026 Top Pilot Enterprises, Inc. All rights reserved.</p>
+            <p className="text-xs text-gray-400">InfoPilot Explorer - First in Flight with Monetization of Searches</p>
           </div>
         </div>
       </footer>
