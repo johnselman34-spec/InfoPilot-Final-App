@@ -346,9 +346,13 @@ const DashboardLayout = ({ children }) => {
     { path: "/stats", icon: BarChart3, label: "Statistics" },
     { path: "/global", icon: Globe, label: "Global Research" },
     { path: "/marketplace", icon: ShoppingBag, label: "Marketplace" },
+    { path: "/leaderboard", icon: Award, label: "Leaderboard" },
     { path: "/friends", icon: Users, label: "Friends" },
     { path: "/groups", icon: Users, label: "Groups" },
     { path: "/chat", icon: MessageCircle, label: "Messages" },
+    { path: "/easter-eggs", icon: Egg, label: "Easter Eggs" },
+    { path: "/quotes", icon: BookOpen, label: "Quote Gallery" },
+    { path: "/themes", icon: Settings, label: "Themes" },
     { path: "/settings", icon: Settings, label: "Settings" },
   ];
 
