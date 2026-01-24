@@ -4712,6 +4712,20 @@ const AppRouter = () => {
           </DashboardLayout>
         </ProtectedRoute>
       } />
+      <Route path="/heatmaps" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <HeatmapsPage />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/collab" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <CollaborativeSessionsPage />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
       <Route path="/privacy-policy" element={<LegalPage docType="privacy-policy" />} />
       <Route path="/terms-of-service" element={<LegalPage docType="terms-of-service" />} />
       <Route path="/payment-success" element={
