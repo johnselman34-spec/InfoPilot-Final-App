@@ -549,6 +549,7 @@ async def create_category(
     cat_dict = category.model_dump()
     cat_dict["category_id"] = f"cat_{uuid.uuid4().hex[:12]}"
     cat_dict["user_id"] = user.user_id
+    cat_dict["sales_count"] = 0
     cat_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     cat_dict["updated_at"] = datetime.now(timezone.utc).isoformat()
     
@@ -560,6 +561,8 @@ async def create_category(
         {"$inc": {"xp": 10}}
     )
     
+    # Return without the MongoDB _id
+    cat_dict.pop("_id", None)
     return cat_dict
 
 @categories_router.put("/{category_id}")
