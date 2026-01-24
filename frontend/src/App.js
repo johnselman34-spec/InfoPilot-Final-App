@@ -1860,6 +1860,404 @@ const AdminPanel = () => {
   );
 };
 
+// ============= EASTER EGGS PAGE =============
+const EasterEggsPage = () => {
+  const [eggs, setEggs] = useState([]);
+  const [leaderboard, setLeaderboard] = useState(null);
+
+  useEffect(() => {
+    fetchEasterEggs();
+    fetchLeaderboard();
+  }, []);
+
+  const fetchEasterEggs = async () => {
+    try {
+      const response = await api.get("/easter-eggs");
+      setEggs(response.data.easter_eggs || []);
+    } catch (error) {
+      console.error("Error fetching easter eggs:", error);
+    }
+  };
+
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await api.get("/easter-eggs/laugh-leaderboard");
+      setLeaderboard(response.data);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+    }
+  };
+
+  const submitLaugh = async (eggId, laughType) => {
+    try {
+      const response = await api.post("/easter-eggs/laugh-submit", {
+        egg_id: eggId,
+        rating: laughType === 'rofl' ? 10 : laughType === 'laugh' ? 7 : 4,
+        laugh_type: laughType
+      });
+      alert(`You earned ${response.data.xp_earned} XP! 😄`);
+    } catch (error) {
+      console.error("Error submitting laugh:", error);
+    }
+  };
+
+  return (
+    <div className="p-6" data-testid="easter-eggs-page">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-4xl font-bold font-['Outfit'] mb-2">Easter Eggs 🥚</h1>
+        <p className="text-gray-600 mb-8">Discover jokes, earn XP, and climb the Laugh-O-Meter!</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Jokes */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Jokes</h2>
+            {eggs.map((egg, i) => (
+              <Card key={egg.egg_id || i} className="glass-card hover-lift easter-egg" data-testid={`easter-egg-${i}`}>
+                <CardContent className="p-6">
+                  <p className="text-lg mb-4">{egg.content}</p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => submitLaugh(egg.egg_id, 'chuckle')}>
+                      😏 Chuckle (+1 XP)
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => submitLaugh(egg.egg_id, 'laugh')}>
+                      😂 Laugh (+3 XP)
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => submitLaugh(egg.egg_id, 'rofl')}>
+                      🤣 ROFL (+5 XP)
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Leaderboard */}
+          <div className="space-y-4">
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle>🏆 Laugh-O-Meter Champions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {(leaderboard?.top_laughers || []).map((entry, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-full bg-yellow-100 text-yellow-800 font-bold flex items-center justify-center">
+                        {i + 1}
+                      </span>
+                      <span className="flex-1">{entry.user?.name || "Anonymous"}</span>
+                      <span className="text-sm">{entry.total_laughs} laughs</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle>😂 Funniest Jokes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {(leaderboard?.funniest_jokes || []).map((entry, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-full bg-green-100 text-green-800 font-bold flex items-center justify-center">
+                        #{entry._id?.replace('egg_', '')}
+                      </span>
+                      <span className="text-sm">Rating: {entry.avg_rating?.toFixed(1)}/10</span>
+                      <span className="text-sm text-gray-500">({entry.total_laughs} laughs)</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============= QUOTE GALLERY PAGE =============
+const QuotesPage = () => {
+  const [quotes, setQuotes] = useState([]);
+  const [allQuotes, setAllQuotes] = useState([]);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    fetchQuotes();
+  }, []);
+
+  const fetchQuotes = async () => {
+    try {
+      const response = await api.get("/quotes?count=10");
+      setQuotes(response.data.quotes || []);
+      
+      const allResponse = await api.get("/quotes/all");
+      setAllQuotes(allResponse.data.quotes || []);
+    } catch (error) {
+      console.error("Error fetching quotes:", error);
+    }
+  };
+
+  return (
+    <div className="p-6" data-testid="quotes-page">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold font-['Outfit'] mb-2">Quote Gallery 📜</h1>
+        <p className="text-gray-600 mb-8">Wisdom from the InfoPilot manuscript ({allQuotes.length} quotes)</p>
+
+        <div className="flex gap-4 mb-6">
+          <Button 
+            variant={showAll ? "outline" : "default"} 
+            onClick={() => setShowAll(false)}
+          >
+            Random 10
+          </Button>
+          <Button 
+            variant={showAll ? "default" : "outline"} 
+            onClick={() => setShowAll(true)}
+          >
+            Show All
+          </Button>
+          <Button variant="outline" onClick={fetchQuotes}>
+            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {(showAll ? allQuotes : quotes).map((quote, i) => (
+            <Card key={i} className="glass-card hover-lift" style={{ animationDelay: `${i * 0.1}s` }}>
+              <CardContent className="p-6">
+                <blockquote className="text-lg italic text-gray-700 border-l-4 border-[#007AFF] pl-4">
+                  "{quote}"
+                </blockquote>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============= THEMES PAGE =============
+const ThemesPage = () => {
+  const [presets, setPresets] = useState({});
+  const [currentTheme, setCurrentTheme] = useState('default');
+  const [customColors, setCustomColors] = useState({
+    background: '#FFFFF0',
+    primary: '#007AFF',
+    secondary: '#34C759',
+    accent: '#FFD60A'
+  });
+
+  useEffect(() => {
+    fetchThemes();
+  }, []);
+
+  const fetchThemes = async () => {
+    try {
+      const response = await api.get("/themes/presets");
+      setPresets(response.data.presets || {});
+    } catch (error) {
+      console.error("Error fetching themes:", error);
+    }
+  };
+
+  const applyTheme = (presetKey) => {
+    setCurrentTheme(presetKey);
+    const preset = presets[presetKey];
+    if (preset) {
+      document.documentElement.style.setProperty('--background', preset.background);
+      document.documentElement.style.setProperty('--primary', preset.primary);
+      document.documentElement.style.setProperty('--secondary', preset.secondary);
+    }
+  };
+
+  const saveTheme = async () => {
+    try {
+      await api.post("/themes/save", {
+        preset: currentTheme,
+        custom: customColors,
+        dark_mode: currentTheme === 'dark'
+      });
+      alert("Theme saved!");
+    } catch (error) {
+      console.error("Error saving theme:", error);
+    }
+  };
+
+  return (
+    <div className="p-6" data-testid="themes-page">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-4xl font-bold font-['Outfit'] mb-2">Theme Gallery 🎨</h1>
+        <p className="text-gray-600 mb-8">Customize your InfoPilot experience</p>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {Object.entries(presets).map(([key, preset]) => (
+            <Card 
+              key={key} 
+              className={`glass-card hover-lift cursor-pointer ${currentTheme === key ? 'ring-2 ring-[#007AFF]' : ''}`}
+              onClick={() => applyTheme(key)}
+              data-testid={`theme-${key}`}
+            >
+              <CardContent className="p-4">
+                <div className="flex gap-1 mb-3">
+                  <div className="w-8 h-8 rounded" style={{ backgroundColor: preset.background, border: '1px solid #ccc' }}></div>
+                  <div className="w-8 h-8 rounded" style={{ backgroundColor: preset.primary }}></div>
+                  <div className="w-8 h-8 rounded" style={{ backgroundColor: preset.secondary }}></div>
+                </div>
+                <p className="font-medium text-sm">{preset.name}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle>Current Theme: {presets[currentTheme]?.name || 'Default'}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={saveTheme}>Save as My Theme</Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+// ============= COMMUNITY LEADERBOARD PAGE =============
+const LeaderboardPage = () => {
+  const [leaderboard, setLeaderboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, []);
+
+  const fetchLeaderboard = async () => {
+    try {
+      const response = await api.get("/social/leaderboard");
+      setLeaderboard(response.data);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6" data-testid="leaderboard-page">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-4xl font-bold font-['Outfit'] mb-2">Community Leaderboard 🏆</h1>
+        <p className="text-gray-600 mb-8">Top protocol creators and researchers</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Top Sellers */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-[#007AFF]" /> Top Sellers
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {(leaderboard?.top_sellers || []).map((seller, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                      i === 0 ? 'bg-yellow-100 text-yellow-800' :
+                      i === 1 ? 'bg-gray-100 text-gray-800' :
+                      i === 2 ? 'bg-orange-100 text-orange-800' :
+                      'bg-gray-50 text-gray-600'
+                    }`}>
+                      {i + 1}
+                    </span>
+                    <img 
+                      src={seller.user?.picture || "https://via.placeholder.com/32"} 
+                      alt={seller.user?.name}
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{seller.user?.name || "Anonymous"}</p>
+                      <p className="text-xs text-gray-500">{seller.protocol_count} protocols</p>
+                    </div>
+                    <Badge>{seller.total_sales} sales</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Rising Stars */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-[#FFD60A]" /> Rising Stars
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {(leaderboard?.rising_stars || []).map((star, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                      i === 0 ? 'bg-purple-100 text-purple-800' :
+                      'bg-gray-50 text-gray-600'
+                    }`}>
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 text-sm">{star.user?.name || "Anonymous"}</span>
+                    <Badge variant="outline">{star.total_copies}x copied</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Top XP */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-[#34C759]" /> Top XP Earners
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {(leaderboard?.top_xp || []).map((user, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                      i === 0 ? 'bg-green-100 text-green-800' :
+                      'bg-gray-50 text-gray-600'
+                    }`}>
+                      {i + 1}
+                    </span>
+                    <img 
+                      src={user.picture || "https://via.placeholder.com/32"} 
+                      alt={user.name}
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{user.name}</p>
+                      <p className="text-xs text-gray-500">Level {user.level || 1}</p>
+                    </div>
+                    <Badge className="badge-secondary">{user.xp} XP</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ============= APP ROUTER =============
 const AppRouter = () => {
   const location = useLocation();
@@ -1907,6 +2305,13 @@ const AppRouter = () => {
           </DashboardLayout>
         </ProtectedRoute>
       } />
+      <Route path="/leaderboard" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <LeaderboardPage />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
       <Route path="/friends" element={
         <ProtectedRoute>
           <DashboardLayout>
@@ -1925,6 +2330,27 @@ const AppRouter = () => {
         <ProtectedRoute>
           <DashboardLayout>
             <ChatPage />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/easter-eggs" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <EasterEggsPage />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/quotes" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <QuotesPage />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/themes" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <ThemesPage />
           </DashboardLayout>
         </ProtectedRoute>
       } />
