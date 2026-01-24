@@ -2990,6 +2990,9 @@ api_router.include_router(themes_router)
 api_router.include_router(analytics_router)
 api_router.include_router(promotions_router)
 api_router.include_router(reports_router)
+api_router.include_router(payments_router)
+api_router.include_router(legal_router)
+api_router.include_router(templates_router)
 
 app.include_router(api_router)
 
