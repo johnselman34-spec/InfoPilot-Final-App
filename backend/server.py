@@ -5465,6 +5465,7 @@ api_router.include_router(heatmap_router)
 api_router.include_router(collab_router)
 api_router.include_router(versioning_router)
 api_router.include_router(branding_router)
+api_router.include_router(paypal_router_module)
 
 app.include_router(api_router)
 
