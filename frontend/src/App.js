@@ -651,7 +651,7 @@ const UltimateSearchPage = () => {
     });
   };
 
-  const useTemplate = (template) => {
+  const applyTemplate = (template) => {
     setNewCategoryName(template.name);
     setNewCategoryProtocol(template.protocol_string);
     setShowNewCategory(true);
