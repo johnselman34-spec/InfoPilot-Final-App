@@ -2957,7 +2957,8 @@ const LegalPage = ({ docType }) => {
 
   const fetchDocument = async () => {
     try {
-      const response = await api.get(`/legal/${docType}`);
+      // Use axios directly without auth for public legal pages
+      const response = await axios.get(`${API}/legal/${docType}`);
       setDocument(response.data);
     } catch (error) {
       console.error("Error fetching legal document:", error);
