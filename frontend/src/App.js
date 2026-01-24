@@ -1087,6 +1087,7 @@ const UltimateSearchPage = () => {
                           <p><strong>Query:</strong> {debugInfo.query}</p>
                           <p><strong>Categories Selected:</strong> {debugInfo.categories}</p>
                           <p><strong>Match Options:</strong> {JSON.stringify(debugInfo.matchOptions)}</p>
+                          <p><strong>Favor Options:</strong> {JSON.stringify(debugInfo.favorOptions)}</p>
                           <p><strong>Results Count:</strong> {debugInfo.resultsCount}</p>
                           <p><strong>Timestamp:</strong> {debugInfo.timestamp}</p>
                         </div>
