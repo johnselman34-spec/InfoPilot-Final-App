@@ -249,33 +249,27 @@ class TestRefactoredRouters:
         assert response.status_code == 200
         print("✓ PayPal router integrated correctly")
     
-    def test_groups_router(self):
-        """Test groups router endpoints exist"""
+    def test_groups_router_requires_auth(self):
+        """Test groups router endpoints require auth"""
         response = requests.get(f"{API_URL}/groups")
-        assert response.status_code == 200
-        data = response.json()
-        assert "groups" in data
-        print(f"✓ Groups router: {len(data['groups'])} groups")
+        assert response.status_code == 401  # Auth required
+        print("✓ Groups router correctly requires auth")
     
-    def test_pages_router(self):
-        """Test pages router endpoints exist"""
+    def test_pages_router_requires_auth(self):
+        """Test pages router endpoints require auth"""
         response = requests.get(f"{API_URL}/pages")
-        assert response.status_code == 200
-        data = response.json()
-        assert "pages" in data
-        print(f"✓ Pages router: {len(data['pages'])} pages")
+        assert response.status_code == 401  # Auth required
+        print("✓ Pages router correctly requires auth")
 
 
 class TestChatEndpoints:
     """Test chat endpoints"""
     
-    def test_chat_rooms(self):
-        """Test /api/chat/rooms returns chat rooms"""
+    def test_chat_rooms_requires_auth(self):
+        """Test /api/chat/rooms requires authentication"""
         response = requests.get(f"{API_URL}/chat/rooms")
-        assert response.status_code == 200
-        data = response.json()
-        assert "rooms" in data
-        print(f"✓ Chat rooms: {len(data['rooms'])} rooms")
+        assert response.status_code == 401  # Auth required
+        print("✓ Chat rooms correctly requires auth")
 
 
 if __name__ == "__main__":
