@@ -1,4 +1,4 @@
-# InfoPilot Explorer - PRD v7.0
+# InfoPilot Explorer - PRD v8.0
 
 ## Project Overview
 InfoPilot Explorer is a worldwide web information exchange social network that provides users a "3D view of the Internet". Users can create custom search protocols using InfoJet 2.0 Protocol Language to collate web search results into organized categories.
@@ -27,6 +27,32 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - Personal Reports with images/location
 - Book promotion (Letters to Evelyn)
 - Subscription with Pay What You Want
+
+## v8.0 Features - Implemented January 24, 2026
+
+### Location Detection Bug Fix
+✅ **Enhanced City Detection** - International cities now detected WITHOUT country name
+✅ **Virgin Bay Fix** - Specifically fixed detection for "Virgin Bay, Nicaragua"
+✅ **PATTERN 4B** - New detection pattern for standalone international city names
+✅ **Word Boundary Matching** - Prevents partial matches using regex word boundaries
+
+### Codebase Refactoring (In Progress)
+✅ **Backend Models** - Created `/app/backend/models/` with:
+  - `enums.py` - DocumentType, ReactionType, SearchAggregation enums
+  - `schemas.py` - User, Category, SearchResult Pydantic models
+✅ **Backend Services** - Created `/app/backend/services/` with:
+  - `database.py` - Database connection configuration
+  - `location.py` - LocationExtractor class (with bug fix)
+  - `protocol.py` - ProtocolParser and DocumentClassifier classes
+✅ **Frontend Contexts** - Created `/app/frontend/src/contexts/` with:
+  - `AuthContext.jsx` - Authentication context and provider
+✅ **Frontend Utils** - Created `/app/frontend/src/utils/` with:
+  - `api.js` - API configuration and axios instance
+✅ **Frontend Pages** - Created `/app/frontend/src/pages/` with:
+  - `LandingPage.jsx` - Landing page component
+  - `AuthCallback.jsx` - Auth callback handler
+  - `ProtectedRoute.jsx` - Route protection HOC
+⏳ **Routers Directory** - `/app/backend/routers/` created (migration pending)
 
 ## v7.0 Features - Implemented January 24, 2026
 
