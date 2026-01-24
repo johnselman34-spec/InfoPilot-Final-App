@@ -447,15 +447,25 @@ class InfoPilotAPITester:
 
     def test_copy_protocol(self):
         """Test Copy Protocol to Clipboard endpoint"""
-        copy_data = {
-            "protocol_id": "test_protocol_123"
-        }
-        success, data = self.make_request('POST', '/copy-protocol', copy_data)
-        self.log_result(
-            "POST /api/copy-protocol", 
-            success and 'protocol_text' in data,
-            "Protocol text returned for clipboard" if success else f"Error: {data}"
-        )
+        # Get existing categories to test copy functionality
+        success, data = self.make_request('GET', '/categories')
+        if success and data.get('categories'):
+            protocol_id = data['categories'][0]['category_id']
+            copy_data = {
+                "protocol_id": protocol_id
+            }
+            success, data = self.make_request('POST', '/copy-protocol', copy_data)
+            self.log_result(
+                "POST /api/copy-protocol", 
+                success and 'protocol_text' in data,
+                "Protocol text returned for clipboard" if success else f"Error: {data}"
+            )
+        else:
+            self.log_result(
+                "POST /api/copy-protocol", 
+                False,
+                "Could not test - no protocols available"
+            )
 
     def test_clean_category(self):
         """Test Clean Category endpoint"""
