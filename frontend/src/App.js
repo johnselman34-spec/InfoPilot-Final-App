@@ -1266,14 +1266,33 @@ const SearchResultCard = ({ result }) => {
     }
   };
 
+  // Format the collated date
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   return (
     <Card className="search-result-card" data-testid={`result-${result.result_id}`}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <Badge className="badge-primary">{result.document_type}</Badge>
               {result.year && <Badge variant="outline">{result.year}</Badge>}
+              {result.locations?.length > 0 && (
+                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <Map className="w-3 h-3 mr-1" />
+                  {result.locations.length} location{result.locations.length > 1 ? 's' : ''}
+                </Badge>
+              )}
             </div>
             <h3 className="text-lg font-semibold mb-2">
               <a 
@@ -1286,7 +1305,26 @@ const SearchResultCard = ({ result }) => {
               </a>
             </h3>
             <p className="text-gray-600 text-sm mb-3 truncate-3">{result.snippet}</p>
-            <p className="text-xs text-gray-400">{result.root_domain}</p>
+            <div className="flex items-center gap-4 text-xs text-gray-400">
+              <span>{result.root_domain}</span>
+              {result.collated_at && (
+                <span>Collated: {formatDate(result.collated_at)}</span>
+              )}
+            </div>
+            {/* Show locations if present */}
+            {result.locations?.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {result.locations.slice(0, 5).map((loc, i) => (
+                  <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                    {loc.city || loc.state || loc.country || loc.address || 'Location'}
+                    {loc.country && loc.city && `, ${loc.country}`}
+                  </span>
+                ))}
+                {result.locations.length > 5 && (
+                  <span className="text-xs text-gray-500">+{result.locations.length - 5} more</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
