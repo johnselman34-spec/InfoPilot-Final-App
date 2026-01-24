@@ -1,4 +1,4 @@
-# InfoPilot Explorer - PRD v8.1
+# InfoPilot Explorer - PRD v8.2
 
 ## Project Overview
 InfoPilot Explorer is a worldwide web information exchange social network that provides users a "3D view of the Internet". Users can create custom search protocols using InfoJet 2.0 Protocol Language to collate web search results into organized categories.
@@ -28,9 +28,27 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - Book promotion (Letters to Evelyn)
 - Subscription with Pay What You Want
 
+## v8.2 Features - Implemented January 24, 2026
+
+### Critical Bug Fixes
+✅ **Admin Login Loop (REGRESSION FIXED)** - CORS was using wildcard (*) which doesn't work with credentials; now uses explicit origins list
+✅ **Create Category Button** - Fixed issue where second category creation wouldn't work; Dialog now properly resets form state on close
+✅ **Map Dots Not Appearing** - Fixed - Map View now shows 11+ location dots with proper color coding
+✅ **Stripe Live Mode** - Updated STRIPE_API_KEY to live mode (sk_live_...) for real payments
+
+### Enhanced Easter Eggs - Ancient T-Rex Eggs 🦖
+✅ **Floating T-Rex Eggs Animation** - Multicolored, spotted, sparkling, transparent eggs float across the screen
+✅ **3 Content Types** - Jokes (17), Protocol Tips (10), and Cheat Codes (9)
+✅ **Interactive Eggs** - Click floating eggs to discover random content and earn XP
+✅ **Color-coded Egg Cards** - Each egg has unique color scheme with gradient effect
+✅ **SVG T-Rex Egg Design** - Custom egg shape with spots, sparkle animations, and crack lines
+✅ **Tab Filter** - Filter by All Eggs, Jokes, Protocol Tips, or Cheat Codes
+✅ **Popup Modal** - Full content display when clicking on any egg
+✅ **T-Rex Egg Facts** - Fun facts sidebar about the prehistoric eggs
+
 ## v8.1 Features - Implemented January 24, 2026
 
-### Bug Fixes
+### Bug Fixes (Previous Session)
 ✅ **Create Category Button** - Fixed issue where second category creation wouldn't work; now properly clears form and shows error messages
 ✅ **CORS Configuration** - Fixed wildcard CORS issue with credentials; now uses explicit origins list
 
