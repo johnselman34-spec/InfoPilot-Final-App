@@ -3130,7 +3130,7 @@ const ProtocolTemplatesPage = () => {
                   <div className="flex items-center justify-between">
                     <Badge variant="outline">{template.category}</Badge>
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={() => useTemplate(template.template_id)} data-testid={`use-template-${template.template_id}`}>
+                      <Button size="sm" onClick={() => applyTemplate(template.template_id)} data-testid={`use-template-${template.template_id}`}>
                         <Play className="w-4 h-4 mr-1" /> Use
                       </Button>
                       <Button size="sm" variant="ghost" onClick={() => deleteTemplate(template.template_id)}>
