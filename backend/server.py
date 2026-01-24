@@ -69,6 +69,9 @@ collab_router = APIRouter(prefix="/collab", tags=["Collaborative Sessions"])
 versioning_router = APIRouter(prefix="/versioning", tags=["Protocol Versioning"])
 branding_router = APIRouter(prefix="/branding", tags=["App Branding"])
 
+# Import modular routers
+from routers.paypal import router as paypal_router_module
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
