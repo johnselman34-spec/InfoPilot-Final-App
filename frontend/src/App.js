@@ -2901,6 +2901,38 @@ const SettingsPage = () => {
     }
   };
 
+  const handlePayPalPayment = async () => {
+    setLoadingPayment(true);
+    try {
+      const amount = selectedPackage === 'pay_what_you_want' 
+        ? parseFloat(customAmount) 
+        : selectedPackage === 'premium' ? 9.99 : 4.99;
+      
+      const response = await api.post("/paypal/create-order", {
+        amount: amount,
+        currency: "USD",
+        description: `InfoPilot Explorer ${selectedPackage} Subscription`,
+        item_type: "subscription",
+        item_id: selectedPackage,
+        user_id: user?.user_id
+      });
+      
+      if (response.data.approval_url) {
+        // Redirect to PayPal for approval
+        window.location.href = response.data.approval_url;
+      } else if (response.data.paypal_link) {
+        // Manual payment fallback
+        window.open(response.data.paypal_link, '_blank');
+        alert(`Order ID: ${response.data.order_id}\nPlease include this ID in your PayPal payment notes.`);
+      }
+    } catch (error) {
+      console.error("PayPal payment error:", error);
+      alert("Failed to initiate PayPal payment. Please try again.");
+    } finally {
+      setLoadingPayment(false);
+    }
+  };
+
   return (
     <div className="p-6" data-testid="settings-page">
       <div className="max-w-3xl mx-auto">
