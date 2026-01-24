@@ -1189,16 +1189,18 @@ async def get_recommended_protocols(user: User = Depends(require_auth)):
 
 @stats_router.get("/overview")
 async def get_stats_overview(user: User = Depends(require_auth)):
-    """Get statistics overview"""
-    # Count results by document type
+    """Get comprehensive statistics overview with 14+ aspects"""
+    user_id = user.user_id
+    
+    # 1. Document Type Distribution
     doc_type_stats = await db.search_results.aggregate([
-        {"$match": {"user_id": user.user_id}},
+        {"$match": {"user_id": user_id}},
         {"$group": {"_id": "$document_type", "count": {"$sum": 1}}}
     ]).to_list(20)
     
-    # Count results by country
+    # 2. Results by Country
     country_stats = await db.search_results.aggregate([
-        {"$match": {"user_id": user.user_id}},
+        {"$match": {"user_id": user_id}},
         {"$unwind": "$locations"},
         {"$match": {"locations.country": {"$exists": True}}},
         {"$group": {"_id": "$locations.country", "count": {"$sum": 1}}},
@@ -1206,9 +1208,9 @@ async def get_stats_overview(user: User = Depends(require_auth)):
         {"$limit": 20}
     ]).to_list(20)
     
-    # Count results by state
+    # 3. Results by State
     state_stats = await db.search_results.aggregate([
-        {"$match": {"user_id": user.user_id}},
+        {"$match": {"user_id": user_id}},
         {"$unwind": "$locations"},
         {"$match": {"locations.state": {"$exists": True}}},
         {"$group": {"_id": "$locations.state", "count": {"$sum": 1}}},
@@ -1216,35 +1218,205 @@ async def get_stats_overview(user: User = Depends(require_auth)):
         {"$limit": 20}
     ]).to_list(20)
     
-    # Count results by root domain
+    # 4. Results by City
+    city_stats = await db.search_results.aggregate([
+        {"$match": {"user_id": user_id}},
+        {"$unwind": "$locations"},
+        {"$match": {"locations.city": {"$exists": True}}},
+        {"$group": {"_id": "$locations.city", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 20}
+    ]).to_list(20)
+    
+    # 5. Top Domains
     domain_stats = await db.search_results.aggregate([
-        {"$match": {"user_id": user.user_id}},
+        {"$match": {"user_id": user_id}},
         {"$group": {"_id": "$root_domain", "count": {"$sum": 1}}},
         {"$sort": {"count": -1}},
         {"$limit": 20}
     ]).to_list(20)
     
-    # Top 10 most used words (basic word frequency)
-    # This is simplified - real implementation would use text analysis
-    
-    # Count by year
+    # 6. Results by Year (publication/reference year)
     year_stats = await db.search_results.aggregate([
-        {"$match": {"user_id": user.user_id, "year": {"$exists": True, "$ne": None}}},
+        {"$match": {"user_id": user_id, "year": {"$exists": True, "$ne": None}}},
         {"$group": {"_id": "$year", "count": {"$sum": 1}}},
         {"$sort": {"_id": 1}}
     ]).to_list(50)
     
-    total_results = await db.search_results.count_documents({"user_id": user.user_id})
-    total_categories = await db.categories.count_documents({"user_id": user.user_id})
+    # 7. Age of Subjects (estimated from year mentions in content)
+    current_year = datetime.now().year
+    age_brackets = await db.search_results.aggregate([
+        {"$match": {"user_id": user_id, "year": {"$exists": True, "$ne": None}}},
+        {"$addFields": {
+            "age": {"$subtract": [current_year, "$year"]}
+        }},
+        {"$bucket": {
+            "groupBy": "$age",
+            "boundaries": [0, 5, 10, 20, 50, 100, 200, 500],
+            "default": "500+",
+            "output": {"count": {"$sum": 1}}
+        }}
+    ]).to_list(10)
+    
+    # 8. Results by Category
+    category_stats = await db.search_results.aggregate([
+        {"$match": {"user_id": user_id}},
+        {"$group": {"_id": "$category_id", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 15}
+    ]).to_list(15)
+    
+    # Enrich with category names
+    for cat_stat in category_stats:
+        if cat_stat["_id"]:
+            cat = await db.categories.find_one({"category_id": cat_stat["_id"]}, {"_id": 0, "name": 1})
+            cat_stat["name"] = cat["name"] if cat else "Unknown"
+    
+    # 9. Content Source Types (webpage, news, academic, etc.)
+    source_type_stats = await db.search_results.aggregate([
+        {"$match": {"user_id": user_id}},
+        {"$addFields": {
+            "source_type": {
+                "$switch": {
+                    "branches": [
+                        {"case": {"$regexMatch": {"input": {"$ifNull": ["$root_domain", ""]}, "regex": "news|cnn|bbc|nytimes|washingtonpost|reuters"}}, "then": "News"},
+                        {"case": {"$regexMatch": {"input": {"$ifNull": ["$root_domain", ""]}, "regex": "edu|academic|scholar|jstor|pubmed"}}, "then": "Academic"},
+                        {"case": {"$regexMatch": {"input": {"$ifNull": ["$root_domain", ""]}, "regex": "gov|government|state"}}, "then": "Government"},
+                        {"case": {"$regexMatch": {"input": {"$ifNull": ["$root_domain", ""]}, "regex": "wikipedia|wiki"}}, "then": "Wiki"},
+                        {"case": {"$regexMatch": {"input": {"$ifNull": ["$root_domain", ""]}, "regex": "blog|medium|wordpress|blogger"}}, "then": "Blog"},
+                        {"case": {"$regexMatch": {"input": {"$ifNull": ["$root_domain", ""]}, "regex": "forum|reddit|quora|stackexchange"}}, "then": "Forum"},
+                        {"case": {"$regexMatch": {"input": {"$ifNull": ["$root_domain", ""]}, "regex": "youtube|video|vimeo"}}, "then": "Video"},
+                        {"case": {"$regexMatch": {"input": {"$ifNull": ["$root_domain", ""]}, "regex": "pdf"}}, "then": "PDF/Document"}
+                    ],
+                    "default": "Webpage"
+                }
+            }
+        }},
+        {"$group": {"_id": "$source_type", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]).to_list(15)
+    
+    # 10. Results by Day of Week (when collated)
+    day_of_week_stats = await db.search_results.aggregate([
+        {"$match": {"user_id": user_id}},
+        {"$addFields": {
+            "day_of_week": {"$dayOfWeek": {"$dateFromString": {"dateString": "$created_at", "onError": None}}}
+        }},
+        {"$match": {"day_of_week": {"$ne": None}}},
+        {"$group": {"_id": "$day_of_week", "count": {"$sum": 1}}},
+        {"$sort": {"_id": 1}}
+    ]).to_list(7)
+    
+    # Map day numbers to names
+    day_names = {1: "Sunday", 2: "Monday", 3: "Tuesday", 4: "Wednesday", 5: "Thursday", 6: "Friday", 7: "Saturday"}
+    for d in day_of_week_stats:
+        d["name"] = day_names.get(d["_id"], "Unknown")
+    
+    # 11. Results by Month
+    month_stats = await db.search_results.aggregate([
+        {"$match": {"user_id": user_id}},
+        {"$addFields": {
+            "month": {"$month": {"$dateFromString": {"dateString": "$created_at", "onError": None}}}
+        }},
+        {"$match": {"month": {"$ne": None}}},
+        {"$group": {"_id": "$month", "count": {"$sum": 1}}},
+        {"$sort": {"_id": 1}}
+    ]).to_list(12)
+    
+    month_names = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun", 7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"}
+    for m in month_stats:
+        m["name"] = month_names.get(m["_id"], "Unknown")
+    
+    # 12. Top Level Domain Distribution (.com, .org, .edu, etc.)
+    tld_stats = await db.search_results.aggregate([
+        {"$match": {"user_id": user_id, "root_domain": {"$exists": True}}},
+        {"$addFields": {
+            "tld": {"$arrayElemAt": [{"$split": ["$root_domain", "."]}, -1]}
+        }},
+        {"$group": {"_id": "$tld", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 15}
+    ]).to_list(15)
+    
+    # 13. Region Distribution (US regions)
+    us_regions = {
+        "Northeast": ["Maine", "New Hampshire", "Vermont", "Massachusetts", "Rhode Island", "Connecticut", "New York", "New Jersey", "Pennsylvania"],
+        "Southeast": ["Delaware", "Maryland", "Virginia", "West Virginia", "North Carolina", "South Carolina", "Georgia", "Florida", "Kentucky", "Tennessee", "Alabama", "Mississippi", "Arkansas", "Louisiana"],
+        "Midwest": ["Ohio", "Michigan", "Indiana", "Illinois", "Wisconsin", "Minnesota", "Iowa", "Missouri", "North Dakota", "South Dakota", "Nebraska", "Kansas"],
+        "Southwest": ["Texas", "Oklahoma", "New Mexico", "Arizona"],
+        "West": ["Colorado", "Wyoming", "Montana", "Idaho", "Utah", "Nevada", "California", "Oregon", "Washington", "Alaska", "Hawaii"]
+    }
+    
+    region_counts = {"Northeast": 0, "Southeast": 0, "Midwest": 0, "Southwest": 0, "West": 0, "International": 0}
+    for state_item in state_stats:
+        state_name = state_item["_id"]
+        found_region = False
+        for region, states in us_regions.items():
+            if state_name in states:
+                region_counts[region] += state_item["count"]
+                found_region = True
+                break
+        if not found_region:
+            region_counts["International"] += state_item["count"]
+    
+    region_stats = [{"_id": k, "count": v} for k, v in region_counts.items() if v > 0]
+    
+    # 14. Content Length Distribution (short, medium, long snippets)
+    length_stats = await db.search_results.aggregate([
+        {"$match": {"user_id": user_id}},
+        {"$addFields": {
+            "snippet_length": {"$strLenCP": {"$ifNull": ["$snippet", ""]}}
+        }},
+        {"$bucket": {
+            "groupBy": "$snippet_length",
+            "boundaries": [0, 100, 300, 500, 1000],
+            "default": "1000+",
+            "output": {"count": {"$sum": 1}}
+        }}
+    ]).to_list(10)
+    
+    # 15. Protocol Match Quality (if tracked)
+    match_quality_stats = await db.search_results.aggregate([
+        {"$match": {"user_id": user_id, "match_score": {"$exists": True}}},
+        {"$bucket": {
+            "groupBy": "$match_score",
+            "boundaries": [0, 0.25, 0.5, 0.75, 1.0],
+            "default": "Unknown",
+            "output": {"count": {"$sum": 1}}
+        }}
+    ]).to_list(10)
+    
+    # 16. Reaction Distribution
+    reaction_stats = await db.reactions.aggregate([
+        {"$match": {"user_id": user_id}},
+        {"$group": {"_id": "$reaction_type", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ]).to_list(10)
+    
+    total_results = await db.search_results.count_documents({"user_id": user_id})
+    total_categories = await db.categories.count_documents({"user_id": user_id})
+    total_locations = len(country_stats) + len(state_stats) + len(city_stats)
     
     return {
         "total_results": total_results,
         "total_categories": total_categories,
+        "total_locations": total_locations,
         "by_document_type": doc_type_stats,
         "by_country": country_stats,
         "by_state": state_stats,
+        "by_city": city_stats,
         "by_domain": domain_stats,
-        "by_year": year_stats
+        "by_year": year_stats,
+        "by_age_bracket": age_brackets,
+        "by_category": category_stats,
+        "by_source_type": source_type_stats,
+        "by_day_of_week": day_of_week_stats,
+        "by_month": month_stats,
+        "by_tld": tld_stats,
+        "by_region": region_stats,
+        "by_content_length": length_stats,
+        "by_match_quality": match_quality_stats,
+        "by_reaction": reaction_stats
     }
 
 @stats_router.get("/map-data")
