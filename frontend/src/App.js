@@ -1211,7 +1211,14 @@ const UltimateSearchPage = () => {
       </div>
 
       {/* New Category Dialog */}
-      <Dialog open={showNewCategory} onOpenChange={setShowNewCategory}>
+      <Dialog open={showNewCategory} onOpenChange={(open) => {
+        setShowNewCategory(open);
+        if (!open) {
+          // Reset form when dialog closes
+          setNewCategoryName("");
+          setNewCategoryProtocol("");
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Category</DialogTitle>
