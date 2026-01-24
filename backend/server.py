@@ -1063,6 +1063,7 @@ async def copy_protocol(
     }
     
     await db.categories.insert_one(new_category)
+    new_category.pop("_id", None)
     
     # Track copy for leaderboard
     await db.protocol_copies.insert_one({
