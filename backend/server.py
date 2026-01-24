@@ -1337,6 +1337,7 @@ async def create_page(
     }
     
     await db.pages.insert_one(page)
+    page.pop("_id", None)
     return page
 
 @pages_router.post("/{page_id}/follow")
