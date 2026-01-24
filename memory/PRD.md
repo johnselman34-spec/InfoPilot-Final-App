@@ -181,7 +181,7 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 16. Settings
 17. Admin Panel
 
-## API Endpoints (70+)
+## API Endpoints (80+)
 - `/api/auth/*` - Authentication (3)
 - `/api/categories/*` - Categories (6)
 - `/api/search/*` - Search/Collate (3)
@@ -190,7 +190,7 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - `/api/pages/*` - Pages (4)
 - `/api/chat/*` - Messaging (5)
 - `/api/marketplace/*` - Marketplace (5)
-- `/api/stats/*` - Statistics (6)
+- `/api/stats/*` - Statistics (8) - includes map-data-detailed, map-location
 - `/api/admin/*` - Admin (7)
 - `/api/easter-eggs/*` - Easter Eggs (5)
 - `/api/newsletter/*` - Newsletter (4)
@@ -201,6 +201,11 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - `/api/promotions/*` - Promotions (3)
 - `/api/reports/*` - Personal Reports (4)
 - `/api/subscription/*` - Subscription (2)
+- `/api/payments/*` - Stripe Payments (4) - NEW
+- `/api/legal/*` - Legal Documents (2) - NEW
+- `/api/templates/*` - Protocol Templates (5) - NEW
+- `/api/app-downloads` - App Download Links (1) - NEW
+- `/api/document-types` - Document Types (1) - NEW
 
 ## Tech Stack
 - **Frontend**: React 18, Tailwind CSS, Recharts, Framer Motion
@@ -208,16 +213,24 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - **Database**: MongoDB
 - **Search**: DuckDuckGo (ddgs library)
 - **Auth**: Emergent OAuth (Google)
-- **Payments**: PayPal (external links)
+- **Payments**: Stripe (emergentintegrations), PayPal (external link)
 
-## Testing Results
-- Backend: 100% success rate (70+ endpoints)
-- Frontend: 100% success rate (17+ pages)
+## Testing Results - v4.0
+- Backend: 92% success rate (80+ endpoints)
+- Frontend: 100% success rate (20+ pages)
 - All core flows operational
+- Legal pages accessible without auth
 
 ## Remaining Backlog
 
-### P0 - Critical
+### P0 - Critical (All Completed ✅)
+✅ Select All/Deselect All filters
+✅ Stripe payment integration
+✅ App download links
+✅ Legal pages (Privacy Policy, Terms of Service)
+✅ Enhanced map interaction
+✅ Protocol templates
+✅ "First in Flight" branding
 - [ ] PayPal API integration (currently external links)
 - [ ] WebSocket real-time chat
 - [ ] Voice search (Whisper)
