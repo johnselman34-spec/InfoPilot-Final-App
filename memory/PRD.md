@@ -1,4 +1,4 @@
-# InfoPilot Explorer - PRD v5.0
+# InfoPilot Explorer - PRD v6.0
 
 ## Project Overview
 InfoPilot Explorer is a worldwide web information exchange social network that provides users a "3D view of the Internet". Users can create custom search protocols using InfoJet 2.0 Protocol Language to collate web search results into organized categories.
@@ -16,7 +16,7 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - Ultimate Search Page with map visualization
 - Document classification system
 - Global Research Database
-- Statistics with charts
+- Statistics with 14+ analysis aspects
 - Social networking features
 - Protocol Marketplace
 - Easter Eggs with Laugh-O-Meter
@@ -28,9 +28,35 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - Book promotion (Letters to Evelyn)
 - Subscription with Pay What You Want
 
-## v5.0 Features - Implemented January 24, 2026
+## v6.0 Features - Implemented January 24, 2026
 
-### Latest Features (from InforPilot Explorer 2 More Information 1.docx)
+### Enhanced Statistics (16 Analysis Aspects)
+✅ **Statistics Page with 5 Tabs** - Overview, Location, Temporal, Sources, Advanced
+✅ **Aspect 1: Document Types** - Pie chart distribution
+✅ **Aspect 2: Source Types** - Webpage, News, Academic, Government, Wiki, Blog, Forum, Video, PDF
+✅ **Aspect 3: Results by Category** - Protocol categories bar chart
+✅ **Aspect 4: Reactions Distribution** - User engagement analysis
+✅ **Aspect 5: Results by Country** - Geographic distribution by nation
+✅ **Aspect 6: Results by State** - US states and provinces
+✅ **Aspect 7: Results by City** - 50+ major cities
+✅ **Aspect 8: US Regions** - Northeast, Southeast, Midwest, Southwest, West
+✅ **Aspect 9: Results by Year** - Publication/reference year line chart
+✅ **Aspect 10: Age of Subjects** - Time brackets (0-5, 5-10, 10-20, 20-50, 50-100, 100-200, 200-500, 500+ years)
+✅ **Aspect 11: Activity by Day of Week** - When you collate results
+✅ **Aspect 12: Activity by Month** - Monthly collation patterns
+✅ **Aspect 13: Top Domains** - Most frequent source websites
+✅ **Aspect 14: Top Level Domains** - .com, .org, .edu, .gov distribution
+✅ **Aspect 15: Content Length** - Snippet length distribution
+✅ **Aspect 16: Match Quality** - Protocol match scoring
+
+### Enhanced Geolocation
+✅ **State Abbreviations** - CA, NY, VA, TX, FL, etc.
+✅ **Major Cities** - 50+ US cities including Brunswick, Bath, Portland (Maine)
+✅ **Regional Prefixes** - Northern Virginia, Greater Boston, Metro Atlanta, etc.
+✅ **Street Addresses** - Pattern detection for addresses
+✅ **ZIP Codes** - Detection and regional mapping
+
+### Previous v5.0 Features
 ✅ **Search Match Options** - Exact Match, Strict Match, AI Match, Intelligent Match checkboxes
 ✅ **Search Match Select All/Deselect All** - Buttons for all match options
 ✅ **Show Templates Button** - Displays protocol templates panel in search
@@ -42,7 +68,7 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 ✅ **InfoPilot Messaging** - "Better than Facebook/LinkedIn" messaging on Groups page
 ✅ **Schematics/Diagrams Preference** - Checkbox to favor visual content
 
-### P0 Features (Previous Implementation)
+### P0 Features (v4.0)
 ✅ **Select All / Deselect All** - Document type filter buttons in Ultimate Search
 ✅ **Stripe Payment Integration** - Full checkout flow with emergentintegrations library
 ✅ **App Download Links** - Android, iOS, Desktop, Browser Extension in footer & settings
