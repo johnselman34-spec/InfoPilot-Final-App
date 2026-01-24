@@ -481,16 +481,14 @@ class InfoPilotAPITester:
         """Run all test suites"""
         print("🚀 Starting InfoPilot Explorer Backend API Tests")
         print(f"📍 Testing API at: {self.api_url}")
+        print(f"🔑 Using test session: {self.session_token}")
         print("=" * 60)
         
         # Core API tests
         self.test_health_check()
         self.test_health_endpoint()
         
-        # Authentication test
-        self.create_test_user_session()
-        
-        # Feature endpoint tests
+        # Feature endpoint tests with authentication
         self.test_categories_endpoints()
         self.test_search_endpoints()
         self.test_social_endpoints()
@@ -502,6 +500,40 @@ class InfoPilotAPITester:
         
         # Protocol parser test
         self.test_protocol_parser()
+        
+        # NEW FEATURES FROM DOCUMENTS 5-9
+        print("\n🆕 Testing New Features from Documents 5-9:")
+        print("-" * 40)
+        
+        # Quote Gallery (50 quotes)
+        self.test_quotes_endpoints()
+        
+        # Theme Gallery (8 presets including dark mode)
+        self.test_themes_endpoints()
+        
+        # Polls functionality
+        self.test_polls_endpoints()
+        
+        # Community Leaderboard
+        self.test_social_leaderboard()
+        
+        # AI News Headlines
+        self.test_newsletter_endpoints()
+        
+        # Top Words/Phrases Analytics
+        self.test_stats_top_words()
+        
+        # Easter Eggs & Laugh-O-Meter
+        self.test_easter_eggs_endpoints()
+        
+        # Protocol Analytics Dashboard
+        self.test_protocol_analytics()
+        
+        # Copy Protocol to Clipboard
+        self.test_copy_protocol()
+        
+        # Clean Category
+        self.test_clean_category()
         
         # Print summary
         print("=" * 60)
