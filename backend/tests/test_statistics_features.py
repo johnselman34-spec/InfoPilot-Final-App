@@ -310,11 +310,11 @@ class TestLocationExtractor:
             "Content-Type": "application/json"
         }
     
-    def test_search_with_state_abbreviation(self):
-        """Test that search detects state abbreviations like CA, NY, VA"""
+    def test_search_collate_with_state_abbreviation(self):
+        """Test that search/collate detects state abbreviations like CA, NY, VA"""
         # This tests the LocationExtractor indirectly through search
         response = requests.post(
-            f"{BASE_URL}/api/search",
+            f"{BASE_URL}/api/search/collate",
             headers=self.headers,
             json={
                 "query": "technology news from San Francisco, CA",
@@ -324,10 +324,10 @@ class TestLocationExtractor:
         # Just verify the endpoint works
         assert response.status_code in [200, 201], f"Search should work, got {response.status_code}"
     
-    def test_search_with_city_name(self):
-        """Test that search detects major cities"""
+    def test_search_collate_with_city_name(self):
+        """Test that search/collate detects major cities"""
         response = requests.post(
-            f"{BASE_URL}/api/search",
+            f"{BASE_URL}/api/search/collate",
             headers=self.headers,
             json={
                 "query": "business news from New York City",
@@ -336,10 +336,10 @@ class TestLocationExtractor:
         )
         assert response.status_code in [200, 201], f"Search should work, got {response.status_code}"
     
-    def test_search_with_regional_prefix(self):
-        """Test that search detects regional prefixes (Northern Virginia, Greater Boston)"""
+    def test_search_collate_with_regional_prefix(self):
+        """Test that search/collate detects regional prefixes (Northern Virginia, Greater Boston)"""
         response = requests.post(
-            f"{BASE_URL}/api/search",
+            f"{BASE_URL}/api/search/collate",
             headers=self.headers,
             json={
                 "query": "tech companies in Northern Virginia",
@@ -360,10 +360,10 @@ class TestSearchMatchOptions:
             "Content-Type": "application/json"
         }
     
-    def test_search_with_match_options(self):
-        """Test search with various match options"""
+    def test_search_collate_with_match_options(self):
+        """Test search/collate with various match options"""
         response = requests.post(
-            f"{BASE_URL}/api/search",
+            f"{BASE_URL}/api/search/collate",
             headers=self.headers,
             json={
                 "query": "test search",
