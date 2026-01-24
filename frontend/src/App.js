@@ -3005,9 +3005,13 @@ const SettingsPage = () => {
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => window.open('https://www.paypal.com/ncp/payment/LGXMXSG3D2MXU', '_blank')}
+                      onClick={handlePayPalPayment}
+                      disabled={loadingPayment}
                       data-testid="pay-with-paypal"
                     >
+                      {loadingPayment ? (
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      ) : null}
                       Pay with PayPal
                     </Button>
                   </div>
