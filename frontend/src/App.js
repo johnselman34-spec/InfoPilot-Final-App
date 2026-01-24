@@ -1795,10 +1795,47 @@ const SettingsPage = () => {
     content_filter: "moderate",
     newsletter_subscribed: false
   });
+  const [packages, setPackages] = useState([]);
+  const [loadingPayment, setLoadingPayment] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState('monthly');
+  const [customAmount, setCustomAmount] = useState('0.99');
+
+  useEffect(() => {
+    fetchPackages();
+  }, []);
+
+  const fetchPackages = async () => {
+    try {
+      const response = await api.get("/payments/packages");
+      setPackages(response.data.packages || []);
+    } catch (error) {
+      console.error("Error fetching packages:", error);
+    }
+  };
 
   const updateSetting = async (key, value) => {
     setSettings({ ...settings, [key]: value });
     // In a real app, you would save this to the backend
+  };
+
+  const handleStripePayment = async () => {
+    setLoadingPayment(true);
+    try {
+      const response = await api.post("/payments/checkout/session", {
+        origin_url: window.location.origin,
+        package_type: selectedPackage,
+        custom_amount: selectedPackage === 'pay_what_you_want' ? parseFloat(customAmount) : undefined
+      });
+      
+      if (response.data.url) {
+        window.location.href = response.data.url;
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      alert("Failed to initiate payment. Please try again.");
+    } finally {
+      setLoadingPayment(false);
+    }
   };
 
   return (
@@ -1825,6 +1862,94 @@ const SettingsPage = () => {
                   <Badge className="mt-2">Level {user?.level || 1}</Badge>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Subscription & Payment */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-[#007AFF]" />
+                Subscription
+              </CardTitle>
+              <CardDescription>First in Flight with Monetization of Searches</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {user?.is_paid ? (
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2 text-green-700 mb-2">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-medium">Premium Subscriber</span>
+                  </div>
+                  <p className="text-sm text-green-600">
+                    {user?.subscription_until 
+                      ? `Active until ${new Date(user.subscription_until).toLocaleDateString()}`
+                      : 'Your subscription is active'
+                    }
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    {packages.map((pkg) => (
+                      <div
+                        key={pkg.id}
+                        onClick={() => setSelectedPackage(pkg.id)}
+                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                          selectedPackage === pkg.id
+                            ? 'border-[#007AFF] bg-[#007AFF]/5'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        data-testid={`package-${pkg.id}`}
+                      >
+                        <p className="font-semibold">{pkg.name}</p>
+                        <p className="text-2xl font-bold text-[#007AFF]">${pkg.price}</p>
+                        <p className="text-sm text-gray-500">/{pkg.period}</p>
+                        <p className="text-xs text-gray-400 mt-2">{pkg.description}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {selectedPackage === 'pay_what_you_want' && (
+                    <div>
+                      <Label>Your Amount (min $0.75)</Label>
+                      <Input
+                        type="number"
+                        min="0.75"
+                        step="0.01"
+                        value={customAmount}
+                        onChange={(e) => setCustomAmount(e.target.value)}
+                        className="w-40"
+                        data-testid="custom-amount"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-3">
+                    <Button 
+                      className="btn-primary w-full"
+                      onClick={handleStripePayment}
+                      disabled={loadingPayment}
+                      data-testid="pay-with-stripe"
+                    >
+                      {loadingPayment ? (
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <CreditCard className="w-4 h-4 mr-2" />
+                      )}
+                      Pay with Stripe
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => window.open('https://www.paypal.com/ncp/payment/LGXMXSG3D2MXU', '_blank')}
+                      data-testid="pay-with-paypal"
+                    >
+                      Pay with PayPal
+                    </Button>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 
@@ -1894,6 +2019,94 @@ const SettingsPage = () => {
                   data-testid="setting-newsletter"
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* App Downloads */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Download className="w-5 h-5 text-[#007AFF]" />
+                Download Apps
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <a 
+                  href="https://play.google.com/store/apps/details?id=com.infopilot.explorer"
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-[#007AFF] transition-colors"
+                  data-testid="download-android-settings"
+                >
+                  <Smartphone className="w-8 h-8 text-[#34C759]" />
+                  <div>
+                    <p className="font-medium">Android</p>
+                    <p className="text-xs text-gray-500">Google Play Store</p>
+                  </div>
+                </a>
+                <a 
+                  href="https://apps.apple.com/app/infojet"
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-[#007AFF] transition-colors"
+                  data-testid="download-ios-settings"
+                >
+                  <Smartphone className="w-8 h-8 text-gray-700" />
+                  <div>
+                    <p className="font-medium">iOS</p>
+                    <p className="text-xs text-gray-500">App Store</p>
+                  </div>
+                </a>
+                <a 
+                  href="https://www.infopilotexplorer.biz/download"
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-[#007AFF] transition-colors"
+                  data-testid="download-desktop-settings"
+                >
+                  <Monitor className="w-8 h-8 text-[#007AFF]" />
+                  <div>
+                    <p className="font-medium">Desktop</p>
+                    <p className="text-xs text-gray-500">Windows, macOS, Linux</p>
+                  </div>
+                </a>
+                <a 
+                  href="https://chrome.google.com/webstore/detail/infopilot"
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 rounded-lg border border-gray-200 hover:border-[#007AFF] transition-colors"
+                  data-testid="download-extension-settings"
+                >
+                  <Globe className="w-8 h-8 text-[#FFD60A]" />
+                  <div>
+                    <p className="font-medium">Browser Extension</p>
+                    <p className="text-xs text-gray-500">Chrome, Firefox, Edge</p>
+                  </div>
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Legal Links */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Legal</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                <Link to="/privacy-policy" className="text-[#007AFF] hover:underline flex items-center gap-2">
+                  <Shield className="w-4 h-4" /> Privacy Policy
+                </Link>
+                <Link to="/terms-of-service" className="text-[#007AFF] hover:underline flex items-center gap-2">
+                  <Scale className="w-4 h-4" /> Terms of Service
+                </Link>
+              </div>
+              <p className="text-xs text-gray-400 mt-4">
+                InfoPilot Explorer - First in Flight with Monetization of Searches
+                <br />
+                © 2025-2026 Top Pilot Enterprises, Inc.
+              </p>
             </CardContent>
           </Card>
         </div>
