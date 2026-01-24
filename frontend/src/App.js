@@ -1810,10 +1810,17 @@ const GroupsPage = () => {
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [newGroupDescription, setNewGroupDescription] = useState("");
+  const [searchByName, setSearchByName] = useState("");
+  const [searchByContent, setSearchByContent] = useState("");
+  const [filteredGroups, setFilteredGroups] = useState([]);
 
   useEffect(() => {
     fetchGroups();
   }, []);
+
+  useEffect(() => {
+    filterGroups();
+  }, [groups, searchByName, searchByContent]);
 
   const fetchGroups = async () => {
     try {
@@ -1821,6 +1828,39 @@ const GroupsPage = () => {
       setGroups(response.data.groups || []);
     } catch (error) {
       console.error("Error fetching groups:", error);
+    }
+  };
+
+  const filterGroups = () => {
+    let results = [...groups];
+    
+    if (searchByName.trim()) {
+      results = results.filter(g => 
+        g.name.toLowerCase().includes(searchByName.toLowerCase())
+      );
+    }
+    
+    if (searchByContent.trim()) {
+      results = results.filter(g => 
+        g.description?.toLowerCase().includes(searchByContent.toLowerCase()) ||
+        g.posts?.some(p => p.content?.toLowerCase().includes(searchByContent.toLowerCase()))
+      );
+    }
+    
+    setFilteredGroups(results);
+  };
+
+  const searchGroupsAPI = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (searchByName) params.append("name", searchByName);
+      if (searchByContent) params.append("content", searchByContent);
+      
+      const response = await api.get(`/groups/search?${params.toString()}`);
+      setFilteredGroups(response.data.groups || []);
+    } catch (error) {
+      console.error("Error searching groups:", error);
+      filterGroups(); // Fall back to local filtering
     }
   };
 
@@ -1840,6 +1880,8 @@ const GroupsPage = () => {
     }
   };
 
+  const displayGroups = searchByName || searchByContent ? filteredGroups : groups;
+
   return (
     <div className="p-6" data-testid="groups-page">
       <div className="max-w-4xl mx-auto">
@@ -1850,8 +1892,46 @@ const GroupsPage = () => {
           </Button>
         </div>
 
+        {/* Search by Name and Content */}
+        <Card className="glass-card mb-6">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm mb-2 block">Search by Group Name</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Search groups by name..."
+                    value={searchByName}
+                    onChange={(e) => setSearchByName(e.target.value)}
+                    data-testid="search-group-name"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm mb-2 block">Search by Content</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Search within groups..."
+                    value={searchByContent}
+                    onChange={(e) => setSearchByContent(e.target.value)}
+                    data-testid="search-group-content"
+                  />
+                </div>
+              </div>
+            </div>
+            <Button className="mt-4" variant="outline" onClick={searchGroupsAPI} data-testid="search-groups-btn">
+              <Search className="w-4 h-4 mr-2" /> Search Groups
+            </Button>
+          </CardContent>
+        </Card>
+
+        <p className="text-sm text-gray-500 mb-4">
+          InfoPilot believes it does a better job than Facebook or LinkedIn for collaborative projects, 
+          individual projects, certifications, advancement, and social interaction.
+        </p>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {groups.map((group) => (
+          {displayGroups.map((group) => (
             <Card key={group.group_id} className="glass-card hover-lift" data-testid={`group-${group.group_id}`}>
               <CardContent className="p-6">
                 <h3 className="text-xl font-semibold mb-2">{group.name}</h3>
@@ -1866,11 +1946,15 @@ const GroupsPage = () => {
               </CardContent>
             </Card>
           ))}
-          {groups.length === 0 && (
+          {displayGroups.length === 0 && (
             <Card className="glass-card col-span-2">
               <CardContent className="py-12 text-center">
                 <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No groups yet. Create one to start collaborating!</p>
+                <p className="text-gray-500">
+                  {searchByName || searchByContent 
+                    ? "No groups found matching your search" 
+                    : "No groups yet. Create one to start collaborating!"}
+                </p>
               </CardContent>
             </Card>
           )}
