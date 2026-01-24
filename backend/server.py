@@ -2970,6 +2970,637 @@ async def get_document_types():
         ]
     }
 
+# ============= STRIPE PAYMENTS =============
+
+@payments_router.post("/checkout/session")
+async def create_checkout_session(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Create a Stripe checkout session for subscription"""
+    if not STRIPE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Stripe integration not available")
+    
+    data = await request.json()
+    origin_url = data.get("origin_url", "")
+    package_type = data.get("package_type", "monthly")  # monthly, yearly_intro, yearly_regular
+    
+    # Define fixed packages on backend (security)
+    PACKAGES = {
+        "monthly": {"amount": 0.99, "description": "Monthly Subscription"},
+        "yearly_intro": {"amount": 0.75, "description": "Yearly Intro ($0.75/year until March 2026)"},
+        "yearly_regular": {"amount": 4.62, "description": "Yearly Regular Subscription"},
+        "pay_what_you_want": {"amount": float(data.get("custom_amount", 0.99)), "description": "Pay What You Want"}
+    }
+    
+    if package_type not in PACKAGES:
+        package_type = "monthly"
+    
+    package = PACKAGES[package_type]
+    amount = max(0.75, package["amount"])  # Minimum $0.75
+    
+    try:
+        stripe_api_key = os.environ.get("STRIPE_API_KEY")
+        if not stripe_api_key:
+            raise HTTPException(status_code=500, detail="Stripe API key not configured")
+        
+        host_url = str(request.base_url).rstrip('/')
+        webhook_url = f"{host_url}/api/payments/webhook/stripe"
+        
+        stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
+        
+        success_url = f"{origin_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
+        cancel_url = f"{origin_url}/settings"
+        
+        checkout_request = CheckoutSessionRequest(
+            amount=amount,
+            currency="usd",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={
+                "user_id": user.user_id,
+                "package_type": package_type,
+                "description": package["description"]
+            }
+        )
+        
+        session = await stripe_checkout.create_checkout_session(checkout_request)
+        
+        # Create payment transaction record
+        await db.payment_transactions.insert_one({
+            "transaction_id": f"txn_{uuid.uuid4().hex[:12]}",
+            "session_id": session.session_id,
+            "user_id": user.user_id,
+            "amount": amount,
+            "currency": "usd",
+            "package_type": package_type,
+            "payment_status": "pending",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        
+        return {"url": session.url, "session_id": session.session_id}
+    
+    except Exception as e:
+        logger.error(f"Stripe checkout error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@payments_router.get("/checkout/status/{session_id}")
+async def get_checkout_status(
+    session_id: str,
+    user: User = Depends(require_auth)
+):
+    """Get the status of a checkout session"""
+    if not STRIPE_AVAILABLE:
+        raise HTTPException(status_code=503, detail="Stripe integration not available")
+    
+    try:
+        stripe_api_key = os.environ.get("STRIPE_API_KEY")
+        host_url = "https://infopilot-hub-1.preview.emergentagent.com"
+        webhook_url = f"{host_url}/api/payments/webhook/stripe"
+        
+        stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
+        status = await stripe_checkout.get_checkout_status(session_id)
+        
+        # Update transaction in database
+        if status.payment_status == "paid":
+            # Check if already processed
+            existing = await db.payment_transactions.find_one({
+                "session_id": session_id,
+                "payment_status": "completed"
+            })
+            
+            if not existing:
+                # Update transaction
+                await db.payment_transactions.update_one(
+                    {"session_id": session_id},
+                    {"$set": {
+                        "payment_status": "completed",
+                        "completed_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                
+                # Activate subscription
+                subscription_until = datetime.now(timezone.utc) + timedelta(days=30)
+                await db.users.update_one(
+                    {"user_id": user.user_id},
+                    {"$set": {
+                        "is_paid": True,
+                        "subscription_until": subscription_until.isoformat()
+                    }}
+                )
+        
+        return {
+            "status": status.status,
+            "payment_status": status.payment_status,
+            "amount_total": status.amount_total,
+            "currency": status.currency
+        }
+    
+    except Exception as e:
+        logger.error(f"Stripe status check error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@payments_router.post("/webhook/stripe")
+async def handle_stripe_webhook(request: Request):
+    """Handle Stripe webhook events"""
+    if not STRIPE_AVAILABLE:
+        return {"status": "ignored"}
+    
+    try:
+        body = await request.body()
+        stripe_signature = request.headers.get("Stripe-Signature")
+        
+        stripe_api_key = os.environ.get("STRIPE_API_KEY")
+        host_url = "https://infopilot-hub-1.preview.emergentagent.com"
+        webhook_url = f"{host_url}/api/payments/webhook/stripe"
+        
+        stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
+        webhook_response = await stripe_checkout.handle_webhook(body, stripe_signature)
+        
+        if webhook_response.payment_status == "paid":
+            # Get user from metadata
+            user_id = webhook_response.metadata.get("user_id")
+            if user_id:
+                await db.payment_transactions.update_one(
+                    {"session_id": webhook_response.session_id},
+                    {"$set": {
+                        "payment_status": "completed",
+                        "completed_at": datetime.now(timezone.utc).isoformat()
+                    }}
+                )
+                
+                subscription_until = datetime.now(timezone.utc) + timedelta(days=30)
+                await db.users.update_one(
+                    {"user_id": user_id},
+                    {"$set": {
+                        "is_paid": True,
+                        "subscription_until": subscription_until.isoformat()
+                    }}
+                )
+        
+        return {"status": "received"}
+    
+    except Exception as e:
+        logger.error(f"Stripe webhook error: {e}")
+        return {"status": "error", "detail": str(e)}
+
+@payments_router.get("/packages")
+async def get_subscription_packages():
+    """Get available subscription packages"""
+    return {
+        "packages": [
+            {"id": "monthly", "name": "Monthly", "price": 0.99, "period": "month", "description": "Full access monthly"},
+            {"id": "yearly_intro", "name": "Yearly Intro", "price": 0.75, "period": "year", "description": "Introductory rate until March 2026"},
+            {"id": "yearly_regular", "name": "Yearly", "price": 4.62, "period": "year", "description": "Annual subscription"},
+            {"id": "pay_what_you_want", "name": "Pay What You Want", "price": 0.75, "period": "month", "description": "Minimum $0.75", "custom": True}
+        ],
+        "stripe_enabled": STRIPE_AVAILABLE,
+        "paypal_link": "https://www.paypal.com/ncp/payment/LGXMXSG3D2MXU"
+    }
+
+# ============= LEGAL PAGES =============
+
+LEGAL_DOCUMENTS = {
+    "privacy-policy": {
+        "title": "Privacy Policy",
+        "last_updated": "January 2026",
+        "content": """
+# Privacy Policy
+
+**InfoPilot Explorer** - Top Pilot Enterprises, Inc.
+
+*Last Updated: January 2026*
+
+## First in Flight with Monetization of Searches
+
+InfoPilot Explorer is proud to be **First in Flight** with the monetization of web searches. Your privacy is paramount to us.
+
+## Information We Collect
+
+### Account Information
+- Email address (via Google OAuth)
+- Display name and profile picture
+- Account preferences and settings
+
+### Usage Data
+- Search queries and collated results
+- Categories and protocols you create
+- Interaction data (reactions, comments, friend connections)
+
+### Payment Information
+- Processed securely through Stripe and PayPal
+- We do not store credit card numbers
+
+## How We Use Your Information
+
+1. **Service Delivery**: To provide the InfoPilot Explorer platform
+2. **Personalization**: To customize your Ultimate Search Page
+3. **Communication**: To send newsletters and updates (configurable)
+4. **Improvement**: To enhance our services
+
+## Data Security
+
+We implement industry-standard security measures including:
+- Encrypted data transmission (HTTPS)
+- Secure authentication via Google OAuth
+- Regular security audits
+
+## Your Rights
+
+You have the right to:
+- Access your personal data
+- Request data deletion
+- Opt-out of marketing communications
+- Export your data
+
+## Children's Privacy
+
+InfoPilot Explorer is not intended for users under 13. We do not knowingly collect information from children.
+
+## Contact Us
+
+**Top Pilot Enterprises, Inc.**
+Brunswick, Maine
+Email: JJSpilot24@gmail.com
+
+---
+*Copyright © 2025-2026 Top Pilot Enterprises, Inc. All rights reserved.*
+*InfoPilot Explorer - First in Flight with Monetization of Searches*
+"""
+    },
+    "terms-of-service": {
+        "title": "User Agreement / Terms of Service",
+        "last_updated": "January 2026",
+        "content": """
+# User Agreement / Terms of Service
+
+**InfoPilot Explorer** - Top Pilot Enterprises, Inc.
+
+*Last Updated: January 2026*
+
+## First in Flight with Monetization of Searches
+
+Welcome to InfoPilot Explorer, the world's premier information exchange social network.
+
+## 1. Acceptance of Terms
+
+By accessing InfoPilot Explorer, you agree to these Terms of Service and our Privacy Policy.
+
+## 2. Description of Service
+
+InfoPilot Explorer provides:
+- Custom search protocols using InfoJet 2.0 language
+- Web search collation and categorization
+- Social networking features
+- Protocol marketplace
+
+## 3. User Accounts
+
+- You must provide accurate registration information
+- You are responsible for maintaining account security
+- One person, one account policy
+
+## 4. Intellectual Property
+
+### Our IP
+The InfoJet 2.0 protocol language, platform code, and design are proprietary to Top Pilot Enterprises, Inc.
+
+### Your Content
+You retain ownership of protocols and content you create. By sharing publicly, you grant us license to display them.
+
+## 5. Prohibited Content
+
+You may NOT post:
+- Illegal content
+- Harmful or threatening content
+- Content violating others' rights
+
+## 6. Protocol Marketplace
+
+- 90/10 revenue split (you/platform) on protocol sales
+- Prices subject to admin approval
+- Refunds handled case-by-case
+
+## 7. Subscriptions
+
+- Monthly: $0.99
+- Yearly Intro: $0.75 (until March 2026)
+- Yearly Regular: $4.62
+- Pay What You Want: Minimum $0.75
+
+Subscriptions auto-renew unless cancelled.
+
+## 8. Limitation of Liability
+
+InfoPilot Explorer is provided "as is" without warranties. We are not liable for indirect damages.
+
+## 9. Termination
+
+We may terminate accounts violating these terms. You may delete your account at any time.
+
+## 10. Changes to Terms
+
+We may update these terms. Continued use constitutes acceptance.
+
+## 11. Contact
+
+**Top Pilot Enterprises, Inc.**
+Brunswick, Maine
+Email: JJSpilot24@gmail.com
+Phone: (207) 522-0894
+
+---
+*Copyright © 2025-2026 Top Pilot Enterprises, Inc. All rights reserved.*
+*This code and platform may not be emulated or reproduced without express written permission.*
+*InfoPilot Explorer - First in Flight with Monetization of Searches*
+"""
+    }
+}
+
+@legal_router.get("/{doc_type}")
+async def get_legal_document(doc_type: str):
+    """Get a legal document (privacy-policy or terms-of-service)"""
+    if doc_type not in LEGAL_DOCUMENTS:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    # Check for admin-customized version first
+    custom_doc = await db.legal_documents.find_one({"doc_type": doc_type}, {"_id": 0})
+    if custom_doc:
+        return custom_doc
+    
+    return LEGAL_DOCUMENTS[doc_type]
+
+@legal_router.put("/{doc_type}")
+async def update_legal_document(
+    doc_type: str,
+    request: Request,
+    user: User = Depends(require_admin)
+):
+    """Update a legal document (admin only)"""
+    if doc_type not in ["privacy-policy", "terms-of-service"]:
+        raise HTTPException(status_code=400, detail="Invalid document type")
+    
+    data = await request.json()
+    
+    await db.legal_documents.update_one(
+        {"doc_type": doc_type},
+        {"$set": {
+            "doc_type": doc_type,
+            "title": data.get("title", LEGAL_DOCUMENTS[doc_type]["title"]),
+            "content": data.get("content"),
+            "last_updated": datetime.now(timezone.utc).strftime("%B %Y")
+        }},
+        upsert=True
+    )
+    
+    return {"message": "Document updated"}
+
+# ============= PROTOCOL TEMPLATES =============
+
+@templates_router.get("")
+async def get_protocol_templates(
+    is_public: Optional[bool] = None,
+    user: User = Depends(require_auth)
+):
+    """Get protocol templates"""
+    query = {}
+    
+    if is_public is True:
+        query["is_public"] = True
+    elif is_public is False:
+        query["$or"] = [
+            {"user_id": user.user_id},
+            {"is_public": True}
+        ]
+    else:
+        query["$or"] = [
+            {"user_id": user.user_id},
+            {"is_public": True}
+        ]
+    
+    templates = await db.protocol_templates.find(query, {"_id": 0})\
+        .sort("created_at", -1)\
+        .to_list(100)
+    
+    # Get creator info
+    for t in templates:
+        creator = await db.users.find_one(
+            {"user_id": t.get("user_id")},
+            {"_id": 0, "name": 1, "picture": 1}
+        )
+        t["creator"] = creator
+    
+    return {"templates": templates}
+
+@templates_router.post("")
+async def create_protocol_template(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Create a protocol template"""
+    data = await request.json()
+    
+    template = {
+        "template_id": f"tmpl_{uuid.uuid4().hex[:12]}",
+        "user_id": user.user_id,
+        "name": data.get("name"),
+        "description": data.get("description", ""),
+        "protocol_string": data.get("protocol_string"),
+        "category": data.get("category", "General"),
+        "is_public": data.get("is_public", False),
+        "usage_count": 0,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.protocol_templates.insert_one(template)
+    template.pop("_id", None)
+    
+    return template
+
+@templates_router.get("/{template_id}")
+async def get_protocol_template(
+    template_id: str,
+    user: User = Depends(require_auth)
+):
+    """Get a specific protocol template"""
+    template = await db.protocol_templates.find_one(
+        {"template_id": template_id},
+        {"_id": 0}
+    )
+    
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    # Check access
+    if not template.get("is_public") and template.get("user_id") != user.user_id:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    return template
+
+@templates_router.post("/{template_id}/use")
+async def use_protocol_template(
+    template_id: str,
+    user: User = Depends(require_auth)
+):
+    """Use a template to create a new category"""
+    template = await db.protocol_templates.find_one(
+        {"template_id": template_id},
+        {"_id": 0}
+    )
+    
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found")
+    
+    # Create category from template
+    category = {
+        "category_id": f"cat_{uuid.uuid4().hex[:12]}",
+        "user_id": user.user_id,
+        "name": template["name"],
+        "protocol": template["protocol_string"],
+        "parent_id": None,
+        "is_public": True,
+        "price": 0.0,
+        "sales_count": 0,
+        "from_template": template_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.categories.insert_one(category)
+    category.pop("_id", None)
+    
+    # Increment usage count
+    await db.protocol_templates.update_one(
+        {"template_id": template_id},
+        {"$inc": {"usage_count": 1}}
+    )
+    
+    return {"message": "Category created from template", "category": category}
+
+@templates_router.delete("/{template_id}")
+async def delete_protocol_template(
+    template_id: str,
+    user: User = Depends(require_auth)
+):
+    """Delete a protocol template"""
+    result = await db.protocol_templates.delete_one({
+        "template_id": template_id,
+        "user_id": user.user_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Template not found or access denied")
+    
+    return {"message": "Template deleted"}
+
+# ============= ENHANCED MAP DATA =============
+
+@stats_router.get("/map-data-detailed")
+async def get_detailed_map_data(user: User = Depends(require_auth)):
+    """Get detailed map data with all results per location"""
+    # Get all search results with location data
+    results = await db.search_results.find(
+        {"user_id": user.user_id, "locations": {"$exists": True, "$ne": []}},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Group results by location
+    location_groups = {}
+    for result in results:
+        for loc in result.get("locations", []):
+            key = f"{loc.get('country', 'Unknown')}_{loc.get('state', '')}_{loc.get('city', '')}"
+            if key not in location_groups:
+                location_groups[key] = {
+                    "location": loc,
+                    "results": [],
+                    "count": 0
+                }
+            location_groups[key]["results"].append({
+                "result_id": result.get("result_id"),
+                "title": result.get("title"),
+                "url": result.get("url"),
+                "document_type": result.get("document_type"),
+                "snippet": result.get("snippet", "")[:200]
+            })
+            location_groups[key]["count"] += 1
+    
+    return {
+        "locations": list(location_groups.values()),
+        "total_locations": len(location_groups),
+        "total_results": len(results)
+    }
+
+@stats_router.get("/map-location/{location_key}")
+async def get_results_by_location(
+    location_key: str,
+    page: int = 1,
+    limit: int = 20,
+    user: User = Depends(require_auth)
+):
+    """Get all search results for a specific map location"""
+    # Parse location key (format: country_state_city)
+    parts = location_key.split("_")
+    country = parts[0] if len(parts) > 0 else None
+    state = parts[1] if len(parts) > 1 else None
+    city = parts[2] if len(parts) > 2 else None
+    
+    query = {"user_id": user.user_id}
+    
+    if country:
+        query["locations.country"] = country
+    if state:
+        query["locations.state"] = state
+    if city:
+        query["locations.city"] = city
+    
+    skip = (page - 1) * limit
+    results = await db.search_results.find(query, {"_id": 0})\
+        .skip(skip)\
+        .limit(limit)\
+        .to_list(limit)
+    
+    total = await db.search_results.count_documents(query)
+    
+    return {
+        "results": results,
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit,
+        "location": {"country": country, "state": state, "city": city}
+    }
+
+# ============= APP DOWNLOAD LINKS =============
+
+@api_router.get("/app-downloads")
+async def get_app_download_links():
+    """Get app download links for mobile and desktop"""
+    return {
+        "android": {
+            "name": "InfoPilot Explorer",
+            "store": "Google Play Store",
+            "url": "https://play.google.com/store/apps/details?id=com.infopilot.explorer",
+            "icon": "android"
+        },
+        "ios": {
+            "name": "InfoJet",
+            "store": "Apple App Store",
+            "url": "https://apps.apple.com/app/infojet",
+            "icon": "apple"
+        },
+        "desktop": {
+            "name": "InfoPilot Desktop",
+            "platforms": ["Windows", "macOS", "Linux"],
+            "url": "https://www.infopilotexplorer.biz/download",
+            "icon": "monitor"
+        },
+        "browser_extension": {
+            "name": "InfoPilot Browser Extension",
+            "browsers": ["Chrome", "Firefox", "Edge"],
+            "url": "https://chrome.google.com/webstore/detail/infopilot",
+            "icon": "globe"
+        }
+    }
+
 # ============= INCLUDE ROUTERS =============
 
 api_router.include_router(auth_router)
