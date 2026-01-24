@@ -1284,6 +1284,42 @@ async def get_groups(
     groups = await db.groups.find(query, {"_id": 0}).to_list(100)
     return {"groups": groups}
 
+@groups_router.get("/search")
+async def search_groups(
+    name: Optional[str] = None,
+    content: Optional[str] = None,
+    user: User = Depends(require_auth)
+):
+    """Search groups by name and/or content"""
+    query = {}
+    
+    if name:
+        query["name"] = {"$regex": name, "$options": "i"}
+    
+    groups = await db.groups.find(query, {"_id": 0}).to_list(100)
+    
+    # If content search is specified, filter by posts content
+    if content:
+        filtered_groups = []
+        for group in groups:
+            # Check description
+            if group.get("description") and content.lower() in group["description"].lower():
+                filtered_groups.append(group)
+                continue
+            
+            # Check posts
+            posts = await db.group_posts.find(
+                {"group_id": group["group_id"], "content": {"$regex": content, "$options": "i"}},
+                {"_id": 0}
+            ).limit(1).to_list(1)
+            
+            if posts:
+                filtered_groups.append(group)
+        
+        return {"groups": filtered_groups}
+    
+    return {"groups": groups}
+
 @groups_router.post("")
 async def create_group(
     request: Request,
