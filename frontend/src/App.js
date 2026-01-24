@@ -913,7 +913,7 @@ const UltimateSearchPage = () => {
                           {templates.slice(0, 6).map((t) => (
                             <button
                               key={t.template_id}
-                              onClick={() => useTemplate(t)}
+                              onClick={() => applyTemplate(t)}
                               className="p-3 bg-white rounded-lg border hover:border-[#007AFF] text-left transition-colors"
                               data-testid={`template-quick-${t.template_id}`}
                             >
