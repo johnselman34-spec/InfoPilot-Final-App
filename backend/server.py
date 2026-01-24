@@ -5370,10 +5370,26 @@ app.include_router(api_router)
 
 # ============= CORS =============
 
+# Get allowed origins from environment or use defaults
+cors_origins_env = os.environ.get("CORS_ORIGINS", "")
+if cors_origins_env == "*":
+    # For wildcard, we need to dynamically allow origins when credentials are used
+    allowed_origins = [
+        "https://search-companion-1.preview.emergentagent.com",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+else:
+    allowed_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()] or [
+        "https://search-companion-1.preview.emergentagent.com",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
