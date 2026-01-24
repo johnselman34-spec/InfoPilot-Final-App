@@ -705,6 +705,9 @@ async def search_and_collate(
     # Save to database
     if collated_results:
         await db.search_results.insert_many(collated_results)
+        # Remove _id from results for JSON serialization
+        for r in collated_results:
+            r.pop("_id", None)
     
     # Add XP
     await db.users.update_one(
