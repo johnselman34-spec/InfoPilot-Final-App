@@ -1927,7 +1927,7 @@ async def root():
     """Root endpoint"""
     return {
         "name": "InfoPilot Explorer API",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "description": "World Wide Web Information Exchange Social Network"
     }
 
@@ -1935,6 +1935,752 @@ async def root():
 async def health_check():
     """Health check"""
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+# ============= POLLS ROUTES =============
+
+@polls_router.get("")
+async def get_polls(
+    target_type: Optional[str] = None,
+    target_id: Optional[str] = None,
+    user: User = Depends(require_auth)
+):
+    """Get polls"""
+    query = {}
+    if target_type:
+        query["target_type"] = target_type
+    if target_id:
+        query["target_id"] = target_id
+    
+    polls = await db.polls.find(query, {"_id": 0}).sort("created_at", -1).to_list(50)
+    return {"polls": polls}
+
+@polls_router.post("")
+async def create_poll(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Create a poll on USP, Group, or Page"""
+    data = await request.json()
+    
+    poll = {
+        "poll_id": f"poll_{uuid.uuid4().hex[:12]}",
+        "creator_id": user.user_id,
+        "question": data.get("question"),
+        "options": [{"text": opt, "votes": 0} for opt in data.get("options", [])],
+        "target_type": data.get("target_type", "usp"),  # usp, group, page
+        "target_id": data.get("target_id"),
+        "voters": [],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": data.get("expires_at")
+    }
+    
+    await db.polls.insert_one(poll)
+    poll.pop("_id", None)
+    return poll
+
+@polls_router.post("/{poll_id}/vote")
+async def vote_on_poll(
+    poll_id: str,
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Vote on a poll"""
+    data = await request.json()
+    option_index = data.get("option_index")
+    
+    # Check if already voted
+    poll = await db.polls.find_one({"poll_id": poll_id}, {"_id": 0})
+    if not poll:
+        raise HTTPException(status_code=404, detail="Poll not found")
+    
+    if user.user_id in poll.get("voters", []):
+        raise HTTPException(status_code=400, detail="Already voted")
+    
+    # Record vote
+    await db.polls.update_one(
+        {"poll_id": poll_id},
+        {
+            "$inc": {f"options.{option_index}.votes": 1},
+            "$push": {"voters": user.user_id}
+        }
+    )
+    
+    return {"message": "Vote recorded"}
+
+# ============= QUOTE GALLERY ROUTES =============
+
+QUOTES_GALLERY = [
+    "The search for truth is the noblest pursuit of humanity.",
+    "In the vast ocean of information, protocols are your compass.",
+    "Every category is a window into someone's curiosity.",
+    "The best researchers are those who ask the right questions.",
+    "Information is power, but organized information is unstoppable.",
+    "Your Ultimate Search Page is your digital fingerprint on the web.",
+    "Collate today, discover tomorrow.",
+    "Behind every great protocol is a mind seeking knowledge.",
+    "The internet is a library - InfoPilot is your librarian.",
+    "Share your protocols, multiply your impact.",
+    "In a world of noise, filters create clarity.",
+    "One person's search result is another's treasure.",
+    "Categories don't limit thinking - they organize it.",
+    "The best ideas come from connecting unrelated searches.",
+    "Research is formalized curiosity. Protocols make it efficient.",
+    "Every click teaches the system; every search refines your world.",
+    "Your 3D view of the internet starts with a single protocol.",
+    "Information wants to be organized. Help it along.",
+    "The marketplace of ideas now has a marketplace of protocols.",
+    "True discovery happens at the intersection of categories.",
+    "Your searches tell a story. Make it a good one.",
+    "Protocols are recipes for knowledge.",
+    "The more precise your protocol, the more valuable your results.",
+    "In the age of information, curation is the new creation.",
+    "Every subcategory is a path deeper into understanding.",
+    "The best searchers don't just find - they filter.",
+    "Your research is your legacy. Organize it well.",
+    "Protocols connect minds across time and space.",
+    "The internet remembers; your protocols help you remember what matters.",
+    "Every great discovery started with a simple search.",
+    "Categories are the scaffolding of knowledge.",
+    "Share a protocol, change a perspective.",
+    "The robot searches, but you decide what's valuable.",
+    "Your USP is your intellectual home base.",
+    "Great minds search alike - literally, with protocols.",
+    "Information without organization is just noise.",
+    "The best protocols are born from necessity.",
+    "Your categories reflect your priorities.",
+    "Search smarter, not harder.",
+    "Every protocol tells a story of curiosity.",
+    "The marketplace rewards expertise.",
+    "Your 3D view is uniquely yours.",
+    "Protocols: because bookmarks aren't enough.",
+    "The best researchers share their methods.",
+    "Information exchange is civilization's backbone.",
+    "Your searches shape your worldview.",
+    "Categories are mental models made visible.",
+    "The robot works while you sleep.",
+    "Great protocols stand the test of time.",
+    "Your Ultimate Search Page: curated by you, for you."
+]
+
+@quotes_router.get("")
+async def get_quotes(count: int = 10):
+    """Get random quotes from the gallery"""
+    import random
+    selected = random.sample(QUOTES_GALLERY, min(count, len(QUOTES_GALLERY)))
+    return {"quotes": selected}
+
+@quotes_router.get("/all")
+async def get_all_quotes():
+    """Get all quotes"""
+    return {"quotes": QUOTES_GALLERY, "total": len(QUOTES_GALLERY)}
+
+# ============= THEMES ROUTES =============
+
+THEME_PRESETS = {
+    "default": {
+        "name": "InfoPilot Classic",
+        "background": "#FFFFF0",
+        "primary": "#007AFF",
+        "secondary": "#34C759",
+        "accent": "#FFD60A"
+    },
+    "royal": {
+        "name": "Royal",
+        "background": "#1A1A2E",
+        "primary": "#6B5B95",
+        "secondary": "#9B59B6",
+        "accent": "#E8D5B7"
+    },
+    "hot": {
+        "name": "Hot",
+        "background": "#FFFFFF",
+        "primary": "#FF4444",
+        "secondary": "#FF6B6B",
+        "accent": "#FFB347"
+    },
+    "ocean": {
+        "name": "Ocean",
+        "background": "#F0F8FF",
+        "primary": "#0077B6",
+        "secondary": "#00B4D8",
+        "accent": "#90E0EF"
+    },
+    "forest": {
+        "name": "Forest",
+        "background": "#F5F5DC",
+        "primary": "#228B22",
+        "secondary": "#32CD32",
+        "accent": "#90EE90"
+    },
+    "sunset": {
+        "name": "Sunset",
+        "background": "#FFF8DC",
+        "primary": "#FF6347",
+        "secondary": "#FF7F50",
+        "accent": "#FFD700"
+    },
+    "ruby": {
+        "name": "Ruby",
+        "background": "#FFF0F5",
+        "primary": "#DC143C",
+        "secondary": "#FF69B4",
+        "accent": "#FFB6C1"
+    },
+    "dark": {
+        "name": "Dark Mode",
+        "background": "#121212",
+        "primary": "#BB86FC",
+        "secondary": "#03DAC6",
+        "accent": "#CF6679"
+    }
+}
+
+@themes_router.get("/presets")
+async def get_theme_presets():
+    """Get available theme presets"""
+    return {"presets": THEME_PRESETS}
+
+@themes_router.get("/user")
+async def get_user_theme(user: User = Depends(require_auth)):
+    """Get user's current theme"""
+    user_theme = await db.user_themes.find_one(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    )
+    return {"theme": user_theme or THEME_PRESETS["default"]}
+
+@themes_router.post("/save")
+async def save_user_theme(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Save user's custom theme"""
+    data = await request.json()
+    
+    theme_data = {
+        "user_id": user.user_id,
+        "preset": data.get("preset"),
+        "custom": data.get("custom", {}),
+        "dark_mode": data.get("dark_mode", False),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.user_themes.update_one(
+        {"user_id": user.user_id},
+        {"$set": theme_data},
+        upsert=True
+    )
+    
+    return {"message": "Theme saved"}
+
+@themes_router.post("/share")
+async def share_theme(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Share a custom theme to the gallery"""
+    data = await request.json()
+    
+    shared_theme = {
+        "theme_id": f"theme_{uuid.uuid4().hex[:12]}",
+        "creator_id": user.user_id,
+        "name": data.get("name"),
+        "colors": data.get("colors"),
+        "downloads": 0,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.shared_themes.insert_one(shared_theme)
+    shared_theme.pop("_id", None)
+    return shared_theme
+
+# ============= PROTOCOL ANALYTICS ROUTES =============
+
+@analytics_router.get("/my-protocols")
+async def get_my_protocol_analytics(user: User = Depends(require_auth)):
+    """Get analytics for user's protocols"""
+    # Get user's categories with stats
+    categories = await db.categories.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).to_list(100)
+    
+    analytics = []
+    for cat in categories:
+        # Get views
+        views = await db.protocol_views.count_documents({"category_id": cat["category_id"]})
+        
+        # Get copies
+        copies = await db.protocol_copies.count_documents({"original_id": cat["category_id"]})
+        
+        # Get purchases
+        purchases = await db.purchases.count_documents({"category_id": cat["category_id"]})
+        
+        # Calculate conversion rate
+        conversion = (purchases / views * 100) if views > 0 else 0
+        
+        analytics.append({
+            "category_id": cat["category_id"],
+            "name": cat["name"],
+            "views": views,
+            "copies": copies,
+            "sales": purchases,
+            "revenue": purchases * cat.get("price", 0),
+            "conversion_rate": round(conversion, 2)
+        })
+    
+    return {"analytics": analytics}
+
+@analytics_router.post("/track-view")
+async def track_protocol_view(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Track a protocol view"""
+    data = await request.json()
+    category_id = data.get("category_id")
+    
+    await db.protocol_views.insert_one({
+        "category_id": category_id,
+        "viewer_id": user.user_id,
+        "viewed_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "View tracked"}
+
+@analytics_router.get("/admin/marketplace-forecast")
+async def get_marketplace_forecast(user: User = Depends(require_admin)):
+    """Get marketplace-wide forecast (admin only)"""
+    # Get total revenue
+    total_purchases = await db.purchases.find({}, {"_id": 0, "price": 1}).to_list(10000)
+    total_revenue = sum(p.get("price", 0) for p in total_purchases)
+    
+    # Get trending categories
+    trending = await db.protocol_copies.aggregate([
+        {"$group": {"_id": "$original_id", "copies": {"$sum": 1}}},
+        {"$sort": {"copies": -1}},
+        {"$limit": 10}
+    ]).to_list(10)
+    
+    # Get top creators
+    top_creators = await db.purchases.aggregate([
+        {"$lookup": {
+            "from": "categories",
+            "localField": "category_id",
+            "foreignField": "category_id",
+            "as": "category"
+        }},
+        {"$unwind": "$category"},
+        {"$group": {
+            "_id": "$category.user_id",
+            "total_sales": {"$sum": 1},
+            "total_revenue": {"$sum": "$price"}
+        }},
+        {"$sort": {"total_revenue": -1}},
+        {"$limit": 10}
+    ]).to_list(10)
+    
+    return {
+        "total_revenue": total_revenue,
+        "trending_protocols": trending,
+        "top_creators": top_creators
+    }
+
+@analytics_router.get("/admin/top-creators")
+async def get_top_creators(user: User = Depends(require_admin)):
+    """Get top protocol creators"""
+    creators = await db.categories.aggregate([
+        {"$match": {"is_public": True}},
+        {"$group": {
+            "_id": "$user_id",
+            "protocol_count": {"$sum": 1},
+            "total_sales": {"$sum": "$sales_count"}
+        }},
+        {"$sort": {"total_sales": -1}},
+        {"$limit": 20}
+    ]).to_list(20)
+    
+    # Get user info
+    for creator in creators:
+        user_info = await db.users.find_one(
+            {"user_id": creator["_id"]},
+            {"_id": 0, "name": 1, "picture": 1, "callsign": 1}
+        )
+        creator["user"] = user_info
+    
+    return {"creators": creators}
+
+# ============= LAUGH-O-METER ROUTES =============
+
+@easter_eggs_router.post("/laugh-submit")
+async def submit_laugh(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Submit a laugh rating for the laugh-o-meter"""
+    data = await request.json()
+    
+    laugh_entry = {
+        "laugh_id": f"laugh_{uuid.uuid4().hex[:12]}",
+        "user_id": user.user_id,
+        "egg_id": data.get("egg_id"),
+        "rating": min(max(data.get("rating", 5), 1), 10),  # 1-10 scale
+        "laugh_type": data.get("laugh_type", "chuckle"),  # chuckle, laugh, rofl
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.laugh_entries.insert_one(laugh_entry)
+    
+    # Award XP for laughing
+    xp_awards = {"chuckle": 1, "laugh": 3, "rofl": 5}
+    await db.users.update_one(
+        {"user_id": user.user_id},
+        {"$inc": {"xp": xp_awards.get(data.get("laugh_type", "chuckle"), 1)}}
+    )
+    
+    return {"message": "Laugh recorded!", "xp_earned": xp_awards.get(data.get("laugh_type", "chuckle"), 1)}
+
+@easter_eggs_router.get("/laugh-leaderboard")
+async def get_laugh_leaderboard():
+    """Get laugh-o-meter leaderboard"""
+    # Top laughers
+    top_laughers = await db.laugh_entries.aggregate([
+        {"$group": {
+            "_id": "$user_id",
+            "total_laughs": {"$sum": 1},
+            "avg_rating": {"$avg": "$rating"}
+        }},
+        {"$sort": {"total_laughs": -1}},
+        {"$limit": 10}
+    ]).to_list(10)
+    
+    for entry in top_laughers:
+        user_info = await db.users.find_one(
+            {"user_id": entry["_id"]},
+            {"_id": 0, "name": 1, "picture": 1}
+        )
+        entry["user"] = user_info
+    
+    # Funniest jokes
+    funniest = await db.laugh_entries.aggregate([
+        {"$group": {
+            "_id": "$egg_id",
+            "avg_rating": {"$avg": "$rating"},
+            "total_laughs": {"$sum": 1}
+        }},
+        {"$sort": {"avg_rating": -1}},
+        {"$limit": 10}
+    ]).to_list(10)
+    
+    return {
+        "top_laughers": top_laughers,
+        "funniest_jokes": funniest
+    }
+
+# ============= PROTOCOL RECOMMENDATIONS =============
+
+@api_router.post("/protocol-recommendations")
+async def submit_protocol_recommendation(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Submit a recommendation for a public protocol"""
+    data = await request.json()
+    category_id = data.get("category_id")
+    recommendation = data.get("recommendation")
+    
+    if not category_id or not recommendation:
+        raise HTTPException(status_code=400, detail="category_id and recommendation required")
+    
+    # Verify it's a public protocol
+    category = await db.categories.find_one(
+        {"category_id": category_id, "is_public": True},
+        {"_id": 0}
+    )
+    
+    if not category:
+        raise HTTPException(status_code=404, detail="Public protocol not found")
+    
+    rec_entry = {
+        "recommendation_id": f"rec_{uuid.uuid4().hex[:12]}",
+        "category_id": category_id,
+        "owner_id": category["user_id"],
+        "recommender_id": user.user_id,
+        "recommendation": recommendation,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.protocol_recommendations.insert_one(rec_entry)
+    rec_entry.pop("_id", None)
+    
+    return {"message": "Recommendation submitted", "recommendation": rec_entry}
+
+@api_router.get("/protocol-recommendations/{category_id}")
+async def get_protocol_recommendations(
+    category_id: str,
+    user: User = Depends(require_auth)
+):
+    """Get recommendations for a protocol (owner only)"""
+    # Verify ownership
+    category = await db.categories.find_one(
+        {"category_id": category_id, "user_id": user.user_id},
+        {"_id": 0}
+    )
+    
+    if not category:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    recommendations = await db.protocol_recommendations.find(
+        {"category_id": category_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    # Get recommender info
+    for rec in recommendations:
+        recommender = await db.users.find_one(
+            {"user_id": rec["recommender_id"]},
+            {"_id": 0, "name": 1, "picture": 1}
+        )
+        rec["recommender"] = recommender
+    
+    return {"recommendations": recommendations}
+
+# ============= COPY PROTOCOL TO CLIPBOARD =============
+
+@api_router.post("/copy-protocol")
+async def copy_protocol(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Copy a protocol to clipboard (track the copy)"""
+    data = await request.json()
+    category_id = data.get("category_id")
+    
+    category = await db.categories.find_one(
+        {"category_id": category_id},
+        {"_id": 0}
+    )
+    
+    if not category:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    
+    # Check if public or user owns it
+    if not category.get("is_public") and category.get("user_id") != user.user_id:
+        raise HTTPException(status_code=403, detail="Protocol is private")
+    
+    # Track the copy
+    await db.protocol_copies.insert_one({
+        "original_id": category_id,
+        "copied_by": user.user_id,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {
+        "protocol": category.get("protocol"),
+        "name": category.get("name"),
+        "message": "Protocol copied to clipboard"
+    }
+
+# ============= CLEAN CATEGORY =============
+
+@categories_router.post("/{category_id}/clean")
+async def clean_category(
+    category_id: str,
+    user: User = Depends(require_auth)
+):
+    """Delete all search results for a category"""
+    # Verify ownership
+    category = await db.categories.find_one(
+        {"category_id": category_id, "user_id": user.user_id},
+        {"_id": 0}
+    )
+    
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    result = await db.search_results.delete_many({
+        "user_id": user.user_id,
+        "category_ids": category_id
+    })
+    
+    return {"message": f"Deleted {result.deleted_count} results from category"}
+
+# ============= TOP WORDS/PHRASES ANALYTICS =============
+
+@stats_router.get("/top-words")
+async def get_top_words(user: User = Depends(require_auth)):
+    """Get top 10 most used words in user's search results"""
+    # Get all user's search result snippets
+    results = await db.search_results.find(
+        {"user_id": user.user_id},
+        {"_id": 0, "snippet": 1, "title": 1}
+    ).to_list(1000)
+    
+    # Common words to exclude
+    exclude_words = {
+        'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+        'of', 'with', 'by', 'from', 'up', 'about', 'into', 'through', 'during',
+        'before', 'after', 'above', 'below', 'between', 'under', 'again', 'further',
+        'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all',
+        'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor',
+        'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'can', 'will',
+        'just', 'should', 'now', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+        'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'would',
+        'could', 'might', 'must', 'shall', 'this', 'that', 'these', 'those', 'i',
+        'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your',
+        'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she',
+        'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their',
+        'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'as', 'if', 'while'
+    }
+    
+    word_counts = {}
+    for result in results:
+        text = f"{result.get('title', '')} {result.get('snippet', '')}".lower()
+        words = re.findall(r'\b[a-z]{4,}\b', text)  # Words with 4+ letters
+        for word in words:
+            if word not in exclude_words:
+                word_counts[word] = word_counts.get(word, 0) + 1
+    
+    # Get top 10
+    top_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    
+    return {"top_words": [{"word": w, "count": c} for w, c in top_words]}
+
+@stats_router.get("/top-protocol-words")
+async def get_top_protocol_words(user: User = Depends(require_auth)):
+    """Get top 10 most used words in user's protocols"""
+    categories = await db.categories.find(
+        {"user_id": user.user_id},
+        {"_id": 0, "protocol": 1}
+    ).to_list(500)
+    
+    word_counts = {}
+    for cat in categories:
+        protocol = cat.get("protocol", "")
+        # Extract words from parentheses groups
+        groups = re.findall(r'\(([^)]+)\)', protocol)
+        for group in groups:
+            terms = [t.strip().lower() for t in group.split(' or ')]
+            for term in terms:
+                if term and len(term) > 2:
+                    word_counts[term] = word_counts.get(term, 0) + 1
+    
+    top_words = sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+    
+    return {"top_protocol_words": [{"term": w, "count": c} for w, c in top_words]}
+
+# ============= AI NEWS HEADLINES =============
+
+@newsletter_router.get("/ai-headlines")
+async def get_ai_headlines():
+    """Get AI-generated news headlines"""
+    # Return stored headlines or generate simple ones
+    headlines = await db.ai_headlines.find({}, {"_id": 0})\
+        .sort("created_at", -1)\
+        .limit(10)\
+        .to_list(10)
+    
+    if not headlines:
+        # Default headlines
+        default_headlines = [
+            {"title": "InfoPilot Users Collate Record 1M Documents This Week", "category": "Platform"},
+            {"title": "New Protocol Marketplace Feature Launched", "category": "Features"},
+            {"title": "Top 10 Most Popular Protocols of the Month", "category": "Trending"},
+            {"title": "Community Reaches 10,000 Active Researchers", "category": "Milestone"},
+            {"title": "AI-Powered Search Coming Soon", "category": "Technology"},
+            {"title": "Best Practices for Writing Effective Protocols", "category": "Tips"},
+            {"title": "Introducing Theme Customization", "category": "Features"},
+            {"title": "How One User Found Their Research Breakthrough", "category": "Stories"},
+            {"title": "Weekly Protocol Challenge Winners Announced", "category": "Community"},
+            {"title": "Security Updates Keep Your Research Safe", "category": "Security"}
+        ]
+        headlines = [
+            {**h, "headline_id": f"hl_{i}", "created_at": datetime.now(timezone.utc).isoformat()}
+            for i, h in enumerate(default_headlines)
+        ]
+    
+    return {"headlines": headlines}
+
+@newsletter_router.post("/refresh-headlines")
+async def refresh_headlines(user: User = Depends(require_admin)):
+    """Refresh AI headlines (admin only)"""
+    # In production, this would call an AI service
+    new_headlines = [
+        {"title": f"Breaking: New Feature Announcement - {datetime.now().strftime('%B %d')}", "category": "News"},
+        {"title": "Community Highlight: Top Protocol Creators This Week", "category": "Community"},
+        {"title": "Research Tips from Power Users", "category": "Tips"},
+        {"title": "Platform Updates and Improvements", "category": "Updates"},
+        {"title": "Trending Categories to Explore", "category": "Trending"}
+    ]
+    
+    for h in new_headlines:
+        h["headline_id"] = f"hl_{uuid.uuid4().hex[:8]}"
+        h["created_at"] = datetime.now(timezone.utc).isoformat()
+        await db.ai_headlines.insert_one(h)
+    
+    return {"message": "Headlines refreshed", "count": len(new_headlines)}
+
+# ============= COMMUNITY LEADERBOARD =============
+
+@social_router.get("/leaderboard")
+async def get_community_leaderboard():
+    """Get community leaderboard"""
+    # Top protocol creators by sales
+    top_sellers = await db.categories.aggregate([
+        {"$match": {"is_public": True, "sales_count": {"$gt": 0}}},
+        {"$group": {
+            "_id": "$user_id",
+            "total_sales": {"$sum": "$sales_count"},
+            "protocol_count": {"$sum": 1}
+        }},
+        {"$sort": {"total_sales": -1}},
+        {"$limit": 10}
+    ]).to_list(10)
+    
+    for seller in top_sellers:
+        user_info = await db.users.find_one(
+            {"user_id": seller["_id"]},
+            {"_id": 0, "name": 1, "picture": 1, "callsign": 1, "xp": 1, "level": 1}
+        )
+        seller["user"] = user_info
+    
+    # Rising stars (most copies)
+    rising_stars = await db.protocol_copies.aggregate([
+        {"$group": {"_id": "$original_id", "copies": {"$sum": 1}}},
+        {"$lookup": {
+            "from": "categories",
+            "localField": "_id",
+            "foreignField": "category_id",
+            "as": "category"
+        }},
+        {"$unwind": "$category"},
+        {"$group": {
+            "_id": "$category.user_id",
+            "total_copies": {"$sum": "$copies"}
+        }},
+        {"$sort": {"total_copies": -1}},
+        {"$limit": 10}
+    ]).to_list(10)
+    
+    for star in rising_stars:
+        user_info = await db.users.find_one(
+            {"user_id": star["_id"]},
+            {"_id": 0, "name": 1, "picture": 1, "callsign": 1}
+        )
+        star["user"] = user_info
+    
+    # Top XP earners
+    top_xp = await db.users.find(
+        {},
+        {"_id": 0, "user_id": 1, "name": 1, "picture": 1, "xp": 1, "level": 1}
+    ).sort("xp", -1).limit(10).to_list(10)
+    
+    return {
+        "top_sellers": top_sellers,
+        "rising_stars": rising_stars,
+        "top_xp": top_xp
+    }
 
 # ============= INCLUDE ROUTERS =============
 
@@ -1950,6 +2696,10 @@ api_router.include_router(groups_router)
 api_router.include_router(pages_router)
 api_router.include_router(easter_eggs_router)
 api_router.include_router(newsletter_router)
+api_router.include_router(polls_router)
+api_router.include_router(quotes_router)
+api_router.include_router(themes_router)
+api_router.include_router(analytics_router)
 
 app.include_router(api_router)
 
