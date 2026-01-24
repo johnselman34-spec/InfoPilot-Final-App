@@ -542,6 +542,9 @@ const UltimateSearchPage = () => {
     state: ""
   });
   
+  // Deep Content Scan option - fetches full page content for better location extraction
+  const [deepContentScan, setDeepContentScan] = useState(false);
+  
   // Search Match Options with descriptions
   const [matchOptions, setMatchOptions] = useState({
     exactMatch: false,      // High closeness to protocols
