@@ -3171,60 +3171,366 @@ LEGAL_DOCUMENTS = {
 
 *Last Updated: January 2026*
 
-## First in Flight with Monetization of Searches
-
-InfoPilot Explorer is proud to be **First in Flight** with the monetization of web searches. Your privacy is paramount to us.
-
-## Information We Collect
-
-### Account Information
-- Email address (via Google OAuth)
-- Display name and profile picture
-- Account preferences and settings
-
-### Usage Data
-- Search queries and collated results
-- Categories and protocols you create
-- Interaction data (reactions, comments, friend connections)
-
-### Payment Information
-- Processed securely through Stripe and PayPal
-- We do not store credit card numbers
-
-## How We Use Your Information
-
-1. **Service Delivery**: To provide the InfoPilot Explorer platform
-2. **Personalization**: To customize your Ultimate Search Page
-3. **Communication**: To send newsletters and updates (configurable)
-4. **Improvement**: To enhance our services
-
-## Data Security
-
-We implement industry-standard security measures including:
-- Encrypted data transmission (HTTPS)
-- Secure authentication via Google OAuth
-- Regular security audits
-
-## Your Rights
-
-You have the right to:
-- Access your personal data
-- Request data deletion
-- Opt-out of marketing communications
-- Export your data
-
-## Children's Privacy
-
-InfoPilot Explorer is not intended for users under 13. We do not knowingly collect information from children.
-
-## Contact Us
-
-**Top Pilot Enterprises, Inc.**
-Brunswick, Maine
-Email: JJSpilot24@gmail.com
+*Effective Date: January 1, 2026*
 
 ---
+
+## INTRODUCTION AND ACCEPTANCE
+
+By clicking "Continue with Google" or otherwise accessing InfoPilot Explorer, you acknowledge that you have read, understood, and agree to be bound by this Privacy Policy. This Privacy Policy constitutes a legally binding agreement between you ("User," "you," or "your") and Top Pilot Enterprises, Inc. ("Company," "we," "us," or "our").
+
+**InfoPilot Explorer is First in Flight with Monetization of Searches** - pioneering the future of information exchange and search monetization.
+
+---
+
+## 1. AGE REQUIREMENTS AND ELIGIBILITY
+
+### 1.1 Minimum Age Requirement
+**YOU MUST BE AT LEAST TWENTY-ONE (21) YEARS OF AGE TO USE INFOPILOT EXPLORER.** By accessing or using our services, you represent and warrant that you are at least 21 years old. We do not knowingly collect, use, or disclose personal information from individuals under 21 years of age.
+
+### 1.2 Age Verification
+We reserve the right to request proof of age at any time. If we discover or have reason to believe that a user is under 21 years of age, we will immediately terminate that user's account and delete all associated personal information.
+
+### 1.3 Parental/Guardian Notice
+If you are a parent or guardian and believe your child under 21 has provided us with personal information, please contact us immediately at JJSpilot24@gmail.com. We will take steps to remove such information from our systems.
+
+---
+
+## 2. INFORMATION WE COLLECT
+
+### 2.1 Information You Provide Directly
+
+**Account Information:**
+- Email address (obtained via Google OAuth authentication)
+- Display name and profile picture (from your Google account)
+- Username/callsign you create
+- Account preferences and settings
+- Payment information (processed through secure third-party providers)
+
+**User-Generated Content:**
+- Search protocols you create using InfoJet 2.0 language
+- Categories and organizational structures
+- Comments, reactions, and social interactions
+- Personal reports and submissions
+- Messages sent through our platform
+
+### 2.2 Information Collected Automatically
+
+**Usage Data:**
+- Search queries and collated results
+- Pages visited and features used
+- Time spent on the platform
+- Click patterns and navigation paths
+- Device information (browser type, operating system, device identifiers)
+
+**Technical Data:**
+- IP address and approximate geographic location
+- Browser type and version
+- Operating system
+- Referring URLs
+- Access times and dates
+- Error logs and performance data
+
+**Cookies and Tracking Technologies:**
+- Session cookies (essential for platform functionality)
+- Preference cookies (to remember your settings)
+- Analytics cookies (to understand usage patterns)
+- Authentication tokens
+
+### 2.3 Information from Third Parties
+
+**Google OAuth:**
+- Basic profile information from your Google account
+- Email address for account creation and communication
+
+**Payment Processors (Stripe and PayPal):**
+- Transaction confirmations
+- Payment status updates
+- We do NOT receive or store your full credit card numbers
+
+---
+
+## 3. HOW WE USE YOUR INFORMATION
+
+### 3.1 Primary Uses
+
+We use your information to:
+- Provide, maintain, and improve InfoPilot Explorer services
+- Process your account registration and authentication
+- Enable your use of the Ultimate Search Page and protocol features
+- Facilitate social networking features (friends, groups, messaging)
+- Process payments and manage subscriptions
+- Send service-related communications
+
+### 3.2 Personalization
+
+We use your data to:
+- Customize your Ultimate Search Page experience
+- Recommend protocols and categories based on your interests
+- Display relevant content in your feed
+- Remember your preferences and settings
+
+### 3.3 Communication
+
+We may contact you to:
+- Send our tri-weekly newsletter (if subscribed)
+- Notify you of important service updates
+- Respond to your inquiries and support requests
+- Inform you of changes to our policies
+- Send promotional materials (with your consent)
+
+### 3.4 Safety and Security
+
+We use information to:
+- Detect and prevent fraud, abuse, and security incidents
+- Enforce our User Agreement and community guidelines
+- Protect the rights and safety of our users
+- Comply with legal obligations
+
+### 3.5 Analytics and Improvement
+
+We analyze data to:
+- Understand how users interact with our platform
+- Identify areas for improvement
+- Develop new features and services
+- Measure the effectiveness of our services
+
+---
+
+## 4. INFORMATION SHARING AND DISCLOSURE
+
+### 4.1 Public Information
+
+The following may be visible to other users:
+- Your display name and profile picture
+- Public protocols and categories you create
+- Your activity on public content (reactions, comments)
+- Your position on leaderboards
+- Information you choose to make public in your settings
+
+### 4.2 Service Providers
+
+We share information with trusted third parties who assist us in:
+- Payment processing (Stripe, PayPal)
+- Cloud hosting and data storage
+- Analytics and performance monitoring
+- Customer support services
+- Email delivery services
+
+These providers are contractually obligated to protect your information and use it only for the services they provide to us.
+
+### 4.3 Legal Requirements
+
+We may disclose your information if required to:
+- Comply with applicable laws, regulations, or legal processes
+- Respond to lawful requests from government authorities
+- Protect our rights, privacy, safety, or property
+- Enforce our User Agreement
+- Protect against legal liability
+
+### 4.4 Business Transfers
+
+In the event of a merger, acquisition, reorganization, or sale of assets, your information may be transferred to the acquiring entity. We will notify you of any such change and any choices you may have regarding your information.
+
+### 4.5 With Your Consent
+
+We may share your information for other purposes with your explicit consent.
+
+---
+
+## 5. DATA SECURITY
+
+### 5.1 Security Measures
+
+We implement comprehensive security measures including:
+- Encryption of data in transit using TLS/SSL (HTTPS)
+- Secure authentication via Google OAuth 2.0
+- Regular security assessments and audits
+- Access controls and authentication for our systems
+- Secure data storage with industry-standard protections
+- Regular backup procedures
+- Incident response procedures
+
+### 5.2 Your Responsibilities
+
+You are responsible for:
+- Maintaining the security of your Google account
+- Not sharing your account credentials
+- Logging out of shared devices
+- Reporting any suspected unauthorized access
+
+### 5.3 Security Limitations
+
+While we strive to protect your information, no method of transmission over the Internet or electronic storage is 100% secure. We cannot guarantee absolute security.
+
+---
+
+## 6. DATA RETENTION
+
+### 6.1 Retention Periods
+
+We retain your information for as long as:
+- Your account remains active
+- Necessary to provide our services
+- Required by applicable laws
+- Needed for legitimate business purposes
+
+### 6.2 Account Deletion
+
+Upon account deletion:
+- Your personal profile information will be removed
+- Your public content may be anonymized or retained
+- Some information may be retained for legal compliance
+- Backup copies may persist for a limited time
+
+---
+
+## 7. YOUR RIGHTS AND CHOICES
+
+### 7.1 Access and Portability
+
+You have the right to:
+- Access the personal information we hold about you
+- Request a copy of your data in a portable format
+- Review your account information at any time
+
+### 7.2 Correction
+
+You may:
+- Update your profile information through your account settings
+- Request correction of inaccurate information
+
+### 7.3 Deletion
+
+You may:
+- Delete your account through the settings page
+- Request deletion of specific content you've created
+- Request removal of your personal information
+
+### 7.4 Opt-Out Rights
+
+You may opt out of:
+- Marketing communications (via unsubscribe links or settings)
+- Newsletter subscriptions
+- Non-essential cookies (through browser settings)
+
+### 7.5 Do Not Track
+
+Our platform does not currently respond to "Do Not Track" browser signals.
+
+---
+
+## 8. CHILDREN AND MINORS
+
+### 8.1 Age Restriction
+
+**InfoPilot Explorer is strictly for users 21 years of age and older.** We do not knowingly collect personal information from anyone under 21.
+
+### 8.2 Discovery of Underage Users
+
+If we learn that we have collected personal information from a user under 21, we will:
+- Immediately terminate the account
+- Delete all associated personal information
+- Take steps to prevent future access
+
+### 8.3 Reporting
+
+If you believe a user is under 21, please report this to JJSpilot24@gmail.com.
+
+---
+
+## 9. INTERNATIONAL DATA TRANSFERS
+
+### 9.1 Data Location
+
+Your information may be transferred to and processed in the United States and other countries where our service providers operate.
+
+### 9.2 Safeguards
+
+We implement appropriate safeguards for international data transfers, including contractual protections with our service providers.
+
+---
+
+## 10. CALIFORNIA PRIVACY RIGHTS
+
+### 10.1 California Consumer Privacy Act (CCPA)
+
+California residents have additional rights including:
+- Right to know what personal information is collected
+- Right to know if personal information is sold or disclosed
+- Right to opt out of the sale of personal information
+- Right to request deletion of personal information
+- Right to non-discrimination for exercising privacy rights
+
+### 10.2 Shine the Light
+
+California residents may request information about disclosure of personal information to third parties for direct marketing purposes.
+
+---
+
+## 11. EUROPEAN PRIVACY RIGHTS (GDPR)
+
+### 11.1 Legal Basis for Processing
+
+For users in the European Economic Area, we process personal data based on:
+- Your consent
+- Performance of our contract with you
+- Our legitimate business interests
+- Compliance with legal obligations
+
+### 11.2 Additional Rights
+
+EEA users have additional rights including:
+- Right to restrict processing
+- Right to object to processing
+- Right to lodge a complaint with a supervisory authority
+
+---
+
+## 12. CHANGES TO THIS PRIVACY POLICY
+
+### 12.1 Updates
+
+We may update this Privacy Policy from time to time. We will notify you of material changes by:
+- Posting the updated policy on our platform
+- Sending an email notification
+- Displaying a prominent notice on our website
+
+### 12.2 Continued Use
+
+Your continued use of InfoPilot Explorer after changes become effective constitutes acceptance of the updated Privacy Policy.
+
+---
+
+## 13. CONTACT INFORMATION
+
+For questions, concerns, or requests regarding this Privacy Policy, please contact:
+
+**Top Pilot Enterprises, Inc.**
+Brunswick, Maine, USA
+Email: JJSpilot24@gmail.com
+Phone: (207) 522-0894
+
+**Data Protection Inquiries:**
+Email: JJSpilot24@gmail.com
+Subject Line: "Privacy Inquiry"
+
+---
+
+## 14. CONSENT
+
+**BY CLICKING "CONTINUE WITH GOOGLE" OR OTHERWISE ACCESSING INFOPILOT EXPLORER, YOU ACKNOWLEDGE THAT:**
+
+1. You have read and understood this Privacy Policy in its entirety
+2. You are at least 21 years of age
+3. You consent to the collection, use, and disclosure of your information as described herein
+4. You understand your rights and how to exercise them
+5. You agree to be bound by this Privacy Policy and any future updates
+
+---
+
 *Copyright © 2025-2026 Top Pilot Enterprises, Inc. All rights reserved.*
+
 *InfoPilot Explorer - First in Flight with Monetization of Searches*
 """
     },
@@ -3238,80 +3544,451 @@ Email: JJSpilot24@gmail.com
 
 *Last Updated: January 2026*
 
-## First in Flight with Monetization of Searches
+*Effective Date: January 1, 2026*
 
-Welcome to InfoPilot Explorer, the world's premier information exchange social network.
+---
 
-## 1. Acceptance of Terms
+## IMPORTANT: PLEASE READ THIS AGREEMENT CAREFULLY
 
-By accessing InfoPilot Explorer, you agree to these Terms of Service and our Privacy Policy.
+This User Agreement ("Agreement") is a legally binding contract between you ("User," "you," or "your") and Top Pilot Enterprises, Inc. ("Company," "we," "us," or "our") governing your use of InfoPilot Explorer and all related services.
 
-## 2. Description of Service
+**BY CLICKING "CONTINUE WITH GOOGLE," CREATING AN ACCOUNT, OR USING INFOPILOT EXPLORER, YOU AGREE TO BE BOUND BY THIS AGREEMENT AND OUR PRIVACY POLICY.**
+
+**InfoPilot Explorer is First in Flight with Monetization of Searches** - pioneering the future of information exchange.
+
+---
+
+## SECTION 1: ELIGIBILITY AND AGE REQUIREMENTS
+
+### 1.1 Minimum Age Requirement
+
+**YOU MUST BE AT LEAST TWENTY-ONE (21) YEARS OF AGE TO USE INFOPILOT EXPLORER.**
+
+By accessing or using InfoPilot Explorer, you represent and warrant that:
+- You are at least 21 years of age
+- You have the legal capacity to enter into this Agreement
+- You are not prohibited from using our services under applicable law
+
+### 1.2 Age Verification
+
+We reserve the right to:
+- Request proof of age at any time
+- Verify your age through third-party services
+- Suspend or terminate accounts suspected of being underage
+
+### 1.3 Consequences of Misrepresentation
+
+If you misrepresent your age:
+- Your account will be immediately terminated
+- All associated data will be deleted
+- You may be permanently banned from the platform
+- We reserve the right to pursue legal action
+
+---
+
+## SECTION 2: ACCOUNT REGISTRATION AND SECURITY
+
+### 2.1 Account Creation
+
+To use InfoPilot Explorer, you must:
+- Authenticate via Google OAuth
+- Provide accurate and complete information
+- Maintain one account per person (no multiple accounts)
+- Choose an appropriate callsign/username
+
+### 2.2 Account Security
+
+You are responsible for:
+- Maintaining the confidentiality of your account
+- All activities that occur under your account
+- Immediately notifying us of any unauthorized access
+- Ensuring your Google account remains secure
+
+### 2.3 Account Restrictions
+
+You may NOT:
+- Share your account with others
+- Transfer your account to another person
+- Create accounts on behalf of others
+- Use automated methods to create accounts
+
+---
+
+## SECTION 3: DESCRIPTION OF SERVICES
+
+### 3.1 Platform Overview
 
 InfoPilot Explorer provides:
-- Custom search protocols using InfoJet 2.0 language
-- Web search collation and categorization
-- Social networking features
-- Protocol marketplace
+- **Ultimate Search Page (USP)**: Personalized search collation and categorization
+- **InfoJet 2.0 Protocol Language**: Custom search protocol creation
+- **Protocol Marketplace**: Buy and sell search protocols
+- **Social Features**: Friends, groups, messaging, reactions
+- **Leaderboards**: Competitive rankings and achievements
+- **Personal Reports**: User-generated content submissions
+- **Newsletter**: Tri-weekly information updates
 
-## 3. User Accounts
+### 3.2 Service Availability
 
-- You must provide accurate registration information
-- You are responsible for maintaining account security
-- One person, one account policy
+We strive to maintain continuous service but do not guarantee:
+- Uninterrupted access to the platform
+- Error-free operation
+- Compatibility with all devices or browsers
+- Availability of specific features
 
-## 4. Intellectual Property
+### 3.3 Service Modifications
 
-### Our IP
-The InfoJet 2.0 protocol language, platform code, and design are proprietary to Top Pilot Enterprises, Inc.
+We reserve the right to:
+- Modify, suspend, or discontinue any feature
+- Update the platform without prior notice
+- Change pricing and subscription terms
+- Limit access to certain features
 
-### Your Content
-You retain ownership of protocols and content you create. By sharing publicly, you grant us license to display them.
+---
 
-## 5. Prohibited Content
+## SECTION 4: CHILD SAFETY AND PROTECTION POLICY
 
-You may NOT post:
-- Illegal content
-- Harmful or threatening content
-- Content violating others' rights
+### 4.1 Strict Prohibition on Contact with Minors
 
-## 6. Protocol Marketplace
+**USERS ARE STRICTLY PROHIBITED FROM:**
+- Attempting to contact, communicate with, or interact with any person under 21 years of age through InfoPilot Explorer
+- Using the platform to arrange meetings with minors
+- Sharing personal information with the intent of contacting minors
+- Using the platform to groom, exploit, or harm minors in any way
 
-- 90/10 revenue split (you/platform) on protocol sales
-- Prices subject to admin approval
-- Refunds handled case-by-case
+### 4.2 Category Title Restrictions
 
-## 7. Subscriptions
+**USERS MAY NOT include references to children, minors, or persons under 21 in any Category Title.** This includes but is not limited to:
+- Words such as "child," "children," "kid," "kids," "minor," "minors," "youth," "juvenile," "teen," "teenager," "adolescent," "underage," "baby," "infant," "toddler"
+- Age references indicating persons under 21
+- School-related terms that imply minor involvement (e.g., "elementary," "middle school," "high school students")
+- Any euphemisms or coded language referring to minors
 
-- Monthly: $0.99
-- Yearly Intro: $0.75 (until March 2026)
-- Yearly Regular: $4.62
-- Pay What You Want: Minimum $0.75
+### 4.3 Protocol Content Guidelines
 
-Subscriptions auto-renew unless cancelled.
+References to children within protocol search strings (InfoJet 2.0 syntax) are permitted ONLY when:
+- The content is educational, historical, or informational in nature
+- The context is entirely non-sexual and non-exploitative
+- The purpose is legitimate research or information gathering
+- Examples include: child development research, pediatric health information, educational policy, historical events, family-related topics
 
-## 8. Limitation of Liability
+### 4.4 Prohibited Protocol Content
 
-InfoPilot Explorer is provided "as is" without warranties. We are not liable for indirect damages.
+Protocols may NOT be used to search for:
+- Any sexual content involving minors
+- Content that sexualizes, exploits, or endangers children
+- Methods to contact or locate minors
+- Content promoting harm to children
+- Child abuse material of any kind
 
-## 9. Termination
+### 4.5 Reporting and Enforcement
 
-We may terminate accounts violating these terms. You may delete your account at any time.
+- We actively monitor for violations of child safety policies
+- Violations will result in immediate account termination
+- We will report suspected illegal activity to law enforcement
+- We cooperate fully with investigations involving child safety
 
-## 10. Changes to Terms
+### 4.6 Zero Tolerance
 
-We may update these terms. Continued use constitutes acceptance.
+**WE MAINTAIN A ZERO-TOLERANCE POLICY FOR ANY CONTENT OR BEHAVIOR THAT ENDANGERS CHILDREN. VIOLATIONS WILL RESULT IN IMMEDIATE AND PERMANENT ACCOUNT TERMINATION AND MAY BE REPORTED TO APPROPRIATE AUTHORITIES.**
 
-## 11. Contact
+---
+
+## SECTION 5: USER CONDUCT AND PROHIBITED ACTIVITIES
+
+### 5.1 General Conduct Standards
+
+You agree to:
+- Use InfoPilot Explorer lawfully and ethically
+- Respect other users and their content
+- Provide accurate information
+- Comply with all applicable laws and regulations
+
+### 5.2 Prohibited Content
+
+You may NOT post, share, or create content that:
+- Is illegal, harmful, threatening, abusive, or harassing
+- Is defamatory, libelous, or invades privacy
+- Contains hate speech or discrimination
+- Is sexually explicit or pornographic
+- Promotes violence or illegal activities
+- Infringes intellectual property rights
+- Contains malware, viruses, or harmful code
+- Is spam, phishing, or fraudulent
+- Violates our Child Safety Policy (Section 4)
+
+### 5.3 Prohibited Activities
+
+You may NOT:
+- Attempt to hack, exploit, or compromise the platform
+- Use automated tools without authorization
+- Scrape or harvest user data
+- Impersonate others or misrepresent your identity
+- Interfere with other users' enjoyment of the platform
+- Circumvent security measures or access restrictions
+- Use the platform for commercial purposes without authorization
+- Engage in any activity that violates this Agreement
+
+### 5.4 Enforcement
+
+Violations may result in:
+- Content removal
+- Account suspension
+- Permanent account termination
+- Legal action
+- Reporting to law enforcement
+
+---
+
+## SECTION 6: INTELLECTUAL PROPERTY
+
+### 6.1 Company Intellectual Property
+
+Top Pilot Enterprises, Inc. owns all rights to:
+- The InfoPilot Explorer platform and software
+- The InfoJet 2.0 protocol language and syntax
+- All trademarks, logos, and branding
+- Platform design, layout, and user interface
+- Documentation and educational materials
+
+### 6.2 Your Content
+
+You retain ownership of:
+- Protocols you create
+- Categories you organize
+- Personal reports you submit
+- Comments and reactions you post
+
+### 6.3 License Grant to Company
+
+By posting content on InfoPilot Explorer, you grant us a:
+- Non-exclusive, worldwide, royalty-free license
+- Right to use, display, reproduce, and distribute your content
+- Right to modify content for platform functionality
+- Right to sublicense to service providers
+
+This license continues even after account deletion for content that has been shared publicly or with other users.
+
+### 6.4 Marketplace Content
+
+For protocols sold in the Marketplace:
+- You warrant you have the right to sell the content
+- You grant buyers a license to use the protocol
+- Revenue sharing applies as specified in Section 8
+
+---
+
+## SECTION 7: PRIVACY AND DATA PROTECTION
+
+### 7.1 Privacy Policy
+
+Your use of InfoPilot Explorer is also governed by our Privacy Policy, which is incorporated into this Agreement by reference.
+
+### 7.2 Data Collection
+
+By using our services, you consent to:
+- Collection of information as described in our Privacy Policy
+- Use of cookies and tracking technologies
+- Processing of your data for service provision
+
+### 7.3 Communication
+
+You agree to receive:
+- Service-related communications
+- Security alerts and notifications
+- Marketing communications (with opt-out option)
+- Newsletter (if subscribed)
+
+---
+
+## SECTION 8: PAYMENTS AND SUBSCRIPTIONS
+
+### 8.1 Subscription Plans
+
+InfoPilot Explorer offers:
+- **Monthly Subscription**: $0.99/month
+- **Yearly Intro Rate**: $0.75/year (available until March 2026)
+- **Yearly Regular**: $4.62/year
+- **Pay What You Want**: Minimum $0.75
+
+### 8.2 Payment Processing
+
+- Payments are processed through Stripe and PayPal
+- You authorize recurring charges for subscriptions
+- All prices are in US Dollars
+- Taxes may apply based on your location
+
+### 8.3 Billing and Renewal
+
+- Subscriptions auto-renew unless cancelled
+- You may cancel at any time through account settings
+- Cancellation takes effect at the end of the billing period
+- No refunds for partial billing periods
+
+### 8.4 Protocol Marketplace Revenue
+
+For protocol sales:
+- **Creator receives**: 90% of sale price
+- **Platform fee**: 10% of sale price
+- Payments processed monthly for balances over $10
+- You are responsible for applicable taxes
+
+### 8.5 Refund Policy
+
+- Subscription refunds are handled case-by-case
+- Protocol purchases are generally non-refundable
+- Contact support for refund requests
+
+---
+
+## SECTION 9: DISCLAIMERS AND LIMITATIONS
+
+### 9.1 Service Provided "As Is"
+
+INFOPILOT EXPLORER IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
+- MERCHANTABILITY
+- FITNESS FOR A PARTICULAR PURPOSE
+- NON-INFRINGEMENT
+- ACCURACY OR RELIABILITY OF CONTENT
+
+### 9.2 No Guarantee of Results
+
+We do not guarantee:
+- Accuracy of search results
+- Availability of specific content
+- Success in the marketplace
+- Any particular outcome from using our services
+
+### 9.3 Third-Party Content
+
+We are not responsible for:
+- Content created by users
+- External websites linked from our platform
+- Third-party services integrated with our platform
+- Accuracy of information from external sources
+
+### 9.4 Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW:
+- We are not liable for indirect, incidental, special, consequential, or punitive damages
+- Our total liability shall not exceed the amount you paid us in the past 12 months
+- We are not liable for loss of data, profits, or business opportunities
+
+### 9.5 Indemnification
+
+You agree to indemnify and hold harmless Top Pilot Enterprises, Inc. from any claims, damages, or expenses arising from:
+- Your use of InfoPilot Explorer
+- Your violation of this Agreement
+- Your violation of any third-party rights
+- Content you create or share
+
+---
+
+## SECTION 10: DISPUTE RESOLUTION
+
+### 10.1 Governing Law
+
+This Agreement is governed by the laws of the State of Maine, United States, without regard to conflict of law principles.
+
+### 10.2 Informal Resolution
+
+Before filing any claim, you agree to attempt informal resolution by contacting us at JJSpilot24@gmail.com.
+
+### 10.3 Arbitration Agreement
+
+Any disputes not resolved informally shall be resolved through binding arbitration in Brunswick, Maine, under the rules of the American Arbitration Association.
+
+### 10.4 Class Action Waiver
+
+YOU AGREE TO RESOLVE DISPUTES INDIVIDUALLY AND WAIVE ANY RIGHT TO PARTICIPATE IN CLASS ACTIONS OR CLASS ARBITRATIONS.
+
+### 10.5 Exceptions
+
+The following may be brought in court:
+- Claims for injunctive relief
+- Intellectual property disputes
+- Small claims court matters
+
+---
+
+## SECTION 11: TERMINATION
+
+### 11.1 Termination by You
+
+You may terminate your account at any time by:
+- Using the account deletion feature in settings
+- Contacting support at JJSpilot24@gmail.com
+
+### 11.2 Termination by Us
+
+We may suspend or terminate your account for:
+- Violation of this Agreement
+- Violation of our Child Safety Policy
+- Illegal activity
+- Extended inactivity
+- Any reason at our sole discretion
+
+### 11.3 Effect of Termination
+
+Upon termination:
+- Your right to use the platform ceases immediately
+- Your account data may be deleted
+- Certain provisions of this Agreement survive termination
+- You remain liable for any prior violations
+
+---
+
+## SECTION 12: GENERAL PROVISIONS
+
+### 12.1 Entire Agreement
+
+This Agreement, together with our Privacy Policy, constitutes the entire agreement between you and Top Pilot Enterprises, Inc.
+
+### 12.2 Severability
+
+If any provision is found unenforceable, the remaining provisions continue in effect.
+
+### 12.3 Waiver
+
+Our failure to enforce any provision does not waive our right to enforce it later.
+
+### 12.4 Assignment
+
+You may not assign this Agreement. We may assign our rights and obligations without restriction.
+
+### 12.5 Modifications
+
+We may modify this Agreement at any time. Material changes will be notified via:
+- Email notification
+- Platform announcement
+- Updated posting date
+
+Continued use after changes constitutes acceptance.
+
+### 12.6 Contact Information
 
 **Top Pilot Enterprises, Inc.**
-Brunswick, Maine
+Brunswick, Maine, USA
 Email: JJSpilot24@gmail.com
 Phone: (207) 522-0894
 
 ---
+
+## SECTION 13: ACKNOWLEDGMENT AND CONSENT
+
+**BY CLICKING "CONTINUE WITH GOOGLE" OR USING INFOPILOT EXPLORER, YOU ACKNOWLEDGE THAT:**
+
+1. You have read this Agreement in its entirety
+2. You understand and agree to all terms and conditions
+3. You are at least 21 years of age
+4. You agree to comply with our Child Safety Policy
+5. You consent to our Privacy Policy
+6. You understand the consequences of violating this Agreement
+7. This Agreement is legally binding
+
+---
+
 *Copyright © 2025-2026 Top Pilot Enterprises, Inc. All rights reserved.*
-*This code and platform may not be emulated or reproduced without express written permission.*
+
 *InfoPilot Explorer - First in Flight with Monetization of Searches*
 """
     }
