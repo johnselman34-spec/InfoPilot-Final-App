@@ -630,6 +630,22 @@ class InfoPilotAPITester:
         # Clean Category
         self.test_clean_category()
         
+        # NEW FEATURES FROM REVIEW REQUEST
+        print("\n🆕 Testing New Features from Review Request:")
+        print("-" * 40)
+        
+        # Promotions API (Letters to Evelyn, Maestro Bistro, Top Pilot Enterprises)
+        self.test_promotions_endpoints()
+        
+        # Subscription API (Pay What You Want pricing)
+        self.test_subscription_endpoints()
+        
+        # Document Types API (8 document types)
+        self.test_document_types_endpoint()
+        
+        # Personal Reports API (with location/images)
+        self.test_reports_endpoints()
+        
         # Print summary
         print("=" * 60)
         print(f"📊 TEST SUMMARY")
