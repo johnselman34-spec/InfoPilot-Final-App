@@ -306,6 +306,177 @@ class InfoPilotAPITester:
                 f"Parser failed: {data}"
             )
 
+    def test_quotes_endpoints(self):
+        """Test Quote Gallery endpoints"""
+        # Test GET quotes
+        success, data = self.make_request('GET', '/quotes')
+        self.log_result(
+            "GET /api/quotes", 
+            success and 'quotes' in data,
+            f"Found {len(data.get('quotes', []))} quotes" if success else f"Error: {data}"
+        )
+
+        # Test GET all quotes (should return 50 quotes)
+        success, data = self.make_request('GET', '/quotes/all')
+        quotes_count = len(data.get('quotes', [])) if success else 0
+        self.log_result(
+            "GET /api/quotes/all", 
+            success and quotes_count == 50,
+            f"Found {quotes_count}/50 quotes" if success else f"Error: {data}"
+        )
+
+    def test_themes_endpoints(self):
+        """Test Theme Gallery endpoints"""
+        # Test GET theme presets (should return 8 presets)
+        success, data = self.make_request('GET', '/themes/presets')
+        themes_count = len(data.get('themes', [])) if success else 0
+        expected_themes = ['default', 'royal', 'hot', 'ocean', 'forest', 'sunset', 'ruby', 'dark']
+        
+        self.log_result(
+            "GET /api/themes/presets", 
+            success and themes_count == 8,
+            f"Found {themes_count}/8 theme presets" if success else f"Error: {data}"
+        )
+
+    def test_polls_endpoints(self):
+        """Test Polls endpoints"""
+        # Test create poll
+        poll_data = {
+            "question": "What's your favorite InfoPilot feature?",
+            "options": ["Search & Collate", "Map View", "Statistics", "Marketplace"],
+            "target_type": "usp",
+            "target_id": None
+        }
+        success, data = self.make_request('POST', '/polls', poll_data, expected_status=201)
+        poll_id = data.get('poll_id') if success else None
+        
+        self.log_result(
+            "POST /api/polls", 
+            success and poll_id,
+            f"Created poll with ID: {poll_id}" if success else f"Error: {data}"
+        )
+
+        # Test vote on poll if poll was created
+        if poll_id:
+            vote_data = {"option_index": 0}
+            success, data = self.make_request('POST', f'/polls/{poll_id}/vote', vote_data)
+            self.log_result(
+                "POST /api/polls/{poll_id}/vote", 
+                success,
+                "Vote recorded successfully" if success else f"Error: {data}"
+            )
+
+    def test_social_leaderboard(self):
+        """Test Social Leaderboard endpoint"""
+        success, data = self.make_request('GET', '/social/leaderboard')
+        self.log_result(
+            "GET /api/social/leaderboard", 
+            success and 'leaderboard' in data,
+            "Leaderboard data available" if success else f"Error: {data}"
+        )
+
+    def test_newsletter_endpoints(self):
+        """Test Newsletter AI Headlines endpoint"""
+        success, data = self.make_request('GET', '/newsletter/ai-headlines')
+        self.log_result(
+            "GET /api/newsletter/ai-headlines", 
+            success and 'headlines' in data,
+            f"Found {len(data.get('headlines', []))} AI headlines" if success else f"Error: {data}"
+        )
+
+    def test_stats_top_words(self):
+        """Test Top Words Analytics endpoints"""
+        # Test top words from results
+        success, data = self.make_request('GET', '/stats/top-words')
+        self.log_result(
+            "GET /api/stats/top-words", 
+            success and 'words' in data,
+            f"Found {len(data.get('words', []))}/10 top words" if success else f"Error: {data}"
+        )
+
+        # Test top protocol words
+        success, data = self.make_request('GET', '/stats/top-protocol-words')
+        self.log_result(
+            "GET /api/stats/top-protocol-words", 
+            success and 'words' in data,
+            f"Found {len(data.get('words', []))} top protocol terms" if success else f"Error: {data}"
+        )
+
+    def test_easter_eggs_endpoints(self):
+        """Test Easter Eggs and Laugh-O-Meter endpoints"""
+        # Test laugh submission
+        laugh_data = {
+            "egg_id": "egg_0",
+            "rating": 5
+        }
+        success, data = self.make_request('POST', '/easter-eggs/laugh-submit', laugh_data)
+        self.log_result(
+            "POST /api/easter-eggs/laugh-submit", 
+            success,
+            "Laugh recorded and XP awarded" if success else f"Error: {data}"
+        )
+
+        # Test laugh leaderboard
+        success, data = self.make_request('GET', '/easter-eggs/laugh-leaderboard')
+        self.log_result(
+            "GET /api/easter-eggs/laugh-leaderboard", 
+            success and 'rankings' in data,
+            f"Found laugh rankings" if success else f"Error: {data}"
+        )
+
+    def test_protocol_analytics(self):
+        """Test Protocol Analytics endpoints"""
+        # Test track protocol view
+        track_data = {
+            "protocol_id": "test_protocol_123",
+            "view_type": "search"
+        }
+        success, data = self.make_request('POST', '/protocol-analytics/track-view', track_data)
+        self.log_result(
+            "POST /api/protocol-analytics/track-view", 
+            success,
+            "Protocol view tracked" if success else f"Error: {data}"
+        )
+
+    def test_copy_protocol(self):
+        """Test Copy Protocol to Clipboard endpoint"""
+        copy_data = {
+            "protocol_id": "test_protocol_123"
+        }
+        success, data = self.make_request('POST', '/copy-protocol', copy_data)
+        self.log_result(
+            "POST /api/copy-protocol", 
+            success and 'protocol_text' in data,
+            "Protocol text returned for clipboard" if success else f"Error: {data}"
+        )
+
+    def test_clean_category(self):
+        """Test Clean Category endpoint"""
+        # First create a test category
+        category_data = {
+            "name": "Test Clean Category",
+            "protocol": "(test or testing) & (clean)+",
+            "is_public": False,
+            "price": 0.0
+        }
+        success, data = self.make_request('POST', '/categories', category_data, expected_status=201)
+        category_id = data.get('category_id') if success else None
+        
+        if category_id:
+            # Test clean category
+            success, data = self.make_request('POST', f'/categories/{category_id}/clean')
+            self.log_result(
+                "POST /api/categories/{category_id}/clean", 
+                success,
+                f"Deleted {data.get('message', 'unknown')} results" if success else f"Error: {data}"
+            )
+        else:
+            self.log_result(
+                "POST /api/categories/{category_id}/clean", 
+                False,
+                "Could not test - category creation failed"
+            )
+
     def run_all_tests(self):
         """Run all test suites"""
         print("🚀 Starting InfoPilot Explorer Backend API Tests")
