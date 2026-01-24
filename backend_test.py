@@ -459,29 +459,23 @@ class InfoPilotAPITester:
 
     def test_clean_category(self):
         """Test Clean Category endpoint"""
-        # First create a test category
-        category_data = {
-            "name": "Test Clean Category",
-            "protocol": "(test or testing) & (clean)+",
-            "is_public": False,
-            "price": 0.0
-        }
-        success, data = self.make_request('POST', '/categories', category_data, expected_status=201)
-        category_id = data.get('category_id') if success else None
-        
-        if category_id:
+        # Get existing categories to test clean functionality
+        success, data = self.make_request('GET', '/categories')
+        if success and data.get('categories'):
+            category_id = data['categories'][0]['category_id']
+            
             # Test clean category
             success, data = self.make_request('POST', f'/categories/{category_id}/clean')
             self.log_result(
                 "POST /api/categories/{category_id}/clean", 
                 success,
-                f"Deleted {data.get('message', 'unknown')} results" if success else f"Error: {data}"
+                f"Clean operation: {data.get('message', 'completed')}" if success else f"Error: {data}"
             )
         else:
             self.log_result(
                 "POST /api/categories/{category_id}/clean", 
                 False,
-                "Could not test - category creation failed"
+                "Could not test - no categories available"
             )
 
     def run_all_tests(self):
