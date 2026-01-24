@@ -1132,7 +1132,60 @@ async def get_leaderboard():
         "most_copied": most_copied
     }
 
-# ============= STATISTICS ROUTES =============
+@marketplace_router.get("/headlines")
+async def get_marketplace_headlines():
+    """Get marketplace headlines/news"""
+    # Get latest headlines from database or generate defaults
+    headlines = await db.marketplace_headlines.find({}, {"_id": 0})\
+        .sort("created_at", -1)\
+        .limit(5)\
+        .to_list(5)
+    
+    if not headlines:
+        # Default headlines
+        headlines = [
+            {"title": "New protocols added daily!", "category": "Platform News"},
+            {"title": "Top seller of the week announced", "category": "Community"},
+            {"title": "AI-powered search matching now available", "category": "Features"},
+            {"title": "Protocol templates feature launched", "category": "Updates"},
+            {"title": "Share your protocols and earn 90% revenue", "category": "Monetization"}
+        ]
+    
+    return {"headlines": headlines}
+
+@marketplace_router.get("/recommended")
+async def get_recommended_protocols(user: User = Depends(require_auth)):
+    """Get recommended protocols based on user activity"""
+    # Get user's recent searches to understand interests
+    recent_results = await db.search_results.find(
+        {"user_id": user.user_id},
+        {"_id": 0, "document_type": 1, "category_id": 1}
+    ).sort("created_at", -1).limit(50).to_list(50)
+    
+    # Get categories user has interacted with
+    user_categories = set()
+    for r in recent_results:
+        if r.get("category_id"):
+            user_categories.add(r["category_id"])
+    
+    # Find popular protocols user hasn't used yet
+    query = {"is_public": True}
+    if user_categories:
+        query["category_id"] = {"$nin": list(user_categories)}
+    
+    recommended = await db.categories.find(query, {"_id": 0})\
+        .sort("sales_count", -1)\
+        .limit(6)\
+        .to_list(6)
+    
+    # If no recommendations, get top protocols
+    if not recommended:
+        recommended = await db.categories.find(
+            {"is_public": True},
+            {"_id": 0}
+        ).sort("sales_count", -1).limit(6).to_list(6)
+    
+    return {"protocols": recommended}
 
 @stats_router.get("/overview")
 async def get_stats_overview(user: User = Depends(require_auth)):
