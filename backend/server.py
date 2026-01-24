@@ -2683,6 +2683,283 @@ async def get_community_leaderboard():
         "top_xp": top_xp
     }
 
+# ============= PROMOTIONS & BOOK SALES =============
+
+BOOK_INFO = {
+    "title": "Letters to Evelyn",
+    "author": "John Selman",
+    "tagline": "A Supernatural Thriller Comedy",
+    "description": "A true love story, a scientific journey past the edge of interest, an ethical standard to live and love by. Join aspiring pilot John Selman on an extraordinary journey through the U.S. Navy, hallucinations revealing alien life, and the pursuit of his beloved Evelyn.",
+    "features": [
+        "Over 20 five-star reviews from Readers' Favorite",
+        "Part memoir, part sci-fi, part rom-com",
+        "Contains the partial solution to the Grand Unifying Theory",
+        "50 hilarious jokes included",
+        "Currently in development for film production"
+    ],
+    "purchase_links": {
+        "amazon_paperback": "https://www.amazon.com/Letters-Evelyn-John-Selman/dp/B0F3XFG14J",
+        "amazon_kindle": "https://www.amazon.com/Letters-Evelyn-John-Selman/dp/B0F3XFG14J",
+        "barnes_noble": "https://www.barnesandnoble.com",
+        "google_play": "https://play.google.com/store/books",
+        "paypal": "https://www.paypal.com/ncp/payment/LGXMXSG3D2MXU"
+    },
+    "prices": {
+        "ebook": 5.99,
+        "paperback": 17.90,
+        "hardcover": 22.90
+    },
+    "reviews": [
+        {"reviewer": "Olga Markova", "rating": 5, "text": "A captivating blend of memoir and fantasy!"},
+        {"reviewer": "P. Zeitsman", "rating": 5, "text": "Thought-provoking and emotionally resonant."},
+        {"reviewer": "K.C. Finn", "rating": 5, "text": "A unique literary experience that defies genre."},
+        {"reviewer": "Christian Sia", "rating": 5, "text": "Lyrical prose with deep spiritual themes."},
+        {"reviewer": "Ruffina Oserio", "rating": 5, "text": "A journey through love, trauma, and redemption."}
+    ]
+}
+
+MAESTRO_BISTRO_INFO = {
+    "name": "Maestro Bistro",
+    "tagline": "Fine Dining on Wheels",
+    "location": "Brunswick, Maine",
+    "menu": [
+        {"name": "Fish Chowder", "description": "Rich, creamy New England fish chowder", "price": 12.99},
+        {"name": "German Beef Rouladen", "description": "Traditional German rolled beef with savory filling", "price": 18.99}
+    ],
+    "description": "A food truck by John Selman Productions, serving authentic New England fish chowder and German beef rouladen in Brunswick, Maine."
+}
+
+@promotions_router.get("/book")
+async def get_book_info():
+    """Get Letters to Evelyn book information"""
+    return BOOK_INFO
+
+@promotions_router.get("/food")
+async def get_food_info():
+    """Get Maestro Bistro food truck information"""
+    return MAESTRO_BISTRO_INFO
+
+@promotions_router.get("/all")
+async def get_all_promotions():
+    """Get all promotional content"""
+    return {
+        "book": BOOK_INFO,
+        "food": MAESTRO_BISTRO_INFO,
+        "company": {
+            "name": "Top Pilot Enterprises, Inc.",
+            "ceo": "John Selman",
+            "location": "Brunswick, Maine",
+            "founded": 2025,
+            "subsidiaries": ["John Selman Productions", "Maestro Bistro"],
+            "tagline": "First in Flight with Monetization of Searches"
+        }
+    }
+
+# ============= PERSONAL REPORTS ROUTES =============
+
+@reports_router.get("")
+async def get_personal_reports(
+    page: int = 1,
+    limit: int = 20,
+    user_id: Optional[str] = None,
+    user: User = Depends(require_auth)
+):
+    """Get personal reports"""
+    query = {}
+    if user_id:
+        query["user_id"] = user_id
+    
+    skip = (page - 1) * limit
+    reports = await db.personal_reports.find(query, {"_id": 0})\
+        .sort("created_at", -1)\
+        .skip(skip)\
+        .limit(limit)\
+        .to_list(limit)
+    
+    total = await db.personal_reports.count_documents(query)
+    
+    return {
+        "reports": reports,
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit
+    }
+
+@reports_router.post("")
+async def create_personal_report(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Create a personal report with up to 3 images"""
+    data = await request.json()
+    
+    # Validate images (max 3)
+    images = data.get("images", [])[:3]
+    
+    report = {
+        "report_id": f"rep_{uuid.uuid4().hex[:12]}",
+        "user_id": user.user_id,
+        "title": data.get("title"),
+        "content": data.get("content"),
+        "images": images,
+        "location": data.get("location"),  # {city, state, country, lat, lng}
+        "category_ids": data.get("category_ids", []),
+        "document_type": "Personal Report (Organic)",
+        "reactions": {},
+        "comments_count": 0,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.personal_reports.insert_one(report)
+    report.pop("_id", None)
+    
+    # Award XP for creating report
+    await db.users.update_one(
+        {"user_id": user.user_id},
+        {"$inc": {"xp": 25}}
+    )
+    
+    return report
+
+@reports_router.put("/{report_id}")
+async def update_personal_report(
+    report_id: str,
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Update a personal report"""
+    data = await request.json()
+    
+    # Verify ownership
+    report = await db.personal_reports.find_one(
+        {"report_id": report_id, "user_id": user.user_id},
+        {"_id": 0}
+    )
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    update_data = {}
+    if "title" in data:
+        update_data["title"] = data["title"]
+    if "content" in data:
+        update_data["content"] = data["content"]
+    if "images" in data:
+        update_data["images"] = data["images"][:3]
+    if "location" in data:
+        update_data["location"] = data["location"]
+    if "category_ids" in data:
+        update_data["category_ids"] = data["category_ids"]
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.personal_reports.update_one(
+        {"report_id": report_id},
+        {"$set": update_data}
+    )
+    
+    updated = await db.personal_reports.find_one({"report_id": report_id}, {"_id": 0})
+    return updated
+
+@reports_router.delete("/{report_id}")
+async def delete_personal_report(
+    report_id: str,
+    user: User = Depends(require_auth)
+):
+    """Delete a personal report"""
+    result = await db.personal_reports.delete_one({
+        "report_id": report_id,
+        "user_id": user.user_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Report not found")
+    
+    return {"message": "Report deleted"}
+
+# ============= SUBSCRIPTION & PAYPAL =============
+
+@api_router.get("/subscription/info")
+async def get_subscription_info():
+    """Get subscription information"""
+    price_setting = await db.settings.find_one({"key": "subscription_price"}, {"_id": 0})
+    price = price_setting.get("value", 0.99) if price_setting else 0.99
+    
+    return {
+        "price": price,
+        "period": "monthly",
+        "features": [
+            "Unlimited search results",
+            "Access to Map View",
+            "Create unlimited categories",
+            "Sell protocols in marketplace",
+            "Real-time messaging",
+            "Priority support"
+        ],
+        "paypal_link": "https://www.paypal.com/ncp/payment/LGXMXSG3D2MXU",
+        "paypal_email": "JJspilot24@gmail.com",
+        "first_in_flight": "InfoPilot Explorer is First in Flight with Monetization of Searches! Your time is valuable.",
+        "pay_what_you_want": {
+            "enabled": True,
+            "minimum": 0.75,
+            "suggested": 0.99,
+            "yearly_intro": 0.75,
+            "yearly_regular": 4.62
+        }
+    }
+
+@api_router.post("/subscription/verify")
+async def verify_subscription(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Verify a PayPal subscription payment"""
+    data = await request.json()
+    payment_id = data.get("payment_id")
+    amount = data.get("amount", 0.99)
+    
+    # In production, verify with PayPal API
+    # For now, mark user as paid
+    subscription_until = datetime.now(timezone.utc) + timedelta(days=30)
+    
+    await db.users.update_one(
+        {"user_id": user.user_id},
+        {"$set": {
+            "is_paid": True,
+            "subscription_until": subscription_until.isoformat()
+        }}
+    )
+    
+    # Record payment
+    await db.payments.insert_one({
+        "payment_id": payment_id or f"pay_{uuid.uuid4().hex[:12]}",
+        "user_id": user.user_id,
+        "amount": amount,
+        "type": "subscription",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"message": "Subscription activated", "until": subscription_until.isoformat()}
+
+# ============= DOCUMENT TYPE FILTERS =============
+
+@api_router.get("/document-types")
+async def get_document_types():
+    """Get all document types for filtering"""
+    return {
+        "types": [
+            {"id": "informative_phd", "name": "Informative Ph.D.", "description": "Academic papers with Ph.D. references"},
+            {"id": "informative", "name": "Informative", "description": "Educational and informative content"},
+            {"id": "news_article", "name": "News Article", "description": "News and current events"},
+            {"id": "blog", "name": "Blog", "description": "Blog posts and personal opinions"},
+            {"id": "forum", "name": "Forum", "description": "Discussion forum posts"},
+            {"id": "personal_report_organic", "name": "Personal Report (Organic)", "description": "User-created reports"},
+            {"id": "personal_report_collected", "name": "Personal Report (Collected)", "description": "First-person narrative articles"},
+            {"id": "infopilot_exclusive", "name": "InfoPilot Exclusive", "description": "Content created by InfoPilot"}
+        ]
+    }
+
 # ============= INCLUDE ROUTERS =============
 
 api_router.include_router(auth_router)
@@ -2701,6 +2978,8 @@ api_router.include_router(polls_router)
 api_router.include_router(quotes_router)
 api_router.include_router(themes_router)
 api_router.include_router(analytics_router)
+api_router.include_router(promotions_router)
+api_router.include_router(reports_router)
 
 app.include_router(api_router)
 
