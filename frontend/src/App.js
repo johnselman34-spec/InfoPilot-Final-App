@@ -5218,12 +5218,121 @@ const AppRouter = () => {
   );
 };
 
+// ============= PWA INSTALL PROMPT =============
+const PWAInstallPrompt = () => {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    // Check if running on iOS
+    const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    setIsIOS(iOS && !isStandalone);
+
+    // Listen for beforeinstallprompt event (Android/Desktop)
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      // Show prompt after a delay if user hasn't dismissed it before
+      const dismissed = localStorage.getItem('pwa-prompt-dismissed');
+      if (!dismissed) {
+        setTimeout(() => setShowPrompt(true), 5000);
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+
+    // Show iOS prompt if applicable
+    if (iOS && !isStandalone) {
+      const dismissed = localStorage.getItem('pwa-prompt-dismissed');
+      if (!dismissed) {
+        setTimeout(() => setShowPrompt(true), 5000);
+      }
+    }
+
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log('PWA install outcome:', outcome);
+      setDeferredPrompt(null);
+    }
+    setShowPrompt(false);
+  };
+
+  const handleDismiss = () => {
+    setShowPrompt(false);
+    localStorage.setItem('pwa-prompt-dismissed', 'true');
+  };
+
+  if (!showPrompt) return null;
+
+  return (
+    <div className="fixed bottom-24 left-4 right-4 md:left-auto md:right-6 md:w-96 z-50 animate-slide-up">
+      <Card className="glass-card border-2 border-[#007AFF] shadow-xl">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-[#007AFF]/10">
+              <Smartphone className="w-8 h-8 text-[#007AFF]" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-sm mb-1">Install InfoPilot Explorer</h3>
+              {isIOS ? (
+                <p className="text-xs text-gray-600 mb-3">
+                  Tap <span className="font-medium">Share</span> then <span className="font-medium">"Add to Home Screen"</span> for quick access!
+                </p>
+              ) : (
+                <p className="text-xs text-gray-600 mb-3">
+                  Add to your home screen for a better experience!
+                </p>
+              )}
+              <div className="flex gap-2">
+                {!isIOS && (
+                  <Button size="sm" className="flex-1" onClick={handleInstall}>
+                    Install App
+                  </Button>
+                )}
+                <Button size="sm" variant="outline" onClick={handleDismiss}>
+                  {isIOS ? "Got it" : "Not now"}
+                </Button>
+              </div>
+            </div>
+            <button onClick={handleDismiss} className="text-gray-400 hover:text-gray-600">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 // ============= MAIN APP =============
 function App() {
+  // Register service worker for PWA
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then((registration) => {
+            console.log('InfoPilot SW registered:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('InfoPilot SW registration failed:', error);
+          });
+      });
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <AuthProvider>
         <AppRouter />
+        <PWAInstallPrompt />
       </AuthProvider>
     </BrowserRouter>
   );
