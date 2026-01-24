@@ -350,9 +350,11 @@ const DashboardLayout = ({ children }) => {
     { path: "/friends", icon: Users, label: "Friends" },
     { path: "/groups", icon: Users, label: "Groups" },
     { path: "/chat", icon: MessageCircle, label: "Messages" },
+    { path: "/reports", icon: BookOpen, label: "Personal Reports" },
     { path: "/easter-eggs", icon: Egg, label: "Easter Eggs" },
     { path: "/quotes", icon: BookOpen, label: "Quote Gallery" },
     { path: "/themes", icon: Settings, label: "Themes" },
+    { path: "/book", icon: BookOpen, label: "Letters to Evelyn" },
     { path: "/settings", icon: Settings, label: "Settings" },
   ];
 
