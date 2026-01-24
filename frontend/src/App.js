@@ -184,17 +184,39 @@ const LandingPage = () => {
               <h1 className="text-6xl md:text-7xl font-bold tracking-tight mb-6 font-['Outfit']">
                 Your <span className="text-[#007AFF]">3D View</span> of the Internet
               </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              <p className="text-xl text-gray-600 mb-4 leading-relaxed">
                 The #1 resource for finding information valuable to YOU. Create custom search protocols, 
                 collate results into categories, and explore the web like never before.
               </p>
-              <div className="flex flex-wrap gap-4">
+              <p className="text-lg text-[#007AFF] font-medium mb-8">
+                Better than Facebook or LinkedIn for collaborative research, professional certifications, career advancement, and meaningful social interaction.
+              </p>
+              <div className="flex flex-wrap gap-4 mb-6">
                 <Button className="btn-primary h-14 px-8 text-lg" onClick={login} data-testid="hero-get-started">
                   <Zap className="w-5 h-5 mr-2" /> Start Exploring
                 </Button>
                 <Button variant="outline" className="h-14 px-8 text-lg rounded-full" data-testid="learn-more-btn">
                   <Play className="w-5 h-5 mr-2" /> Watch Demo
                 </Button>
+              </div>
+              {/* Mobile App Download Buttons */}
+              <div className="flex flex-wrap gap-3">
+                <a href="https://play.google.com/store/apps/details?id=com.infopilot.explorer" target="_blank" rel="noopener noreferrer" 
+                   className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors" data-testid="download-android-hero">
+                  <Smartphone className="w-5 h-5" />
+                  <div className="text-left">
+                    <p className="text-[10px] opacity-80">GET IT ON</p>
+                    <p className="text-sm font-semibold">Google Play</p>
+                  </div>
+                </a>
+                <a href="https://apps.apple.com/app/infojet" target="_blank" rel="noopener noreferrer"
+                   className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800 transition-colors" data-testid="download-ios-hero">
+                  <Smartphone className="w-5 h-5" />
+                  <div className="text-left">
+                    <p className="text-[10px] opacity-80">Download on the</p>
+                    <p className="text-sm font-semibold">App Store</p>
+                  </div>
+                </a>
               </div>
             </div>
             <div className="relative slide-up stagger-2">
@@ -206,6 +228,34 @@ const LandingPage = () => {
                 />
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Better Than Facebook/LinkedIn Section */}
+      <section className="py-16 px-6 bg-gradient-to-r from-[#007AFF]/10 to-[#34C759]/10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <Badge className="mb-4 badge-primary">Why InfoPilot?</Badge>
+            <h2 className="text-3xl md:text-4xl font-semibold mb-4 font-['Outfit']">
+              The Smarter Choice for <span className="text-[#007AFF]">Professionals</span>
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              We believe we do a better job than Facebook or LinkedIn when it comes to collaborative and individual projects, certifications, career advancement, and authentic social interaction.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-4 gap-6">
+            {[
+              { title: "Research Collaboration", desc: "Real-time collaborative research sessions with shared protocols and results" },
+              { title: "Professional Certifications", desc: "Track and showcase your expertise with protocol mastery badges" },
+              { title: "Career Advancement", desc: "Monetize your research skills in our Protocol Marketplace" },
+              { title: "Meaningful Connections", desc: "Connect with researchers who share your interests, not just your network" }
+            ].map((item, i) => (
+              <Card key={i} className="glass-card p-5 text-center hover-lift">
+                <h3 className="font-semibold mb-2 text-[#007AFF]">{item.title}</h3>
+                <p className="text-sm text-gray-600">{item.desc}</p>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
