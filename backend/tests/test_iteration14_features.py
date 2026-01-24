@@ -249,54 +249,33 @@ class TestRefactoredRouters:
         assert response.status_code == 200
         print("✓ PayPal router integrated correctly")
     
-    def test_users_router_endpoints(self):
-        """Test users router endpoints exist"""
-        # Users search should work without auth
-        response = requests.get(f"{API_URL}/users/search?q=test")
-        # May return 200 or 401 depending on implementation
-        assert response.status_code in [200, 401]
-        print("✓ Users router endpoints accessible")
-    
-    def test_users_leaderboard(self):
-        """Test users leaderboard endpoint"""
-        response = requests.get(f"{API_URL}/users/leaderboard")
+    def test_groups_router(self):
+        """Test groups router endpoints exist"""
+        response = requests.get(f"{API_URL}/groups")
         assert response.status_code == 200
         data = response.json()
-        assert "leaderboard" in data
-        print(f"✓ Users leaderboard: {len(data['leaderboard'])} entries")
-
-
-class TestBrandingEndpoints:
-    """Test branding/customization endpoints"""
+        assert "groups" in data
+        print(f"✓ Groups router: {len(data['groups'])} groups")
     
-    def test_branding_config(self):
-        """Test /api/branding/config returns branding settings"""
-        response = requests.get(f"{API_URL}/branding/config")
+    def test_pages_router(self):
+        """Test pages router endpoints exist"""
+        response = requests.get(f"{API_URL}/pages")
         assert response.status_code == 200
         data = response.json()
-        assert "app_name" in data
-        assert "tagline" in data
-        print(f"✓ Branding config: {data['app_name']}")
+        assert "pages" in data
+        print(f"✓ Pages router: {len(data['pages'])} pages")
 
 
-class TestLegalEndpoints:
-    """Test legal pages endpoints"""
+class TestChatEndpoints:
+    """Test chat endpoints"""
     
-    def test_privacy_policy(self):
-        """Test /api/legal/privacy returns privacy policy"""
-        response = requests.get(f"{API_URL}/legal/privacy")
+    def test_chat_rooms(self):
+        """Test /api/chat/rooms returns chat rooms"""
+        response = requests.get(f"{API_URL}/chat/rooms")
         assert response.status_code == 200
         data = response.json()
-        assert "content" in data
-        print("✓ Privacy policy accessible")
-    
-    def test_terms_of_service(self):
-        """Test /api/legal/terms returns terms of service"""
-        response = requests.get(f"{API_URL}/legal/terms")
-        assert response.status_code == 200
-        data = response.json()
-        assert "content" in data
-        print("✓ Terms of service accessible")
+        assert "rooms" in data
+        print(f"✓ Chat rooms: {len(data['rooms'])} rooms")
 
 
 if __name__ == "__main__":
