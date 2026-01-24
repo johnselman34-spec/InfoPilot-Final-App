@@ -1423,10 +1423,16 @@ const MarketplacePage = () => {
   const [protocols, setProtocols] = useState([]);
   const [leaderboard, setLeaderboard] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [headlines, setHeadlines] = useState([]);
+  const [recommendedProtocols, setRecommendedProtocols] = useState([]);
+  const [loadingHeadlines, setLoadingHeadlines] = useState(false);
+  const [loadingRecommended, setLoadingRecommended] = useState(false);
 
   useEffect(() => {
     fetchMarketplace();
     fetchLeaderboard();
+    fetchHeadlines();
+    fetchRecommendedProtocols();
   }, []);
 
   const fetchMarketplace = async () => {
@@ -1446,6 +1452,40 @@ const MarketplacePage = () => {
       setLeaderboard(response.data);
     } catch (error) {
       console.error("Error fetching leaderboard:", error);
+    }
+  };
+
+  const fetchHeadlines = async () => {
+    setLoadingHeadlines(true);
+    try {
+      const response = await api.get("/marketplace/headlines");
+      setHeadlines(response.data.headlines || []);
+    } catch (error) {
+      console.error("Error fetching headlines:", error);
+      // Set default headlines if API fails
+      setHeadlines([
+        { title: "New protocols added daily!", category: "Platform News" },
+        { title: "Top seller of the week announced", category: "Community" },
+        { title: "AI-powered search now available", category: "Features" }
+      ]);
+    } finally {
+      setLoadingHeadlines(false);
+    }
+  };
+
+  const fetchRecommendedProtocols = async () => {
+    setLoadingRecommended(true);
+    try {
+      const response = await api.get("/marketplace/recommended");
+      setRecommendedProtocols(response.data.protocols || []);
+    } catch (error) {
+      console.error("Error fetching recommended protocols:", error);
+      // Use top protocols as fallback
+      if (protocols.length > 0) {
+        setRecommendedProtocols(protocols.slice(0, 3));
+      }
+    } finally {
+      setLoadingRecommended(false);
     }
   };
 
@@ -1472,6 +1512,78 @@ const MarketplacePage = () => {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold font-['Outfit'] mb-2">Protocol Marketplace</h1>
         <p className="text-gray-600 mb-8">Discover and share powerful search protocols</p>
+
+        {/* Headlines Section */}
+        <Card className="glass-card mb-6">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-[#FFD60A]" /> Headlines
+              </CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={fetchHeadlines}
+                disabled={loadingHeadlines}
+                data-testid="refresh-headlines-btn"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${loadingHeadlines ? 'animate-spin' : ''}`} /> Refresh Headlines
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-4">
+              {headlines.map((headline, i) => (
+                <div key={i} className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
+                  <Badge variant="outline" className="text-xs">{headline.category}</Badge>
+                  <span className="text-sm">{headline.title}</span>
+                </div>
+              ))}
+              {headlines.length === 0 && !loadingHeadlines && (
+                <p className="text-sm text-gray-500">No headlines available</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recommended Protocols Section */}
+        <Card className="glass-card mb-6">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Star className="w-5 h-5 text-[#007AFF]" /> Recommended For You
+              </CardTitle>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={fetchRecommendedProtocols}
+                disabled={loadingRecommended}
+                data-testid="refresh-recommended-btn"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${loadingRecommended ? 'animate-spin' : ''}`} /> Refresh
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {recommendedProtocols.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {recommendedProtocols.map((protocol, i) => (
+                  <div key={protocol.category_id || i} className="p-4 bg-gray-50 rounded-lg">
+                    <p className="font-medium">{protocol.name}</p>
+                    <p className="text-sm text-gray-500 mt-1">{protocol.sales_count || 0} sales</p>
+                    <Button size="sm" variant="outline" className="mt-3" onClick={() => handleCopy(protocol.category_id)}>
+                      <Copy className="w-3 h-3 mr-1" /> Copy
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                {loadingRecommended ? 'Loading recommendations...' : 'Keep searching to get personalized recommendations!'}
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Protocols Grid */}
