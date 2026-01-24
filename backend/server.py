@@ -3401,7 +3401,9 @@ async def create_protocol_template(
     data = await request.json()
     
     template_id = f"tmpl_{uuid.uuid4().hex[:12]}"
-    template = {
+    created_at = datetime.now(timezone.utc).isoformat()
+    
+    template_doc = {
         "template_id": template_id,
         "user_id": user.user_id,
         "name": data.get("name"),
@@ -3410,10 +3412,10 @@ async def create_protocol_template(
         "category": data.get("category", "General"),
         "is_public": data.get("is_public", False),
         "usage_count": 0,
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "created_at": created_at
     }
     
-    await db.protocol_templates.insert_one(template)
+    await db.protocol_templates.insert_one(template_doc)
     
     # Return clean response without MongoDB _id
     return {
@@ -3425,7 +3427,7 @@ async def create_protocol_template(
         "category": data.get("category", "General"),
         "is_public": data.get("is_public", False),
         "usage_count": 0,
-        "created_at": template["created_at"]
+        "created_at": created_at
     }
 
 @templates_router.get("/{template_id}")
