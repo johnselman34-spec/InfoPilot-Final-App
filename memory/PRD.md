@@ -1,4 +1,4 @@
-# InfoPilot Explorer - PRD v8.0
+# InfoPilot Explorer - PRD v8.1
 
 ## Project Overview
 InfoPilot Explorer is a worldwide web information exchange social network that provides users a "3D view of the Internet". Users can create custom search protocols using InfoJet 2.0 Protocol Language to collate web search results into organized categories.
@@ -27,6 +27,27 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - Personal Reports with images/location
 - Book promotion (Letters to Evelyn)
 - Subscription with Pay What You Want
+
+## v8.1 Features - Implemented January 24, 2026
+
+### Bug Fixes
+✅ **Create Category Button** - Fixed issue where second category creation wouldn't work; now properly clears form and shows error messages
+✅ **CORS Configuration** - Fixed wildcard CORS issue with credentials; now uses explicit origins list
+
+### Marketing & Branding
+✅ **"Better than Facebook/LinkedIn" Messaging** - Added prominent marketing message to landing page
+✅ **"Why InfoPilot?" Section** - New section highlighting advantages (Research Collaboration, Professional Certifications, Career Advancement, Meaningful Connections)
+✅ **Mobile App Download Buttons** - Google Play and App Store buttons on landing page hero section
+
+### Deep Content Scan Feature
+✅ **Full Page Content Fetching** - New option to fetch complete page content for enhanced location detection
+✅ **UI Checkbox** - "Deep Content Scan" checkbox with "Enhanced" badge in search interface
+✅ **Better Location Extraction** - Detects city/state, city/country, and street addresses from full article body
+
+### Search Results Display
+✅ **Collation Timestamp** - Shows when results were collated (e.g., "Collated: Jan 24, 2026, 12:21 PM")
+✅ **Location Count Badges** - Shows number of locations detected per result
+✅ **Location Tags** - Visual display of extracted locations under each result
 
 ## v8.0 Features - Implemented January 24, 2026
 
