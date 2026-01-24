@@ -482,6 +482,26 @@ class LocationExtractor:
                                 "country": country
                             })
         
+        # PATTERN 4B: International cities mentioned WITHOUT country in text
+        # This catches cases like "Virgin Bay" appearing in an article about Nicaragua
+        # where the country may not be explicitly mentioned near the city name
+        for country, cities in LocationExtractor.INTERNATIONAL_CITIES.items():
+            for city in cities:
+                # Use word boundary to avoid partial matches
+                city_pattern = rf'\b{re.escape(city)}\b'
+                if re.search(city_pattern, text, re.IGNORECASE):
+                    # Check we haven't already added this city
+                    exists = any(
+                        loc.get("city") == city and loc.get("country") == country
+                        for loc in locations
+                    )
+                    if not exists:
+                        locations.append({
+                            "type": "city_country",
+                            "city": city,
+                            "country": country
+                        })
+        
         # PATTERN 5: US States alone
         for state in LocationExtractor.US_STATES:
             if state.lower() in text_lower:
