@@ -693,41 +693,74 @@ const UltimateSearchPage = () => {
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-wrap gap-4 mt-4">
-                  <Select value={filters.documentType || "all"} onValueChange={(v) => setFilters({...filters, documentType: v === "all" ? "" : v})}>
-                    <SelectTrigger className="w-40" data-testid="filter-doc-type">
-                      <SelectValue placeholder="Document Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="Informative Ph.D">Informative Ph.D</SelectItem>
-                      <SelectItem value="Informative">Informative</SelectItem>
-                      <SelectItem value="News Article">News Article</SelectItem>
-                      <SelectItem value="Blog">Blog</SelectItem>
-                      <SelectItem value="Forum">Forum</SelectItem>
-                      <SelectItem value="Personal Report (Organic)">Personal Report</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="mt-4">
+                  {/* Document Type Filters with Select All / Deselect All */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <Label className="text-sm font-medium">Document Types</Label>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={selectAllDocTypes}
+                          data-testid="select-all-doc-types"
+                        >
+                          Select All
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={deselectAllDocTypes}
+                          data-testid="deselect-all-doc-types"
+                        >
+                          Deselect All
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {documentTypes.map((docType) => (
+                        <label 
+                          key={docType.id} 
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
+                            selectedDocTypes.includes(docType.name) 
+                              ? 'bg-[#007AFF] text-white border-[#007AFF]' 
+                              : 'bg-white border-gray-200 hover:border-[#007AFF]'
+                          }`}
+                          data-testid={`doctype-${docType.id}`}
+                        >
+                          <Checkbox
+                            checked={selectedDocTypes.includes(docType.name)}
+                            onCheckedChange={() => toggleDocType(docType.name)}
+                            className="hidden"
+                          />
+                          <span className="text-sm">{docType.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
 
-                  <Input 
-                    placeholder="Year" 
-                    className="w-24"
-                    value={filters.year}
-                    onChange={(e) => setFilters({...filters, year: e.target.value})}
-                    data-testid="filter-year"
-                  />
+                  {/* Other Filters */}
+                  <div className="flex flex-wrap gap-4">
+                    <Input 
+                      placeholder="Year" 
+                      className="w-24"
+                      value={filters.year}
+                      onChange={(e) => setFilters({...filters, year: e.target.value})}
+                      data-testid="filter-year"
+                    />
 
-                  <Input 
-                    placeholder="Domain" 
-                    className="w-40"
-                    value={filters.rootDomain}
-                    onChange={(e) => setFilters({...filters, rootDomain: e.target.value})}
-                    data-testid="filter-domain"
-                  />
+                    <Input 
+                      placeholder="Domain" 
+                      className="w-40"
+                      value={filters.rootDomain}
+                      onChange={(e) => setFilters({...filters, rootDomain: e.target.value})}
+                      data-testid="filter-domain"
+                    />
 
-                  <Button variant="outline" onClick={fetchResults} data-testid="apply-filters-btn">
-                    <Filter className="w-4 h-4 mr-2" /> Apply Filters
-                  </Button>
+                    <Button variant="outline" onClick={fetchResults} data-testid="apply-filters-btn">
+                      <Filter className="w-4 h-4 mr-2" /> Apply Filters
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
