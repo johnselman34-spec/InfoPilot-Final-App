@@ -615,12 +615,12 @@ const UltimateSearchPage = () => {
 
                 {/* Filters */}
                 <div className="flex flex-wrap gap-4 mt-4">
-                  <Select value={filters.documentType} onValueChange={(v) => setFilters({...filters, documentType: v})}>
+                  <Select value={filters.documentType || "all"} onValueChange={(v) => setFilters({...filters, documentType: v === "all" ? "" : v})}>
                     <SelectTrigger className="w-40" data-testid="filter-doc-type">
                       <SelectValue placeholder="Document Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Types</SelectItem>
+                      <SelectItem value="all">All Types</SelectItem>
                       <SelectItem value="Informative Ph.D">Informative Ph.D</SelectItem>
                       <SelectItem value="Informative">Informative</SelectItem>
                       <SelectItem value="News Article">News Article</SelectItem>
