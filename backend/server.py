@@ -22,6 +22,13 @@ import json
 import hashlib
 from bs4 import BeautifulSoup
 
+# Stripe Integration
+try:
+    from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutStatusResponse, CheckoutSessionRequest
+    STRIPE_AVAILABLE = True
+except ImportError:
+    STRIPE_AVAILABLE = False
+
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -54,6 +61,9 @@ quotes_router = APIRouter(prefix="/quotes", tags=["Quote Gallery"])
 themes_router = APIRouter(prefix="/themes", tags=["Themes"])
 analytics_router = APIRouter(prefix="/protocol-analytics", tags=["Protocol Analytics"])
 promotions_router = APIRouter(prefix="/promotions", tags=["Promotions"])
+payments_router = APIRouter(prefix="/payments", tags=["Payments"])
+legal_router = APIRouter(prefix="/legal", tags=["Legal"])
+templates_router = APIRouter(prefix="/templates", tags=["Protocol Templates"])
 
 # Configure logging
 logging.basicConfig(
