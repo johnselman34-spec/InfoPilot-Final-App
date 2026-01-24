@@ -488,11 +488,25 @@ const UltimateSearchPage = () => {
     country: "",
     state: ""
   });
+  // New: Search Match Options
+  const [matchOptions, setMatchOptions] = useState({
+    exactMatch: false,
+    strictMatch: false,
+    aiMatch: true,
+    intelligentMatch: false,
+    favorSchematics: false
+  });
+  // New: Templates and Debugger
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [showDebugger, setShowDebugger] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
     fetchCategories();
     fetchResults();
     fetchDocumentTypes();
+    fetchTemplates();
   }, []);
 
   const fetchDocumentTypes = async () => {
@@ -501,6 +515,15 @@ const UltimateSearchPage = () => {
       setDocumentTypes(response.data.types || []);
     } catch (error) {
       console.error("Error fetching document types:", error);
+    }
+  };
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await api.get("/templates");
+      setTemplates(response.data.templates || []);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
     }
   };
 
@@ -527,6 +550,12 @@ const UltimateSearchPage = () => {
       if (filters.rootDomain) params.append("root_domain", filters.rootDomain);
       if (filters.country) params.append("country", filters.country);
       if (filters.state) params.append("state", filters.state);
+      // Add match options
+      if (matchOptions.exactMatch) params.append("exact_match", "true");
+      if (matchOptions.strictMatch) params.append("strict_match", "true");
+      if (matchOptions.aiMatch) params.append("ai_match", "true");
+      if (matchOptions.intelligentMatch) params.append("intelligent_match", "true");
+      if (matchOptions.favorSchematics) params.append("favor_schematics", "true");
 
       const response = await api.get(`/search/results?${params.toString()}`);
       setSearchResults(response.data.results || []);
@@ -542,9 +571,18 @@ const UltimateSearchPage = () => {
       const response = await api.post("/search/collate", {
         query: searchQuery,
         category_ids: selectedCategories,
-        max_results: 40
+        max_results: 40,
+        match_options: matchOptions
       });
       setSearchResults(response.data.results || []);
+      // Set debug info
+      setDebugInfo({
+        query: searchQuery,
+        categories: selectedCategories.length,
+        matchOptions: matchOptions,
+        resultsCount: response.data.results?.length || 0,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error("Search error:", error);
     } finally {
@@ -591,6 +629,33 @@ const UltimateSearchPage = () => {
 
   const deselectAllDocTypes = () => {
     setSelectedDocTypes([]);
+  };
+
+  const selectAllMatchOptions = () => {
+    setMatchOptions({
+      exactMatch: true,
+      strictMatch: true,
+      aiMatch: true,
+      intelligentMatch: true,
+      favorSchematics: true
+    });
+  };
+
+  const deselectAllMatchOptions = () => {
+    setMatchOptions({
+      exactMatch: false,
+      strictMatch: false,
+      aiMatch: false,
+      intelligentMatch: false,
+      favorSchematics: false
+    });
+  };
+
+  const useTemplate = (template) => {
+    setNewCategoryName(template.name);
+    setNewCategoryProtocol(template.protocol_string);
+    setShowNewCategory(true);
+    setShowTemplates(false);
   };
 
   return (
