@@ -871,7 +871,7 @@ const UltimateSearchPage = () => {
                   {/* Search Match Options */}
                   <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-3">
-                      <Label className="text-sm font-medium">Search Result Favoritism</Label>
+                      <Label className="text-sm font-medium">Search Match Options</Label>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={selectAllMatchOptions} data-testid="select-all-match">
                           Select All
@@ -881,46 +881,155 @@ const UltimateSearchPage = () => {
                         </Button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                      <label className="flex items-center gap-2 cursor-pointer">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <label className="flex items-start gap-2 cursor-pointer p-2 rounded border hover:bg-white">
                         <Checkbox
                           checked={matchOptions.exactMatch}
                           onCheckedChange={(v) => setMatchOptions({...matchOptions, exactMatch: v})}
                           data-testid="match-exact"
+                          className="mt-0.5"
                         />
-                        <span className="text-sm">Exact Match</span>
+                        <div>
+                          <span className="text-sm font-medium">Exact Match</span>
+                          <p className="text-xs text-gray-500">High closeness to protocols</p>
+                        </div>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
+                      <label className="flex items-start gap-2 cursor-pointer p-2 rounded border hover:bg-white">
                         <Checkbox
                           checked={matchOptions.strictMatch}
                           onCheckedChange={(v) => setMatchOptions({...matchOptions, strictMatch: v})}
                           data-testid="match-strict"
+                          className="mt-0.5"
                         />
-                        <span className="text-sm">Strict Match</span>
+                        <div>
+                          <span className="text-sm font-medium">Strict Match</span>
+                          <p className="text-xs text-gray-500">Precise and accurate match</p>
+                        </div>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
+                      <label className="flex items-start gap-2 cursor-pointer p-2 rounded border hover:bg-white">
                         <Checkbox
                           checked={matchOptions.aiMatch}
                           onCheckedChange={(v) => setMatchOptions({...matchOptions, aiMatch: v})}
                           data-testid="match-ai"
+                          className="mt-0.5"
                         />
-                        <span className="text-sm">AI Match</span>
+                        <div>
+                          <span className="text-sm font-medium">AI Match</span>
+                          <p className="text-xs text-gray-500">Using artificial intelligence</p>
+                        </div>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
+                      <label className="flex items-start gap-2 cursor-pointer p-2 rounded border hover:bg-white">
                         <Checkbox
                           checked={matchOptions.intelligentMatch}
                           onCheckedChange={(v) => setMatchOptions({...matchOptions, intelligentMatch: v})}
                           data-testid="match-intelligent"
+                          className="mt-0.5"
                         />
-                        <span className="text-sm">Intelligent Match</span>
+                        <div>
+                          <span className="text-sm font-medium">Smart Match</span>
+                          <p className="text-xs text-gray-500">Maximizes information given</p>
+                        </div>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
+                      <label className="flex items-start gap-2 cursor-pointer p-2 rounded border hover:bg-white">
                         <Checkbox
                           checked={matchOptions.favorSchematics}
                           onCheckedChange={(v) => setMatchOptions({...matchOptions, favorSchematics: v})}
                           data-testid="match-schematics"
+                          className="mt-0.5"
                         />
-                        <span className="text-sm">Schematics/Diagrams</span>
+                        <div>
+                          <span className="text-sm font-medium">Schematics/Diagrams</span>
+                          <p className="text-xs text-gray-500">Pictures of diagrams and schematics</p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Information Favoritism Options */}
+                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-sm font-medium">Information Favoritism</Label>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={selectAllFavorOptions} data-testid="select-all-favor">
+                          Select All
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={deselectAllFavorOptions} data-testid="deselect-all-favor">
+                          Deselect All
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <label className="flex items-start gap-2 cursor-pointer p-2 rounded border border-blue-200 hover:bg-white">
+                        <Checkbox
+                          checked={favorOptions.pearsonCertifications}
+                          onCheckedChange={(v) => setFavorOptions({...favorOptions, pearsonCertifications: v})}
+                          data-testid="favor-pearson"
+                          className="mt-0.5"
+                        />
+                        <div>
+                          <span className="text-sm font-medium">Pearson Certifications</span>
+                          <p className="text-xs text-gray-500">Pearson Learning Certifications</p>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-2 cursor-pointer p-2 rounded border border-blue-200 hover:bg-white">
+                        <Checkbox
+                          checked={favorOptions.diagramsSchematics}
+                          onCheckedChange={(v) => setFavorOptions({...favorOptions, diagramsSchematics: v})}
+                          data-testid="favor-diagrams"
+                          className="mt-0.5"
+                        />
+                        <div>
+                          <span className="text-sm font-medium">Diagrams/Schematics</span>
+                          <p className="text-xs text-gray-500">Pictures of diagrams/schematics</p>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-2 cursor-pointer p-2 rounded border border-blue-200 hover:bg-white">
+                        <Checkbox
+                          checked={favorOptions.academicSources}
+                          onCheckedChange={(v) => setFavorOptions({...favorOptions, academicSources: v})}
+                          data-testid="favor-academic"
+                          className="mt-0.5"
+                        />
+                        <div>
+                          <span className="text-sm font-medium">Academic Sources</span>
+                          <p className="text-xs text-gray-500">Academic/educational sources</p>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-2 cursor-pointer p-2 rounded border border-blue-200 hover:bg-white">
+                        <Checkbox
+                          checked={favorOptions.governmentSources}
+                          onCheckedChange={(v) => setFavorOptions({...favorOptions, governmentSources: v})}
+                          data-testid="favor-government"
+                          className="mt-0.5"
+                        />
+                        <div>
+                          <span className="text-sm font-medium">Government Sources</span>
+                          <p className="text-xs text-gray-500">Government sources</p>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-2 cursor-pointer p-2 rounded border border-blue-200 hover:bg-white">
+                        <Checkbox
+                          checked={favorOptions.recentContent}
+                          onCheckedChange={(v) => setFavorOptions({...favorOptions, recentContent: v})}
+                          data-testid="favor-recent"
+                          className="mt-0.5"
+                        />
+                        <div>
+                          <span className="text-sm font-medium">Recent Content</span>
+                          <p className="text-xs text-gray-500">Recent/current content</p>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-2 cursor-pointer p-2 rounded border border-blue-200 hover:bg-white">
+                        <Checkbox
+                          checked={favorOptions.primarySources}
+                          onCheckedChange={(v) => setFavorOptions({...favorOptions, primarySources: v})}
+                          data-testid="favor-primary"
+                          className="mt-0.5"
+                        />
+                        <div>
+                          <span className="text-sm font-medium">Primary Sources</span>
+                          <p className="text-xs text-gray-500">Primary sources</p>
+                        </div>
                       </label>
                     </div>
                   </div>
