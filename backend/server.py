@@ -1233,6 +1233,7 @@ async def create_group(
     }
     
     await db.groups.insert_one(group)
+    group.pop("_id", None)
     return group
 
 @groups_router.post("/{group_id}/join")
