@@ -2260,6 +2260,242 @@ const LeaderboardPage = () => {
   );
 };
 
+// ============= PERSONAL REPORTS PAGE =============
+const PersonalReportsPage = () => {
+  const [reports, setReports] = useState([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newReport, setNewReport] = useState({ title: '', content: '', location: { city: '', state: '', country: 'USA' } });
+
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const fetchReports = async () => {
+    try {
+      const response = await api.get("/reports");
+      setReports(response.data.reports || []);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+    }
+  };
+
+  const createReport = async () => {
+    if (!newReport.title.trim() || !newReport.content.trim()) return;
+    try {
+      await api.post("/reports", newReport);
+      setNewReport({ title: '', content: '', location: { city: '', state: '', country: 'USA' } });
+      setShowCreate(false);
+      fetchReports();
+    } catch (error) {
+      console.error("Error creating report:", error);
+    }
+  };
+
+  return (
+    <div className="p-6" data-testid="reports-page">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-4xl font-bold font-['Outfit']">Personal Reports 📝</h1>
+            <p className="text-gray-600">Share your research experiences and discoveries</p>
+          </div>
+          <Button onClick={() => setShowCreate(true)} data-testid="create-report-btn">
+            <Plus className="w-4 h-4 mr-2" /> Create Report
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          {reports.map((report) => (
+            <Card key={report.report_id} className="glass-card hover-lift" data-testid={`report-${report.report_id}`}>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-2">{report.title}</h3>
+                <p className="text-gray-600 mb-4">{report.content}</p>
+                {report.location && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Map className="w-4 h-4" />
+                    <span>{report.location.city}, {report.location.state}</span>
+                  </div>
+                )}
+                {report.images && report.images.length > 0 && (
+                  <div className="flex gap-2 mt-4">
+                    {report.images.map((img, i) => (
+                      <img key={i} src={img} alt={`Report ${i + 1}`} className="w-24 h-24 object-cover rounded-lg" />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+          {reports.length === 0 && (
+            <Card className="glass-card">
+              <CardContent className="py-12 text-center">
+                <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No reports yet. Create your first personal report!</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Personal Report</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div>
+                <Label>Title</Label>
+                <Input
+                  placeholder="My Research Discovery"
+                  value={newReport.title}
+                  onChange={(e) => setNewReport({ ...newReport, title: e.target.value })}
+                  data-testid="report-title"
+                />
+              </div>
+              <div>
+                <Label>Content</Label>
+                <Textarea
+                  placeholder="Share your research experience..."
+                  value={newReport.content}
+                  onChange={(e) => setNewReport({ ...newReport, content: e.target.value })}
+                  rows={6}
+                  data-testid="report-content"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>City</Label>
+                  <Input
+                    placeholder="Gettysburg"
+                    value={newReport.location.city}
+                    onChange={(e) => setNewReport({ ...newReport, location: { ...newReport.location, city: e.target.value } })}
+                  />
+                </div>
+                <div>
+                  <Label>State</Label>
+                  <Input
+                    placeholder="Pennsylvania"
+                    value={newReport.location.state}
+                    onChange={(e) => setNewReport({ ...newReport, location: { ...newReport.location, state: e.target.value } })}
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">You can add up to 3 images (feature coming soon)</p>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+                <Button onClick={createReport} data-testid="submit-report">Create Report</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+};
+
+// ============= LETTERS TO EVELYN BOOK PAGE =============
+const BookPage = () => {
+  const [bookInfo, setBookInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBookInfo();
+  }, []);
+
+  const fetchBookInfo = async () => {
+    try {
+      const response = await api.get("/promotions/book");
+      setBookInfo(response.data);
+    } catch (error) {
+      console.error("Error fetching book info:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6" data-testid="book-page">
+      <div className="max-w-4xl mx-auto">
+        <div className="glass-card p-8 mb-8">
+          <div className="text-center mb-8">
+            <Badge className="badge-primary mb-4">{bookInfo?.tagline}</Badge>
+            <h1 className="text-5xl font-bold font-['Outfit'] mb-4">{bookInfo?.title}</h1>
+            <p className="text-xl text-gray-600">by {bookInfo?.author}</p>
+          </div>
+          
+          <p className="text-lg text-center text-gray-700 mb-8">{bookInfo?.description}</p>
+
+          <div className="grid md:grid-cols-3 gap-4 mb-8">
+            <Card className="text-center p-4">
+              <p className="text-2xl font-bold text-[#007AFF]">${bookInfo?.prices?.ebook}</p>
+              <p className="text-sm text-gray-500">eBook</p>
+            </Card>
+            <Card className="text-center p-4 ring-2 ring-[#007AFF]">
+              <p className="text-2xl font-bold text-[#007AFF]">${bookInfo?.prices?.paperback}</p>
+              <p className="text-sm text-gray-500">Paperback</p>
+            </Card>
+            <Card className="text-center p-4">
+              <p className="text-2xl font-bold text-[#007AFF]">${bookInfo?.prices?.hardcover}</p>
+              <p className="text-sm text-gray-500">Hardcover</p>
+            </Card>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
+            <Button 
+              className="btn-primary px-8"
+              onClick={() => window.open(bookInfo?.purchase_links?.amazon_paperback, '_blank')}
+              data-testid="buy-amazon"
+            >
+              Buy on Amazon
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => window.open(bookInfo?.purchase_links?.paypal, '_blank')}
+              data-testid="buy-paypal"
+            >
+              Buy via PayPal
+            </Button>
+          </div>
+        </div>
+
+        <h2 className="text-2xl font-semibold mb-4">Features</h2>
+        <ul className="space-y-2 mb-8">
+          {(bookInfo?.features || []).map((feature, i) => (
+            <li key={i} className="flex items-center gap-2">
+              <Check className="w-5 h-5 text-[#34C759]" />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+
+        <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
+        <div className="grid md:grid-cols-2 gap-4">
+          {(bookInfo?.reviews || []).map((review, i) => (
+            <Card key={i} className="glass-card">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-1 mb-2">
+                  {[...Array(review.rating)].map((_, j) => (
+                    <Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-gray-700 italic mb-2">"{review.text}"</p>
+                <p className="text-sm text-gray-500">- {review.reviewer}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ============= APP ROUTER =============
 const AppRouter = () => {
   const location = useLocation();
@@ -2335,6 +2571,13 @@ const AppRouter = () => {
           </DashboardLayout>
         </ProtectedRoute>
       } />
+      <Route path="/reports" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <PersonalReportsPage />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
       <Route path="/easter-eggs" element={
         <ProtectedRoute>
           <DashboardLayout>
@@ -2353,6 +2596,13 @@ const AppRouter = () => {
         <ProtectedRoute>
           <DashboardLayout>
             <ThemesPage />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/book" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <BookPage />
           </DashboardLayout>
         </ProtectedRoute>
       } />
