@@ -1280,6 +1280,7 @@ async def create_group_post(
     }
     
     await db.posts.insert_one(post)
+    post.pop("_id", None)
     return post
 
 @groups_router.get("/{group_id}/posts")
