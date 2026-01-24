@@ -480,8 +480,9 @@ const UltimateSearchPage = () => {
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryProtocol, setNewCategoryProtocol] = useState("");
+  const [documentTypes, setDocumentTypes] = useState([]);
+  const [selectedDocTypes, setSelectedDocTypes] = useState([]);
   const [filters, setFilters] = useState({
-    documentType: "",
     year: "",
     rootDomain: "",
     country: "",
@@ -491,7 +492,17 @@ const UltimateSearchPage = () => {
   useEffect(() => {
     fetchCategories();
     fetchResults();
+    fetchDocumentTypes();
   }, []);
+
+  const fetchDocumentTypes = async () => {
+    try {
+      const response = await api.get("/document-types");
+      setDocumentTypes(response.data.types || []);
+    } catch (error) {
+      console.error("Error fetching document types:", error);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -509,7 +520,9 @@ const UltimateSearchPage = () => {
         params.append("category_ids", selectedCategories.join(","));
       }
       params.append("aggregation", aggregation);
-      if (filters.documentType) params.append("document_type", filters.documentType);
+      if (selectedDocTypes.length === 1) {
+        params.append("document_type", selectedDocTypes[0]);
+      }
       if (filters.year) params.append("year", filters.year);
       if (filters.rootDomain) params.append("root_domain", filters.rootDomain);
       if (filters.country) params.append("country", filters.country);
@@ -562,6 +575,22 @@ const UltimateSearchPage = () => {
         ? prev.filter(id => id !== categoryId)
         : [...prev, categoryId]
     );
+  };
+
+  const toggleDocType = (docTypeName) => {
+    setSelectedDocTypes(prev =>
+      prev.includes(docTypeName)
+        ? prev.filter(t => t !== docTypeName)
+        : [...prev, docTypeName]
+    );
+  };
+
+  const selectAllDocTypes = () => {
+    setSelectedDocTypes(documentTypes.map(dt => dt.name));
+  };
+
+  const deselectAllDocTypes = () => {
+    setSelectedDocTypes([]);
   };
 
   return (
