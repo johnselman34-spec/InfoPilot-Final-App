@@ -1,4 +1,4 @@
-# InfoPilot Explorer - PRD v8.2
+# InfoPilot Explorer - PRD v8.3
 
 ## Project Overview
 InfoPilot Explorer is a worldwide web information exchange social network that provides users a "3D view of the Internet". Users can create custom search protocols using InfoJet 2.0 Protocol Language to collate web search results into organized categories.
@@ -27,6 +27,27 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - Personal Reports with images/location
 - Book promotion (Letters to Evelyn)
 - Subscription with Pay What You Want
+
+## v8.3 Features - Implemented January 24, 2026
+
+### Progressive Web App (PWA) - Mobile App Experience 📱
+✅ **manifest.json** - Full PWA manifest with app name, icons, theme colors, and standalone display mode
+✅ **App Icons (8 sizes)** - 72, 96, 128, 144, 152, 192, 384, 512px icons for all platforms
+✅ **Service Worker** - Offline caching support with network-first strategy
+✅ **iOS Support** - Apple meta tags for apple-mobile-web-app-capable, status bar style, touch icons
+✅ **Android Support** - Full Google Play-ready PWA configuration
+✅ **Install Prompt** - Smart install banner appears after 5 seconds on compatible devices
+✅ **Add to Home Screen** - Users can install InfoPilot directly from Chrome/Safari
+
+### Code Refactoring (Phase 2)
+✅ **Frontend Page Components**:
+  - `MapViewPage.jsx` - Extracted map visualization component
+  - `StatisticsPage.jsx` - Extracted statistics dashboard with 16 chart types
+  - Updated `pages/index.js` with new exports
+✅ **Backend Routers**:
+  - `routers/search.py` - Search results CRUD, protocol parsing, filtering
+  - `routers/stats.py` - Statistics overview, map data, regional analysis
+  - Updated `routers/__init__.py` with new router exports
 
 ## v8.2 Features - Implemented January 24, 2026
 
