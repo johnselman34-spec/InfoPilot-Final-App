@@ -9,6 +9,7 @@ from .easter_eggs import router as easter_eggs_router
 from .pages import router as pages_router
 from .search import router as search_router
 from .stats import router as stats_router
+from .paypal import router as paypal_router
 
 __all__ = [
     'auth_router', 'require_auth',
@@ -20,5 +21,6 @@ __all__ = [
     'easter_eggs_router',
     'pages_router',
     'search_router',
-    'stats_router'
+    'stats_router',
+    'paypal_router'
 ]
