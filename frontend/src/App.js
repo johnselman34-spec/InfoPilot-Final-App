@@ -4127,6 +4127,459 @@ const PaymentSuccessPage = () => {
   );
 };
 
+// ============= HEATMAPS PAGE =============
+const HeatmapsPage = () => {
+  const [activityHeatmap, setActivityHeatmap] = useState(null);
+  const [locationHeatmap, setLocationHeatmap] = useState(null);
+  const [domainHeatmap, setDomainHeatmap] = useState(null);
+  const [period, setPeriod] = useState("month");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHeatmaps();
+  }, [period]);
+
+  const fetchHeatmaps = async () => {
+    setLoading(true);
+    try {
+      const [activity, location, domain] = await Promise.all([
+        api.get(`/heatmaps/activity?period=${period}`),
+        api.get("/heatmaps/location"),
+        api.get("/heatmaps/domain")
+      ]);
+      setActivityHeatmap(activity.data);
+      setLocationHeatmap(location.data);
+      setDomainHeatmap(domain.data);
+    } catch (error) {
+      console.error("Error fetching heatmaps:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getHeatColor = (value, max) => {
+    if (max === 0) return "bg-gray-100";
+    const intensity = value / max;
+    if (intensity > 0.8) return "bg-red-500";
+    if (intensity > 0.6) return "bg-orange-500";
+    if (intensity > 0.4) return "bg-yellow-500";
+    if (intensity > 0.2) return "bg-green-400";
+    if (intensity > 0) return "bg-green-200";
+    return "bg-gray-100";
+  };
+
+  return (
+    <div className="p-6" data-testid="heatmaps-page">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-4xl font-bold font-['Outfit']">Search Result Heatmaps</h1>
+            <p className="text-gray-600">Visualize your search patterns over time</p>
+          </div>
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="week">Week</SelectItem>
+              <SelectItem value="month">Month</SelectItem>
+              <SelectItem value="year">Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="spinner"></div>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* Activity Heatmap */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-[#007AFF]" />
+                  Activity Heatmap
+                </CardTitle>
+                <CardDescription>When you search the most (by day and hour)</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {activityHeatmap && (
+                  <div className="overflow-x-auto">
+                    <div className="min-w-[800px]">
+                      {/* Hours header */}
+                      <div className="flex mb-2">
+                        <div className="w-24"></div>
+                        {activityHeatmap.hours.map(hour => (
+                          <div key={hour} className="w-8 text-xs text-center text-gray-500">
+                            {hour}
+                          </div>
+                        ))}
+                      </div>
+                      {/* Days and cells */}
+                      {activityHeatmap.days.map((day, dayIndex) => (
+                        <div key={day} className="flex items-center mb-1">
+                          <div className="w-24 text-sm text-gray-600">{day}</div>
+                          {activityHeatmap.heatmap[dayIndex].map((value, hour) => (
+                            <div
+                              key={`${dayIndex}-${hour}`}
+                              className={`w-8 h-6 rounded ${getHeatColor(value, activityHeatmap.max_value)} transition-colors`}
+                              title={`${day} ${hour}:00 - ${value} searches`}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                      {/* Legend */}
+                      <div className="flex items-center gap-2 mt-4 text-xs text-gray-500">
+                        <span>Less</span>
+                        <div className="w-4 h-4 bg-gray-100 rounded" />
+                        <div className="w-4 h-4 bg-green-200 rounded" />
+                        <div className="w-4 h-4 bg-green-400 rounded" />
+                        <div className="w-4 h-4 bg-yellow-500 rounded" />
+                        <div className="w-4 h-4 bg-orange-500 rounded" />
+                        <div className="w-4 h-4 bg-red-500 rounded" />
+                        <span>More</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Location Heatmap */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Map className="w-5 h-5 text-[#34C759]" />
+                  Location Heatmap
+                </CardTitle>
+                <CardDescription>Geographic distribution of your search results</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {(locationHeatmap?.locations || []).slice(0, 16).map((loc, i) => (
+                    <div
+                      key={i}
+                      className="p-3 rounded-lg border transition-all"
+                      style={{
+                        backgroundColor: `rgba(0, 122, 255, ${loc.intensity})`,
+                        borderColor: loc.intensity > 0.5 ? '#007AFF' : '#e5e7eb'
+                      }}
+                    >
+                      <p className={`font-medium text-sm ${loc.intensity > 0.5 ? 'text-white' : 'text-gray-800'}`}>
+                        {loc.state || loc.country}
+                      </p>
+                      <p className={`text-xs ${loc.intensity > 0.5 ? 'text-white/80' : 'text-gray-500'}`}>
+                        {loc.count} results
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Domain Heatmap */}
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-[#FFD60A]" />
+                  Domain Heatmap
+                </CardTitle>
+                <CardDescription>Your most visited information sources</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {(domainHeatmap?.domains || []).slice(0, 20).map((d, i) => (
+                    <div
+                      key={i}
+                      className="p-2 rounded-lg text-center transition-all"
+                      style={{
+                        backgroundColor: `rgba(255, 214, 10, ${d.intensity})`,
+                        border: d.intensity > 0.5 ? '2px solid #FFD60A' : '1px solid #e5e7eb'
+                      }}
+                    >
+                      <p className="font-mono text-xs truncate" title={d.domain}>
+                        {d.domain}
+                      </p>
+                      <p className="text-xs text-gray-600">{d.count}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ============= COLLABORATIVE SESSIONS PAGE =============
+const CollaborativeSessionsPage = () => {
+  const { user } = useAuth();
+  const [sessions, setSessions] = useState([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const [showJoin, setShowJoin] = useState(false);
+  const [newSession, setNewSession] = useState({ name: "", description: "" });
+  const [inviteCode, setInviteCode] = useState("");
+  const [activeSession, setActiveSession] = useState(null);
+  const [chatMessage, setChatMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  const fetchSessions = async () => {
+    try {
+      const response = await api.get("/collab/sessions");
+      setSessions(response.data.sessions || []);
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createSession = async () => {
+    if (!newSession.name.trim()) return;
+    try {
+      const response = await api.post("/collab/sessions", newSession);
+      setSessions([response.data, ...sessions]);
+      setNewSession({ name: "", description: "" });
+      setShowCreate(false);
+      setActiveSession(response.data);
+    } catch (error) {
+      console.error("Error creating session:", error);
+    }
+  };
+
+  const joinSession = async () => {
+    if (!inviteCode.trim()) return;
+    try {
+      const response = await api.post("/collab/sessions/join", { invite_code: inviteCode });
+      setActiveSession(response.data);
+      setShowJoin(false);
+      setInviteCode("");
+      fetchSessions();
+    } catch (error) {
+      console.error("Error joining session:", error);
+      alert("Invalid invite code or session not found");
+    }
+  };
+
+  const openSession = async (sessionId) => {
+    try {
+      const response = await api.get(`/collab/sessions/${sessionId}`);
+      setActiveSession(response.data);
+    } catch (error) {
+      console.error("Error opening session:", error);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!chatMessage.trim() || !activeSession) return;
+    try {
+      await api.post(`/collab/sessions/${activeSession.session_id}/message`, {
+        content: chatMessage
+      });
+      setChatMessage("");
+      // Refresh session to get new messages
+      openSession(activeSession.session_id);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
+  const endSession = async () => {
+    if (!activeSession) return;
+    try {
+      await api.delete(`/collab/sessions/${activeSession.session_id}`);
+      setActiveSession(null);
+      fetchSessions();
+    } catch (error) {
+      console.error("Error ending session:", error);
+    }
+  };
+
+  return (
+    <div className="p-6" data-testid="collab-page">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-4xl font-bold font-['Outfit']">Collaborative Sessions</h1>
+            <p className="text-gray-600">Search together in real-time with other researchers</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowJoin(true)} data-testid="join-session-btn">
+              <UserPlus className="w-4 h-4 mr-2" /> Join Session
+            </Button>
+            <Button onClick={() => setShowCreate(true)} data-testid="create-session-btn">
+              <Plus className="w-4 h-4 mr-2" /> Create Session
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Sessions List */}
+          <div className="space-y-4">
+            <h2 className="font-semibold text-lg">Your Sessions</h2>
+            {sessions.map((session) => (
+              <Card
+                key={session.session_id}
+                className={`glass-card cursor-pointer hover-lift ${activeSession?.session_id === session.session_id ? 'border-[#007AFF]' : ''}`}
+                onClick={() => openSession(session.session_id)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">{session.name}</h3>
+                    <Badge variant={session.is_active ? "default" : "secondary"}>
+                      {session.is_active ? "Active" : "Ended"}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-500">{session.participants?.length || 0} participants</p>
+                  <p className="text-xs text-gray-400 mt-2">Host: {session.host_name}</p>
+                </CardContent>
+              </Card>
+            ))}
+            {sessions.length === 0 && !loading && (
+              <Card className="glass-card">
+                <CardContent className="py-8 text-center">
+                  <Share2 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No sessions yet</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Active Session */}
+          <div className="lg:col-span-2">
+            {activeSession ? (
+              <Card className="glass-card h-full">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>{activeSession.name}</CardTitle>
+                      <CardDescription>{activeSession.description}</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">
+                        Code: {activeSession.invite_code}
+                      </Badge>
+                      {activeSession.host_id === user?.user_id && activeSession.is_active && (
+                        <Button variant="destructive" size="sm" onClick={endSession}>
+                          End Session
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {/* Participants */}
+                  <div className="mb-4">
+                    <p className="text-sm font-medium mb-2">Participants</p>
+                    <div className="flex flex-wrap gap-2">
+                      {activeSession.participants?.map((p, i) => (
+                        <Badge key={i} variant={p.role === "host" ? "default" : "outline"}>
+                          {p.name} {p.role === "host" && "(Host)"}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Chat */}
+                  <div className="border rounded-lg p-4 h-64 overflow-y-auto mb-4 bg-gray-50">
+                    {activeSession.chat_messages?.map((msg, i) => (
+                      <div key={i} className="mb-2">
+                        <span className="font-medium text-sm">{msg.user_name}: </span>
+                        <span className="text-sm">{msg.content}</span>
+                      </div>
+                    ))}
+                    {(!activeSession.chat_messages || activeSession.chat_messages.length === 0) && (
+                      <p className="text-gray-400 text-sm text-center">No messages yet</p>
+                    )}
+                  </div>
+
+                  {activeSession.is_active && (
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Type a message..."
+                        value={chatMessage}
+                        onChange={(e) => setChatMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                      />
+                      <Button onClick={sendMessage}>
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="glass-card h-full flex items-center justify-center">
+                <CardContent className="py-12 text-center">
+                  <Share2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">Select a session or create a new one</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        {/* Create Dialog */}
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Collaborative Session</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div>
+                <Label>Session Name</Label>
+                <Input
+                  placeholder="e.g., Research Project Alpha"
+                  value={newSession.name}
+                  onChange={(e) => setNewSession({ ...newSession, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Description</Label>
+                <Textarea
+                  placeholder="What will you be researching?"
+                  value={newSession.description}
+                  onChange={(e) => setNewSession({ ...newSession, description: e.target.value })}
+                />
+              </div>
+              <Button className="w-full" onClick={createSession}>Create Session</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Join Dialog */}
+        <Dialog open={showJoin} onOpenChange={setShowJoin}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Join Session</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div>
+                <Label>Invite Code</Label>
+                <Input
+                  placeholder="Enter 8-character code"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                  maxLength={8}
+                  className="font-mono text-center text-lg tracking-wider"
+                />
+              </div>
+              <Button className="w-full" onClick={joinSession}>Join Session</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+};
+
 // ============= APP ROUTER =============
 const AppRouter = () => {
   const location = useLocation();
