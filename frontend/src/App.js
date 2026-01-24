@@ -610,19 +610,26 @@ const UltimateSearchPage = () => {
   };
 
   const createCategory = async () => {
-    if (!newCategoryName.trim() || !newCategoryProtocol.trim()) return;
+    if (!newCategoryName.trim() || !newCategoryProtocol.trim()) {
+      alert("Please enter both a category name and protocol");
+      return;
+    }
     try {
-      await api.post("/categories", {
+      const response = await api.post("/categories", {
         name: newCategoryName,
         protocol: newCategoryProtocol,
         is_public: true
       });
-      setNewCategoryName("");
-      setNewCategoryProtocol("");
-      setShowNewCategory(false);
-      fetchCategories();
+      if (response.data) {
+        // Successfully created - clear form and close modal
+        setNewCategoryName("");
+        setNewCategoryProtocol("");
+        setShowNewCategory(false);
+        await fetchCategories();
+      }
     } catch (error) {
       console.error("Error creating category:", error);
+      alert("Error creating category: " + (error.response?.data?.detail || error.message));
     }
   };
 
