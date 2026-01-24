@@ -598,16 +598,6 @@ class LocationExtractor:
                 })
         
         return locations
-            }
-            if zip_code[0] in zip_regions:
-                locations.append({
-                    "type": "zip_code",
-                    "zip": zip_code,
-                    "region": zip_regions[zip_code[0]],
-                    "country": "United States"
-                })
-        
-        return locations
 
 # ============= AUTHENTICATION =============
 
