@@ -306,7 +306,7 @@ class DocumentClassifier:
 
 # Location Extractor
 class LocationExtractor:
-    """Extract location information from text"""
+    """Extract location information from text with enhanced geolocation support"""
     
     US_STATES = [
         "Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado",
@@ -321,16 +321,58 @@ class LocationExtractor:
         "West Virginia", "Wisconsin", "Wyoming"
     ]
     
+    # State abbreviations
+    STATE_ABBREV = {
+        "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas",
+        "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware",
+        "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho",
+        "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas",
+        "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
+        "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi",
+        "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada",
+        "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York",
+        "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma",
+        "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
+        "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah",
+        "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia",
+        "WI": "Wisconsin", "WY": "Wyoming", "DC": "District of Columbia"
+    }
+    
     COUNTRIES = [
         "United States", "USA", "UK", "United Kingdom", "Canada", "Australia",
         "Germany", "France", "Italy", "Spain", "Japan", "China", "India",
         "Brazil", "Mexico", "Russia", "South Korea", "Netherlands", "Sweden",
-        "Switzerland", "Nicaragua", "Costa Rica", "Panama"
+        "Switzerland", "Nicaragua", "Costa Rica", "Panama", "Ireland", "Scotland",
+        "Norway", "Denmark", "Finland", "Belgium", "Austria", "Portugal",
+        "Greece", "Poland", "Czech Republic", "Hungary", "Romania", "Ukraine",
+        "Turkey", "Israel", "Egypt", "South Africa", "Argentina", "Chile",
+        "Colombia", "Peru", "Venezuela", "Cuba", "Puerto Rico", "Philippines",
+        "Thailand", "Vietnam", "Indonesia", "Malaysia", "Singapore", "New Zealand"
     ]
+    
+    # Major US cities
+    MAJOR_CITIES = [
+        "New York City", "Los Angeles", "Chicago", "Houston", "Phoenix",
+        "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
+        "Austin", "Jacksonville", "Fort Worth", "Columbus", "Charlotte",
+        "San Francisco", "Indianapolis", "Seattle", "Denver", "Washington",
+        "Boston", "El Paso", "Nashville", "Detroit", "Oklahoma City",
+        "Portland", "Las Vegas", "Memphis", "Louisville", "Baltimore",
+        "Milwaukee", "Albuquerque", "Tucson", "Fresno", "Mesa",
+        "Sacramento", "Atlanta", "Kansas City", "Colorado Springs", "Miami",
+        "Raleigh", "Omaha", "Long Beach", "Virginia Beach", "Oakland",
+        "Minneapolis", "Tulsa", "Tampa", "Arlington", "New Orleans",
+        "Brunswick", "Bath", "Portland", "Bangor", "Augusta"  # Maine cities
+    ]
+    
+    # Regional descriptors
+    REGIONAL_PREFIXES = ["Northern", "Southern", "Eastern", "Western", "Central",
+                         "North", "South", "East", "West", "Upper", "Lower",
+                         "Greater", "Metro", "Downtown", "Uptown", "Suburban"]
     
     @staticmethod
     def extract_locations(text: str) -> List[Dict]:
-        """Extract all locations found in text"""
+        """Extract all locations found in text with enhanced detection"""
         locations = []
         text_lower = text.lower()
         
@@ -339,36 +381,97 @@ class LocationExtractor:
             if state.lower() in text_lower:
                 locations.append({
                     "type": "state",
-                    "name": state,
+                    "state": state,
                     "country": "United States"
                 })
+        
+        # Check for state abbreviations (e.g., "CA", "NY", "VA")
+        for abbrev, state in LocationExtractor.STATE_ABBREV.items():
+            # Look for patterns like ", CA" or "CA," or "CA 90210"
+            patterns = [
+                rf',\s*{abbrev}\b',
+                rf'\b{abbrev},',
+                rf'\b{abbrev}\s+\d{{5}}',  # ZIP code pattern
+                rf'\({abbrev}\)'
+            ]
+            for pattern in patterns:
+                if re.search(pattern, text, re.IGNORECASE):
+                    if not any(loc.get("state") == state for loc in locations):
+                        locations.append({
+                            "type": "state",
+                            "state": state,
+                            "country": "United States"
+                        })
+                    break
         
         # Check for countries
         for country in LocationExtractor.COUNTRIES:
             if country.lower() in text_lower:
                 locations.append({
                     "type": "country",
-                    "name": country
+                    "country": country
                 })
         
-        # Check for partial locations like "Northern Virginia"
-        partial_patterns = [
-            (r'northern\s+(\w+)', 'Northern'),
-            (r'southern\s+(\w+)', 'Southern'),
-            (r'eastern\s+(\w+)', 'Eastern'),
-            (r'western\s+(\w+)', 'Western')
-        ]
+        # Check for major cities
+        for city in LocationExtractor.MAJOR_CITIES:
+            if city.lower() in text_lower:
+                locations.append({
+                    "type": "city",
+                    "city": city,
+                    "country": "United States"
+                })
         
-        for pattern, prefix in partial_patterns:
-            matches = re.findall(pattern, text_lower)
+        # Check for partial locations like "Northern Virginia", "Greater Boston"
+        for prefix in LocationExtractor.REGIONAL_PREFIXES:
+            pattern = rf'\b{prefix}\s+(\w+(?:\s+\w+)?)'
+            matches = re.findall(pattern, text, re.IGNORECASE)
             for match in matches:
-                if match.title() in LocationExtractor.US_STATES:
+                match_title = match.title()
+                # Check if it's a state
+                if match_title in LocationExtractor.US_STATES:
                     locations.append({
                         "type": "region",
-                        "name": f"{prefix} {match.title()}",
-                        "state": match.title(),
+                        "region": f"{prefix} {match_title}",
+                        "state": match_title,
                         "country": "United States"
                     })
+                # Check if it's a city
+                elif match_title in LocationExtractor.MAJOR_CITIES:
+                    locations.append({
+                        "type": "metro_area",
+                        "region": f"{prefix} {match_title}",
+                        "city": match_title,
+                        "country": "United States"
+                    })
+        
+        # Extract street addresses (pattern: number + street name + type)
+        street_types = r'(?:Street|St|Avenue|Ave|Boulevard|Blvd|Road|Rd|Drive|Dr|Lane|Ln|Way|Court|Ct|Place|Pl|Circle|Cir)'
+        address_pattern = rf'\b(\d+)\s+(\w+(?:\s+\w+)?)\s+({street_types})\b'
+        address_matches = re.findall(address_pattern, text, re.IGNORECASE)
+        for number, street_name, street_type in address_matches:
+            locations.append({
+                "type": "street_address",
+                "address": f"{number} {street_name.title()} {street_type.title()}",
+                "country": "United States"
+            })
+        
+        # Extract ZIP codes
+        zip_pattern = r'\b(\d{5})(?:-\d{4})?\b'
+        zip_matches = re.findall(zip_pattern, text)
+        for zip_code in zip_matches:
+            # Basic ZIP code to state mapping (first digit)
+            zip_regions = {
+                '0': 'Northeast', '1': 'Northeast', '2': 'Mid-Atlantic',
+                '3': 'Southeast', '4': 'Midwest', '5': 'Midwest',
+                '6': 'Central', '7': 'South', '8': 'West', '9': 'West'
+            }
+            if zip_code[0] in zip_regions:
+                locations.append({
+                    "type": "zip_code",
+                    "zip": zip_code,
+                    "region": zip_regions[zip_code[0]],
+                    "country": "United States"
+                })
         
         return locations
 
