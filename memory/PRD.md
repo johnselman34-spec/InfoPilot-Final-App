@@ -1,4 +1,4 @@
-# InfoPilot Explorer - PRD v4.0
+# InfoPilot Explorer - PRD v5.0
 
 ## Project Overview
 InfoPilot Explorer is a worldwide web information exchange social network that provides users a "3D view of the Internet". Users can create custom search protocols using InfoJet 2.0 Protocol Language to collate web search results into organized categories.
@@ -28,9 +28,21 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - Book promotion (Letters to Evelyn)
 - Subscription with Pay What You Want
 
-## v4.0 Features - Implemented January 24, 2026
+## v5.0 Features - Implemented January 24, 2026
 
-### P0 Features (Latest Implementation)
+### Latest Features (from InforPilot Explorer 2 More Information 1.docx)
+✅ **Search Match Options** - Exact Match, Strict Match, AI Match, Intelligent Match checkboxes
+✅ **Search Match Select All/Deselect All** - Buttons for all match options
+✅ **Show Templates Button** - Displays protocol templates panel in search
+✅ **Protocol Debugger** - Shows query, categories, match options, results count
+✅ **Marketplace Headlines** - Headlines section with Refresh button (5 headlines)
+✅ **Recommended Protocols** - Personalized recommendations with Refresh button
+✅ **Groups Search by Name** - Search field for group names
+✅ **Groups Search by Content** - Search field for content within groups
+✅ **InfoPilot Messaging** - "Better than Facebook/LinkedIn" messaging on Groups page
+✅ **Schematics/Diagrams Preference** - Checkbox to favor visual content
+
+### P0 Features (Previous Implementation)
 ✅ **Select All / Deselect All** - Document type filter buttons in Ultimate Search
 ✅ **Stripe Payment Integration** - Full checkout flow with emergentintegrations library
 ✅ **App Download Links** - Android, iOS, Desktop, Browser Extension in footer & settings
@@ -64,18 +76,24 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 ✅ Year extraction from content
 ✅ Root domain tracking
 ✅ Clean category function
-✅ Select All/Deselect All filters (NEW)
+✅ Select All/Deselect All for document types
+✅ Search Match Options (Exact, Strict, AI, Intelligent)
+✅ Schematics/Diagrams preference
+✅ Show Templates panel
+✅ Protocol Debugger panel
 
 ### Protocol Marketplace
 ✅ Public protocol listings
-✅ Purchase protocols (PayPal)
+✅ Purchase protocols (PayPal & Stripe)
 ✅ Copy free protocols
 ✅ Sales tracking and analytics
-✅ Protocol recommendations
+✅ Protocol recommendations (personalized)
 ✅ Copy to clipboard
 ✅ Views/copies/conversion tracking
 ✅ Top sellers leaderboard
 ✅ Rising stars leaderboard
+✅ Headlines with Refresh
+✅ Recommended Protocols with Refresh
 
 ### Social Features
 ✅ Google OAuth authentication
