@@ -3068,7 +3068,7 @@ const ProtocolTemplatesPage = () => {
     }
   };
 
-  const useTemplate = async (templateId) => {
+  const applyTemplate = async (templateId) => {
     try {
       await api.post(`/templates/${templateId}/use`);
       alert("Category created from template!");
