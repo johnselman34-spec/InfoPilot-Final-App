@@ -1097,6 +1097,28 @@ const UltimateSearchPage = () => {
                     </div>
                   </div>
 
+                  {/* Deep Content Scan Option */}
+                  <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          checked={deepContentScan}
+                          onCheckedChange={(v) => setDeepContentScan(v)}
+                          data-testid="deep-content-scan"
+                          className="mt-0.5"
+                        />
+                        <div>
+                          <span className="text-sm font-medium text-green-800">Deep Content Scan</span>
+                          <p className="text-xs text-green-600">
+                            Fetches full page content for enhanced location detection (city/state, city/country, street addresses). 
+                            Slower but finds more locations mentioned in article body text.
+                          </p>
+                        </div>
+                      </div>
+                      <Badge className="bg-green-100 text-green-800">Enhanced</Badge>
+                    </div>
+                  </div>
+
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-2 mt-4">
                     <Button 
