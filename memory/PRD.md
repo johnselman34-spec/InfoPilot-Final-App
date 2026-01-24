@@ -1,4 +1,4 @@
-# InfoPilot Explorer - PRD v8.3
+# InfoPilot Explorer - PRD v8.4
 
 ## Project Overview
 InfoPilot Explorer is a worldwide web information exchange social network that provides users a "3D view of the Internet". Users can create custom search protocols using InfoJet 2.0 Protocol Language to collate web search results into organized categories.
@@ -27,6 +27,34 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - Personal Reports with images/location
 - Book promotion (Letters to Evelyn)
 - Subscription with Pay What You Want
+
+## v8.4 Features - Implemented January 24, 2026
+
+### PayPal Integration 💳
+✅ **PayPal Router** (`/api/paypal/`) - Full payment flow support
+✅ **Create Order** - `/api/paypal/create-order` - Creates payment orders for subscriptions, protocols, books
+✅ **Capture Payment** - `/api/paypal/capture-order/{order_id}` - Completes payments after approval
+✅ **Order Status** - `/api/paypal/order-status/{order_id}` - Track payment status
+✅ **Webhook Handler** - `/api/paypal/webhook` - Handles PayPal events
+✅ **Manual Payment Fallback** - When API keys not configured, provides PayPal.me link
+✅ **Order Fulfillment** - Automatically activates subscriptions/grants protocol access on payment
+✅ **Frontend Integration** - PayPal button in Settings page uses new API
+
+### Extended Code Refactoring (Phase 3)
+✅ **Backend Routers Created**:
+  - `routers/paypal.py` - PayPal payment integration (imported and active)
+  - `routers/users.py` - User profiles, settings, followers, leaderboard
+  - `routers/search.py` - Search results, protocol parsing, filtering
+  - `routers/stats.py` - Statistics, map data, regional analysis
+✅ **Frontend Page Components Created**:
+  - `pages/EasterEggsPage.jsx` - Full Easter Eggs with T-Rex animation
+  - `pages/MapViewPage.jsx` - Map visualization component
+  - `pages/StatisticsPage.jsx` - Statistics dashboard
+
+### Location Detection Verification
+✅ **Virgin Bay, Nicaragua** - Confirmed in INTERNATIONAL_CITIES list
+✅ **City/Country Pattern** - Supports "City, Country", "City in Country", "City (Country)" formats
+✅ **Deep Content Scan** - Available via checkbox to fetch full article text
 
 ## v8.3 Features - Implemented January 24, 2026
 
