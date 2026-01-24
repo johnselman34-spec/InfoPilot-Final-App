@@ -3252,6 +3252,21 @@ const AppRouter = () => {
           </DashboardLayout>
         </ProtectedRoute>
       } />
+      {/* New Routes for P0 Features */}
+      <Route path="/templates" element={
+        <ProtectedRoute>
+          <DashboardLayout>
+            <ProtocolTemplatesPage />
+          </DashboardLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/privacy-policy" element={<LegalPage docType="privacy-policy" />} />
+      <Route path="/terms-of-service" element={<LegalPage docType="terms-of-service" />} />
+      <Route path="/payment-success" element={
+        <ProtectedRoute>
+          <PaymentSuccessPage />
+        </ProtectedRoute>
+      } />
     </Routes>
   );
 };
