@@ -3400,8 +3400,9 @@ async def create_protocol_template(
     """Create a protocol template"""
     data = await request.json()
     
+    template_id = f"tmpl_{uuid.uuid4().hex[:12]}"
     template = {
-        "template_id": f"tmpl_{uuid.uuid4().hex[:12]}",
+        "template_id": template_id,
         "user_id": user.user_id,
         "name": data.get("name"),
         "description": data.get("description", ""),
@@ -3413,9 +3414,19 @@ async def create_protocol_template(
     }
     
     await db.protocol_templates.insert_one(template)
-    template.pop("_id", None)
     
-    return template
+    # Return clean response without MongoDB _id
+    return {
+        "template_id": template_id,
+        "user_id": user.user_id,
+        "name": data.get("name"),
+        "description": data.get("description", ""),
+        "protocol_string": data.get("protocol_string"),
+        "category": data.get("category", "General"),
+        "is_public": data.get("is_public", False),
+        "usage_count": 0,
+        "created_at": template["created_at"]
+    }
 
 @templates_router.get("/{template_id}")
 async def get_protocol_template(
