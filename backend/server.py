@@ -53,6 +53,7 @@ reports_router = APIRouter(prefix="/reports", tags=["Personal Reports"])
 quotes_router = APIRouter(prefix="/quotes", tags=["Quote Gallery"])
 themes_router = APIRouter(prefix="/themes", tags=["Themes"])
 analytics_router = APIRouter(prefix="/protocol-analytics", tags=["Protocol Analytics"])
+promotions_router = APIRouter(prefix="/promotions", tags=["Promotions"])
 
 # Configure logging
 logging.basicConfig(
