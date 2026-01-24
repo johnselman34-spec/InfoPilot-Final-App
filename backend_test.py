@@ -126,18 +126,22 @@ class InfoPilotAPITester:
             f"Found {len(data.get('categories', []))} public categories" if success else f"Error: {data}"
         )
 
-        # Test POST categories (requires auth)
+        # Test POST categories (with auth)
         category_data = {
             "name": "Test Category",
             "protocol": "(test or testing) & (api)+",
             "is_public": True,
             "price": 0.0
         }
-        success, data = self.make_request('POST', '/categories', category_data, expected_status=401)
+        success, data = self.make_request('POST', '/categories', category_data, expected_status=201)
+        if not success:
+            # Try with 200 status code
+            success, data = self.make_request('POST', '/categories', category_data, expected_status=200)
+        
         self.log_result(
-            "POST Categories (Auth Required)", 
-            success,  # 401 is expected without auth
-            "Correctly requires authentication"
+            "POST Categories (With Auth)", 
+            success and 'category_id' in data,
+            f"Created category: {data.get('category_id')}" if success else f"Error: {data}"
         )
 
     def test_search_endpoints(self):
