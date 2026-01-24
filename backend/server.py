@@ -931,6 +931,7 @@ async def add_comment(
     }
     
     await db.comments.insert_one(comment)
+    comment.pop("_id", None)
     
     # Update comment count
     await db.search_results.update_one(
