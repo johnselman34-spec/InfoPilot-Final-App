@@ -389,6 +389,7 @@ const DashboardLayout = ({ children }) => {
     { path: "/stats", icon: BarChart3, label: "Statistics" },
     { path: "/global", icon: Globe, label: "Global Research" },
     { path: "/marketplace", icon: ShoppingBag, label: "Marketplace" },
+    { path: "/templates", icon: Layout, label: "Protocol Templates" },
     { path: "/leaderboard", icon: Award, label: "Leaderboard" },
     { path: "/friends", icon: Users, label: "Friends" },
     { path: "/groups", icon: Users, label: "Groups" },
