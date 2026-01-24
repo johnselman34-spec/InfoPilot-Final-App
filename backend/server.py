@@ -648,7 +648,7 @@ async def search_and_collate(
     
     # Search using DuckDuckGo
     try:
-        from duckduckgo_search import DDGS
+        from ddgs import DDGS
         ddgs = DDGS(timeout=20)
         search_results = list(ddgs.text(query, max_results=max_results))
     except Exception as e:
