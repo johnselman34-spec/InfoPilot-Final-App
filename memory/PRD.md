@@ -1,4 +1,4 @@
-# InfoPilot Explorer - PRD v6.0
+# InfoPilot Explorer - PRD v7.0
 
 ## Project Overview
 InfoPilot Explorer is a worldwide web information exchange social network that provides users a "3D view of the Internet". Users can create custom search protocols using InfoJet 2.0 Protocol Language to collate web search results into organized categories.
@@ -16,7 +16,7 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - Ultimate Search Page with map visualization
 - Document classification system
 - Global Research Database
-- Statistics with 14+ analysis aspects
+- Statistics with 16 analysis aspects
 - Social networking features
 - Protocol Marketplace
 - Easter Eggs with Laugh-O-Meter
@@ -28,33 +28,46 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - Book promotion (Letters to Evelyn)
 - Subscription with Pay What You Want
 
-## v6.0 Features - Implemented January 24, 2026
+## v7.0 Features - Implemented January 24, 2026
+
+### Search Result Heatmaps
+✅ **Activity Heatmap** - 7x24 grid showing search patterns by day and hour
+✅ **Location Heatmap** - Geographic distribution with intensity coloring
+✅ **Domain Heatmap** - Most visited information sources with intensity
+✅ **Period Selector** - Week, Month, Year time ranges
+✅ **Color Legend** - Visual intensity scale (Less to More)
+
+### Collaborative Search Sessions
+✅ **Create Session** - Start collaborative research with name/description
+✅ **Invite Codes** - 8-character uppercase codes for joining
+✅ **Join Session** - Enter invite code to join others' sessions
+✅ **Real-time Chat** - Message other participants during research
+✅ **Session Management** - View active sessions, participants, host info
+✅ **End Session** - Host can terminate sessions
+
+### Protocol Versioning
+✅ **Version History** - Track all versions of a protocol
+✅ **Create Version** - Save new versions with changelog
+✅ **Revert Version** - Roll back to any previous version
+✅ **Export Protocol** - Download protocol with all version history
+✅ **Import Protocol** - Upload previously exported protocols
+
+### App Branding
+✅ **Icon Specifications** - F/A-18C Hornet (primary) + S-3 Viking (secondary)
+✅ **App Store Listings** - iOS (InfoJet) and Android (InfoPilot Explorer)
+✅ **Brand Guidelines** - Colors, symbols, slogans
+✅ **Legal Notices** - Copyright, trademarks, age requirement
 
 ### Enhanced Statistics (16 Analysis Aspects)
 ✅ **Statistics Page with 5 Tabs** - Overview, Location, Temporal, Sources, Advanced
-✅ **Aspect 1: Document Types** - Pie chart distribution
-✅ **Aspect 2: Source Types** - Webpage, News, Academic, Government, Wiki, Blog, Forum, Video, PDF
-✅ **Aspect 3: Results by Category** - Protocol categories bar chart
-✅ **Aspect 4: Reactions Distribution** - User engagement analysis
-✅ **Aspect 5: Results by Country** - Geographic distribution by nation
-✅ **Aspect 6: Results by State** - US states and provinces
-✅ **Aspect 7: Results by City** - 50+ major cities
-✅ **Aspect 8: US Regions** - Northeast, Southeast, Midwest, Southwest, West
-✅ **Aspect 9: Results by Year** - Publication/reference year line chart
-✅ **Aspect 10: Age of Subjects** - Time brackets (0-5, 5-10, 10-20, 20-50, 50-100, 100-200, 200-500, 500+ years)
-✅ **Aspect 11: Activity by Day of Week** - When you collate results
-✅ **Aspect 12: Activity by Month** - Monthly collation patterns
-✅ **Aspect 13: Top Domains** - Most frequent source websites
-✅ **Aspect 14: Top Level Domains** - .com, .org, .edu, .gov distribution
-✅ **Aspect 15: Content Length** - Snippet length distribution
-✅ **Aspect 16: Match Quality** - Protocol match scoring
+✅ **16 Charts** - Document Types, Source Types, Categories, Reactions, Countries, States, Cities, US Regions, Years, Age of Subjects, Day of Week, Month, Domains, TLDs, Content Length, Match Quality
 
 ### Enhanced Geolocation
 ✅ **State Abbreviations** - CA, NY, VA, TX, FL, etc.
 ✅ **Major Cities** - 50+ US cities including Brunswick, Bath, Portland (Maine)
-✅ **Regional Prefixes** - Northern Virginia, Greater Boston, Metro Atlanta, etc.
+✅ **Regional Prefixes** - Northern Virginia, Greater Boston, Metro Atlanta
 ✅ **Street Addresses** - Pattern detection for addresses
-✅ **ZIP Codes** - Detection and regional mapping
+✅ **ZIP Codes** - Detection with regional mapping
 
 ### Previous v5.0 Features
 ✅ **Search Match Options** - Exact Match, Strict Match, AI Match, Intelligent Match checkboxes
