@@ -7,6 +7,8 @@ from .chat import router as chat_router
 from .marketplace import router as marketplace_router
 from .easter_eggs import router as easter_eggs_router
 from .pages import router as pages_router
+from .search import router as search_router
+from .stats import router as stats_router
 
 __all__ = [
     'auth_router', 'require_auth',
@@ -16,5 +18,7 @@ __all__ = [
     'chat_router',
     'marketplace_router',
     'easter_eggs_router',
-    'pages_router'
+    'pages_router',
+    'search_router',
+    'stats_router'
 ]
