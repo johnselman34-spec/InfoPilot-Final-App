@@ -920,12 +920,36 @@ async def search_and_collate(
     
     # Process and collate results
     collated_results = []
+    fetch_full_content = data.get("fetch_full_content", False)
     
     for result in search_results:
         url = result.get("href", "")
         title = result.get("title", "")
         snippet = result.get("body", "")
-        combined_text = f"{title} {snippet}"
+        full_content = ""
+        
+        # Optionally fetch full page content for better location extraction
+        if fetch_full_content:
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    resp = await client.get(url, follow_redirects=True)
+                    if resp.status_code == 200:
+                        # Extract text from HTML
+                        html_content = resp.text
+                        # Remove script and style tags
+                        import re as re_mod
+                        html_content = re_mod.sub(r'<script[^>]*>.*?</script>', '', html_content, flags=re_mod.DOTALL | re_mod.IGNORECASE)
+                        html_content = re_mod.sub(r'<style[^>]*>.*?</style>', '', html_content, flags=re_mod.DOTALL | re_mod.IGNORECASE)
+                        # Remove HTML tags
+                        html_content = re_mod.sub(r'<[^>]+>', ' ', html_content)
+                        # Clean up whitespace
+                        full_content = ' '.join(html_content.split())[:10000]  # Limit to 10K chars
+            except Exception as e:
+                logger.debug(f"Could not fetch full content for {url}: {e}")
+        
+        # Use full content if available, otherwise use title + snippet
+        combined_text = f"{title} {snippet} {full_content}" if full_content else f"{title} {snippet}"
         
         # Extract domain
         domain_match = re.search(r'https?://([^/]+)', url)
@@ -941,7 +965,7 @@ async def search_and_collate(
             # Classify document type
             doc_type = await DocumentClassifier.classify(snippet, title, url)
             
-            # Extract locations
+            # Extract locations - now includes full content if fetched
             locations = LocationExtractor.extract_locations(combined_text)
             
             # Extract year
@@ -954,6 +978,7 @@ async def search_and_collate(
                 "url": url,
                 "title": title,
                 "snippet": snippet,
+                "content_preview": full_content[:500] if full_content else None,
                 "document_type": doc_type.value,
                 "category_ids": matching_cats,
                 "locations": locations,
