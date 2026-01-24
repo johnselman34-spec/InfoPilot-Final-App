@@ -2733,6 +2733,401 @@ const BookPage = () => {
   );
 };
 
+// ============= LEGAL PAGE (Privacy Policy / Terms of Service) =============
+const LegalPage = ({ docType }) => {
+  const [document, setDocument] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDocument();
+  }, [docType]);
+
+  const fetchDocument = async () => {
+    try {
+      const response = await api.get(`/legal/${docType}`);
+      setDocument(response.data);
+    } catch (error) {
+      console.error("Error fetching legal document:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#FFFFF0] py-12 px-6" data-testid={`legal-${docType}`}>
+      <div className="max-w-3xl mx-auto">
+        <Link to="/" className="flex items-center gap-2 text-[#007AFF] mb-8 hover:underline">
+          <Globe className="w-5 h-5" />
+          Back to InfoPilot Explorer
+        </Link>
+        
+        <Card className="glass-card">
+          <CardContent className="p-8">
+            <div className="flex items-center gap-3 mb-6">
+              {docType === 'privacy-policy' ? (
+                <Shield className="w-8 h-8 text-[#007AFF]" />
+              ) : (
+                <Scale className="w-8 h-8 text-[#007AFF]" />
+              )}
+              <div>
+                <h1 className="text-3xl font-bold font-['Outfit']">{document?.title}</h1>
+                <p className="text-sm text-gray-500">Last Updated: {document?.last_updated}</p>
+              </div>
+            </div>
+            
+            <div className="prose prose-slate max-w-none">
+              {/* Render markdown-like content */}
+              {document?.content?.split('\n').map((line, i) => {
+                if (line.startsWith('# ')) {
+                  return <h1 key={i} className="text-2xl font-bold mt-8 mb-4">{line.substring(2)}</h1>;
+                } else if (line.startsWith('## ')) {
+                  return <h2 key={i} className="text-xl font-semibold mt-6 mb-3">{line.substring(3)}</h2>;
+                } else if (line.startsWith('### ')) {
+                  return <h3 key={i} className="text-lg font-medium mt-4 mb-2">{line.substring(4)}</h3>;
+                } else if (line.startsWith('- ')) {
+                  return <li key={i} className="ml-4">{line.substring(2)}</li>;
+                } else if (line.startsWith('**') && line.endsWith('**')) {
+                  return <p key={i} className="font-bold">{line.slice(2, -2)}</p>;
+                } else if (line.startsWith('*') && line.endsWith('*')) {
+                  return <p key={i} className="italic text-gray-600">{line.slice(1, -1)}</p>;
+                } else if (line.startsWith('---')) {
+                  return <hr key={i} className="my-6 border-gray-200" />;
+                } else if (line.trim() === '') {
+                  return <br key={i} />;
+                } else {
+                  return <p key={i} className="my-2">{line}</p>;
+                }
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+// ============= PROTOCOL TEMPLATES PAGE =============
+const ProtocolTemplatesPage = () => {
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newTemplate, setNewTemplate] = useState({
+    name: '',
+    description: '',
+    protocol_string: '',
+    category: 'General',
+    is_public: false
+  });
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await api.get("/templates");
+      setTemplates(response.data.templates || []);
+    } catch (error) {
+      console.error("Error fetching templates:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const createTemplate = async () => {
+    if (!newTemplate.name.trim() || !newTemplate.protocol_string.trim()) return;
+    try {
+      await api.post("/templates", newTemplate);
+      setNewTemplate({ name: '', description: '', protocol_string: '', category: 'General', is_public: false });
+      setShowCreate(false);
+      fetchTemplates();
+    } catch (error) {
+      console.error("Error creating template:", error);
+    }
+  };
+
+  const useTemplate = async (templateId) => {
+    try {
+      await api.post(`/templates/${templateId}/use`);
+      alert("Category created from template!");
+    } catch (error) {
+      console.error("Error using template:", error);
+    }
+  };
+
+  const deleteTemplate = async (templateId) => {
+    if (!window.confirm("Delete this template?")) return;
+    try {
+      await api.delete(`/templates/${templateId}`);
+      fetchTemplates();
+    } catch (error) {
+      console.error("Error deleting template:", error);
+    }
+  };
+
+  return (
+    <div className="p-6" data-testid="templates-page">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-4xl font-bold font-['Outfit']">Protocol Templates</h1>
+            <p className="text-gray-600">Create and use predefined protocol templates</p>
+          </div>
+          <Button onClick={() => setShowCreate(true)} data-testid="create-template-btn">
+            <Plus className="w-4 h-4 mr-2" /> Create Template
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="spinner mx-auto"></div>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {templates.map((template) => (
+              <Card key={template.template_id} className="glass-card hover-lift" data-testid={`template-${template.template_id}`}>
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="text-lg font-semibold">{template.name}</h3>
+                      <p className="text-sm text-gray-500">{template.creator?.name || 'You'}</p>
+                    </div>
+                    <Badge variant={template.is_public ? "default" : "secondary"}>
+                      {template.is_public ? "Public" : "Private"}
+                    </Badge>
+                  </div>
+                  
+                  <p className="text-sm text-gray-600 mb-3">{template.description}</p>
+                  
+                  <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                    <code className="text-xs font-mono text-gray-700 break-all">
+                      {template.protocol_string}
+                    </code>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline">{template.category}</Badge>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => useTemplate(template.template_id)} data-testid={`use-template-${template.template_id}`}>
+                        <Play className="w-4 h-4 mr-1" /> Use
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => deleteTemplate(template.template_id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <p className="text-xs text-gray-400 mt-3">Used {template.usage_count || 0} times</p>
+                </CardContent>
+              </Card>
+            ))}
+
+            {templates.length === 0 && (
+              <Card className="glass-card col-span-full">
+                <CardContent className="py-12 text-center">
+                  <Layout className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-gray-500">No templates yet. Create your first protocol template!</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Create Template Dialog */}
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Protocol Template</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div>
+                <Label>Template Name</Label>
+                <Input
+                  placeholder="e.g., Academic Research"
+                  value={newTemplate.name}
+                  onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
+                  data-testid="template-name"
+                />
+              </div>
+              <div>
+                <Label>Description</Label>
+                <Input
+                  placeholder="What this template is for..."
+                  value={newTemplate.description}
+                  onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Protocol String (InfoJet 2.0)</Label>
+                <Textarea
+                  placeholder="(term1 or term2) & (term3)+ & (exclude)^"
+                  value={newTemplate.protocol_string}
+                  onChange={(e) => setNewTemplate({ ...newTemplate, protocol_string: e.target.value })}
+                  className="font-mono"
+                  rows={4}
+                  data-testid="template-protocol"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Category</Label>
+                  <Select value={newTemplate.category} onValueChange={(v) => setNewTemplate({ ...newTemplate, category: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="General">General</SelectItem>
+                      <SelectItem value="Academic">Academic</SelectItem>
+                      <SelectItem value="Business">Business</SelectItem>
+                      <SelectItem value="Technology">Technology</SelectItem>
+                      <SelectItem value="Science">Science</SelectItem>
+                      <SelectItem value="History">History</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-2 mt-6">
+                  <Checkbox
+                    id="is-public"
+                    checked={newTemplate.is_public}
+                    onCheckedChange={(v) => setNewTemplate({ ...newTemplate, is_public: v })}
+                  />
+                  <Label htmlFor="is-public">Make Public</Label>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+                <Button onClick={createTemplate} data-testid="submit-template">Create Template</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </div>
+  );
+};
+
+// ============= PAYMENT SUCCESS PAGE =============
+const PaymentSuccessPage = () => {
+  const [status, setStatus] = useState('checking');
+  const [paymentInfo, setPaymentInfo] = useState(null);
+  const navigate = useNavigate();
+  const pollingRef = useRef(null);
+  const attemptRef = useRef(0);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    
+    if (sessionId) {
+      pollPaymentStatus(sessionId);
+    } else {
+      setStatus('error');
+    }
+
+    return () => {
+      if (pollingRef.current) {
+        clearTimeout(pollingRef.current);
+      }
+    };
+  }, []);
+
+  const pollPaymentStatus = async (sessionId) => {
+    const maxAttempts = 10;
+    
+    if (attemptRef.current >= maxAttempts) {
+      setStatus('timeout');
+      return;
+    }
+
+    try {
+      const response = await api.get(`/payments/checkout/status/${sessionId}`);
+      setPaymentInfo(response.data);
+
+      if (response.data.payment_status === 'paid') {
+        setStatus('success');
+        return;
+      } else if (response.data.status === 'expired') {
+        setStatus('expired');
+        return;
+      }
+
+      // Continue polling
+      attemptRef.current += 1;
+      pollingRef.current = setTimeout(() => pollPaymentStatus(sessionId), 2000);
+      setStatus('processing');
+    } catch (error) {
+      console.error("Error checking payment status:", error);
+      attemptRef.current += 1;
+      pollingRef.current = setTimeout(() => pollPaymentStatus(sessionId), 2000);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#FFFFF0] flex items-center justify-center p-6" data-testid="payment-success-page">
+      <Card className="glass-card max-w-md w-full">
+        <CardContent className="p-8 text-center">
+          {status === 'checking' || status === 'processing' ? (
+            <>
+              <div className="spinner mx-auto mb-6"></div>
+              <h1 className="text-2xl font-bold mb-2">Processing Payment</h1>
+              <p className="text-gray-600">Please wait while we confirm your payment...</p>
+            </>
+          ) : status === 'success' ? (
+            <>
+              <CheckCircle className="w-16 h-16 text-[#34C759] mx-auto mb-6" />
+              <h1 className="text-2xl font-bold mb-2">Payment Successful!</h1>
+              <p className="text-gray-600 mb-4">Your subscription has been activated.</p>
+              {paymentInfo && (
+                <p className="text-sm text-gray-500 mb-6">
+                  Amount: ${(paymentInfo.amount_total / 100).toFixed(2)} {paymentInfo.currency?.toUpperCase()}
+                </p>
+              )}
+              <Button className="btn-primary w-full" onClick={() => navigate('/dashboard')} data-testid="go-to-dashboard">
+                Go to Dashboard
+              </Button>
+            </>
+          ) : status === 'expired' ? (
+            <>
+              <XCircle className="w-16 h-16 text-[#FF6B6B] mx-auto mb-6" />
+              <h1 className="text-2xl font-bold mb-2">Session Expired</h1>
+              <p className="text-gray-600 mb-6">Your payment session has expired. Please try again.</p>
+              <Button className="btn-primary w-full" onClick={() => navigate('/settings')} data-testid="try-again">
+                Try Again
+              </Button>
+            </>
+          ) : status === 'timeout' ? (
+            <>
+              <AlertTriangle className="w-16 h-16 text-[#FFD60A] mx-auto mb-6" />
+              <h1 className="text-2xl font-bold mb-2">Payment Status Unknown</h1>
+              <p className="text-gray-600 mb-6">We couldn't confirm your payment. If you were charged, please contact support.</p>
+              <Button className="btn-primary w-full" onClick={() => navigate('/dashboard')} data-testid="go-dashboard-anyway">
+                Go to Dashboard
+              </Button>
+            </>
+          ) : (
+            <>
+              <XCircle className="w-16 h-16 text-[#FF6B6B] mx-auto mb-6" />
+              <h1 className="text-2xl font-bold mb-2">Something Went Wrong</h1>
+              <p className="text-gray-600 mb-6">Please contact support if you need help.</p>
+              <Button className="btn-primary w-full" onClick={() => navigate('/')} data-testid="go-home">
+                Go Home
+              </Button>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 // ============= APP ROUTER =============
 const AppRouter = () => {
   const location = useLocation();
