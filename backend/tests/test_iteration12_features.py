@@ -210,37 +210,35 @@ class TestStripeConfiguration:
     """Test Stripe API key configuration"""
     
     def test_stripe_key_is_live_mode(self):
-        """Verify STRIPE_API_KEY starts with sk_live_ (not sk_test_)"""
-        # Read from environment or .env file
-        stripe_key = os.environ.get("STRIPE_API_KEY", "")
+        """Verify STRIPE_API_KEY in .env file starts with sk_live_ (not sk_test_)"""
+        # Read directly from .env file (not environment variable which may be different)
+        env_path = "/app/backend/.env"
+        stripe_key = ""
+        try:
+            with open(env_path, 'r') as f:
+                for line in f:
+                    if line.startswith("STRIPE_API_KEY="):
+                        stripe_key = line.split("=", 1)[1].strip()
+                        break
+        except FileNotFoundError:
+            pytest.skip("Could not find .env file")
         
-        if not stripe_key:
-            # Try reading from .env file
-            env_path = "/app/backend/.env"
-            try:
-                with open(env_path, 'r') as f:
-                    for line in f:
-                        if line.startswith("STRIPE_API_KEY="):
-                            stripe_key = line.split("=", 1)[1].strip()
-                            break
-            except FileNotFoundError:
-                pytest.skip("Could not find .env file")
-        
-        assert stripe_key, "STRIPE_API_KEY not found"
+        assert stripe_key, "STRIPE_API_KEY not found in .env"
         assert stripe_key.startswith("sk_live_"), f"Stripe key should be live mode (sk_live_), got: {stripe_key[:15]}..."
-        print(f"✓ Stripe API key is in LIVE mode (sk_live_...)")
+        print(f"✓ Stripe API key in .env is in LIVE mode (sk_live_...)")
     
-    def test_payment_config_endpoint(self):
-        """Test payment configuration endpoint returns stripe_enabled"""
+    def test_payment_packages_endpoint(self):
+        """Test payment packages endpoint returns stripe_enabled"""
         headers = {
             "Authorization": f"Bearer {TEST_SESSION_TOKEN}"
         }
-        response = requests.get(f"{BASE_URL}/api/payments/config", headers=headers)
+        response = requests.get(f"{BASE_URL}/api/payments/packages", headers=headers)
         assert response.status_code == 200
         
         data = response.json()
         assert "stripe_enabled" in data
-        print(f"✓ Payment config endpoint working - stripe_enabled: {data['stripe_enabled']}")
+        assert data["stripe_enabled"] == True, "Stripe should be enabled"
+        print(f"✓ Payment packages endpoint working - stripe_enabled: {data['stripe_enabled']}")
 
 
 class TestLocationExtraction:
