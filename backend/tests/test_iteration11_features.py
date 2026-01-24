@@ -13,7 +13,7 @@ import requests
 import os
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://search-companion-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://datascout-hub.preview.emergentagent.com')
 
 # Test session token created for iteration 11
 TEST_SESSION_TOKEN = "test_session_iter11_1769257278052"

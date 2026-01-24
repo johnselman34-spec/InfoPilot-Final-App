@@ -5400,13 +5400,13 @@ cors_origins_env = os.environ.get("CORS_ORIGINS", "")
 if cors_origins_env == "*":
     # For wildcard, we need to dynamically allow origins when credentials are used
     allowed_origins = [
-        "https://search-companion-1.preview.emergentagent.com",
+        "https://datascout-hub.preview.emergentagent.com",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]
 else:
     allowed_origins = [o.strip() for o in cors_origins_env.split(",") if o.strip()] or [
-        "https://search-companion-1.preview.emergentagent.com",
+        "https://datascout-hub.preview.emergentagent.com",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ]

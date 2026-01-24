@@ -86,7 +86,7 @@ class TestStripeIntegration:
         """POST /api/payments/checkout/session - Endpoint exists and requires proper data"""
         # Test that endpoint exists (may fail with 400/422 due to missing data, but not 404)
         response = api_client.post(f"{BASE_URL}/api/payments/checkout/session", json={
-            "origin_url": "https://search-companion-1.preview.emergentagent.com",
+            "origin_url": "https://datascout-hub.preview.emergentagent.com",
             "package_type": "monthly"
         })
         
