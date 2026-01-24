@@ -491,15 +491,27 @@ const UltimateSearchPage = () => {
     country: "",
     state: ""
   });
-  // New: Search Match Options
+  
+  // Search Match Options with descriptions
   const [matchOptions, setMatchOptions] = useState({
-    exactMatch: false,
-    strictMatch: false,
-    aiMatch: true,
-    intelligentMatch: false,
-    favorSchematics: false
+    exactMatch: false,      // High closeness to protocols
+    strictMatch: false,     // Precise and accurate match
+    aiMatch: true,          // Using artificial intelligence
+    intelligentMatch: false, // Maximizes information given (Smart Match)
+    favorSchematics: false   // Pictures of diagrams and schematics
   });
-  // New: Templates and Debugger
+  
+  // Information Favoritism Options
+  const [favorOptions, setFavorOptions] = useState({
+    pearsonCertifications: false,  // Pearson Learning Certifications
+    diagramsSchematics: false,     // Pictures of diagrams/schematics
+    academicSources: false,        // Academic/educational sources
+    governmentSources: false,      // Government sources
+    recentContent: false,          // Recent/current content
+    primarySources: false          // Primary sources
+  });
+  
+  // Templates and Debugger
   const [showTemplates, setShowTemplates] = useState(false);
   const [templates, setTemplates] = useState([]);
   const [showDebugger, setShowDebugger] = useState(false);
@@ -554,11 +566,13 @@ const UltimateSearchPage = () => {
       if (filters.country) params.append("country", filters.country);
       if (filters.state) params.append("state", filters.state);
       // Add match options
-      if (matchOptions.exactMatch) params.append("exact_match", "true");
-      if (matchOptions.strictMatch) params.append("strict_match", "true");
-      if (matchOptions.aiMatch) params.append("ai_match", "true");
-      if (matchOptions.intelligentMatch) params.append("intelligent_match", "true");
-      if (matchOptions.favorSchematics) params.append("favor_schematics", "true");
+      Object.entries(matchOptions).forEach(([key, value]) => {
+        if (value) params.append(key, "true");
+      });
+      // Add favor options
+      Object.entries(favorOptions).forEach(([key, value]) => {
+        if (value) params.append(key, "true");
+      });
 
       const response = await api.get(`/search/results?${params.toString()}`);
       setSearchResults(response.data.results || []);
@@ -575,7 +589,8 @@ const UltimateSearchPage = () => {
         query: searchQuery,
         category_ids: selectedCategories,
         max_results: 40,
-        match_options: matchOptions
+        match_options: matchOptions,
+        favor_options: favorOptions
       });
       setSearchResults(response.data.results || []);
       // Set debug info
@@ -583,6 +598,7 @@ const UltimateSearchPage = () => {
         query: searchQuery,
         categories: selectedCategories.length,
         matchOptions: matchOptions,
+        favorOptions: favorOptions,
         resultsCount: response.data.results?.length || 0,
         timestamp: new Date().toISOString()
       });
@@ -626,14 +642,15 @@ const UltimateSearchPage = () => {
     );
   };
 
+  // Select All / Deselect All functions for Document Types
   const selectAllDocTypes = () => {
     setSelectedDocTypes(documentTypes.map(dt => dt.name));
   };
-
   const deselectAllDocTypes = () => {
     setSelectedDocTypes([]);
   };
 
+  // Select All / Deselect All functions for Match Options
   const selectAllMatchOptions = () => {
     setMatchOptions({
       exactMatch: true,
@@ -643,7 +660,6 @@ const UltimateSearchPage = () => {
       favorSchematics: true
     });
   };
-
   const deselectAllMatchOptions = () => {
     setMatchOptions({
       exactMatch: false,
@@ -651,6 +667,28 @@ const UltimateSearchPage = () => {
       aiMatch: false,
       intelligentMatch: false,
       favorSchematics: false
+    });
+  };
+
+  // Select All / Deselect All functions for Favor Options
+  const selectAllFavorOptions = () => {
+    setFavorOptions({
+      pearsonCertifications: true,
+      diagramsSchematics: true,
+      academicSources: true,
+      governmentSources: true,
+      recentContent: true,
+      primarySources: true
+    });
+  };
+  const deselectAllFavorOptions = () => {
+    setFavorOptions({
+      pearsonCertifications: false,
+      diagramsSchematics: false,
+      academicSources: false,
+      governmentSources: false,
+      recentContent: false,
+      primarySources: false
     });
   };
 
