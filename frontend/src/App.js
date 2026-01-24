@@ -7,7 +7,9 @@ import {
   Plus, Folder, Globe, Heart, ThumbsUp, Laugh, AlertTriangle,
   MessageSquare, Star, Filter, Check, Copy, Trash2, Edit,
   ChevronDown, Play, RefreshCw, Award, TrendingUp, Zap,
-  BookOpen, User, Bell, HelpCircle, Egg, Send, UserPlus
+  BookOpen, User, Bell, HelpCircle, Egg, Send, UserPlus,
+  Download, Smartphone, Monitor, FileText, CreditCard,
+  CheckCircle, XCircle, Layout, Scale, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
