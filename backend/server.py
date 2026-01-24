@@ -48,6 +48,11 @@ groups_router = APIRouter(prefix="/groups", tags=["Groups"])
 pages_router = APIRouter(prefix="/pages", tags=["Pages"])
 easter_eggs_router = APIRouter(prefix="/easter-eggs", tags=["Easter Eggs"])
 newsletter_router = APIRouter(prefix="/newsletter", tags=["Newsletter"])
+polls_router = APIRouter(prefix="/polls", tags=["Polls"])
+reports_router = APIRouter(prefix="/reports", tags=["Personal Reports"])
+quotes_router = APIRouter(prefix="/quotes", tags=["Quote Gallery"])
+themes_router = APIRouter(prefix="/themes", tags=["Themes"])
+analytics_router = APIRouter(prefix="/protocol-analytics", tags=["Protocol Analytics"])
 
 # Configure logging
 logging.basicConfig(
