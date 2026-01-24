@@ -2035,18 +2035,54 @@ async def get_chat_rooms(
 
 # ============= EASTER EGGS ROUTES =============
 
-EASTER_EGG_JOKES = [
-    "Why did the protocol cross the search engine? To get to the other database!",
-    "I told my protocol it was looking sharp today. It replied with a perfectly parsed boolean.",
-    "My stepmother tried to poison me, but jokes on her - I became a bestselling author!",
-    "What do you call a protocol that tells jokes? A fun-ction!",
-    "I asked the Internet Robot for advice. It said 'Have you tried turning your search strategy off and on again?'",
-    "Why don't protocols ever get invited to parties? They're too exclusive... or inclusive... depends on the modifier!",
-    "My search results were so good, even Google was jealous.",
-    "InfoPilot: Because sometimes you need a pilot to navigate the information superhighway.",
-    "What's a protocol's favorite music? Boolean beats!",
-    "I wrote a protocol so good, it collated itself."
-]
+# Ancient T-Rex Egg Content: Jokes, Protocol Tips, and Cheat Codes
+EASTER_EGG_CONTENT = {
+    "jokes": [
+        "Why did the protocol cross the search engine? To get to the other database!",
+        "I told my protocol it was looking sharp today. It replied with a perfectly parsed boolean.",
+        "My stepmother tried to poison me, but jokes on her - I became a bestselling author!",
+        "What do you call a protocol that tells jokes? A fun-ction!",
+        "I asked the Internet Robot for advice. It said 'Have you tried turning your search strategy off and on again?'",
+        "Why don't protocols ever get invited to parties? They're too exclusive... or inclusive... depends on the modifier!",
+        "My search results were so good, even Google was jealous.",
+        "InfoPilot: Because sometimes you need a pilot to navigate the information superhighway.",
+        "What's a protocol's favorite music? Boolean beats!",
+        "I wrote a protocol so good, it collated itself.",
+        "What did the T-Rex say to the database? 'I'm not extinct, I'm just deprecated!'",
+        "Why do dinosaurs make terrible programmers? They keep causing meteor showers in production!",
+        "A T-Rex walks into a bar... and knocks everything off with its tiny arms. Just like a bad regex!",
+        "Three ventures. One mission. Zero turbulence. (Okay, maybe a little turbulence at the bistro during lunch rush.)",
+        "The parent company behind the book that makes you cry, the tech that makes you think, and the food that makes you come back for seconds!",
+        "Get yourself giggling in disoriented, stupefying hee-haw laughter with Letters to Evelyn!",
+        "Cleared for takeoff since Day One - because when you've flown 10 different aircraft, running three businesses feels like a gentle cruise at 30,000 feet!"
+    ],
+    "protocol_tips": [
+        "PRO TIP: Use 'or' for alternatives within groups, like (cat or dog or hamster)",
+        "PRO TIP: Use '&' between groups to require ALL groups to match",
+        "PRO TIP: Add '+' at the end to INCLUDE specific terms: (keyword)+",
+        "PRO TIP: Add '^' at the end to EXCLUDE specific terms: (spam or ads)^",
+        "PRO TIP: Protocols are case-insensitive - 'Dog' equals 'dog' equals 'DOG'",
+        "PRO TIP: Works with any language in the world - try protocols in Spanish, French, or Japanese!",
+        "PRO TIP: Nest parentheses for complex searches: ((cat or dog) & (food or nutrition))+",
+        "PRO TIP: The Internet Robot scans the FULL body of each URL when Deep Content Scan is enabled",
+        "PRO TIP: Create subcategories up to 10 levels deep for detailed organization",
+        "PRO TIP: Check your Recommended Protocols for personalized search suggestions!"
+    ],
+    "cheat_codes": [
+        "🎮 CHEAT CODE: Use (William C. Gamble or General Gamble) & (Civil War)+ for detailed historical searches",
+        "🎮 CHEAT CODE: Enable 'AI Match' checkbox for intelligent protocol interpretation",
+        "🎮 CHEAT CODE: Toggle 'Deep Content Scan' to extract locations from article body text",
+        "🎮 CHEAT CODE: Sell your best protocols in the Marketplace to earn money!",
+        "🎮 CHEAT CODE: Use the 'Exact Match' checkbox for precise protocol matching",
+        "🎮 CHEAT CODE: Click on map dots to see all results from that location",
+        "🎮 CHEAT CODE: Join Collaborative Sessions to research with friends in real-time",
+        "🎮 CHEAT CODE: Earn XP badges by creating 10+ categories with unique protocols",
+        "🎮 CHEAT CODE: Use quotation marks in protocols for exact phrase matching"
+    ]
+}
+
+# Flatten for backwards compatibility
+EASTER_EGG_JOKES = EASTER_EGG_CONTENT["jokes"]
 
 @easter_eggs_router.get("")
 async def get_easter_eggs(user: User = Depends(require_auth)):
