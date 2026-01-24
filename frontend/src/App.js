@@ -9,7 +9,8 @@ import {
   ChevronDown, Play, RefreshCw, Award, TrendingUp, Zap,
   BookOpen, User, Bell, HelpCircle, Egg, Send, UserPlus,
   Download, Smartphone, Monitor, FileText, CreditCard,
-  CheckCircle, XCircle, Layout, Scale, Shield
+  CheckCircle, XCircle, Layout, Scale, Shield, Activity,
+  GitBranch, Upload, Share2, Clock, Plane, Target
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
