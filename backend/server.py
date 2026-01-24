@@ -3055,7 +3055,7 @@ async def get_checkout_status(
     
     try:
         stripe_api_key = os.environ.get("STRIPE_API_KEY")
-        host_url = "https://infopilot-hub-1.preview.emergentagent.com"
+        host_url = os.environ.get("BACKEND_URL", str(request.base_url).rstrip('/'))
         webhook_url = f"{host_url}/api/payments/webhook/stripe"
         
         stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
@@ -3111,7 +3111,7 @@ async def handle_stripe_webhook(request: Request):
         stripe_signature = request.headers.get("Stripe-Signature")
         
         stripe_api_key = os.environ.get("STRIPE_API_KEY")
-        host_url = "https://infopilot-hub-1.preview.emergentagent.com"
+        host_url = os.environ.get("BACKEND_URL", str(request.base_url).rstrip('/'))
         webhook_url = f"{host_url}/api/payments/webhook/stripe"
         
         stripe_checkout = StripeCheckout(api_key=stripe_api_key, webhook_url=webhook_url)
