@@ -826,6 +826,125 @@ const UltimateSearchPage = () => {
                       <Filter className="w-4 h-4 mr-2" /> Apply Filters
                     </Button>
                   </div>
+
+                  {/* Search Match Options */}
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-sm font-medium">Search Result Favoritism</Label>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={selectAllMatchOptions} data-testid="select-all-match">
+                          Select All
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={deselectAllMatchOptions} data-testid="deselect-all-match">
+                          Deselect All
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={matchOptions.exactMatch}
+                          onCheckedChange={(v) => setMatchOptions({...matchOptions, exactMatch: v})}
+                          data-testid="match-exact"
+                        />
+                        <span className="text-sm">Exact Match</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={matchOptions.strictMatch}
+                          onCheckedChange={(v) => setMatchOptions({...matchOptions, strictMatch: v})}
+                          data-testid="match-strict"
+                        />
+                        <span className="text-sm">Strict Match</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={matchOptions.aiMatch}
+                          onCheckedChange={(v) => setMatchOptions({...matchOptions, aiMatch: v})}
+                          data-testid="match-ai"
+                        />
+                        <span className="text-sm">AI Match</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={matchOptions.intelligentMatch}
+                          onCheckedChange={(v) => setMatchOptions({...matchOptions, intelligentMatch: v})}
+                          data-testid="match-intelligent"
+                        />
+                        <span className="text-sm">Intelligent Match</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={matchOptions.favorSchematics}
+                          onCheckedChange={(v) => setMatchOptions({...matchOptions, favorSchematics: v})}
+                          data-testid="match-schematics"
+                        />
+                        <span className="text-sm">Schematics/Diagrams</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => { setShowTemplates(!showTemplates); fetchTemplates(); }}
+                      data-testid="show-templates-btn"
+                    >
+                      <Layout className="w-4 h-4 mr-2" /> {showTemplates ? 'Hide' : 'Show'} Templates
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setShowDebugger(!showDebugger)}
+                      data-testid="show-debugger-btn"
+                    >
+                      <FileText className="w-4 h-4 mr-2" /> {showDebugger ? 'Hide' : 'Show'} Protocol Debugger
+                    </Button>
+                  </div>
+
+                  {/* Templates Panel */}
+                  {showTemplates && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium mb-3">Protocol Templates</h4>
+                      {templates.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {templates.slice(0, 6).map((t) => (
+                            <button
+                              key={t.template_id}
+                              onClick={() => useTemplate(t)}
+                              className="p-3 bg-white rounded-lg border hover:border-[#007AFF] text-left transition-colors"
+                              data-testid={`template-quick-${t.template_id}`}
+                            >
+                              <p className="font-medium text-sm">{t.name}</p>
+                              <p className="text-xs text-gray-500 truncate">{t.protocol_string}</p>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">No templates available. Create one in the Templates page!</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Protocol Debugger Panel */}
+                  {showDebugger && (
+                    <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
+                      <h4 className="font-medium mb-3">Protocol Debugger</h4>
+                      {debugInfo ? (
+                        <div className="font-mono text-xs bg-white p-3 rounded border">
+                          <p><strong>Query:</strong> {debugInfo.query}</p>
+                          <p><strong>Categories Selected:</strong> {debugInfo.categories}</p>
+                          <p><strong>Match Options:</strong> {JSON.stringify(debugInfo.matchOptions)}</p>
+                          <p><strong>Results Count:</strong> {debugInfo.resultsCount}</p>
+                          <p><strong>Timestamp:</strong> {debugInfo.timestamp}</p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">Run a search to see debug information.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
