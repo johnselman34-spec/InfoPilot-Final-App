@@ -14,8 +14,9 @@ class InfoPilotAPITester:
     def __init__(self, base_url: str = "https://word-integrator.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
-        self.session_token = None
-        self.user_id = None
+        # Test credentials from review request
+        self.session_token = "test_session_1769213571175"
+        self.user_id = "test-user-1769213571175"
         self.tests_run = 0
         self.tests_passed = 0
         self.failed_tests = []
