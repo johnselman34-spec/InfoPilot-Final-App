@@ -1518,6 +1518,9 @@ async def get_easter_eggs(user: User = Depends(require_auth)):
             for i, joke in enumerate(EASTER_EGG_JOKES)
         ]
         await db.easter_eggs.insert_many(default_eggs)
+        # Remove _id from eggs for JSON serialization
+        for egg in default_eggs:
+            egg.pop("_id", None)
         eggs = default_eggs
     
     return {"easter_eggs": eggs}
