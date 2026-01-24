@@ -1406,6 +1406,7 @@ async def send_message(
             "last_message_at": datetime.now(timezone.utc).isoformat()
         }
         await db.conversations.insert_one(conversation)
+        conversation.pop("_id", None)
     
     # Create message
     message = {
@@ -1417,6 +1418,7 @@ async def send_message(
     }
     
     await db.messages.insert_one(message)
+    message.pop("_id", None)
     
     # Update conversation
     await db.conversations.update_one(
