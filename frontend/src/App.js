@@ -643,7 +643,8 @@ const UltimateSearchPage = () => {
         category_ids: selectedCategories,
         max_results: 40,
         match_options: matchOptions,
-        favor_options: favorOptions
+        favor_options: favorOptions,
+        fetch_full_content: deepContentScan  // Enable deep content scan for better location extraction
       });
       setSearchResults(response.data.results || []);
       // Set debug info
@@ -652,7 +653,9 @@ const UltimateSearchPage = () => {
         categories: selectedCategories.length,
         matchOptions: matchOptions,
         favorOptions: favorOptions,
+        deepContentScan: deepContentScan,
         resultsCount: response.data.results?.length || 0,
+        locationsFound: response.data.results?.reduce((acc, r) => acc + (r.locations?.length || 0), 0) || 0,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
