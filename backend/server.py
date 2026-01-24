@@ -64,6 +64,10 @@ promotions_router = APIRouter(prefix="/promotions", tags=["Promotions"])
 payments_router = APIRouter(prefix="/payments", tags=["Payments"])
 legal_router = APIRouter(prefix="/legal", tags=["Legal"])
 templates_router = APIRouter(prefix="/templates", tags=["Protocol Templates"])
+heatmap_router = APIRouter(prefix="/heatmaps", tags=["Heatmaps"])
+collab_router = APIRouter(prefix="/collab", tags=["Collaborative Sessions"])
+versioning_router = APIRouter(prefix="/versioning", tags=["Protocol Versioning"])
+branding_router = APIRouter(prefix="/branding", tags=["App Branding"])
 
 # Configure logging
 logging.basicConfig(
