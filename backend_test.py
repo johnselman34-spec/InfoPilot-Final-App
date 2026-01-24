@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class InfoPilotAPITester:
-    def __init__(self, base_url: str = "https://infopilot-hub-1.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://search-companion-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         # Test credentials from review request

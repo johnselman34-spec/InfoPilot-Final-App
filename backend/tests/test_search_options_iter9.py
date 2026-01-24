@@ -11,7 +11,7 @@ import sys
 # Add backend to path for importing LocationExtractor
 sys.path.insert(0, '/app/backend')
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://infopilot-hub-1.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://search-companion-1.preview.emergentagent.com')
 SESSION_TOKEN = os.environ.get('TEST_SESSION_TOKEN', 'test_session_iter9_1769227219986')
 USER_ID = os.environ.get('TEST_USER_ID', 'test-user-iter9-1769227219986')
 
