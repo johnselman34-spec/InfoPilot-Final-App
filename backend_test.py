@@ -488,6 +488,90 @@ class InfoPilotAPITester:
                 "Could not test - no categories available"
             )
 
+    def test_promotions_endpoints(self):
+        """Test new Promotions API endpoints"""
+        # Test GET /api/promotions/book (Letters to Evelyn)
+        success, data = self.make_request('GET', '/promotions/book')
+        self.log_result(
+            "GET /api/promotions/book", 
+            success and ('title' in data or 'book' in data or 'name' in data),
+            f"Letters to Evelyn book info: {data.get('title', data.get('name', 'Found'))}" if success else f"Error: {data}"
+        )
+
+        # Test GET /api/promotions/food (Maestro Bistro)
+        success, data = self.make_request('GET', '/promotions/food')
+        self.log_result(
+            "GET /api/promotions/food", 
+            success and ('name' in data or 'restaurant' in data or 'food' in data),
+            f"Maestro Bistro info: {data.get('name', 'Found')}" if success else f"Error: {data}"
+        )
+
+        # Test GET /api/promotions/all (Top Pilot Enterprises)
+        success, data = self.make_request('GET', '/promotions/all')
+        self.log_result(
+            "GET /api/promotions/all", 
+            success and ('company' in data or 'name' in data or 'promotions' in data),
+            f"Company info: {data.get('company', data.get('name', 'Found'))}" if success else f"Error: {data}"
+        )
+
+    def test_subscription_endpoints(self):
+        """Test Subscription API endpoints"""
+        # Test GET /api/subscription/info (pricing and PayPal link)
+        success, data = self.make_request('GET', '/subscription/info')
+        self.log_result(
+            "GET /api/subscription/info", 
+            success and ('price' in data or 'paypal' in data or 'subscription' in data),
+            f"Subscription info with PayPal: {data.get('price', 'Found')}" if success else f"Error: {data}"
+        )
+
+    def test_document_types_endpoint(self):
+        """Test Document Types API endpoint"""
+        # Test GET /api/document-types (should return 8 document types)
+        success, data = self.make_request('GET', '/document-types')
+        types_count = len(data.get('document_types', [])) if success else 0
+        self.log_result(
+            "GET /api/document-types", 
+            success and types_count == 8,
+            f"Found {types_count}/8 document types" if success else f"Error: {data}"
+        )
+
+    def test_reports_endpoints(self):
+        """Test Personal Reports API endpoints"""
+        # Test POST /api/reports (create personal report)
+        report_data = {
+            "title": "Test Personal Report",
+            "content": "This is a test personal report with location and images.",
+            "images": ["https://example.com/image1.jpg", "https://example.com/image2.jpg"],
+            "location": {
+                "city": "San Francisco",
+                "state": "California", 
+                "country": "United States",
+                "lat": 37.7749,
+                "lng": -122.4194
+            },
+            "category_ids": []
+        }
+        success, data = self.make_request('POST', '/reports', report_data, expected_status=200)
+        if not success:
+            # Try with 201 status code
+            success, data = self.make_request('POST', '/reports', report_data, expected_status=201)
+        
+        report_id = data.get('report_id') if success else None
+        self.log_result(
+            "POST /api/reports", 
+            success and report_id,
+            f"Created personal report: {report_id}" if success else f"Error: {data}"
+        )
+
+        # Test GET /api/reports (get reports list)
+        success, data = self.make_request('GET', '/reports')
+        reports_count = len(data.get('reports', [])) if success else 0
+        self.log_result(
+            "GET /api/reports", 
+            success and 'reports' in data,
+            f"Found {reports_count} personal reports" if success else f"Error: {data}"
+        )
+
     def run_all_tests(self):
         """Run all test suites"""
         print("🚀 Starting InfoPilot Explorer Backend API Tests")
