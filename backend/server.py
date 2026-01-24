@@ -4661,6 +4661,543 @@ async def get_app_download_links():
         }
     }
 
+# ============= SEARCH RESULT HEATMAPS =============
+
+@heatmap_router.get("/activity")
+async def get_activity_heatmap(
+    period: str = "month",  # week, month, year
+    user: User = Depends(require_auth)
+):
+    """Get search activity heatmap data"""
+    # Calculate date range
+    now = datetime.now(timezone.utc)
+    if period == "week":
+        days = 7
+    elif period == "year":
+        days = 365
+    else:
+        days = 30
+    
+    start_date = now - timedelta(days=days)
+    
+    # Get activity by hour and day
+    pipeline = [
+        {"$match": {
+            "user_id": user.user_id,
+            "created_at": {"$gte": start_date.isoformat()}
+        }},
+        {"$addFields": {
+            "parsed_date": {"$dateFromString": {"dateString": "$created_at", "onError": None}}
+        }},
+        {"$match": {"parsed_date": {"$ne": None}}},
+        {"$group": {
+            "_id": {
+                "day": {"$dayOfWeek": "$parsed_date"},
+                "hour": {"$hour": "$parsed_date"}
+            },
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"_id.day": 1, "_id.hour": 1}}
+    ]
+    
+    results = await db.search_results.aggregate(pipeline).to_list(200)
+    
+    # Format for heatmap (7 days x 24 hours)
+    heatmap_data = [[0 for _ in range(24)] for _ in range(7)]
+    for r in results:
+        day = r["_id"]["day"] - 1  # 0-indexed
+        hour = r["_id"]["hour"]
+        if 0 <= day < 7 and 0 <= hour < 24:
+            heatmap_data[day][hour] = r["count"]
+    
+    day_names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    
+    return {
+        "period": period,
+        "heatmap": heatmap_data,
+        "days": day_names,
+        "hours": list(range(24)),
+        "max_value": max(max(row) for row in heatmap_data) if any(any(row) for row in heatmap_data) else 0
+    }
+
+@heatmap_router.get("/location")
+async def get_location_heatmap(user: User = Depends(require_auth)):
+    """Get location-based heatmap data"""
+    pipeline = [
+        {"$match": {"user_id": user.user_id}},
+        {"$unwind": "$locations"},
+        {"$group": {
+            "_id": {
+                "country": "$locations.country",
+                "state": "$locations.state"
+            },
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"count": -1}},
+        {"$limit": 50}
+    ]
+    
+    results = await db.search_results.aggregate(pipeline).to_list(50)
+    
+    return {
+        "locations": [
+            {
+                "country": r["_id"].get("country", "Unknown"),
+                "state": r["_id"].get("state", ""),
+                "count": r["count"],
+                "intensity": min(r["count"] / 10, 1.0)  # Normalize 0-1
+            }
+            for r in results
+        ]
+    }
+
+@heatmap_router.get("/domain")
+async def get_domain_heatmap(user: User = Depends(require_auth)):
+    """Get domain activity heatmap"""
+    pipeline = [
+        {"$match": {"user_id": user.user_id}},
+        {"$group": {
+            "_id": "$root_domain",
+            "count": {"$sum": 1},
+            "last_accessed": {"$max": "$created_at"}
+        }},
+        {"$sort": {"count": -1}},
+        {"$limit": 30}
+    ]
+    
+    results = await db.search_results.aggregate(pipeline).to_list(30)
+    max_count = results[0]["count"] if results else 1
+    
+    return {
+        "domains": [
+            {
+                "domain": r["_id"],
+                "count": r["count"],
+                "intensity": r["count"] / max_count,
+                "last_accessed": r["last_accessed"]
+            }
+            for r in results if r["_id"]
+        ]
+    }
+
+# ============= COLLABORATIVE SEARCH SESSIONS =============
+
+# In-memory store for active sessions (in production, use Redis)
+active_collab_sessions = {}
+
+@collab_router.post("/sessions")
+async def create_collab_session(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Create a new collaborative search session"""
+    data = await request.json()
+    
+    session_id = f"collab_{uuid.uuid4().hex[:12]}"
+    session = {
+        "session_id": session_id,
+        "name": data.get("name", "Untitled Session"),
+        "description": data.get("description", ""),
+        "host_id": user.user_id,
+        "host_name": user.name,
+        "participants": [{"user_id": user.user_id, "name": user.name, "role": "host"}],
+        "search_query": "",
+        "results": [],
+        "chat_messages": [],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "is_active": True,
+        "invite_code": uuid.uuid4().hex[:8].upper()
+    }
+    
+    # Store in database
+    await db.collab_sessions.insert_one(session)
+    session.pop("_id", None)
+    
+    # Also store in memory for real-time updates
+    active_collab_sessions[session_id] = session
+    
+    return session
+
+@collab_router.get("/sessions")
+async def get_collab_sessions(user: User = Depends(require_auth)):
+    """Get user's collaborative sessions"""
+    sessions = await db.collab_sessions.find(
+        {"$or": [
+            {"host_id": user.user_id},
+            {"participants.user_id": user.user_id}
+        ]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    return {"sessions": sessions}
+
+@collab_router.post("/sessions/join")
+async def join_collab_session(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Join a collaborative session by invite code"""
+    data = await request.json()
+    invite_code = data.get("invite_code", "").upper()
+    
+    session = await db.collab_sessions.find_one(
+        {"invite_code": invite_code, "is_active": True},
+        {"_id": 0}
+    )
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found or inactive")
+    
+    # Add participant if not already in
+    if not any(p["user_id"] == user.user_id for p in session["participants"]):
+        await db.collab_sessions.update_one(
+            {"session_id": session["session_id"]},
+            {"$push": {"participants": {"user_id": user.user_id, "name": user.name, "role": "participant"}}}
+        )
+    
+    return session
+
+@collab_router.get("/sessions/{session_id}")
+async def get_collab_session(
+    session_id: str,
+    user: User = Depends(require_auth)
+):
+    """Get a specific collaborative session"""
+    session = await db.collab_sessions.find_one(
+        {"session_id": session_id},
+        {"_id": 0}
+    )
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    # Verify user is participant
+    if not any(p["user_id"] == user.user_id for p in session["participants"]):
+        raise HTTPException(status_code=403, detail="Not a participant in this session")
+    
+    return session
+
+@collab_router.post("/sessions/{session_id}/search")
+async def collab_search(
+    session_id: str,
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Perform a search in collaborative session"""
+    data = await request.json()
+    query = data.get("query", "")
+    
+    # Update session with query
+    await db.collab_sessions.update_one(
+        {"session_id": session_id},
+        {"$set": {"search_query": query, "last_search_by": user.name}}
+    )
+    
+    # Perform search (reuse existing search logic)
+    # This is simplified - in production, you'd call your actual search function
+    return {"message": "Search initiated", "query": query, "by": user.name}
+
+@collab_router.post("/sessions/{session_id}/message")
+async def collab_message(
+    session_id: str,
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Send a message in collaborative session"""
+    data = await request.json()
+    
+    message = {
+        "message_id": f"msg_{uuid.uuid4().hex[:8]}",
+        "user_id": user.user_id,
+        "user_name": user.name,
+        "content": data.get("content", ""),
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.collab_sessions.update_one(
+        {"session_id": session_id},
+        {"$push": {"chat_messages": message}}
+    )
+    
+    return message
+
+@collab_router.delete("/sessions/{session_id}")
+async def end_collab_session(
+    session_id: str,
+    user: User = Depends(require_auth)
+):
+    """End a collaborative session (host only)"""
+    session = await db.collab_sessions.find_one({"session_id": session_id})
+    
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    
+    if session["host_id"] != user.user_id:
+        raise HTTPException(status_code=403, detail="Only the host can end the session")
+    
+    await db.collab_sessions.update_one(
+        {"session_id": session_id},
+        {"$set": {"is_active": False, "ended_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"message": "Session ended"}
+
+# ============= PROTOCOL VERSIONING =============
+
+@versioning_router.get("/protocols/{category_id}/versions")
+async def get_protocol_versions(
+    category_id: str,
+    user: User = Depends(require_auth)
+):
+    """Get all versions of a protocol"""
+    versions = await db.protocol_versions.find(
+        {"category_id": category_id, "user_id": user.user_id},
+        {"_id": 0}
+    ).sort("version", -1).to_list(50)
+    
+    return {"versions": versions}
+
+@versioning_router.post("/protocols/{category_id}/versions")
+async def create_protocol_version(
+    category_id: str,
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Create a new version of a protocol"""
+    # Get current protocol
+    category = await db.categories.find_one(
+        {"category_id": category_id, "user_id": user.user_id},
+        {"_id": 0}
+    )
+    
+    if not category:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    
+    # Get latest version number
+    latest = await db.protocol_versions.find_one(
+        {"category_id": category_id},
+        sort=[("version", -1)]
+    )
+    
+    new_version = (latest["version"] + 1) if latest else 1
+    
+    data = await request.json()
+    
+    version_doc = {
+        "version_id": f"ver_{uuid.uuid4().hex[:12]}",
+        "category_id": category_id,
+        "user_id": user.user_id,
+        "version": new_version,
+        "protocol": data.get("protocol", category["protocol"]),
+        "name": data.get("name", category["name"]),
+        "changelog": data.get("changelog", ""),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.protocol_versions.insert_one(version_doc)
+    version_doc.pop("_id", None)
+    
+    # Update main protocol if requested
+    if data.get("update_main", True):
+        await db.categories.update_one(
+            {"category_id": category_id},
+            {"$set": {
+                "protocol": version_doc["protocol"],
+                "name": version_doc["name"],
+                "current_version": new_version,
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+    
+    return version_doc
+
+@versioning_router.post("/protocols/{category_id}/revert/{version}")
+async def revert_protocol_version(
+    category_id: str,
+    version: int,
+    user: User = Depends(require_auth)
+):
+    """Revert a protocol to a specific version"""
+    version_doc = await db.protocol_versions.find_one(
+        {"category_id": category_id, "version": version, "user_id": user.user_id},
+        {"_id": 0}
+    )
+    
+    if not version_doc:
+        raise HTTPException(status_code=404, detail="Version not found")
+    
+    await db.categories.update_one(
+        {"category_id": category_id},
+        {"$set": {
+            "protocol": version_doc["protocol"],
+            "name": version_doc["name"],
+            "current_version": version,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": f"Reverted to version {version}"}
+
+@versioning_router.get("/protocols/export/{category_id}")
+async def export_protocol(
+    category_id: str,
+    user: User = Depends(require_auth)
+):
+    """Export a protocol with all versions"""
+    category = await db.categories.find_one(
+        {"category_id": category_id, "user_id": user.user_id},
+        {"_id": 0}
+    )
+    
+    if not category:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    
+    versions = await db.protocol_versions.find(
+        {"category_id": category_id},
+        {"_id": 0}
+    ).sort("version", 1).to_list(100)
+    
+    export_data = {
+        "export_version": "1.0",
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+        "protocol": category,
+        "versions": versions
+    }
+    
+    return export_data
+
+@versioning_router.post("/protocols/import")
+async def import_protocol(
+    request: Request,
+    user: User = Depends(require_auth)
+):
+    """Import a protocol from export data"""
+    data = await request.json()
+    
+    protocol_data = data.get("protocol", {})
+    
+    # Create new category
+    new_category_id = f"cat_{uuid.uuid4().hex[:12]}"
+    new_category = {
+        "category_id": new_category_id,
+        "user_id": user.user_id,
+        "name": protocol_data.get("name", "Imported Protocol"),
+        "protocol": protocol_data.get("protocol", ""),
+        "parent_id": None,
+        "is_public": False,
+        "price": 0.0,
+        "sales_count": 0,
+        "imported_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.categories.insert_one(new_category)
+    new_category.pop("_id", None)
+    
+    # Import versions if present
+    versions = data.get("versions", [])
+    for v in versions:
+        v["version_id"] = f"ver_{uuid.uuid4().hex[:12]}"
+        v["category_id"] = new_category_id
+        v["user_id"] = user.user_id
+        await db.protocol_versions.insert_one(v)
+    
+    return {"message": "Protocol imported", "category": new_category}
+
+# ============= APP BRANDING =============
+
+@branding_router.get("/info")
+async def get_app_branding():
+    """Get app branding information"""
+    return {
+        "app_name": "InfoPilot Explorer",
+        "tagline": "First in Flight with Monetization of Searches",
+        "company": "Top Pilot Enterprises, Inc.",
+        "ceo": "John Selman",
+        "location": "Brunswick, Maine",
+        "contact": {
+            "email": "JJSpilot24@gmail.com",
+            "phone": "(207) 522-0894"
+        },
+        "icon_description": {
+            "primary": "F/A-18C Hornet schematic (top-down view)",
+            "secondary": "S-3 Viking side view",
+            "colors": ["#007AFF", "#34C759", "#FFD60A"],
+            "style": "Military aviation technical drawing with modern gradient overlays"
+        },
+        "app_stores": {
+            "ios": {
+                "name": "InfoJet",
+                "store": "Apple App Store",
+                "icon": "F/A-18C Hornet silhouette",
+                "url": "https://apps.apple.com/app/infojet"
+            },
+            "android": {
+                "name": "InfoPilot Explorer",
+                "store": "Google Play Store", 
+                "icon": "S-3 Viking with data streams",
+                "url": "https://play.google.com/store/apps/details?id=com.infopilot.explorer"
+            }
+        },
+        "slogan_variants": [
+            "First in Flight with Monetization of Searches",
+            "Your 3D View of the Internet",
+            "Search Smarter, Discover More",
+            "The Information Exchange Social Network"
+        ],
+        "legal_notices": {
+            "copyright": "© 2025-2026 Top Pilot Enterprises, Inc.",
+            "age_requirement": "21+ years old",
+            "trademark": "InfoPilot Explorer™, InfoJet™, InfoJet 2.0™ are trademarks of Top Pilot Enterprises, Inc."
+        }
+    }
+
+@branding_router.get("/icons")
+async def get_app_icons():
+    """Get app icon specifications"""
+    return {
+        "primary_icon": {
+            "name": "FA-18C Hornet",
+            "description": "Top-down schematic view of F/A-18C Hornet fighter jet",
+            "style": "Technical blueprint with gradient overlay",
+            "colors": {
+                "primary": "#007AFF",
+                "secondary": "#34C759",
+                "accent": "#FFD60A",
+                "background": "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)"
+            },
+            "symbolism": "Speed, precision, cutting-edge technology"
+        },
+        "secondary_icon": {
+            "name": "S-3 Viking",
+            "description": "Side profile of S-3 Viking aircraft",
+            "style": "Minimalist silhouette with data visualization elements",
+            "colors": {
+                "primary": "#007AFF",
+                "glow": "#34C759"
+            },
+            "symbolism": "Information gathering, surveillance, data collection"
+        },
+        "favicon": {
+            "description": "Simplified jet silhouette",
+            "sizes": [16, 32, 48, 64, 128, 256],
+            "format": "SVG with PNG fallbacks"
+        },
+        "app_store_icons": {
+            "ios": {
+                "size": "1024x1024",
+                "corners": "rounded",
+                "background": "gradient"
+            },
+            "android": {
+                "size": "512x512",
+                "adaptive": True,
+                "foreground": "jet silhouette",
+                "background": "gradient"
+            }
+        }
+    }
+
 # ============= INCLUDE ROUTERS =============
 
 api_router.include_router(auth_router)
