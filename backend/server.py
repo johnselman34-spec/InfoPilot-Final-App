@@ -2086,22 +2086,58 @@ EASTER_EGG_JOKES = EASTER_EGG_CONTENT["jokes"]
 
 @easter_eggs_router.get("")
 async def get_easter_eggs(user: User = Depends(require_auth)):
-    """Get available easter eggs"""
-    eggs = await db.easter_eggs.find({}, {"_id": 0}).to_list(50)
+    """Get available easter eggs - includes jokes, protocol tips, and cheat codes"""
+    eggs = await db.easter_eggs.find({}, {"_id": 0}).to_list(100)
     
-    if not eggs:
-        # Initialize default easter eggs
-        default_eggs = [
-            {
-                "egg_id": f"egg_{i}",
+    if not eggs or len(eggs) < 30:
+        # Clear old eggs and initialize with all content types
+        await db.easter_eggs.delete_many({})
+        
+        default_eggs = []
+        egg_id = 0
+        
+        # Add jokes
+        for joke in EASTER_EGG_CONTENT["jokes"]:
+            default_eggs.append({
+                "egg_id": f"egg_{egg_id}",
                 "type": "joke",
                 "content": joke,
                 "reward_type": "xp",
                 "reward_amount": 5,
-                "times_found": 0
-            }
-            for i, joke in enumerate(EASTER_EGG_JOKES)
-        ]
+                "times_found": 0,
+                "egg_color": ["#FF6B6B", "#4ECDC4", "#FFE66D", "#95E1D3", "#F38181", "#AA96DA"][egg_id % 6],
+                "egg_spots": ["#2C3E50", "#E74C3C", "#3498DB", "#9B59B6", "#F39C12"][egg_id % 5]
+            })
+            egg_id += 1
+        
+        # Add protocol tips
+        for tip in EASTER_EGG_CONTENT["protocol_tips"]:
+            default_eggs.append({
+                "egg_id": f"egg_{egg_id}",
+                "type": "tip",
+                "content": tip,
+                "reward_type": "xp",
+                "reward_amount": 3,
+                "times_found": 0,
+                "egg_color": ["#74B9FF", "#00CEC9", "#81ECEC", "#A29BFE", "#6C5CE7"][egg_id % 5],
+                "egg_spots": ["#0984E3", "#00B894", "#00CEC9", "#6C5CE7", "#5F27CD"][egg_id % 5]
+            })
+            egg_id += 1
+        
+        # Add cheat codes
+        for code in EASTER_EGG_CONTENT["cheat_codes"]:
+            default_eggs.append({
+                "egg_id": f"egg_{egg_id}",
+                "type": "cheat_code",
+                "content": code,
+                "reward_type": "xp",
+                "reward_amount": 10,
+                "times_found": 0,
+                "egg_color": ["#FFEAA7", "#FDCB6E", "#F9CA24", "#EAB543", "#F7DC6F"][egg_id % 5],
+                "egg_spots": ["#E17055", "#D63031", "#E84393", "#B33939", "#78281F"][egg_id % 5]
+            })
+            egg_id += 1
+        
         await db.easter_eggs.insert_many(default_eggs)
         # Remove _id from eggs for JSON serialization
         for egg in default_eggs:
