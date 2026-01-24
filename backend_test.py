@@ -528,7 +528,7 @@ class InfoPilotAPITester:
         """Test Document Types API endpoint"""
         # Test GET /api/document-types (should return 8 document types)
         success, data = self.make_request('GET', '/document-types')
-        types_count = len(data.get('document_types', [])) if success else 0
+        types_count = len(data.get('types', [])) if success else 0
         self.log_result(
             "GET /api/document-types", 
             success and types_count == 8,
