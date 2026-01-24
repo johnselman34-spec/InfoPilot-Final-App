@@ -1,4 +1,4 @@
-# InfoPilot Explorer - PRD v3.0
+# InfoPilot Explorer - PRD v4.0
 
 ## Project Overview
 InfoPilot Explorer is a worldwide web information exchange social network that provides users a "3D view of the Internet". Users can create custom search protocols using InfoJet 2.0 Protocol Language to collate web search results into organized categories.
@@ -7,6 +7,7 @@ InfoPilot Explorer is a worldwide web information exchange social network that p
 **CEO:** John Selman
 **Location:** Brunswick, Maine
 **Tagline:** First in Flight with Monetization of Searches
+**Age Requirement:** 21+ years old
 
 ## Original Problem Statement
 Build InfoPilot Explorer with all features from 15+ Word documents covering:
@@ -27,7 +28,31 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 - Book promotion (Letters to Evelyn)
 - Subscription with Pay What You Want
 
-## Complete Feature List - Implemented January 24, 2026
+## v4.0 Features - Implemented January 24, 2026
+
+### P0 Features (Latest Implementation)
+✅ **Select All / Deselect All** - Document type filter buttons in Ultimate Search
+✅ **Stripe Payment Integration** - Full checkout flow with emergentintegrations library
+✅ **App Download Links** - Android, iOS, Desktop, Browser Extension in footer & settings
+✅ **Legal Pages** - Privacy Policy & Terms of Service with comprehensive content
+✅ **Enhanced Map Interaction** - Clickable dots showing all associated results
+✅ **Protocol Templates** - Create, use, and share predefined protocol templates
+✅ **"First in Flight" Messaging** - Branding throughout legal pages
+
+### Legal Documentation
+✅ Privacy Policy with:
+  - 21+ age requirement
+  - "Continue with Google" consent language
+  - CCPA and GDPR compliance sections
+  - Data retention policies
+  - User rights and choices
+✅ Terms of Service with:
+  - Child safety policy (Section 4)
+  - Category title restrictions
+  - Protocol content guidelines
+  - Zero tolerance policy
+
+## Complete Feature List
 
 ### Core Search Features
 ✅ InfoJet 2.0 Protocol Language Parser
@@ -39,7 +64,7 @@ Build InfoPilot Explorer with all features from 15+ Word documents covering:
 ✅ Year extraction from content
 ✅ Root domain tracking
 ✅ Clean category function
-✅ Select All/Deselect All filters
+✅ Select All/Deselect All filters (NEW)
 
 ### Protocol Marketplace
 ✅ Public protocol listings
