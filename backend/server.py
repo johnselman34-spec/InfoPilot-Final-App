@@ -1468,6 +1468,7 @@ async def create_chat_room(
     }
     
     await db.chat_rooms.insert_one(room)
+    room.pop("_id", None)
     return room
 
 @chat_router.get("/rooms")
