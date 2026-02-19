@@ -279,64 +279,48 @@ const ComprehensiveUserAgreement = ({ onAccept, onDecline }) => {
           {/* Section 3: Prohibited Content */}
           {currentSection === 'prohibited' && (
             <div>
-              <h3 style={{ color: '#ef4444', marginBottom: 20 }}>
-                🚫 PROHIBITED CONTENT ACKNOWLEDGMENT
+              <h3 style={{ color: '#10b981', marginBottom: 20 }}>
+                ✅ CONTENT POLICY ACKNOWLEDGMENT
               </h3>
               
               <div style={{
-                background: 'rgba(239, 68, 68, 0.2)',
-                padding: 25,
-                borderRadius: 12,
-                border: '3px solid rgba(239, 68, 68, 0.5)',
-                marginBottom: 25
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(59, 130, 246, 0.15))',
+                padding: 30,
+                borderRadius: 16,
+                border: '2px solid rgba(16, 185, 129, 0.4)',
+                marginBottom: 25,
+                textAlign: 'center'
               }}>
-                <h4 style={{ color: '#fca5a5', margin: '0 0 15px 0', fontSize: '1.2rem' }}>
-                  ⚠️ STRICTLY PROHIBITED RESEARCH TOPICS
+                <div style={{ fontSize: '3rem', marginBottom: 15 }}>🛡️</div>
+                <h4 style={{ color: '#10b981', margin: '0 0 20px 0', fontSize: '1.4rem' }}>
+                  Officially Approved User-Friendly Content Only
                 </h4>
-                <p style={{ color: '#fecaca', marginBottom: 15 }}>
-                  The following topics are ABSOLUTELY FORBIDDEN on this platform. 
-                  Any attempt to research, search for, or share information about these topics 
-                  will result in immediate account termination and may be reported to authorities:
+                <p style={{ 
+                  color: '#d1fae5', 
+                  fontSize: '1.1rem', 
+                  lineHeight: 1.8,
+                  maxWidth: 600,
+                  margin: '0 auto'
+                }}>
+                  No military weapons or anything else dangerous is allowed to be researched here.
                 </p>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 15 }}>
-                  <ProhibitedCategory 
-                    icon="☢️" 
-                    title="Nuclear Technology"
-                    items={['Nuclear weapons', 'Uranium enrichment', 'Plutonium processing', 'Radiological devices', 'Dirty bombs']}
-                  />
-                  <ProhibitedCategory 
-                    icon="💣" 
-                    title="Terrorism"
-                    items={['Terrorist activities', 'Bomb making', 'Explosive devices', 'Attack planning', 'Recruitment materials']}
-                  />
-                  <ProhibitedCategory 
-                    icon="🧪" 
-                    title="Biological Weapons"
-                    items={['Bioweapons', 'Pathogen weaponization', 'Anthrax production', 'Viral enhancement', 'Disease deployment']}
-                  />
-                  <ProhibitedCategory 
-                    icon="⚗️" 
-                    title="Chemical Weapons"
-                    items={['Nerve agents', 'Toxic chemicals', 'Sarin/VX production', 'Mustard gas', 'Poisoning methods']}
-                  />
-                </div>
-                
-                <div style={{ marginTop: 20 }}>
-                  <ProhibitedCategory 
-                    icon="🧠" 
-                    title="Psychological Warfare"
-                    items={['Mind control techniques', 'Brainwashing', 'Mass manipulation', 'Psychological torture', 'Coercive control methods']}
-                  />
-                </div>
+                <p style={{ 
+                  color: '#a7f3d0', 
+                  fontSize: '0.95rem', 
+                  marginTop: 20,
+                  fontStyle: 'italic'
+                }}>
+                  InfoPilot Explorer is designed for educational, professional, and personal research 
+                  on safe, constructive, and lawful topics only.
+                </p>
               </div>
               
               <VerificationCheckbox
                 checked={understandProhibited}
                 onChange={setUnderstandProhibited}
-                icon="✋"
-                title="Prohibited Content Acknowledgment"
-                description="I have read and understand the list of prohibited content above. I acknowledge that I will NOT use InfoPilot Explorer to research, search for, collect, or distribute any information related to nuclear technology, terrorism, biological weapons, chemical weapons, psychological warfare, or any other content that could be used to cause mass harm. I understand that violations will be reported to law enforcement."
+                icon="✅"
+                title="Content Policy Agreement"
+                description="I agree to search for Officially Approved User-Friendly Content Only. I understand that no military weapons or anything else dangerous is allowed to be researched here. I will use InfoPilot Explorer responsibly for safe, constructive, and lawful purposes only."
                 testId="understand-prohibited"
               />
               
@@ -349,7 +333,7 @@ const ComprehensiveUserAgreement = ({ onAccept, onDecline }) => {
                   marginTop: 20
                 }}>
                   <p style={{ color: '#10b981', margin: 0, fontWeight: 600 }}>
-                    ✓ Prohibited content acknowledgment complete! Please proceed to the final section.
+                    ✓ Content policy acknowledged! Please proceed to the final section.
                   </p>
                 </div>
               )}
