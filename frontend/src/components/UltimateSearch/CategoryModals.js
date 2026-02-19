@@ -280,7 +280,7 @@ const EditCategoryModal = ({
               <input
                 type="number"
                 min="0"
-                max="99"
+                max="24.97"
                 step="0.01"
                 placeholder="0.00 (FREE)"
                 value={editPrice}
@@ -296,7 +296,7 @@ const EditCategoryModal = ({
               </span>
             </div>
             <p style={{ fontSize: '0.75rem', color: '#a1a1aa', margin: '8px 0 0 0' }}>
-              Set a price ($1-$99) to sell this protocol on the marketplace, or leave empty/0 for FREE.
+              Set a price ($1-$24.97 max) to sell this protocol on the marketplace, or leave empty/0 for FREE.
             </p>
           </div>
 
