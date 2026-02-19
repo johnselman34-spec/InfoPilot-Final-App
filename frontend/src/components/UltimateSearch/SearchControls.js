@@ -58,6 +58,39 @@ const SearchControls = ({
     }));
   };
   
+  // Check for prohibited content in search query
+  const [isProhibited, setIsProhibited] = useState(false);
+  
+  // Monitor search query for prohibited content
+  useEffect(() => {
+    setIsProhibited(containsProhibitedContent(searchQuery));
+  }, [searchQuery]);
+  
+  // Wrapper functions that check for prohibited content before executing
+  const safeOnSearch = () => {
+    if (containsProhibitedContent(searchQuery)) {
+      alert('🚫 SEARCH BLOCKED\n\nYour search contains prohibited content related to nuclear, terrorism, or biological/chemical/psychological warfare.\n\nThis type of research is not allowed on InfoPilot Explorer.');
+      return;
+    }
+    onSearch && onSearch();
+  };
+  
+  const safeOnAutoCategorize = () => {
+    if (containsProhibitedContent(searchQuery)) {
+      alert('🚫 SEARCH BLOCKED\n\nYour search contains prohibited content.\n\nThis type of research is not allowed.');
+      return;
+    }
+    onAutoCategorize && onAutoCategorize();
+  };
+  
+  const safeOnAISearch = () => {
+    if (containsProhibitedContent(searchQuery)) {
+      alert('🚫 SEARCH BLOCKED\n\nYour search contains prohibited content.\n\nThis type of research is not allowed.');
+      return;
+    }
+    onAISearch && onAISearch();
+  };
+  
   // Fetch available search engines on mount
   useEffect(() => {
     const fetchEngines = async () => {
@@ -76,6 +109,31 @@ const SearchControls = ({
 
   return (
     <>
+      {/* Prohibited Content Warning */}
+      {isProhibited && (
+        <div style={{
+          background: 'rgba(239, 68, 68, 0.2)',
+          border: '2px solid rgba(239, 68, 68, 0.6)',
+          borderRadius: 12,
+          padding: '15px 20px',
+          marginBottom: 15,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 15
+        }}>
+          <span style={{ fontSize: '2rem' }}>🚫</span>
+          <div>
+            <strong style={{ color: '#ef4444', fontSize: '1.1rem' }}>
+              Prohibited Content Detected
+            </strong>
+            <p style={{ color: '#fca5a5', margin: '5px 0 0 0', fontSize: '0.9rem' }}>
+              Your search contains terms related to nuclear technology, terrorism, or biological/chemical/psychological warfare. 
+              This type of research is NOT allowed on InfoPilot Explorer.
+            </p>
+          </div>
+        </div>
+      )}
+      
       {/* Search Engines Status */}
       {searchEngines && (
         <div style={{
