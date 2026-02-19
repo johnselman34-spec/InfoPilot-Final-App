@@ -1345,6 +1345,55 @@ const MapPage = ({ showToast, setCurrentPage }) => {
         </div>
       )}
 
+      {/* Advanced Analytics Dashboard with 14+ Charts */}
+      {mapResults.length > 0 && (
+        <div style={{ marginTop: 25 }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: 15 
+          }}>
+            <button
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              className="btn"
+              style={{
+                background: showAnalytics 
+                  ? 'linear-gradient(135deg, #8b5cf6, #f472b6)' 
+                  : 'rgba(139, 92, 246, 0.2)',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 20px',
+                borderRadius: 25,
+                border: '2px solid rgba(139, 92, 246, 0.5)',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                fontWeight: 600
+              }}
+            >
+              📊 {showAnalytics ? 'Hide' : 'Show'} Advanced Analytics
+              <span style={{
+                background: 'rgba(255,255,255,0.2)',
+                padding: '2px 8px',
+                borderRadius: 12,
+                fontSize: '0.75rem'
+              }}>
+                14 Charts
+              </span>
+            </button>
+          </div>
+          
+          {showAnalytics && (
+            <MapAnalyticsCharts 
+              results={mapResults} 
+              categories={categories}
+            />
+          )}
+        </div>
+      )}
+
       <p style={{ marginTop: 20, color: '#a1a1aa', fontSize: '0.85rem', textAlign: 'center' }}>
         💡 Hover over markers to preview details. Click any marker to open the article in a new tab!
       </p>
