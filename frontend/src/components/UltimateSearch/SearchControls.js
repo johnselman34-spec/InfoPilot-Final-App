@@ -109,11 +109,11 @@ const SearchControls = ({
 
   return (
     <>
-      {/* Prohibited Content Warning */}
+      {/* Content Policy Warning */}
       {isProhibited && (
         <div style={{
-          background: 'rgba(239, 68, 68, 0.2)',
-          border: '2px solid rgba(239, 68, 68, 0.6)',
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.15))',
+          border: '2px solid rgba(245, 158, 11, 0.5)',
           borderRadius: 12,
           padding: '15px 20px',
           marginBottom: 15,
@@ -121,14 +121,14 @@ const SearchControls = ({
           alignItems: 'center',
           gap: 15
         }}>
-          <span style={{ fontSize: '2rem' }}>🚫</span>
+          <span style={{ fontSize: '2rem' }}>🛡️</span>
           <div>
-            <strong style={{ color: '#ef4444', fontSize: '1.1rem' }}>
-              Prohibited Content Detected
+            <strong style={{ color: '#f59e0b', fontSize: '1.1rem' }}>
+              Content Not Permitted
             </strong>
-            <p style={{ color: '#fca5a5', margin: '5px 0 0 0', fontSize: '0.9rem' }}>
-              Your search contains terms related to nuclear technology, terrorism, or biological/chemical/psychological warfare. 
-              This type of research is NOT allowed on InfoPilot Explorer.
+            <p style={{ color: '#fcd34d', margin: '5px 0 0 0', fontSize: '0.9rem' }}>
+              InfoPilot Explorer is for Officially Approved User-Friendly Content Only. 
+              No military weapons or anything else dangerous is allowed to be researched here.
             </p>
           </div>
         </div>
