@@ -200,13 +200,12 @@ async def get_stripe_balance():
     except stripe.error.StripeError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# Premium feature pricing
+# Premium feature pricing (max $24.97 for protocols)
 PREMIUM_PRICES = {
-    "protocol_basic": {"name": "Basic Protocol", "amount": 499},  # $4.99
-    "protocol_pro": {"name": "Pro Protocol", "amount": 999},  # $9.99
-    "protocol_premium": {"name": "Premium Protocol", "amount": 1999},  # $19.99
-    "subscription_monthly": {"name": "Monthly Premium", "amount": 999},  # $9.99/month
-    "subscription_yearly": {"name": "Yearly Premium", "amount": 9999},  # $99.99/year
+    "protocol_basic": {"name": "Basic Protocol", "amount": 299},  # $2.99
+    "protocol_standard": {"name": "Standard Protocol", "amount": 799},  # $7.99
+    "protocol_pro": {"name": "Pro Protocol", "amount": 1499},  # $14.99
+    "protocol_premium": {"name": "Premium Protocol", "amount": 2497},  # $24.97 (max)
 }
 
 @router.get("/prices")
