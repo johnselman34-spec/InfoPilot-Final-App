@@ -843,6 +843,16 @@ const UltimateSearchPage = ({ showToast }) => {
         }}
       />
 
+      {/* Data Source Toggle */}
+      <div className="card" style={{ marginBottom: 15, padding: '12px 20px' }}>
+        <DataSourceToggle 
+          dataSource={dataSource}
+          setDataSource={setDataSource}
+          personalCount={dataSource === 'personal' ? mapResults.length : 0}
+          worldwideCount={dataSource === 'worldwide' ? mapResults.length : 0}
+        />
+      </div>
+
       {/* Interactive Map */}
       {showMap && (
         <div className="card" style={{ marginBottom: 20 }}>
