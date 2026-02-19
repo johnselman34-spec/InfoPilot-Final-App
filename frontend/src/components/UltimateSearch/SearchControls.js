@@ -265,6 +265,87 @@ const SearchControls = ({
         </span>
       </div>
 
+      {/* Certification Filters - NEW */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 15,
+        marginBottom: 15,
+        padding: '12px 16px',
+        background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15))',
+        borderRadius: 12,
+        border: '1px solid rgba(139, 92, 246, 0.3)',
+        flexWrap: 'wrap'
+      }}>
+        <span style={{ color: '#a78bfa', fontWeight: 600, fontSize: '0.9rem' }}>
+          🎓 Certification Filters:
+        </span>
+        
+        {[
+          { key: 'pearsonvue', label: 'PearsonVUE Certification', icon: '📜', color: '#8b5cf6' },
+          { key: 'government', label: 'Government Certification', icon: '🏛️', color: '#ef4444' },
+          { key: 'advancedDegree', label: 'Advanced Degree Information', icon: '🎓', color: '#3b82f6' }
+        ].map(filter => (
+          <label
+            key={filter.key}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 14px',
+              borderRadius: 20,
+              cursor: 'pointer',
+              background: certFilters[filter.key] 
+                ? `${filter.color}25`
+                : 'rgba(30, 20, 50, 0.5)',
+              border: certFilters[filter.key]
+                ? `2px solid ${filter.color}`
+                : '1px solid rgba(255,255,255,0.1)',
+              transition: 'all 0.2s',
+              userSelect: 'none'
+            }}
+            data-testid={`cert-filter-${filter.key}`}
+          >
+            <input
+              type="checkbox"
+              checked={certFilters[filter.key]}
+              onChange={() => toggleCertFilter(filter.key)}
+              style={{ 
+                accentColor: filter.color,
+                width: 16,
+                height: 16,
+                cursor: 'pointer'
+              }}
+            />
+            <span style={{ fontSize: '1rem' }}>{filter.icon}</span>
+            <span style={{ 
+              color: certFilters[filter.key] ? '#fff' : '#a1a1aa',
+              fontSize: '0.85rem',
+              fontWeight: certFilters[filter.key] ? 600 : 400
+            }}>
+              {filter.label}
+            </span>
+          </label>
+        ))}
+        
+        <button
+          onClick={() => setCertFilters({ pearsonvue: true, government: true, advancedDegree: true })}
+          style={{
+            background: 'rgba(16, 185, 129, 0.2)',
+            border: '1px solid rgba(16, 185, 129, 0.4)',
+            color: '#10b981',
+            padding: '6px 12px',
+            borderRadius: 8,
+            fontSize: '0.75rem',
+            cursor: 'pointer',
+            marginLeft: 'auto'
+          }}
+          data-testid="select-all-certs"
+        >
+          ✓ Select All
+        </button>
+      </div>
+
       {/* Aggregation Options */}
       <div style={{ display: 'flex', gap: 20, marginBottom: 20, alignItems: 'center', flexWrap: 'wrap' }}>
         <span style={{ color: '#a1a1aa' }}>Category Logic:</span>
@@ -309,7 +390,7 @@ const SearchControls = ({
             borderRadius: 6,
             fontSize: '0.8rem'
           }}>
-            🔍 Filtering by {selectedCategoriesCount} categor{selectedCategoriesCount > 1 ? 'ies' : 'y'} ({aggregation.toUpperCase().replace('_', '/')})
+          🔍 Filtering by {selectedCategoriesCount} categor{selectedCategoriesCount > 1 ? 'ies' : 'y'} ({aggregation.toUpperCase().replace('_', '/')})
           </span>
         )}
         
