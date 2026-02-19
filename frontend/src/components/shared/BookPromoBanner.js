@@ -489,6 +489,7 @@ const BookPromoBanner = () => {
   const { user, token } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [hideMaestroBistro, setHideMaestroBistro] = useState(false);
+  const [compactMode, setCompactMode] = useState(true); // Default to compact mode for smaller ads
   
   // Check if user is an admin who can hide ads
   const canHideAds = user?.email && ADMIN_EMAILS.map(e => e.toLowerCase()).includes(user.email.toLowerCase());
@@ -500,6 +501,10 @@ const BookPromoBanner = () => {
       if (savedPref !== null) {
         setHideMaestroBistro(savedPref === 'true');
       }
+      const savedCompact = localStorage.getItem('compactAds');
+      if (savedCompact !== null) {
+        setCompactMode(savedCompact === 'true');
+      }
     }
   }, [canHideAds, user?.email]);
   
@@ -508,6 +513,13 @@ const BookPromoBanner = () => {
     const newValue = !hideMaestroBistro;
     setHideMaestroBistro(newValue);
     localStorage.setItem('hideMaestroBistro', String(newValue));
+  };
+  
+  // Toggle compact mode
+  const toggleCompactMode = () => {
+    const newValue = !compactMode;
+    setCompactMode(newValue);
+    localStorage.setItem('compactAds', String(newValue));
   };
   
   // A/B Testing hooks for headline and CTA
