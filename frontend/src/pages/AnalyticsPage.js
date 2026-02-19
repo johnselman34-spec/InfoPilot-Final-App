@@ -1,14 +1,50 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ProtocolAnalyticsDashboard from '../components/Analytics/ProtocolAnalyticsDashboard';
-import { BookPromoBanner } from '../components/shared';
+import AdvancedAnalyticsDashboard from '../components/Analytics/AdvancedAnalyticsDashboard';
+import { API } from '../utils/api';
 
 /**
  * Analytics Page
  * Hub for all analytics features - Protocol Analytics Dashboard for creators
+ * Now includes Advanced Analytics Dashboard
  */
 const AnalyticsPage = ({ showToast }) => {
   const { user, token } = useAuth();
+  const [activeView, setActiveView] = useState('advanced');
+  const [searchResults, setSearchResults] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [mapResults, setMapResults] = useState([]);
+
+  // Fetch data for analytics
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!token) return;
+      try {
+        // Fetch categories
+        const catRes = await fetch(`${API}/categories`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (catRes.ok) {
+          const cats = await catRes.json();
+          setCategories(cats);
+        }
+        
+        // Fetch map results
+        const mapRes = await fetch(`${API}/map-results`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (mapRes.ok) {
+          const results = await mapRes.json();
+          setMapResults(results);
+          setSearchResults(results);
+        }
+      } catch (e) {
+        console.log('Analytics data fetch failed:', e);
+      }
+    };
+    fetchData();
+  }, [token]);
 
   if (!token) {
     return (
@@ -46,8 +82,55 @@ const AnalyticsPage = ({ showToast }) => {
         }}>
           📊 Analytics Hub
         </h1>
-        <p style={{ color: '#a1a1aa', fontSize: '1.1rem', margin: 0 }}>
+        <p style={{ color: '#a1a1aa', fontSize: '1.1rem', margin: '0 0 20px 0' }}>
           Track your protocol performance, views, copies, and revenue
+        </p>
+        
+        {/* View Toggle */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={() => setActiveView('advanced')}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 25,
+              border: 'none',
+              background: activeView === 'advanced' 
+                ? 'linear-gradient(135deg, #8b5cf6, #ec4899)' 
+                : 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: activeView === 'advanced' ? 600 : 400
+            }}
+          >
+            📊 Advanced Analytics
+          </button>
+          <button
+            onClick={() => setActiveView('protocol')}
+            style={{
+              padding: '10px 20px',
+              borderRadius: 25,
+              border: 'none',
+              background: activeView === 'protocol' 
+                ? 'linear-gradient(135deg, #8b5cf6, #ec4899)' 
+                : 'rgba(255,255,255,0.1)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: activeView === 'protocol' ? 600 : 400
+            }}
+          >
+            📈 Protocol Analytics
+          </button>
+        </div>
+      </div>
+
+      {/* Advanced Analytics Dashboard */}
+      {activeView === 'advanced' && (
+        <AdvancedAnalyticsDashboard 
+          searchResults={searchResults}
+          categories={categories}
+          mapResults={mapResults}
+        />
+      )}
         </p>
       </div>
 
