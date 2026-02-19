@@ -434,34 +434,37 @@ const CategoryTreeNode = ({
           )}
         </div>
 
-        {/* Price Badge */}
+        {/* Price Badge - Compact */}
         {category.price > 0 && (
           <span style={{
             background: 'linear-gradient(135deg, #10b981, #059669)',
-            padding: '2px 8px',
-            borderRadius: 10,
-            fontSize: '0.7rem',
+            padding: '2px 6px',
+            borderRadius: 8,
+            fontSize: '0.65rem',
             fontWeight: 600,
             color: '#fff',
-            marginLeft: 8,
-            flexShrink: 0
+            marginLeft: 6,
+            flexShrink: 0,
+            whiteSpace: 'nowrap'
           }}>
             ${category.price.toFixed(2)}
           </span>
         )}
 
-        {/* Public Badge */}
+        {/* Public Badge - Compact, no overlap */}
         {category.is_public && (
           <span style={{
-            background: 'rgba(59, 130, 246, 0.3)',
-            padding: '2px 6px',
-            borderRadius: 10,
-            fontSize: '0.65rem',
+            background: 'rgba(59, 130, 246, 0.25)',
+            padding: '2px 5px',
+            borderRadius: 6,
+            fontSize: '0.6rem',
             color: '#60a5fa',
-            marginLeft: 6,
-            flexShrink: 0
+            marginLeft: 4,
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
+            fontWeight: 500
           }}>
-            PUBLIC
+            PUB
           </span>
         )}
 
