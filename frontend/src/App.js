@@ -11,6 +11,7 @@ import { Toast, Sidebar, QuoteOfTheDay, BookPromoBanner } from './components/sha
 import AINewsTicker from './components/shared/AINewsTicker';
 import { LaughProvider } from './components/Gamification/LaughOMeter';
 import { FloatingEasterEggsController } from './components/Gamification/FloatingEasterEggs';
+import { InAppBrowserWarning } from './utils/facebookBrowser';
 import { 
   LoginPage, 
   RegisterPage, 
