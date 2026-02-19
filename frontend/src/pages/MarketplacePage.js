@@ -98,8 +98,16 @@ const MarketplacePage = ({ showToast }) => {
         await fetchPurchases(); 
         await fetchDashboard(); 
       }
+      setLastUpdate(new Date());
     };
     loadData();
+    
+    // Real-time updates every 30 seconds
+    const interval = setInterval(() => {
+      loadData();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, [fetchProtocols, fetchCategories, fetchPurchases, fetchDashboard, token]);
 
   useEffect(() => {
