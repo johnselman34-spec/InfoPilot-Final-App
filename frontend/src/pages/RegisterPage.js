@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
-import { UserAgreement, PrivacyStatement } from '../components/Legal';
+import { ComprehensiveUserAgreement } from '../components/Legal';
 
 const RegisterPage = ({ onSwitch }) => {
   const { register } = useAuth();
@@ -10,37 +10,33 @@ const RegisterPage = ({ onSwitch }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
-  const [showTerms, setShowTerms] = useState(null);
-  const [termsSummary, setTermsSummary] = useState('');
-
-  // Fetch terms summary on mount
-  useEffect(() => {
-    const fetchTermsSummary = async () => {
-      try {
-        const res = await fetch(`${API}/api/legal/terms-summary`);
-        if (res.ok) {
-          const data = await res.json();
-          setTermsSummary(data.summary);
-        }
-      } catch (e) {
-        // Fallback summary
-        setTermsSummary('By creating an account, you agree to our terms of service and privacy policy. We protect your data and never sell it to third parties.');
-      }
-    };
-    fetchTermsSummary();
-  }, []);
+  
+  // Agreement state - must complete comprehensive agreement first
+  const [showAgreement, setShowAgreement] = useState(true);
+  const [agreementData, setAgreementData] = useState(null);
+  
+  // Handle agreement acceptance
+  const handleAgreementAccept = (data) => {
+    setAgreementData(data);
+    setShowAgreement(false);
+  };
+  
+  // Handle agreement decline
+  const handleAgreementDecline = () => {
+    // Redirect away or show message
+    window.location.href = 'https://www.google.com';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!acceptedTerms) {
-      setError('You must accept the User Agreement and Privacy Policy to continue');
+    if (!agreementData) {
+      setError('You must accept the User Agreement to continue');
       return;
     }
     setError('');
     setLoading(true);
     try {
-      await register(email, username, password);
+      await register(email, username, password, agreementData);
     } catch (err) {
       setError(err.message);
     }
@@ -49,19 +45,50 @@ const RegisterPage = ({ onSwitch }) => {
 
   // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
   const handleGoogleLogin = () => {
+    if (!agreementData) {
+      setError('You must accept the User Agreement before signing in');
+      return;
+    }
     const redirectUrl = window.location.origin;
+    // Store agreement data in sessionStorage for after OAuth
+    sessionStorage.setItem('agreementData', JSON.stringify(agreementData));
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
+
+  // Show comprehensive agreement first
+  if (showAgreement) {
+    return (
+      <ComprehensiveUserAgreement
+        onAccept={handleAgreementAccept}
+        onDecline={handleAgreementDecline}
+      />
+    );
+  }
 
   return (
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-logo">
           <h1>InfoPilot</h1>
-          <p>Your 3D View of the Internet</p>
+          <p>World Wide Web Information Exchange</p>
         </div>
+        
+        {/* Agreement Confirmed Badge */}
+        <div style={{
+          background: 'rgba(16, 185, 129, 0.2)',
+          border: '1px solid rgba(16, 185, 129, 0.4)',
+          borderRadius: 10,
+          padding: '10px 15px',
+          marginBottom: 20,
+          textAlign: 'center'
+        }}>
+          <span style={{ color: '#10b981', fontSize: '0.85rem' }}>
+            ✓ Age 26+ Verified | ✓ Terms Accepted | ✓ Privacy Acknowledged
+          </span>
+        </div>
+        
         <form className="auth-form" onSubmit={handleSubmit}>
-          {error && <div style={{ color: '#ef4444', textAlign: 'center', fontSize: '0.9rem' }}>{error}</div>}
+          {error && <div style={{ color: '#ef4444', textAlign: 'center', fontSize: '0.9rem', marginBottom: 10 }}>{error}</div>}
           <input
             className="input-field"
             type="text"
@@ -90,61 +117,7 @@ const RegisterPage = ({ onSwitch }) => {
             data-testid="register-password-input"
           />
           
-          {/* Terms Acceptance */}
-          <div style={{ 
-            padding: 12, 
-            background: 'rgba(39, 39, 42, 0.5)', 
-            borderRadius: 8, 
-            marginBottom: 10,
-            fontSize: '0.8rem'
-          }}>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'flex-start', 
-              gap: 10, 
-              cursor: 'pointer',
-              color: '#a1a1aa'
-            }}>
-              <input
-                type="checkbox"
-                checked={acceptedTerms}
-                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                style={{ marginTop: 3, accentColor: '#8b5cf6' }}
-                data-testid="accept-terms-checkbox"
-              />
-              <span>
-                I agree to the{' '}
-                <a 
-                  href="#" 
-                  onClick={(e) => { e.preventDefault(); setShowTerms('terms'); }}
-                  style={{ color: '#8b5cf6' }}
-                >
-                  User Agreement
-                </a>
-                {' '}and{' '}
-                <a 
-                  href="#" 
-                  onClick={(e) => { e.preventDefault(); setShowTerms('privacy'); }}
-                  style={{ color: '#8b5cf6' }}
-                >
-                  Privacy Policy
-                </a>
-              </span>
-            </label>
-            {termsSummary && (
-              <p style={{ 
-                color: '#71717a', 
-                fontSize: '0.7rem', 
-                marginTop: 8, 
-                lineHeight: 1.4,
-                whiteSpace: 'pre-line'
-              }}>
-                {termsSummary}
-              </p>
-            )}
-          </div>
-          
-          <button className="btn btn-primary" type="submit" disabled={loading || !acceptedTerms} data-testid="register-submit-btn">
+          <button className="btn btn-primary" type="submit" disabled={loading} data-testid="register-submit-btn">
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
@@ -156,14 +129,6 @@ const RegisterPage = ({ onSwitch }) => {
         <div className="auth-footer">
           Already have an account? <a href="#" onClick={(e) => { e.preventDefault(); onSwitch(); }} data-testid="switch-to-login">Sign In</a>
         </div>
-        
-        {/* Legal Document Modals - Using dedicated components */}
-        {showTerms === 'terms' && (
-          <UserAgreement onClose={() => setShowTerms(null)} />
-        )}
-        {showTerms === 'privacy' && (
-          <PrivacyStatement onClose={() => setShowTerms(null)} />
-        )}
       </div>
     </div>
   );
