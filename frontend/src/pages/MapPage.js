@@ -138,12 +138,24 @@ const MapPage = ({ showToast, setCurrentPage }) => {
     return getMarkerColor(result.article_type);
   };
   
-  // Filter map results by selected categories
-  const filteredMapResults = selectedCategories.length > 0
-    ? mapResults.filter(result => 
+  // Filter map results by selected categories AND document types (instant update)
+  const filteredMapResults = React.useMemo(() => {
+    let results = mapResults;
+    
+    // Filter by category if any selected
+    if (selectedCategories.length > 0) {
+      results = results.filter(result => 
         result.categories && result.categories.some(cat => selectedCategories.includes(cat))
-      )
-    : mapResults;
+      );
+    }
+    
+    // Filter by document type
+    if (selectedDocTypes.length > 0 && selectedDocTypes.length < documentTypes.length) {
+      results = results.filter(result => selectedDocTypes.includes(result.article_type));
+    }
+    
+    return results;
+  }, [mapResults, selectedCategories, selectedDocTypes, documentTypes.length]);
 
   // Known locations for context-based geocoding
   const KNOWN_LOCATIONS = {
