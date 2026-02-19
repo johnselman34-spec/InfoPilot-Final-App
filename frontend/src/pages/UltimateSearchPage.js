@@ -1047,6 +1047,12 @@ const UltimateSearchPage = ({ showToast }) => {
             </p>
           )}
           
+          {filteredMapResults.length === 0 && mapResults.length > 0 && (
+            <p style={{ color: '#f59e0b', fontSize: '0.85rem', marginTop: 10, textAlign: 'center' }}>
+              🔍 No map results match your current filters. Try adjusting category or document type filters to see more results.
+            </p>
+          )}
+          
           {/* Document Type Filters - Beneath the Map */}
           <div style={{
             marginTop: 15,
