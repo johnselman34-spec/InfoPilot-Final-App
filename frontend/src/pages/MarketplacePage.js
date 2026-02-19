@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
-import { Icons, ProtocolCopyButtons, AISuggestions } from '../components/shared';
+import { Icons, ProtocolCopyButtons, AISuggestions, DataSourceToggle, SelectAllControls, DocumentTypeFilter, FunnyBanner } from '../components/shared';
 import ProtocolAnalyticsDashboard from '../components/Admin/ProtocolAnalyticsDashboard';
 import ProtocolBundlesSection from '../components/Marketplace/ProtocolBundlesSection';
 import BundleOfTheWeek from '../components/Marketplace/BundleOfTheWeek';
