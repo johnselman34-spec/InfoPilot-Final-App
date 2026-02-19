@@ -223,9 +223,9 @@ async def update_category(category_id: str, update: CategoryUpdate, user = Depen
     if update.is_public is not None:
         update_data["is_public"] = update.is_public
     if update.price is not None:
-        # Validate price range ($0-$24.97 max)
-        if update.price < 0 or update.price > 24.97:
-            raise HTTPException(status_code=400, detail="Price must be between $0 and $24.97")
+        # Validate price range ($0.20-$24.97, or $0 for FREE)
+        if update.price != 0 and (update.price < 0.20 or update.price > 24.97):
+            raise HTTPException(status_code=400, detail="Price must be FREE ($0) or between $0.20 and $24.97")
         update_data["price"] = update.price
     
     # Handle parent_id update for hierarchy changes
