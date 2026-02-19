@@ -327,6 +327,97 @@ export const WorldWideMap = ({ protocols, categories, selectedCategories, onSele
           }
         `}</style>
       </div>
+      
+      {/* Right side panel - Marketplace Statistics */}
+      <div style={{ 
+        flex: 1, 
+        background: 'linear-gradient(135deg, rgba(30, 20, 50, 0.8), rgba(15, 10, 35, 0.9))',
+        borderRadius: 12,
+        border: '1px solid rgba(124, 58, 237, 0.3)',
+        padding: 15,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        height: 280,
+        overflowY: 'auto'
+      }}>
+        <h4 style={{ color: '#a78bfa', margin: 0, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+          📊 Marketplace Stats
+        </h4>
+        
+        {/* Quick Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div style={{ 
+            background: 'rgba(16, 185, 129, 0.15)', 
+            borderRadius: 8, 
+            padding: 10,
+            border: '1px solid rgba(16, 185, 129, 0.3)'
+          }}>
+            <div style={{ color: '#10b981', fontSize: '1.25rem', fontWeight: 700 }}>{filteredProtocols.length}</div>
+            <div style={{ color: '#71717a', fontSize: '0.7rem' }}>Protocols</div>
+          </div>
+          <div style={{ 
+            background: 'rgba(59, 130, 246, 0.15)', 
+            borderRadius: 8, 
+            padding: 10,
+            border: '1px solid rgba(59, 130, 246, 0.3)'
+          }}>
+            <div style={{ color: '#3b82f6', fontSize: '1.25rem', fontWeight: 700 }}>{categories.length}</div>
+            <div style={{ color: '#71717a', fontSize: '0.7rem' }}>Categories</div>
+          </div>
+          <div style={{ 
+            background: 'rgba(236, 72, 153, 0.15)', 
+            borderRadius: 8, 
+            padding: 10,
+            border: '1px solid rgba(236, 72, 153, 0.3)'
+          }}>
+            <div style={{ color: '#ec4899', fontSize: '1.25rem', fontWeight: 700 }}>{selectedCategories.length}</div>
+            <div style={{ color: '#71717a', fontSize: '0.7rem' }}>Selected</div>
+          </div>
+          <div style={{ 
+            background: 'rgba(245, 158, 11, 0.15)', 
+            borderRadius: 8, 
+            padding: 10,
+            border: '1px solid rgba(245, 158, 11, 0.3)'
+          }}>
+            <div style={{ color: '#f59e0b', fontSize: '1.25rem', fontWeight: 700 }}>
+              {filteredProtocols.filter(p => p.price === 0).length}
+            </div>
+            <div style={{ color: '#71717a', fontSize: '0.7rem' }}>Free</div>
+          </div>
+        </div>
+        
+        {/* Active Filters */}
+        <div style={{ 
+          background: 'rgba(124, 58, 237, 0.1)', 
+          borderRadius: 8, 
+          padding: 10,
+          border: '1px solid rgba(124, 58, 237, 0.2)'
+        }}>
+          <div style={{ color: '#a78bfa', fontSize: '0.8rem', fontWeight: 600, marginBottom: 4 }}>
+            {selectedCategories.length > 0 ? '🎯 Filters Active' : '📋 All Protocols'}
+          </div>
+          <div style={{ color: '#71717a', fontSize: '0.7rem' }}>
+            {selectedCategories.length > 0 
+              ? `${selectedCategories.length} categories selected`
+              : 'No category filter applied'}
+          </div>
+        </div>
+        
+        {/* Free Banner */}
+        <div style={{ 
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2))', 
+          borderRadius: 8, 
+          padding: 10,
+          border: '1px solid rgba(16, 185, 129, 0.3)',
+          marginTop: 'auto'
+        }}>
+          <div style={{ color: '#10b981', fontSize: '0.8rem', fontWeight: 600, textAlign: 'center' }}>
+            🆓 100% FREE to Browse!
+          </div>
+        </div>
+      </div>
+      </div>
     </div>
   );
 };
