@@ -1165,6 +1165,98 @@ const MapPage = ({ showToast, setCurrentPage }) => {
               </div>
             )}
           </div>
+          
+          {/* Right side panel - Map Statistics */}
+          <div style={{ 
+            flex: 1, 
+            background: 'linear-gradient(135deg, rgba(30, 20, 50, 0.8), rgba(15, 10, 35, 0.9))',
+            borderRadius: 12,
+            border: '1px solid rgba(124, 58, 237, 0.3)',
+            padding: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 15,
+            maxHeight: 450,
+            overflowY: 'auto'
+          }}>
+            <h4 style={{ color: '#a78bfa', margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+              📊 Map Statistics
+            </h4>
+            
+            {/* Quick Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div style={{ 
+                background: 'rgba(16, 185, 129, 0.15)', 
+                borderRadius: 8, 
+                padding: 12,
+                border: '1px solid rgba(16, 185, 129, 0.3)'
+              }}>
+                <div style={{ color: '#10b981', fontSize: '1.5rem', fontWeight: 700 }}>{filteredMapResults.length}</div>
+                <div style={{ color: '#71717a', fontSize: '0.75rem' }}>Mapped Results</div>
+              </div>
+              <div style={{ 
+                background: 'rgba(59, 130, 246, 0.15)', 
+                borderRadius: 8, 
+                padding: 12,
+                border: '1px solid rgba(59, 130, 246, 0.3)'
+              }}>
+                <div style={{ color: '#3b82f6', fontSize: '1.5rem', fontWeight: 700 }}>{categories.length}</div>
+                <div style={{ color: '#71717a', fontSize: '0.75rem' }}>Categories</div>
+              </div>
+              <div style={{ 
+                background: 'rgba(236, 72, 153, 0.15)', 
+                borderRadius: 8, 
+                padding: 12,
+                border: '1px solid rgba(236, 72, 153, 0.3)'
+              }}>
+                <div style={{ color: '#ec4899', fontSize: '1.5rem', fontWeight: 700 }}>{selectedCategories.length}</div>
+                <div style={{ color: '#71717a', fontSize: '0.75rem' }}>Selected Filters</div>
+              </div>
+              <div style={{ 
+                background: 'rgba(245, 158, 11, 0.15)', 
+                borderRadius: 8, 
+                padding: 12,
+                border: '1px solid rgba(245, 158, 11, 0.3)'
+              }}>
+                <div style={{ color: '#f59e0b', fontSize: '1.5rem', fontWeight: 700 }}>
+                  {selectedDocTypes.length}/{documentTypes.length}
+                </div>
+                <div style={{ color: '#71717a', fontSize: '0.75rem' }}>Doc Types</div>
+              </div>
+            </div>
+            
+            {/* Data Source Info */}
+            <div style={{ 
+              background: 'rgba(124, 58, 237, 0.1)', 
+              borderRadius: 8, 
+              padding: 12,
+              border: '1px solid rgba(124, 58, 237, 0.2)'
+            }}>
+              <div style={{ color: '#a78bfa', fontSize: '0.85rem', fontWeight: 600, marginBottom: 5 }}>
+                {dataSource === 'worldwide' ? '🌍 Worldwide Data' : '👤 Personal Data'}
+              </div>
+              <div style={{ color: '#71717a', fontSize: '0.75rem' }}>
+                {dataSource === 'worldwide' 
+                  ? 'Showing results from all public sources'
+                  : 'Showing only your collated results'}
+              </div>
+            </div>
+            
+            {/* Last Update */}
+            {lastUpdate && (
+              <div style={{ 
+                color: '#71717a', 
+                fontSize: '0.7rem', 
+                textAlign: 'center',
+                marginTop: 'auto',
+                paddingTop: 10,
+                borderTop: '1px solid rgba(255,255,255,0.1)'
+              }}>
+                Last updated: {lastUpdate.toLocaleTimeString()}
+              </div>
+            )}
+          </div>
+          </div>
 
           {/* Category Filtered Results - Shows at bottom-center when categories are selected */}
           {selectedCategories.length > 0 && (
