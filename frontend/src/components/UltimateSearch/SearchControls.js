@@ -69,7 +69,7 @@ const SearchControls = ({
   // Wrapper functions that check for prohibited content before executing
   const safeOnSearch = () => {
     if (containsProhibitedContent(searchQuery)) {
-      alert('🚫 SEARCH BLOCKED\n\nYour search contains prohibited content related to nuclear, terrorism, or biological/chemical/psychological warfare.\n\nThis type of research is not allowed on InfoPilot Explorer.');
+      alert('🛡️ Content Not Permitted\n\nInfoPilot Explorer is for Officially Approved User-Friendly Content Only.\n\nNo military weapons or anything else dangerous is allowed to be researched here.');
       return;
     }
     onSearch && onSearch();
@@ -77,7 +77,7 @@ const SearchControls = ({
   
   const safeOnAutoCategorize = () => {
     if (containsProhibitedContent(searchQuery)) {
-      alert('🚫 SEARCH BLOCKED\n\nYour search contains prohibited content.\n\nThis type of research is not allowed.');
+      alert('🛡️ Content Not Permitted\n\nInfoPilot Explorer is for Officially Approved User-Friendly Content Only.');
       return;
     }
     onAutoCategorize && onAutoCategorize();
@@ -85,7 +85,7 @@ const SearchControls = ({
   
   const safeOnAISearch = () => {
     if (containsProhibitedContent(searchQuery)) {
-      alert('🚫 SEARCH BLOCKED\n\nYour search contains prohibited content.\n\nThis type of research is not allowed.');
+      alert('🛡️ Content Not Permitted\n\nInfoPilot Explorer is for Officially Approved User-Friendly Content Only.');
       return;
     }
     onAISearch && onAISearch();
