@@ -80,7 +80,7 @@ class MarketplaceProtocolCreate(BaseModel):
     name: str
     description: str
     protocol: str
-    price: float = Field(ge=0.0, le=99.99)  # Allow FREE ($0.00) protocols!
+    price: float = Field(ge=0.0, le=24.97)  # FREE ($0.00) or $0.20-$24.97
     category: str = "General"
     tags: List[str] = []
     preview_results: int = 3  # Number of sample results to show
