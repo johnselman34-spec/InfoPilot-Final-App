@@ -279,7 +279,7 @@ const EditCategoryModal = ({
               <span style={{ color: '#f59e0b', fontSize: '1.2rem' }}>$</span>
               <input
                 type="number"
-                min="0"
+                min="0.20"
                 max="24.97"
                 step="0.01"
                 placeholder="0.00 (FREE)"
@@ -291,12 +291,14 @@ const EditCategoryModal = ({
               />
               <span style={{ color: '#a1a1aa', fontSize: '0.8rem' }}>
                 {editPrice && parseFloat(editPrice) > 0 
-                  ? `Will sell for $${parseFloat(editPrice).toFixed(2)}` 
+                  ? (parseFloat(editPrice) < 0.20 
+                      ? '⚠️ Min $0.20' 
+                      : `Will sell for $${parseFloat(editPrice).toFixed(2)}`)
                   : 'FREE to copy'}
               </span>
             </div>
             <p style={{ fontSize: '0.75rem', color: '#a1a1aa', margin: '8px 0 0 0' }}>
-              Set a price ($1-$24.97 max) to sell this protocol on the marketplace, or leave empty/0 for FREE.
+              Set a price ($0.20-$24.97) to sell this protocol on the marketplace, or leave empty/0 for FREE.
             </p>
           </div>
 
