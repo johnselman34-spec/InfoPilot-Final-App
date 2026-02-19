@@ -915,7 +915,25 @@ const UltimateSearchPage = ({ showToast }) => {
               <h4 style={{ color: '#a78bfa', margin: 0, fontSize: '0.95rem' }}>
                 📄 Filter by Document Type
               </h4>
-              {selectedDocTypes.length > 0 && (
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => { 
+                    setSelectedDocTypes(documentTypes.map(dt => dt.id)); 
+                    setShowFilteredResults(true); 
+                  }}
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.2)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    color: '#10b981',
+                    padding: '4px 12px',
+                    borderRadius: 6,
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                  data-testid="select-all-doctypes"
+                >
+                  ✓ Select All
+                </button>
                 <button
                   onClick={() => { setSelectedDocTypes([]); setShowFilteredResults(false); }}
                   style={{
@@ -927,10 +945,11 @@ const UltimateSearchPage = ({ showToast }) => {
                     fontSize: '0.75rem',
                     cursor: 'pointer'
                   }}
+                  data-testid="deselect-all-doctypes"
                 >
-                  Clear ({selectedDocTypes.length})
+                  ✗ Deselect All
                 </button>
-              )}
+              </div>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {documentTypes.map(docType => (
