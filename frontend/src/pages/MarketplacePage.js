@@ -47,10 +47,34 @@ const MarketplacePage = ({ showToast }) => {
   // Real-time update interval
   const [lastUpdate, setLastUpdate] = useState(new Date());
   
-  // Document type filter
-  const [selectedDocTypes, setSelectedDocTypes] = useState([
-    'news', 'webpage', 'blog', 'research', 'video', 'pdf', 'social'
-  ]);
+  // Document type definitions
+  const documentTypes = [
+    { id: 'PhD Informative', name: 'PhD Informative', color: '#8b5cf6' },
+    { id: 'Personal Report (Organic)', name: 'Personal Report (Organic)', color: '#10b981' },
+    { id: 'Personal Report (Collected)', name: 'Personal Report (Collected)', color: '#14b8a6' },
+    { id: 'News Article', name: 'News Article', color: '#3b82f6' },
+    { id: 'Academic Paper', name: 'Academic Paper', color: '#6366f1' },
+    { id: 'Government', name: 'Government', color: '#ef4444' },
+    { id: 'Wiki', name: 'Wiki', color: '#f59e0b' },
+    { id: 'Blog Post', name: 'Blog Post', color: '#ec4899' },
+    { id: 'Forum', name: 'Forum', color: '#06b6d4' },
+    { id: 'Video', name: 'Video', color: '#f472b6' },
+    { id: 'PDF Document', name: 'PDF Document', color: '#dc2626' },
+    { id: 'MS Word Document', name: 'MS Word Document', color: '#2563eb' },
+    { id: 'Webpage', name: 'Webpage', color: '#6b7280' }
+  ];
+  
+  // Document type filter - ALL SELECTED BY DEFAULT
+  const [selectedDocTypes, setSelectedDocTypes] = useState(
+    documentTypes.map(dt => dt.id)
+  );
+  
+  // Certification filters - ALL SELECTED BY DEFAULT
+  const [certificationFilters, setCertificationFilters] = useState({
+    pearsonvue: true,
+    government: true,
+    advancedDegree: true
+  });
 
   // Fetch functions
   const fetchProtocols = useCallback(async () => {
