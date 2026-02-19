@@ -894,8 +894,9 @@ const UltimateSearchPage = ({ showToast }) => {
             <h3 style={{ color: '#f472b6', margin: 0 }}>
               🗺️ Results Map 
               <span style={{ fontSize: '0.85rem', color: '#a1a1aa', fontWeight: 'normal', marginLeft: 10 }}>
-                {mapResults.length} location{mapResults.length !== 1 ? 's' : ''} plotted
-                {filterInfo.filter_applied && ` (${filterInfo.aggregation_mode.toUpperCase().replace('_', '/')} filter active)`}
+                {filteredMapResults.length} location{filteredMapResults.length !== 1 ? 's' : ''} plotted
+                {mapResults.length !== filteredMapResults.length && ` (${mapResults.length} total)`}
+                {filterInfo.filter_applied && ` • ${filterInfo.aggregation_mode.toUpperCase().replace('_', '/')} mode`}
               </span>
             </h3>
             {selectedCategories.length > 0 && (
