@@ -169,6 +169,40 @@ const UltimateSearchPage = ({ showToast }) => {
     return results;
   }, [searchResults, selectedCategories, selectedDocTypes, categories, aggregation, minQualityScore]);
   
+  // Filtered map results - applies both location filter AND category/doctype filters
+  const filteredMapResults = useMemo(() => {
+    let results = mapResults;
+    
+    // Filter by selected categories
+    if (selectedCategories.length > 0) {
+      const selectedCatNames = categories
+        .filter(c => selectedCategories.includes(c.id))
+        .map(c => c.name);
+      
+      if (aggregation === 'and') {
+        results = results.filter(r => 
+          selectedCatNames.every(catName => r.categories?.includes(catName))
+        );
+      } else {
+        results = results.filter(r => 
+          selectedCatNames.some(catName => r.categories?.includes(catName))
+        );
+      }
+    }
+    
+    // Filter by selected document types
+    if (selectedDocTypes.length > 0) {
+      results = results.filter(r => selectedDocTypes.includes(r.article_type));
+    }
+    
+    // Filter by minimum quality score
+    if (minQualityScore > 0) {
+      results = results.filter(r => (r.content_quality_score || 50) >= minQualityScore);
+    }
+    
+    return results;
+  }, [mapResults, selectedCategories, selectedDocTypes, categories, aggregation, minQualityScore]);
+  
   // Toggle document type selection
   const toggleDocType = (docType) => {
     setSelectedDocTypes(prev => 
