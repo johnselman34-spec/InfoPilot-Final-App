@@ -812,6 +812,8 @@ const UltimateSearchPage = ({ showToast }) => {
           showTemplates={showTemplates}
           setShowTemplates={setShowTemplates}
           filterInfo={filterInfo}
+          certificationFilters={certificationFilters}
+          setCertificationFilters={setCertificationFilters}
         />
 
         {/* Smart Search Suggestions - AI-powered */}
