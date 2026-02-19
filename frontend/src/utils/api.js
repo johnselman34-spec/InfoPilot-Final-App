@@ -28,9 +28,9 @@ export const containsProhibitedContent = (query) => {
 // Get blocked message for prohibited content
 export const getProhibitedContentMessage = () => {
   return {
-    title: '🚫 Search Blocked',
-    message: 'Your search contains terms related to prohibited content (nuclear, terrorism, biological/chemical/psychological warfare). This type of research is not allowed on InfoPilot Explorer.',
-    type: 'error'
+    title: '🛡️ Content Not Permitted',
+    message: 'InfoPilot Explorer is for Officially Approved User-Friendly Content Only. No military weapons or anything else dangerous is allowed to be researched here.',
+    type: 'warning'
   };
 };
 
