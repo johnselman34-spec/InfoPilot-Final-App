@@ -560,6 +560,69 @@ const BookPromoBanner = () => {
     // Conversion is tracked when user actually purchases (external)
   };
 
+  // Compact mode renders a much smaller banner
+  if (compactMode) {
+    return (
+      <div data-testid="book-promo-banner-compact" style={{
+        background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(236, 72, 153, 0.15))',
+        borderRadius: 12,
+        padding: '10px 15px',
+        marginBottom: 15,
+        border: '1px solid rgba(236, 72, 153, 0.4)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 10
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+          <span style={{ fontSize: '1.5rem' }}>📚</span>
+          <div>
+            <div style={{ color: '#f472b6', fontWeight: 700, fontSize: '0.9rem' }}>
+              Letters to Evelyn - $2.99
+            </div>
+            <div style={{ color: '#a1a1aa', fontSize: '0.75rem' }}>
+              19 Five-Star Reviews • Optioned for Film
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <a
+            href="https://amzn.to/4iOMnYi"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: '6px 14px',
+              background: 'linear-gradient(135deg, #ec4899, #f97316)',
+              color: '#fff',
+              borderRadius: 15,
+              textDecoration: 'none',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Get Book
+          </a>
+          <button
+            onClick={toggleCompactMode}
+            style={{
+              background: 'rgba(124, 58, 237, 0.2)',
+              border: '1px solid rgba(124, 58, 237, 0.4)',
+              color: '#a78bfa',
+              padding: '4px 8px',
+              borderRadius: 6,
+              fontSize: '0.7rem',
+              cursor: 'pointer'
+            }}
+          >
+            Expand
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div data-testid="book-promo-banner" style={{
       background: 'linear-gradient(135deg, rgba(20, 10, 40, 0.98), rgba(80, 20, 100, 0.95))',
@@ -568,8 +631,30 @@ const BookPromoBanner = () => {
       marginBottom: 25,
       border: '3px solid rgba(236, 72, 153, 0.7)',
       overflow: 'hidden',
-      boxShadow: '0 25px 80px rgba(124, 58, 237, 0.5)'
+      boxShadow: '0 25px 80px rgba(124, 58, 237, 0.5)',
+      position: 'relative'
     }}>
+      {/* Compact mode button */}
+      <button
+        onClick={toggleCompactMode}
+        style={{
+          position: 'absolute',
+          top: 8,
+          right: 8,
+          background: 'rgba(0,0,0,0.5)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          color: '#a1a1aa',
+          padding: '4px 10px',
+          borderRadius: 15,
+          fontSize: '0.7rem',
+          cursor: 'pointer',
+          zIndex: 10
+        }}
+        title="Minimize advertisement"
+      >
+        ─ Hide
+      </button>
+      
       {/* Top Pilot Enterprises Banner */}
       <TopPilotBanner />
       
