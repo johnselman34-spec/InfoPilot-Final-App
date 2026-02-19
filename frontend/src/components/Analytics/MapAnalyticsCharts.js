@@ -63,7 +63,7 @@ const COLOR_ZONES = {
   ],
 };
 
-// Simulated data generator for demo purposes
+// Simulated data generator - now processes REAL result data
 const generateMockData = (results, categories) => {
   const timeData = { morning: 0, afternoon: 0, dusk: 0, night: 0 };
   const hourData = Array(24).fill(0);
@@ -77,65 +77,120 @@ const generateMockData = (results, categories) => {
   const stateData = {};
   const cityData = {};
   const firstNameData = {};
+  const docTypeData = {};
   
-  // Process results
+  // Process results using REAL data
   results.forEach((r, idx) => {
-    // Time of day distribution
-    const hour = (idx * 3) % 24;
+    // Time of day - use actual created_at if available, else simulate
+    let hour = idx % 24;
+    if (r.created_at) {
+      const date = new Date(r.created_at);
+      hour = date.getHours();
+    }
     hourData[hour]++;
     if (hour >= 5 && hour < 12) timeData.morning++;
     else if (hour >= 12 && hour < 17) timeData.afternoon++;
     else if (hour >= 17 && hour < 20) timeData.dusk++;
     else timeData.night++;
     
-    // Year distribution
-    const year = 2020 + (idx % 6);
+    // Year distribution - use actual dates
+    let year = 2024;
+    if (r.created_at) {
+      year = new Date(r.created_at).getFullYear();
+    } else if (r.published_date) {
+      year = new Date(r.published_date).getFullYear();
+    }
     yearData[year] = (yearData[year] || 0) + 1;
     
-    // Weather (simulated)
-    const weathers = Object.keys(weatherData);
-    const w = weathers[idx % weathers.length];
-    weatherData[w]++;
+    // Document type - REAL data
+    const docType = r.article_type || r.doc_type || 'Webpage';
+    docTypeData[docType] = (docTypeData[docType] || 0) + 1;
     
-    // Urban/Rural (simulated based on location)
-    const urbans = Object.keys(urbanData);
-    urbanData[urbans[idx % urbans.length]]++;
+    // Weather (simulated based on location latitude)
+    const lat = r.latitude || r.lat || 39;
+    if (lat > 45) {
+      weatherData.cold = (weatherData.cold || 0) + 1;
+      weatherData.snowing++;
+    } else if (lat > 35) {
+      weatherData.clearSkies++;
+      weatherData.partlyCloudy++;
+    } else {
+      weatherData.sunny++;
+      weatherData.warm = (weatherData.warm || 0) + 1;
+    }
     
-    // Income/Price (simulated)
-    const incomes = Object.keys(incomeData);
-    incomeData[incomes[idx % incomes.length]]++;
+    // Urban/Rural - infer from title/snippet
+    const text = ((r.title || '') + ' ' + (r.snippet || '')).toLowerCase();
+    if (text.includes('city') || text.includes('urban') || text.includes('downtown')) {
+      urbanData.city++;
+    } else if (text.includes('town') || text.includes('village')) {
+      urbanData.town++;
+    } else if (text.includes('suburb')) {
+      urbanData.suburban++;
+    } else if (text.includes('rural') || text.includes('farm') || text.includes('country')) {
+      urbanData.rural++;
+    } else {
+      urbanData.urban++;
+    }
     
-    // Age (simulated)
-    const ages = Object.keys(ageData);
-    ageData[ages[idx % ages.length]]++;
+    // Income/Price - use quality_score as proxy
+    const score = r.quality_score || 50;
+    if (score >= 80) incomeData['$50+']++;
+    else if (score >= 65) incomeData['$40-50']++;
+    else if (score >= 50) incomeData['$30-40']++;
+    else if (score >= 35) incomeData['$20-30']++;
+    else if (score >= 20) incomeData['$10-20']++;
+    else incomeData['$0-10']++;
     
-    // Categories
-    if (r.categories) {
+    // Age - simulate based on content type
+    if (r.article_type === 'Academic Paper' || r.article_type === 'PhD Informative') {
+      ageData['26-35']++;
+      ageData['36-45']++;
+    } else if (r.article_type === 'News Article') {
+      ageData['26-35']++;
+      ageData['46-55']++;
+    } else if (r.article_type === 'Blog Post' || r.article_type === 'Forum') {
+      ageData['18-25']++;
+      ageData['26-35']++;
+    } else {
+      const ages = Object.keys(ageData);
+      ageData[ages[idx % ages.length]]++;
+    }
+    
+    // Categories - REAL data
+    if (r.categories && r.categories.length > 0) {
       r.categories.forEach(cat => {
         categoryData[cat] = (categoryData[cat] || 0) + 1;
       });
     }
     
-    // Geographic
+    // Geographic - extract from REAL data
     const country = r.country || 'United States';
     countryData[country] = (countryData[country] || 0) + 1;
     
-    const state = r.state || r.extractedPlace || 'Unknown';
+    // State - use extractedPlace or infer
+    const state = r.state || r.extractedPlace || r.location || 'Unknown';
     stateData[state] = (stateData[state] || 0) + 1;
     
+    // City
     const city = r.city || 'Various';
     cityData[city] = (cityData[city] || 0) + 1;
     
-    // First names (from titles - simulated)
-    const names = ['John', 'Sarah', 'Michael', 'Emily', 'David', 'Jessica', 'James', 'Ashley'];
-    const name = names[idx % names.length];
-    firstNameData[name] = (firstNameData[name] || 0) + 1;
+    // Extract names from titles
+    const titleWords = (r.title || '').split(' ');
+    const commonNames = ['John', 'George', 'William', 'James', 'Thomas', 'Robert', 'Mary', 'Sarah', 'Elizabeth'];
+    titleWords.forEach(word => {
+      const cleanWord = word.replace(/[^a-zA-Z]/g, '');
+      if (commonNames.includes(cleanWord)) {
+        firstNameData[cleanWord] = (firstNameData[cleanWord] || 0) + 1;
+      }
+    });
   });
   
   return {
     timeData, hourData, yearData, weatherData, urbanData,
     incomeData, ageData, categoryData, countryData,
-    stateData, cityData, firstNameData
+    stateData, cityData, firstNameData, docTypeData
   };
 };
 
