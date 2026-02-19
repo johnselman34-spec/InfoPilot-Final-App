@@ -335,9 +335,18 @@ const RewardPopup = ({ reward, onClose }) => {
         {/* Copy button for protocols */}
         {reward.type === 'protocol' && (
           <button
-            onClick={() => {
-              navigator.clipboard.writeText(reward.content);
-              // Show mini toast
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(reward.content);
+                // Visual feedback
+                const btn = document.activeElement;
+                if (btn) {
+                  btn.textContent = '✅ Copied!';
+                  setTimeout(() => { btn.textContent = '📋 Copy Protocol to Clipboard'; }, 2000);
+                }
+              } catch (e) {
+                console.error('Copy failed:', e);
+              }
             }}
             style={{
               display: 'block',
@@ -352,6 +361,7 @@ const RewardPopup = ({ reward, onClose }) => {
               fontSize: '1rem',
               marginBottom: 15,
             }}
+            data-testid="easter-egg-copy-protocol"
           >
             📋 Copy Protocol to Clipboard
           </button>
