@@ -8,66 +8,77 @@ Last Updated: February 2026
 
 ## Pricing Model
 - **App is FREE to use** (except marketplace protocol purchases)
-- **Maximum protocol price: $24.97**
+- **Protocol Price Range: $0 (FREE) or $0.20 - $24.97**
 
 ## What's Been Implemented
 
-### Latest Session (February 2026)
+### Latest Session - P0 Bug Fixes (February 19, 2026)
 
-#### Free App Model ✅
-- All features free except marketplace protocol purchases
-- No subscription requirements
-- All pages accessible without payment
+#### P0-1: Minimum Price Validation Added ✅
+- Price range now enforced: $0 (FREE) or $0.20-$24.97
+- Backend validation in categories.py line 226-228
+- Frontend input updated with min="0.20" and warning message
+- Backend rejects prices < $0.20 (except $0) or > $24.97
 
-#### Price Validation Updated ✅
+#### P0-2: Edit Category Modal Text Selection Fixed ✅
+- Modal no longer closes when selecting/highlighting text
+- Uses isTextSelecting state and getSelection() check
+- Improved onMouseDown, onMouseMove, onMouseUp handlers
+- Fix in CategoryModals.js lines 109-160
+
+#### P0-3: Category Filtering Verified ✅
+- Select All / Deselect All buttons working
+- Individual category checkbox toggles work correctly
+- 18 categories load for admin user
+- Filtered results section displays when filters active
+
+### Previous Session Features
+- Free App Model (all features free except marketplace)
 - Maximum protocol price: $24.97
-- Validation in backend (categories.py) and frontend (CategoryModals.js)
-- Backend rejects prices > $24.97
-
-#### News Refresh Button Fixed ✅
-- Shows loading state ("⏳ Refreshing...")
-- Returns 10 AI-powered articles from GPT-5.2
-- Topics: Technology, Science, Business, Health, Politics, Environment, Space, Finance, Education, Sports
-
-#### Stripe Pricing Updated ✅
-| Product | Price |
-|---------|-------|
-| Basic Protocol | $2.99 |
-| Standard Protocol | $7.99 |
-| Pro Protocol | $14.99 |
-| Premium Protocol | $24.97 (max) |
-
-### Previous Features
+- News Refresh Button with loading state
+- Stripe Pricing Updated (Basic $2.99, Standard $7.99, Pro $14.99, Premium $24.97)
 - Stripe Payment Integration
 - Map Analytics Dashboard (14+ charts)
 - Data Controls Components
 - Real-time Updates (30s interval)
-- Funny Messages throughout app
 
-## Test Results
+## Test Results (Iteration 90)
 ### Backend: 100% (15/15 tests passed)
-- AI News: 10 articles, ai_powered=true ✅
+- Price validation: Rejects < $0.20 ✅
+- Price validation: Accepts $0 (FREE) ✅
+- Price validation: Accepts $0.20-$24.97 ✅
 - Price validation: Rejects > $24.97 ✅
-- Price validation: Accepts $0-$24.97 ✅
-- Stripe prices: 4 tiers, max $24.97 ✅
 
 ### Frontend: 100%
-- News refresh button with loading state ✅
-- All pages accessible free ✅
+- Edit modal stays open during text selection ✅
+- Category filtering with Select All/Deselect All ✅
+- Category checkbox toggles work ✅
 
-## File Changes
+## File Changes This Session
 ```
-/app/backend/routes/categories.py - Price validation $0-$24.97
-/app/backend/routes/stripe_payments.py - Updated pricing tiers
-/app/frontend/src/components/shared/AINewsTicker.js - Refresh loading state
-/app/frontend/src/components/UltimateSearch/CategoryModals.js - Price max $24.97
+/app/backend/routes/categories.py - Added min price validation ($0.20 minimum)
+/app/backend/models/schemas.py - Updated MarketplaceProtocolCreate max to $24.97
+/app/frontend/src/components/UltimateSearch/CategoryModals.js - Fixed modal close on text select, updated price input
 ```
 
 ## Credentials
 - Admin: jjspilot24@gmail.com / InfoPilot2024!
 - Test User: testuser@example.com / password123
 
-## Next Tasks
-1. In-App Browser for external links
-2. Integrate DataSourceToggle across all pages
-3. Add DocumentTypeFilter to all pages
+## Pending Issues (P1-P2)
+1. **P1:** "Public/Private" stickers overlap content on multiple screens
+2. **P1:** "Copy Protocol" function on Easter Egg windows not working correctly
+3. **P1:** Make advertisements smaller across the app
+4. **P2:** Facebook in-app browser compatibility issues
+
+## Upcoming Tasks (P0-P1)
+1. **P0:** Implement Data Source Toggle ("Personal" vs "Worldwide") on UltimateSearchPage
+2. **P0:** Add "Select All/Deselect All" to Document Type filter checkboxes
+3. **P1:** Add Statistics areas to UltimateSearchPage and MarketplacePage
+4. **P1:** Connect MapAnalyticsCharts to live data (currently mocked)
+
+## Future Tasks
+- In-App Browser for external links
+- Full Frontend Linting Cleanup (140+ warnings)
+- Bing Search Integration (pending API key)
+- Price Comparison Chart
