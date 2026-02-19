@@ -131,16 +131,11 @@ const AnalyticsPage = ({ showToast }) => {
           mapResults={mapResults}
         />
       )}
-        </p>
-      </div>
 
       {/* Protocol Analytics Dashboard */}
-      <ProtocolAnalyticsDashboard showToast={showToast} />
-
-      {/* Book Promo */}
-      <div style={{ marginTop: 30 }}>
-        <BookPromoBanner variant="compact" />
-      </div>
+      {activeView === 'protocol' && (
+        <ProtocolAnalyticsDashboard showToast={showToast} />
+      )}
     </div>
   );
 };
