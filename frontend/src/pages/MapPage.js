@@ -38,6 +38,9 @@ const MapPage = ({ showToast, setCurrentPage }) => {
   // Data source toggle: 'worldwide' or 'personal'
   const [dataSource, setDataSource] = useState('worldwide');
   
+  // Analytics charts toggle
+  const [showAnalytics, setShowAnalytics] = useState(true);
+  
   // Category filtering state
   const [categories, setCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
