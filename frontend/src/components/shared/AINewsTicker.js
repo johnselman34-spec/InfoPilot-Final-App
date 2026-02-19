@@ -295,20 +295,25 @@ const AINewsTicker = ({ compact = false }) => {
             marginTop: 10
           }}>
             <button
-              onClick={fetchNews}
+              onClick={handleRefresh}
+              disabled={refreshing}
               style={{
-                background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                background: refreshing 
+                  ? 'rgba(124, 58, 237, 0.5)' 
+                  : 'linear-gradient(135deg, #7c3aed, #ec4899)',
                 border: 'none',
                 borderRadius: 20,
                 padding: '8px 20px',
                 color: '#fff',
                 fontWeight: 600,
-                cursor: 'pointer',
-                fontSize: '0.8rem'
+                cursor: refreshing ? 'wait' : 'pointer',
+                fontSize: '0.8rem',
+                transition: 'all 0.3s',
+                opacity: refreshing ? 0.7 : 1
               }}
               data-testid="refresh-news-btn"
             >
-              🔄 Refresh Headlines
+              {refreshing ? '⏳ Refreshing...' : '🔄 Refresh Headlines'}
             </button>
             <p style={{ 
               color: mutedColor, 
