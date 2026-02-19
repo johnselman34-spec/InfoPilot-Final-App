@@ -75,14 +75,7 @@ const UltimateSearchPage = ({ showToast }) => {
   const [mapZoom] = useState(4);
   const [filterInfo, setFilterInfo] = useState({ filter_applied: false, aggregation_mode: 'and_or' });
   
-  // Document Type Filtering state
-  const [selectedDocTypes, setSelectedDocTypes] = useState([]);
-  const [showFilteredResults, setShowFilteredResults] = useState(false);
-  
-  // Quality Score Filtering state
-  const [minQualityScore, setMinQualityScore] = useState(0); // 0 = show all, 50 = Good+, 65 = High Quality+, 80 = Premium only
-  
-  // Available document types
+  // Available document types - defined first so we can use it for default selection
   const documentTypes = useMemo(() => [
     { id: 'PhD Informative', name: 'PhD Informative', color: '#8b5cf6' },
     { id: 'Personal Report (Organic)', name: 'Personal Report (Organic)', color: '#10b981' },
@@ -98,6 +91,22 @@ const UltimateSearchPage = ({ showToast }) => {
     { id: 'MS Word Document', name: 'MS Word Document', color: '#2563eb' },
     { id: 'Webpage', name: 'Webpage', color: '#6b7280' }
   ], []);
+  
+  // Document Type Filtering state - ALL SELECTED BY DEFAULT
+  const [selectedDocTypes, setSelectedDocTypes] = useState(() => 
+    documentTypes.map(dt => dt.id)
+  );
+  const [showFilteredResults, setShowFilteredResults] = useState(true);
+  
+  // Certification Filter state - ALL SELECTED BY DEFAULT
+  const [certificationFilters, setCertificationFilters] = useState({
+    pearsonvue: true,
+    government: true,
+    advancedDegree: true
+  });
+  
+  // Quality Score Filtering state
+  const [minQualityScore, setMinQualityScore] = useState(0); // 0 = show all, 50 = Good+, 65 = High Quality+, 80 = Premium only
 
   // Category colors for map markers
   const categoryColors = useMemo(() => [
