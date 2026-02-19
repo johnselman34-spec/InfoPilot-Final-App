@@ -160,9 +160,11 @@ export const WorldWideMap = ({ protocols, categories, selectedCategories, onSele
         </div>
       </div>
       
+      {/* 16/27 width map layout with statistics panel */}
+      <div style={{ display: 'flex', gap: 20 }}>
       <div 
         ref={mapRef}
-        style={{ background: 'linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%)', borderRadius: 12, height: 280, position: 'relative', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.5)' }}
+        style={{ width: '59.26%', flexShrink: 0, background: 'linear-gradient(135deg, #1a365d 0%, #2d3748 50%, #1a202c 100%)', borderRadius: 12, height: 280, position: 'relative', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.5)' }}
       >
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(124, 58, 237, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(124, 58, 237, 0.1) 1px, transparent 1px)', backgroundSize: '50px 50px' }} />
         
