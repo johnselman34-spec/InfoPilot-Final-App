@@ -5904,6 +5904,7 @@ app.include_router(unified_chat_router, prefix="/api")
 app.include_router(easter_eggs_router, prefix="/api")
 app.include_router(legal_router, prefix="/api")
 app.include_router(category_export_router, prefix="/api")
+app.include_router(stripe_router)  # Stripe payments
 app.include_router(bundles_router)
 app.include_router(push_router)
 app.include_router(chat_router)
