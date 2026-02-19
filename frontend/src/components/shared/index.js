@@ -15,3 +15,11 @@ export { default as AISuggestions } from './AISuggestions';
 export { default as YouTubePlayer, VideoUrlInput } from './YouTubePlayer';
 export { default as UpgradePromoBanner } from './UpgradePromoBanner';
 export { useMapPopup, MapPopupContent, EnhancedMarker } from './MapPopup';
+export { 
+  DataSourceToggle, 
+  SelectAllControls, 
+  DocumentTypeFilter, 
+  QuickStats, 
+  FunnyBanner, 
+  CompactAd 
+} from './DataControls';
