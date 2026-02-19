@@ -71,6 +71,9 @@ const UltimateSearchPage = ({ showToast }) => {
   const [showTemplates, setShowTemplates] = useState(false);
   const [showMap, setShowMap] = useState(true);
   
+  // Data source toggle: 'personal' or 'worldwide'
+  const [dataSource, setDataSource] = useState('worldwide');
+  
   // Map state
   const [mapCenter, setMapCenter] = useState([39.8283, -98.5795]);
   const [mapZoom] = useState(4);
