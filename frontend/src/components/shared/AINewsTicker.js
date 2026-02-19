@@ -28,6 +28,7 @@ const AINewsTicker = ({ compact = false }) => {
   const { isDarkMode } = useTheme();
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [isAiPowered, setIsAiPowered] = useState(false);
   const [expanded, setExpanded] = useState(!compact);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -35,7 +36,8 @@ const AINewsTicker = ({ compact = false }) => {
   const bgColor = isDarkMode ? 'rgba(15, 10, 35, 0.95)' : 'rgba(255, 255, 255, 0.98)';
   const mutedColor = isDarkMode ? '#a1a1aa' : '#64748b';
   
-  const fetchNews = useCallback(async () => {
+  const fetchNews = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
     try {
       const res = await fetch(`${API}/ai/news`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
@@ -50,7 +52,12 @@ const AINewsTicker = ({ compact = false }) => {
       console.error('Failed to fetch AI news:', e);
     }
     setLoading(false);
+    setRefreshing(false);
   }, [token]);
+  
+  const handleRefresh = () => {
+    fetchNews(true);
+  };
   
   useEffect(() => {
     // Initial fetch and refresh interval
