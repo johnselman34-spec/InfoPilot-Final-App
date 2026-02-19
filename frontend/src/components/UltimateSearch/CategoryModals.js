@@ -106,34 +106,75 @@ const EditCategoryModal = ({
   onCleanCategory
 }) => {
   // Track if click started on the overlay (not modal content)
-  const [clickedOnOverlay, setClickedOnOverlay] = React.useState(false);
+  const [clickStartedOnOverlay, setClickStartedOnOverlay] = React.useState(false);
+  const [isTextSelecting, setIsTextSelecting] = React.useState(false);
   
   if (!editingCategory) return null;
 
-  // Only close if both mousedown and mouseup happened on the overlay
+  // Track mouse down position to detect text selection
   const handleOverlayMouseDown = (e) => {
+    // Only track if mousedown is on the overlay itself (not modal content)
     if (e.target === e.currentTarget) {
-      setClickedOnOverlay(true);
+      setClickStartedOnOverlay(true);
     } else {
-      setClickedOnOverlay(false);
+      setClickStartedOnOverlay(false);
+    }
+    setIsTextSelecting(false);
+  };
+
+  // Detect if user is selecting text (drag movement)
+  const handleOverlayMouseMove = (e) => {
+    if (e.buttons === 1) { // Left mouse button is held
+      setIsTextSelecting(true);
     }
   };
 
-  const handleOverlayClick = (e) => {
-    // Only close if click started AND ended on the overlay
-    if (e.target === e.currentTarget && clickedOnOverlay) {
+  // Only close modal if:
+  // 1. Click started on overlay (not modal content)
+  // 2. Click ended on overlay
+  // 3. User was NOT selecting text
+  const handleOverlayMouseUp = (e) => {
+    // If user was selecting text, don't close
+    if (isTextSelecting || window.getSelection()?.toString()?.length > 0) {
+      setClickStartedOnOverlay(false);
+      setIsTextSelecting(false);
+      return;
+    }
+    
+    // Only close if both mousedown and mouseup were on the overlay
+    if (e.target === e.currentTarget && clickStartedOnOverlay) {
       onClose();
     }
-    setClickedOnOverlay(false);
+    setClickStartedOnOverlay(false);
+    setIsTextSelecting(false);
+  };
+
+  // Prevent any click propagation from modal content
+  const handleModalClick = (e) => {
+    e.stopPropagation();
+  };
+
+  // Stop all events from modal content reaching overlay
+  const handleModalMouseDown = (e) => {
+    e.stopPropagation();
+    setClickStartedOnOverlay(false);
   };
 
   return (
     <div 
       className="modal-overlay" 
       onMouseDown={handleOverlayMouseDown}
-      onClick={handleOverlayClick}
+      onMouseMove={handleOverlayMouseMove}
+      onMouseUp={handleOverlayMouseUp}
+      onClick={(e) => e.stopPropagation()}
     >
-      <div className="modal" onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()} style={{ maxWidth: 550 }}>
+      <div 
+        className="modal" 
+        onClick={handleModalClick} 
+        onMouseDown={handleModalMouseDown}
+        onMouseUp={(e) => e.stopPropagation()}
+        style={{ maxWidth: 550 }}
+      >
         <div className="modal-header">
           <h2>Edit Category</h2>
           <button className="modal-close" onClick={onClose}>×</button>
