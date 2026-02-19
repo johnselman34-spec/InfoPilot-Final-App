@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { API } from '../utils/api';
 import { extractHashtags } from '../utils/hashtags';
 import { HashtagDisplay } from '../components/shared';
+import { DataSourceToggle } from '../components/shared/DataControls';
 import CustomMapStyling from '../components/Map/CustomMapStyling';
 import { MapAnalyticsCharts } from '../components/Analytics';
 
