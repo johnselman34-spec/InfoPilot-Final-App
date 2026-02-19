@@ -143,7 +143,7 @@ const SearchControls = ({
         </button>
       </div>
       
-      {/* Search Action Buttons Row 1: Auto-Categorize and AI Intelligent Search */}
+      {/* Search Action Buttons Row 1: Search & Categorize and AI Intelligent Search */}
       <div style={{ 
         display: 'flex', 
         gap: 10, 
@@ -165,7 +165,7 @@ const SearchControls = ({
           data-testid="auto-categorize-btn"
           title="One-click: Search and automatically match results against ALL your categories"
         >
-          {autoCatLoading ? '⏳ Auto-Categorizing...' : '🎯 Search & Auto-Categorize'}
+          {autoCatLoading ? '⏳ Categorizing...' : '🎯 Search & Categorize'}
         </button>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
