@@ -981,8 +981,8 @@ const UltimateSearchPage = ({ showToast }) => {
                   padding: 12,
                   border: '1px solid rgba(59, 130, 246, 0.3)'
                 }}>
-                  <div style={{ color: '#3b82f6', fontSize: '1.5rem', fontWeight: 700 }}>{mapResults.length}</div>
-                  <div style={{ color: '#71717a', fontSize: '0.75rem' }}>On Map</div>
+                  <div style={{ color: '#3b82f6', fontSize: '1.5rem', fontWeight: 700 }}>{filteredMapResults.length}</div>
+                  <div style={{ color: '#71717a', fontSize: '0.75rem' }}>On Map{mapResults.length !== filteredMapResults.length ? ` (${mapResults.length} total)` : ''}</div>
                 </div>
                 <div style={{ 
                   background: 'rgba(236, 72, 153, 0.15)', 
