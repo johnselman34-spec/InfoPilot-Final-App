@@ -6,98 +6,61 @@ InfoPilot Explorer is an interactive, gamified, and monetizable information-shar
 ## Current Status: STABLE ✅
 Last Updated: February 2026
 
+## Pricing Model
+- **App is FREE to use** (except marketplace protocol purchases)
+- **Maximum protocol price: $24.97**
+
 ## What's Been Implemented
 
 ### Latest Session (February 2026)
 
-#### Stripe Payment Integration ✅
-- Live keys integrated (sk_live_ and pk_live_)
-- Endpoints: /api/stripe/config, /api/stripe/prices, /api/stripe/create-checkout-session
-- 5 pricing tiers: $4.99 - $99.99
+#### Free App Model ✅
+- All features free except marketplace protocol purchases
+- No subscription requirements
+- All pages accessible without payment
 
-#### Map Analytics Dashboard ✅
-- 14+ chart types (PieChart, DonutChart, BarChart, MultiLineChart, CompositeBarChart, HourlyHeatmap, StackedAreaChart, RadarChart)
-- Variables analyzed: time of day, weather, urban/rural, income ($10 increments), age groups, geographic data, first names
-- 5-7 color zones per variable
+#### Price Validation Updated ✅
+- Maximum protocol price: $24.97
+- Validation in backend (categories.py) and frontend (CategoryModals.js)
+- Backend rejects prices > $24.97
 
-#### Data Controls Components ✅
-- DataSourceToggle (Personal/Worldwide)
-- SelectAllControls (Select All/Deselect All)
-- DocumentTypeFilter
-- QuickStats
-- FunnyBanner & CompactAd (smaller ads)
+#### News Refresh Button Fixed ✅
+- Shows loading state ("⏳ Refreshing...")
+- Returns 10 AI-powered articles from GPT-5.2
+- Topics: Technology, Science, Business, Health, Politics, Environment, Space, Finance, Education, Sports
 
-#### Categories Price Setting ✅
-- Price field ($0-$99 range)
-- Update via PUT /api/categories/{id}
-- Display in marketplace
-
-#### Real-time Updates ✅
-- Marketplace: 30 second refresh interval
-- Live protocol counts
-
-#### Funny Messages ✅
-- "IT'S A BEAR" 🐻
-- "Crunching numbers faster than a squirrel hoards acorns"
-- Various other humorous loading messages
-
-### Previous Session Features
-- Categories Loading Bug Fix (StrictMode double-fetch)
-- Save Protocol Bug Fix (cat_oid variable)
-- Map Popup Enhancement (close/maximize buttons)
-- Comprehensive Admin Panel (22 tabs)
-- AI-powered suggestions
-- Banned word moderation
-- Content quality reporting
-- PayPal Commerce Platform
-- Multiple search engines (Brave, SerpAPI, DuckDuckGo)
-
-## Test Results
-
-### Backend: 100% (17/17 tests passed)
-- Authentication ✅
-- Categories CRUD with price ✅
-- Statistics ✅
-- Map Data ✅
-- Marketplace (14 protocols) ✅
-- Stripe Integration ✅
-- Gamification ✅
-- Admin Panel ✅
-
-### Frontend: 100%
-- All pages loading correctly
-- 17 categories with price field
-- Statistics: 25 users, 29 categories, 1696 searches
-- Marketplace: 14 protocols with FREE badges
-
-## Stripe Pricing
+#### Stripe Pricing Updated ✅
 | Product | Price |
 |---------|-------|
-| Basic Protocol | $4.99 |
-| Pro Protocol | $9.99 |
-| Premium Protocol | $19.99 |
-| Monthly Subscription | $9.99/mo |
-| Yearly Subscription | $99.99/yr |
+| Basic Protocol | $2.99 |
+| Standard Protocol | $7.99 |
+| Pro Protocol | $14.99 |
+| Premium Protocol | $24.97 (max) |
 
-## File Architecture
+### Previous Features
+- Stripe Payment Integration
+- Map Analytics Dashboard (14+ charts)
+- Data Controls Components
+- Real-time Updates (30s interval)
+- Funny Messages throughout app
+
+## Test Results
+### Backend: 100% (15/15 tests passed)
+- AI News: 10 articles, ai_powered=true ✅
+- Price validation: Rejects > $24.97 ✅
+- Price validation: Accepts $0-$24.97 ✅
+- Stripe prices: 4 tiers, max $24.97 ✅
+
+### Frontend: 100%
+- News refresh button with loading state ✅
+- All pages accessible free ✅
+
+## File Changes
 ```
-/app/
-├── backend/
-│   ├── routes/
-│   │   ├── stripe_payments.py (Stripe integration)
-│   │   ├── categories.py (Price field support)
-│   │   └── ... (20+ route files)
-│   └── .env (Stripe keys)
-└── frontend/
-    └── src/
-        ├── components/
-        │   ├── Analytics/
-        │   │   └── MapAnalyticsCharts.js (14+ charts)
-        │   └── shared/
-        │       └── DataControls.js (Toggle, SelectAll, etc.)
-        └── pages/
-            ├── MapPage.js (Analytics integration)
-            └── MarketplacePage.js (Real-time updates)
+/app/backend/routes/categories.py - Price validation $0-$24.97
+/app/backend/routes/stripe_payments.py - Updated pricing tiers
+/app/frontend/src/components/shared/AINewsTicker.js - Refresh loading state
+/app/frontend/src/components/UltimateSearch/CategoryModals.js - Price max $24.97
 ```
 
 ## Credentials
@@ -106,6 +69,5 @@ Last Updated: February 2026
 
 ## Next Tasks
 1. In-App Browser for external links
-2. Verify Copy Protocol on Easter Egg windows
-3. AI News Ticker verification
-4. Multiple location dots for multi-category matches
+2. Integrate DataSourceToggle across all pages
+3. Add DocumentTypeFilter to all pages
