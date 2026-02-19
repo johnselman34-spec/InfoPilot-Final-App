@@ -3,8 +3,9 @@ import { Icons } from '../shared';
 import { API } from '../../utils/api';
 
 /**
- * SearchControls - Search input box with collate button, auto-categorize, AI search, database search, and aggregation options
+ * SearchControls - Search input box with categorize button, AI search, database search, and aggregation options
  * Includes Google (SerpAPI), Bing, Brave, DuckDuckGo, and Basic search engines!
+ * New: Certification filter checkboxes for PearsonVUE, Government, Advanced Degree
  */
 const SearchControls = ({
   searchQuery,
@@ -33,9 +34,28 @@ const SearchControls = ({
   setShowDebugger,
   showTemplates,
   setShowTemplates,
-  filterInfo
+  filterInfo,
+  certificationFilters,
+  setCertificationFilters
 }) => {
   const [searchEngines, setSearchEngines] = useState(null);
+  
+  // Local state for certification filters if not provided via props
+  const [localCertFilters, setLocalCertFilters] = useState({
+    pearsonvue: true,
+    government: true,
+    advancedDegree: true
+  });
+  
+  const certFilters = certificationFilters || localCertFilters;
+  const setCertFilters = setCertificationFilters || setLocalCertFilters;
+  
+  const toggleCertFilter = (filterKey) => {
+    setCertFilters(prev => ({
+      ...prev,
+      [filterKey]: !prev[filterKey]
+    }));
+  };
   
   // Fetch available search engines on mount
   useEffect(() => {
