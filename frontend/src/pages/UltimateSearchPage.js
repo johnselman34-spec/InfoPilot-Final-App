@@ -880,35 +880,130 @@ const UltimateSearchPage = ({ showToast }) => {
             )}
           </div>
           
-          <div style={{ height: 400, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.3)' }}>
-            <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} key={`map-${mapCenter[0]}-${mapCenter[1]}`}>
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
-              {mapResults.map((result, idx) => (
-                <Marker 
-                  key={result.id || idx}
-                  position={[result.latitude, result.longitude]}
-                  icon={createCategoryIcon(
-                    result.categories?.length > 0 
-                      ? getCategoryColor(categories.find(c => result.categories.includes(c.name))?.id || '')
-                      : '#7c3aed'
-                  )}
-                >
-                  <Popup>
-                    <div style={{ maxWidth: 250 }}>
-                      <strong style={{ color: '#1e1b4b' }}>{result.title}</strong>
-                      <p style={{ fontSize: '0.8rem', margin: '5px 0', color: '#4b5563' }}>{result.snippet?.substring(0, 100)}...</p>
-                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '0.7rem', padding: '2px 6px', background: '#e0e7ff', borderRadius: 4, color: '#3730a3' }}>{result.article_type}</span>
-                        {result.categories?.map((cat, i) => (
-                          <span key={i} style={{ fontSize: '0.7rem', padding: '2px 6px', background: '#fce7f3', borderRadius: 4, color: '#be185d' }}>{cat}</span>
-                        ))}
+          {/* Map container - 16/27 width layout */}
+          <div style={{ display: 'flex', gap: 20 }}>
+            <div style={{ width: '59.26%', height: 400, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.3)', flexShrink: 0 }}>
+              <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} key={`map-${mapCenter[0]}-${mapCenter[1]}`}>
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
+                {mapResults.map((result, idx) => (
+                  <Marker 
+                    key={result.id || idx}
+                    position={[result.latitude, result.longitude]}
+                    icon={createCategoryIcon(
+                      result.categories?.length > 0 
+                        ? getCategoryColor(categories.find(c => result.categories.includes(c.name))?.id || '')
+                        : '#7c3aed'
+                    )}
+                  >
+                    <Popup>
+                      <div style={{ maxWidth: 250 }}>
+                        <strong style={{ color: '#1e1b4b' }}>{result.title}</strong>
+                        <p style={{ fontSize: '0.8rem', margin: '5px 0', color: '#4b5563' }}>{result.snippet?.substring(0, 100)}...</p>
+                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.7rem', padding: '2px 6px', background: '#e0e7ff', borderRadius: 4, color: '#3730a3' }}>{result.article_type}</span>
+                          {result.categories?.map((cat, i) => (
+                            <span key={i} style={{ fontSize: '0.7rem', padding: '2px 6px', background: '#fce7f3', borderRadius: 4, color: '#be185d' }}>{cat}</span>
+                          ))}
+                        </div>
+                        <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: '#7c3aed', display: 'block', marginTop: 8 }}>Open Link →</a>
                       </div>
-                      <a href={result.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.75rem', color: '#7c3aed', display: 'block', marginTop: 8 }}>Open Link →</a>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+                    </Popup>
+                  </Marker>
+                ))}
+              </MapContainer>
+            </div>
+            
+            {/* Right side panel - Search Statistics */}
+            <div style={{ 
+              flex: 1, 
+              background: 'linear-gradient(135deg, rgba(30, 20, 50, 0.8), rgba(15, 10, 35, 0.9))',
+              borderRadius: 12,
+              border: '1px solid rgba(124, 58, 237, 0.3)',
+              padding: 20,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 15,
+              maxHeight: 400,
+              overflowY: 'auto'
+            }}>
+              <h4 style={{ color: '#a78bfa', margin: 0, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                📊 Search Statistics
+              </h4>
+              
+              {/* Quick Stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ 
+                  background: 'rgba(16, 185, 129, 0.15)', 
+                  borderRadius: 8, 
+                  padding: 12,
+                  border: '1px solid rgba(16, 185, 129, 0.3)'
+                }}>
+                  <div style={{ color: '#10b981', fontSize: '1.5rem', fontWeight: 700 }}>{searchResults.length}</div>
+                  <div style={{ color: '#71717a', fontSize: '0.75rem' }}>Total Results</div>
+                </div>
+                <div style={{ 
+                  background: 'rgba(59, 130, 246, 0.15)', 
+                  borderRadius: 8, 
+                  padding: 12,
+                  border: '1px solid rgba(59, 130, 246, 0.3)'
+                }}>
+                  <div style={{ color: '#3b82f6', fontSize: '1.5rem', fontWeight: 700 }}>{mapResults.length}</div>
+                  <div style={{ color: '#71717a', fontSize: '0.75rem' }}>On Map</div>
+                </div>
+                <div style={{ 
+                  background: 'rgba(236, 72, 153, 0.15)', 
+                  borderRadius: 8, 
+                  padding: 12,
+                  border: '1px solid rgba(236, 72, 153, 0.3)'
+                }}>
+                  <div style={{ color: '#ec4899', fontSize: '1.5rem', fontWeight: 700 }}>{categories.length}</div>
+                  <div style={{ color: '#71717a', fontSize: '0.75rem' }}>Categories</div>
+                </div>
+                <div style={{ 
+                  background: 'rgba(245, 158, 11, 0.15)', 
+                  borderRadius: 8, 
+                  padding: 12,
+                  border: '1px solid rgba(245, 158, 11, 0.3)'
+                }}>
+                  <div style={{ color: '#f59e0b', fontSize: '1.5rem', fontWeight: 700 }}>{filteredResults.length}</div>
+                  <div style={{ color: '#71717a', fontSize: '0.75rem' }}>Filtered</div>
+                </div>
+              </div>
+              
+              {/* Filter Status */}
+              <div style={{ 
+                background: 'rgba(124, 58, 237, 0.1)', 
+                borderRadius: 8, 
+                padding: 12,
+                border: '1px solid rgba(124, 58, 237, 0.2)'
+              }}>
+                <div style={{ color: '#a78bfa', fontSize: '0.85rem', fontWeight: 600, marginBottom: 5 }}>
+                  {filterInfo.filter_applied ? '🎯 Filters Active' : '📋 All Results'}
+                </div>
+                <div style={{ color: '#71717a', fontSize: '0.75rem' }}>
+                  {selectedCategories.length > 0 
+                    ? `${selectedCategories.length} categories selected`
+                    : 'No category filter applied'}
+                </div>
+              </div>
+              
+              {/* Aggregation Mode */}
+              <div style={{ 
+                background: 'rgba(6, 182, 212, 0.1)', 
+                borderRadius: 8, 
+                padding: 12,
+                border: '1px solid rgba(6, 182, 212, 0.2)'
+              }}>
+                <div style={{ color: '#06b6d4', fontSize: '0.85rem', fontWeight: 600, marginBottom: 5 }}>
+                  🔗 Mode: {aggregation.toUpperCase().replace('_', '/')}
+                </div>
+                <div style={{ color: '#71717a', fontSize: '0.75rem' }}>
+                  {aggregation === 'and' ? 'Must match ALL categories' : 
+                   aggregation === 'or' ? 'Match ANY category' : 
+                   'Smart matching mode'}
+                </div>
+              </div>
+            </div>
           </div>
           
           {mapResults.length === 0 && searchResults.length > 0 && (

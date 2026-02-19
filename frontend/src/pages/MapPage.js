@@ -936,13 +936,16 @@ const MapPage = ({ showToast, setCurrentPage }) => {
         </div>
       ) : (
         <>
-          {/* React-Leaflet Map with hover popups */}
+          {/* React-Leaflet Map with hover popups - 16/27 width layout */}
+          <div style={{ display: 'flex', gap: 20 }}>
           <div 
             ref={mapContainerRef}
             style={{ 
+              width: '59.26%', /* 16/27 = 59.26% */
               height: 450, borderRadius: 12, overflow: 'hidden',
               border: '2px solid rgba(124, 58, 237, 0.3)',
-              position: 'relative'
+              position: 'relative',
+              flexShrink: 0
             }}
           >
             <MapContainer
