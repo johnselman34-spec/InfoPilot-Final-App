@@ -15,6 +15,7 @@ export { default as AISuggestions } from './AISuggestions';
 export { default as YouTubePlayer, VideoUrlInput } from './YouTubePlayer';
 export { default as UpgradePromoBanner } from './UpgradePromoBanner';
 export { useMapPopup, MapPopupContent, EnhancedMarker } from './MapPopup';
+export { InAppBrowser, useInAppBrowser } from './InAppBrowser';
 export { 
   DataSourceToggle, 
   SelectAllControls, 
