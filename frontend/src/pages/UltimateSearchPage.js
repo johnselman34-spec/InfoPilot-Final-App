@@ -919,7 +919,7 @@ const UltimateSearchPage = ({ showToast }) => {
             <div style={{ width: '59.26%', height: 400, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.3)', flexShrink: 0 }}>
               <MapContainer center={mapCenter} zoom={mapZoom} style={{ height: '100%', width: '100%' }} key={`map-${mapCenter[0]}-${mapCenter[1]}`}>
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
-                {mapResults.map((result, idx) => (
+                {filteredMapResults.map((result, idx) => (
                   <Marker 
                     key={result.id || idx}
                     position={[result.latitude, result.longitude]}
