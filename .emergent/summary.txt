@@ -1,203 +1,201 @@
 <analysis>**original_problem_statement:**
 The user wants to continue building InfoPilot Explorer, an interactive, gamified, and monetizable information-sharing platform. The primary goals are ensuring high-quality content, application stability, and implementing a large number of feature requests and bug fixes.
 
-In the most recent messages, the user has reported several critical issues and requested new features, including:
-- **Critical Bugs:**
-    - Search results not appearing on the Ultimate Search page when category checkboxes are ticked.
-    - The Edit Category modal disappears when text is highlighted.
-    - The Save Protocol function is failing again with a Failed to update category error.
-    - Inconsistent data on the Map page (e.g., an aviation article showing for a Civil War History category).
-    - Public and Private stickers are still covering up information on various screens.
-    - The Copy Protocol function in the Marketplace is failing.
-- **Feature Requests:**
-    - Implement an in-app browser for opening search results.
-    - Allow users to change their email and password from the Settings page.
-    - Ensure map results can show multiple location dots for a single search result that fulfills multiple protocols.
-    - Improve hashtag relevance to be based on protocol content rather than category names.
-    - Add a Worldwide/Owner data toggle to the Statistics page.
-    - Implement automated email alerts for admins when content violations spike.
-- **High-Level Requests:**
-    - Conduct a septuple-check for stability across all features listed in an attached Word document.
-    - List the application on various app marketplaces.
-    - Address compatibility issues with the Facebook in-app browser.
+**Latest User Requests:**
+-   **Bugs & UX:**
+    -   Fix a persistent map bug where hovering over location dots doesn't reliably open popups; the old popup should close instantly when a new dot is hovered.
+    -   Add close and maximize buttons to all map pop-ups.
+    -   Make all advertisements smaller to improve user experience.
+    -   Ensure the app's workflow is extremely funny, efficient, powerful, and fast.
+    -   Verify the Refresh news articles button is fully functional.
+-   **Features:**
+    -   Integrate the user's provided Stripe  and  keys.
+    -   Add at least 14 different chart types (pie, bar, multi-line, composite) to all map views, segmenting data by numerous variables (time of day, weather, location, price, etc.).
+    -   Implement a Personal vs. Worldwide data source toggle on all pages with maps (, , ).
+    -   Add a complete statistics area to the , , and .
+    -   Display the document type (, , etc.) on all relevant pages.
+    -   Add Select All/Deselect All functionality to all checkbox groups.
+-   **Monetization:**
+    -   Make the entire application free to use, with monetization limited to the marketplace.
+    -   Allow users to set the price for their protocols on both the create and edit screens.
+    -   Set the allowed price range for protocols from **/bin/bash.20 to 4.97**.
+-   **High-Level:**
+    -   Conduct a septuple-check for stability and eliminate all bugs and flow errors.
+    -   Ensure all features listed in the user-provided Word document are fully integrated and functional.
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a complex, feature-rich platform with a FastAPI backend and React frontend. It includes a sophisticated Admin Panel (with 22 tabs), a user-facing Ultimate Search page, a Marketplace, and a Map View. Key systems like AI-powered suggestions, banned word moderation, content quality reporting, and automated violation alerts are in place.
+The application is a complex FastAPI and React platform with an Admin Panel, Ultimate Search, Marketplace, and Map View. In this session, the agent performed multiple comprehensive stability checks and fixed several critical P0 bugs, including the recurring Save Protocol failure and a major issue preventing categories from loading on the Ultimate Search page.
 
-In this session, the agent performed a massive stability check, running over 30 API tests and an additional 37 frontend/backend tests via the testing agent, which all passed. The agent implemented several new features, including the content quality report, violation alerts, and email/password changing. It also addressed numerous bugs, such as fixing the Clean Category function, improving social media meta tags, and adding data source toggles to the Map and Statistics pages.
+Key new features were also implemented:
+-   A new shared map popup system with improved hover behavior and close/maximize buttons.
+-   Stripe integration with the user's live keys and a backend endpoint for prices.
+-   A comprehensive analytics dashboard component () with 14+ chart types was created for the map page.
+-   The protocol price validation was updated, and the Refresh News button was improved with a visible loading state.
 
 **Last working item**:
-- **Last item agent was working:** Improving the relevance of generated hashtags. The user wants hashtags to be based on the specific  content for better revenue maximization, rather than the general . The agent was editing  in .
-- **Status:** IN PROGRESS
-- **Agent Testing Done:** N
-- **Which testing method agent to use?** Frontend testing agent. The agent should verify that on the  and in  pop-ups, the generated hashtags are now more specific and relevant to the protocol string of the associated content.
-- **User Testing Done:** N
+-   **Last item agent was working:** The agent completed a batch of user requests focused on the app's monetization model and UX. This included setting the max protocol price to 4.97, verifying the news refresh button, and ensuring most of the app is free.
+-   **Status:** USER VERIFICATION PENDING
+-   **Agent Testing Done:** Y
+-   **Which testing method agent to use?** Manual testing by the user is required to confirm the changes meet their expectations, especially the pricing model and the feel of the news refresh button.
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- **Issue 1: Search results not displaying on Ultimate Search Page (P0)**
-- **Issue 2: Edit Category modal closes on text highlight (P0)**
-- **Issue 3: Inconsistent data/dots on Map Page (P0)**
-- **Issue 4: Save Protocol function fails with Failed to update category error (P0)**
-- **Issue 5: Public/Private stickers overlap content on multiple screens (P1)**
-- **Issue 6: Search results on Map View & Marketplace should be worldwide (P1)**
-- **Issue 7: Copy Protocol function on Easter Egg windows is not working correctly (P1)**
-- **Issue 8: Map results don't show multiple location dots for items matching multiple categories (P2)**
-- **Issue 9: Facebook browser compatibility (P2)**
+-   Issue 1: Search results not displaying on Ultimate Search Page when category checkboxes are ticked (P0)
+-   Issue 2: Edit Category modal closes on text highlight (P0)
+-   Issue 3: Inconsistent data/dots on Map Page (e.g., wrong article for a category) (P0)
+-   Issue 4: Public/Private stickers overlap content on multiple screens (P1)
+-   Issue 5: Copy Protocol function on Easter Egg windows is not working correctly (P1)
+-   Issue 6: Facebook in-app browser compatibility issues (P2)
 
 **Issues Detail:**
-- **Issue 1: Search results not displaying on Ultimate Search Page (P0)**
-    - **Attempted fixes:** The agent previously implemented a fix in  to set  to  when a category is toggled. However, the user reports the issue persists.
-    - **Next debug checklist:**
-        1.  Verify the  function in  is correctly setting the state to show results.
-        2.  Check the  function to ensure it's being called and is receiving the correct category filters.
-        3.  Inspect the component rendering the results to see if it's conditional on a state that isn't being updated.
-    - **Why fix this issue and what will be achieved with the fix?** This is a core function of the application. Fixing it will allow users to filter and view their collated search results.
-    - **Status:** IN PROGRESS
-    - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Frontend.
+-   **Issue 1: Search results not displaying on Ultimate Search Page (P0)**
+    -   **Attempted fixes:** The agent fixed a related, critical bug where categories failed to load at all. However, the original issue of search results not *filtering* correctly when checkboxes are toggled may still exist.
+    -   **Next debug checklist:**
+        1.  Verify in  that  is being set correctly in .
+        2.  Inspect the  function to ensure it is called with the correct  state when a checkbox is clicked.
+        3.  Check the logic that renders the  to ensure it's not being conditionally hidden.
+    -   **Why fix this issue and what will be achieved with the fix?** This is a core feature. Users cannot filter their collated search results without it.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend.
 
-- **Issue 2: Edit Category modal closes on text highlight (P0)**
-    - **Attempted fixes:** The agent modified the  logic in  to prevent clicks on the overlay from propagating when interacting with the modal's content.
-    - **Next debug checklist:**
-        1.  Review the  component again. The fix involved stopping event propagation.
-        2.  Test the text highlighting interaction manually or with the frontend testing agent to confirm the fix works as expected. The bug might be more nuanced than a simple overlay click.
-    - **Why fix this issue and what will be achieved with the fix?** Critical usability bug. Users cannot edit protocols if the modal closes unexpectedly.
-    - **Status:** IN PROGRESS
-    - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Frontend.
+-   **Issue 2: Edit Category modal closes on text highlight (P0)**
+    -   **Attempted fixes:** A previous agent attempted a fix by stopping event propagation. It was not re-addressed in this session.
+    -   **Next debug checklist:**
+        1.  Review the  in .
+        2.  The bug is likely related to how mouse events are handled within the modal vs. the overlay. Investigate , , and  handlers.
+    -   **Why fix this issue and what will be achieved with the fix?** Critical usability bug preventing users from editing protocols.
+    -   **Status:** NOT STARTED
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Frontend.
 
-- **Issue 3: Inconsistent data/dots on Map Page (P0)**
-    - **Attempted fixes:** The agent added a Worldwide vs Owner data source toggle. This might not have addressed the core issue of incorrect data mapping.
-    - **Next debug checklist:**
-        1.  Examine the  and  endpoints in .
-        2.  Trace how search results are matched to categories and protocols in the backend before being sent to the frontend. The logic might be incorrectly assigning a result to a category.
-        3.  Verify the  function in  is processing the data correctly.
-    - **Why fix this issue and what will be achieved with the fix?** This breaks user trust in the platform's data integrity. Fixing it ensures search results are relevant and accurately displayed.
-    - **Status:** IN PROGRESS
-    - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Both.
-
-- **Issue 4: Save Protocol function fails with Failed to update category error (P0)**
-    - **Attempted fixes:** This was fixed in a previous session by relaxing protocol validation in . The user's new report indicates the bug has returned or has a new cause.
-    - **Next debug checklist:**
-        1.  Re-examine the  endpoint in .
-        2.  Check for any new validation logic that was added, such as the banned words check, which could be the new source of failure.
-        3.  Use  to test the endpoint directly with a valid payload to isolate the issue.
-    - **Why fix this issue and what will be achieved with the fix?** This is a critical data-management function for users.
-    - **Status:** IN PROGRESS
-    - **Is recurring issue?** Y
-    - **Should Test frontend/backend/both after fix?** Backend.
+-   **Issue 3, 4, 5, 6:** These issues were carried over from the previous handoff and were not addressed in this session. They remain pending.
 
 **In progress Task List**:
-- **Task 1: Improve Hashtag Relevance (P0)**
-    - **Where to resume:** . The agent has already modified the  function to prioritize protocol content. The next step is to remove the duplicated, old function logic and thoroughly test the change on the search and map pages.
-    - **What will be achieved with this?** Hashtags will be more specific to the content, which the user believes will maximize revenue.
-    - **Status:** IN PROGRESS
-    - **Should Test frontend/backend/both after fix?** Frontend.
+- None.
 
 **Upcoming and Future Tasks**
-- **Upcoming Tasks:**
-    - **P0: Implement In-App Browser:** Create a new component that opens external links within a modal or a dedicated page inside the application, similar to how social media apps handle links.
-    - **P1: Verify/Fix Easter Egg Copy Protocol:** Investigate the floating Easter Egg components and ensure their Copy Protocol functionality works correctly.
-    - **P1: Verify AI News Ticker:** Confirm the news ticker on the top-right of the screen is functioning correctly and displaying recent headlines.
-- **Future Tasks:**
-    - **P2: Full Linting Cleanup:** Address the 140+ frontend linting warnings. The testing agent suggested disabling ESLint in  if  is not being respected.
-    - **P3: App Marketplace Listing Guidance:** This is a user-facing task. The agent should provide guidance on the steps and assets needed for submission to Google Play, Apple App Store, etc.
-    - **P3: Bing Search Integration:** This is deferred, pending the user providing an API key.
+**Upcoming Tasks:**
+-   **P0: Implement Data Source Toggle:** Integrate the  component (from ) into  and  to allow switching between Personal and Worldwide data.
+-   **P0: Add Select All/Deselect All Checkboxes:** Integrate the  component into all relevant areas with checkbox lists (e.g., Document Type filter).
+-   **P1: Add Statistics Areas:** Add new map and statistics sections to the  and .
+-   **P1: Make Advertisements Smaller:** Review all ad components (e.g., Maestro Bistro, Letters to Evelyn) and reduce their size or ensure the hide button is consistently implemented.
+-   **P1: Implement Minimum Protocol Price:** The user requested a minimum price of /bin/bash.20. The backend validation in  and the frontend UI in  needs to be updated to reflect this.
+-   **P2: Implement In-App Browser:** Create a component to open external links within the application.
+
+**Future Tasks:**
+-   **Connect Map Analytics to Live Data:** The new  component uses placeholder data structures. It needs to be connected to the  data and process it for display.
+-   **Map results with multiple location dots:** For a single search result that matches multiple protocols/categories.
+-   **Full Frontend Linting Cleanup:** Address the 140+ warnings.
+-   **App Marketplace Listing Guidance.**
+-   **Bing Search Integration** (pending API key).
+-   **Price Comparison Chart:** An agent suggestion to show users how their protocol prices compare to the marketplace average.
 
 **Completed work in this session**
-- **Septuple-Check Stability Run:** Executed a comprehensive suite of 32 custom API tests and 37 automated tests via the testing agent, all of which passed, to verify core application functionality against the user's document.
-- **Critical Bug Fix (Edit Category Modal):** Implemented a fix to prevent the edit modal from closing when a user highlights text in the protocol textarea.
-- **Feature: User Account Management:** Added backend endpoints and frontend UI for users to change their email and password in the Settings page.
-- **Feature: Map & Statistics Data Toggle:** Implemented a Worldwide vs Owner data source toggle on both the Map and Statistics pages.
-- **Feature: Automated Violation Alerts:** Created the backend system and a new Admin Panel tab for configuring automated email alerts based on content violation thresholds.
-- **Bug Fix (Clean Category):** Corrected the  function by adding the required  parameter to the API call.
-- **UX Improvement (Social Sharing):** Updated  with improved Open Graph/Twitter meta tags to enhance social media sharing previews and to attempt a fix for Facebook browser compatibility.
-- **Bug Fix (UI Overlap):** Adjusted CSS in  to prevent Public/Private badges from overlapping category names.
-- **UX Improvement (Marketplace Copy):** Enhanced the Marketplace UI to show clear Purchase or Copy buttons based on protocol price, improving user feedback.
+-   **Critical Bug Fix (Category Loading):** Resolved a major bug on the  where categories showed as 0 due to a race condition with React's . The fix involved using  to prevent duplicate fetch calls.
+-   **Critical Bug Fix (Save Protocol):** Fixed the recurring Failed to update category error by correcting an undefined variable () in .
+-   **Feature: Stripe Integration:** Integrated the user's Stripe live keys and created backend endpoints (, ) and a payment creation route ().
+-   **Feature: Comprehensive Map Analytics:** Created a large  component with 14+ chart types using Recharts and integrated it into the .
+-   **UX Improvement (Map Popups):** Fixed the buggy map popup hover behavior by creating a new shared  component with reliable / logic and added close/maximize buttons. This was integrated into  and .
+-   **Feature: App Monetization & Pricing Update:**
+    -   Updated backend validation () and frontend UI () to set the maximum protocol price to 4.97.
+    -   Updated the Stripe prices endpoint to reflect the new pricing tiers.
+-   **UX Improvement (News Ticker):** Added a visible ⏳ Refreshing... loading state to the refresh button in .
+-   **Comprehensive Stability Checks:** Ran multiple extensive API test suites and used the testing agent multiple times ( to ), achieving high pass rates and verifying all fixes.
 
-**Earlier issues found/mentioned but not fixed**
-- The user's latest message re-iterated several critical issues that the agent had previously attempted to fix, indicating the fixes were either incomplete or incorrect. These are now listed in the All Pending/In progress Issue list.
+**Known issue recurrence from previous fork**
+-   **Issue recurrence in previous fork:** Failed to update category, Public/Private sticker overlap, and Search results not showing.
+-   **Recurrence count:** 3
+-   **Status:**
+    -   Failed to update category: **RESOLVED**
+    -   Search results not showing: **IN PROGRESS** (A related critical blocker was fixed, but the original filtering issue needs re-verification).
+    -   Public/Private sticker overlap: **NOT STARTED**
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Comprehensive API Test Suites:** Using  and  chaining to create extensive, sequential test scripts for verifying dozens of backend endpoints in a single command.
-- **State-Driven Data Toggling:** Implementing UI toggles (e.g., Worldwide vs. Owner) that update a React state variable, which is then used as a dependency in a  hook to fetch data from different endpoints without a page reload.
-- **DOM Event Propagation:** Debugging a React modal bug by modifying event handlers ( on the modal content) to stop event propagation and prevent an  on the parent overlay from firing.
-- **Meta Tag Optimization:** Editing  to add specific Open Graph and Twitter meta tags for better social media link previews and to address in-app browser rendering issues.
+-   **React StrictMode Debugging:** Diagnosed and fixed a race condition where 's double invocation in development mode caused  requests to be aborted. The solution involved using  to track the loading state and prevent duplicate, concurrent requests.
+-   **Shared Component Architecture:** Centralized complex UI logic (map popups, data controls) into shared, reusable components (, ) to fix bugs and add features consistently across multiple pages.
+-   **Stripe Integration:** Handled secure key storage in  files and created a FastAPI backend to serve prices and handle payment intent creation, keeping secret keys off the frontend.
+-   **Data Visualization:** Used the  library to create a wide variety of complex charts for the new analytics dashboard.
 
 **key DB schema**
-- ****: (Implicitly created) Stores records of attempted banned word usage. .
-- ****: (Modified) Stores configuration for the new violation alert system.
+-   **categories**: The  field in this collection is now actively used and validated on the backend. No new collections were added.
+
+**changes in tech stack**
+-   None.
 
 **All files of reference**
-- **/app/backend/routes/auth.py**: Added email/password change endpoints.
-- **/app/backend/server.py**: Added worldwide data endpoints and violation alert system.
-- **/app/frontend/pages/MapPage.js**: Added data source toggle and UI logic.
-- **/app/frontend/pages/SettingsPage.js**: Added UI for changing email/password.
-- **/app/frontend/pages/StatisticsPage.js**: Added data source toggle.
-- **/app/frontend/src/components/UltimateSearch/CategoryModals.js**: Fixed modal closing bug.
-- **/app/frontend/public/index.html**: Updated with new meta tags.
-- **/app/frontend/src/utils/hashtags.js**: Modified to improve hashtag relevance.
-- **/app/frontend/src/components/Admin/ContentQualityReport.js**: New component.
-- **/app/frontend/src/components/Admin/ViolationAlerts.js**: New component.
+-   **/app/frontend/src/pages/UltimateSearchPage.js**: Fixed a critical category loading bug.
+-   **/app/backend/routes/categories.py**: Fixed a critical Save Protocol bug and updated price validation.
+-   **/app/frontend/src/pages/MapPage.js**: Refactored to use the new, improved map popup system and added the analytics dashboard.
+-   **/app/frontend/src/pages/MarketplacePage.js**: Refactored to use the new map popup and added a real-time data refresh interval.
+-   **/app/frontend/src/components/shared/MapPopup.js**: New shared component to fix popup bugs and add features.
+-   **/app/frontend/src/components/Analytics/MapAnalyticsCharts.js**: New component containing 14+ chart types for data visualization.
+-   **/app/backend/routes/stripe_payments.py**: New route to handle all Stripe-related logic.
+-   **/app/backend/.env, /app/frontend/.env**: Updated with Stripe API keys.
+-   **/app/frontend/src/components/shared/DataControls.js**: New component for data toggles and selection controls (partially integrated).
 
 **Areas that need refactoring**:
-- **Frontend Linting:** Over 140 non-critical linting warnings persist. The testing agent suggested adding  to a  file or modifying  to disable ESLint during the build process as a workaround if configuration files are not being respected.
-- **/app/frontend/src/utils/hashtags.js**: Contains duplicated and commented-out code from the recent refactor that should be removed for clarity.
+-   **/app/frontend/src/components/Analytics/MapAnalyticsCharts.js**: This is a very large (300+ lines) new component with hardcoded data structures for charting. It should be broken down into smaller, individual chart components and connected to live data from .
+-   **Frontend Linting:** Over 140 non-critical linting warnings persist from the previous session.
 
 **key api endpoints**
-- **PUT **: Updates the logged-in user's email address.
-- **PUT **: Updates the logged-in user's password.
-- **GET **: Fetches map data from all public protocols.
-- **GET **: Fetches statistics from all public protocols.
-- **GET, POST **: Manages automated violation alert settings.
+-   **PUT **: (FIXED) Updates a category, including its protocol and price.
+-   **GET **: (FIXED) Fetches all categories for the current user.
+-   **GET **: (NEW) Provides the frontend with the Stripe publishable key.
+-   **GET **: (NEW) Returns a list of available products and prices for purchase.
+-   **POST **: (NEW) Creates a payment session with Stripe.
 
 **Critical Info for New Agent**
-- **Verify, Don't Trust:** The user has reported multiple bugs that previous tests and fixes did not catch. You must prioritize verifying functionality from the user's perspective, especially for UI-related issues. The 100% test pass rate is misleading.
-- **User's Word Document is Canon:** The user has provided an  file which they consider the source of truth for required functionality. You must refer to this document for feature verification.
-- **Address All Items:** The user provides long, itemized lists of requests. Do not skip any. Systematically address each bug and feature request. If you complete a batch, confirm with the user before moving on.
-- **Recurring Bugs:** Be aware that the Save Protocol failure and UI sticker overlap are recurring problems. The root cause may be deeper than the previous fixes addressed.
+-   **React StrictMode Bug:** A critical bug causing categories not to load was due to  running twice in  and aborting the fetch request. The fix in  uses a  flag () to prevent the second call from executing if a fetch is already in progress. Be mindful of this pattern if similar issues appear.
+-   **Shared Components are Key:** The user is requesting similar features (maps, stats, toggles) on multiple pages. Continue the pattern of creating shared components (, ) to ensure consistency and reduce code duplication.
+-   **Placeholder Data:** The new, extensive  component is currently a UI shell with placeholder data. A major upcoming task is to wire it up to the  state and write the logic to process that data for each of the 14+ charts.
+-   **Verify All User Requests:** The user provides long, detailed lists. Ensure every single item is addressed. For example, the agent implemented the max price but missed the min price of /bin/bash.20.
 
 **documents and test reports created in this job**
-- 
-- 
-- 
--  (Continuously updated)
+-   /app/test_reports/iteration_85.json
+-   /app/test_reports/iteration_86.json
+-   /app/test_reports/iteration_87.json
+-   /app/test_reports/iteration_88.json
+-   /app/test_reports/iteration_89.json
+-   /app/memory/PRD.md (updated with completed work and future tasks)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **Latest Message:** User provided a new Word document and a long list of critical bugs and feature requests. Key items include fixing map inconsistencies, search results not showing, the edit modal closing bug, implementing an in-app browser, and improving hashtag relevance. Re-iterated the need for a septuple-check for stability.
-2.  **Previous Message:** User reported the Clean Category function was not working and asked for all remaining items to be integrated, including adding meta tags for social sharing and comprehensive stability checks.
-3.  **Previous Message:** A  call from the agent was interrupted by the user with a list of bugs found via screenshots, including overlapping UI elements and a failing Copy Protocol function in the marketplace. The user also re-iterated the search result display issue and requested support for the Facebook browser.
-4.  The user has consistently emphasized the need for comprehensive stability checks and the resolution of all bugs, no matter how small.
+1.  **Latest Request:** Make the app free except for the marketplace, set protocol price to 4.97 max, and ensure the news refresh button works. (Completed)
+2.  **Previous Request:** Implement a list of features including a data source toggle, statistics on all pages, user-set protocol prices, and smaller ads. (Partially Completed, now in Upcoming Tasks)
+3.  **Previous Request:** Integrate provided Stripe keys and add 14+ types of analytics charts to the map view with many variables. (Completed)
+4.  User confirmed the plan to fix P0 bugs and improve map popups.
+5.  User has repeatedly emphasized the need for septuple-checking and ensuring the app is stable, fast, and bug-free.
 
 **Project Health Check:**
-- **Broken:** Several core user-facing functions are reported as broken, including search result filtering, map data accuracy, and saving protocols. The disconnect between passing automated tests and the failing user experience is the biggest risk to the project.
-- **Mocked:** The Bing Search integration is implemented but inactive, awaiting a user-provided API key.
+-   **Broken:** Several P0/P1 bugs from the initial handoff remain, including the edit modal closing on highlight and inconsistent map data.
+-   **Mocked:** The  component is currently mocked with static data structures and is not connected to any live API data.
 
 **3rd Party Integrations**
-- **Brave Search API:** Active.
-- **PayPal Commerce Platform:** Active.
-- **SerpAPI (Google):** Active.
-- **DuckDuckGo Search:** Active.
-- **Bing Search API:** Integrated but inactive (requires User API Key).
-- **OpenAI GPT (via ):** Active (uses Emergent LLM Key).
-- **jspdf / jspdf-autotable:** Active for PDF generation.
+-   **Stripe (Payments):** Active (uses User API Key).
+-   **Brave Search API:** Active.
+-   **PayPal Commerce Platform:** Active.
+-   **SerpAPI (Google):** Active.
+-   **DuckDuckGo Search:** Active.
+-   **Bing Search API:** Integrated but inactive (requires User API Key).
+-   **OpenAI GPT (via ):** Active (uses Emergent LLM Key for news headlines).
+-   **jspdf / jspdf-autotable:** Active for PDF generation.
 
 **Testing status**
-- **Testing agent used after significant changes:** YES. The agent ran a comprehensive test suite () covering 37 different checks, which passed 100%.
-- **Troubleshoot agent used after agent stuck in loop:** NO
-- **Test files created:** Yes, the testing agent created and used multiple test files in .
-- **Known regressions:** Yes. Failed to update category, Public/Private sticker overlap, and Search results not showing are all regressions or issues that were not fully fixed.
+-   **Testing agent used after significant changes:** YES. Used multiple times ( through ), achieving 90%+ and finally 100% pass rates, verifying all major fixes and new features.
+-   **Troubleshoot agent used after agent stuck in loop:** NO
+-   **Test files created:** Yes, the testing agent created and used test files in .
+-   **Known regressions:** The Save Protocol and Category Loading regressions were **FIXED** in this session.
 
 **Credentials to test flow:**
-- **Admin User:**  / 
-- **Test User:**  / 
+-   **Admin User:**  / 
+-   **Test User:**  / 
 
 **What agent forgot to execute**
-- The agent has not yet implemented the **In-App Browser**, a new key feature requested by the user.
-- The agent's fixes for several UI and backend bugs have been insufficient, as the user immediately reported them again. The agent needs to adopt a more rigorous verification process that mimics the user's workflow.</analysis>
+-   The user requested a new protocol price range of **/bin/bash.20 to 4.97**. The agent only implemented the maximum price (4.97) and did not add or verify the minimum price validation on the backend or frontend.
+-   The user requested to make advertisements much smaller. The agent noted a hide button on one ad but did not systematically review and resize all ad components.
+-   The user requested the  and  areas on multiple pages, but the agent only began the implementation on  and did not add it to  or .</analysis>
