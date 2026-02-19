@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from '../shared';
-import { API } from '../../utils/api';
+import { API, containsProhibitedContent, getProhibitedContentMessage } from '../../utils/api';
 
 /**
  * SearchControls - Search input box with categorize button, AI search, database search, and aggregation options
  * Includes Google (SerpAPI), Bing, Brave, DuckDuckGo, and Basic search engines!
  * New: Certification filter checkboxes for PearsonVUE, Government, Advanced Degree
+ * Security: Blocks prohibited content (nuclear, terrorism, biological/chemical/psychological warfare)
  */
 const SearchControls = ({
   searchQuery,
