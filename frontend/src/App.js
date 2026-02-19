@@ -100,6 +100,9 @@ const MainApp = () => {
   // Pages where AI News should show
   const showAiNews = ['search', 'marketplace', 'social'].includes(currentPage);
   
+  // State for in-app browser warning
+  const [dismissedInAppWarning, setDismissedInAppWarning] = useState(false);
+  
   return (
     <div className="app-container">
       <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} showToast={showToast} />
@@ -121,6 +124,10 @@ const MainApp = () => {
       )}
       {/* Floating Easter Eggs - Fun gamification feature! */}
       <FloatingEasterEggsController enabled={true} frequency={45000} />
+      {/* Facebook/In-App Browser Warning */}
+      {!dismissedInAppWarning && (
+        <InAppBrowserWarning onDismiss={() => setDismissedInAppWarning(true)} />
+      )}
     </div>
   );
 };
