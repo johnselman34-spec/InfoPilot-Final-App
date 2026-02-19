@@ -6,6 +6,7 @@ import { API } from '../utils/api';
 import { extractHashtags } from '../utils/hashtags';
 import { HashtagDisplay } from '../components/shared';
 import CustomMapStyling from '../components/Map/CustomMapStyling';
+import { MapAnalyticsCharts } from '../components/Analytics';
 
 // Auto-refresh interval for map (30 seconds)
 const MAP_REFRESH_INTERVAL = 30000;
