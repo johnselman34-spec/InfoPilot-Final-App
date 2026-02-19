@@ -40,6 +40,17 @@ const MarketplacePage = ({ showToast }) => {
   const [purchases, setPurchases] = useState([]);
   const [dashboard, setDashboard] = useState(null);
   const [freeMessage] = useState(() => FREE_MESSAGES[Math.floor(Math.random() * FREE_MESSAGES.length)]);
+  
+  // Data source toggle - Personal vs Worldwide
+  const [dataSource, setDataSource] = useState('worldwide');
+  
+  // Real-time update interval
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+  
+  // Document type filter
+  const [selectedDocTypes, setSelectedDocTypes] = useState([
+    'news', 'webpage', 'blog', 'research', 'video', 'pdf', 'social'
+  ]);
 
   // Fetch functions
   const fetchProtocols = useCallback(async () => {
