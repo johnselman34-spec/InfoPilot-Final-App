@@ -524,7 +524,11 @@ async def get_search_results(current_user: User = Depends(get_current_user), cat
     if category_id:
         query["categories"] = category_id
     
-    results = await db.search_results.find(query).sort("createdAt", -1).limit(100).to_list(1000)
+    results = await db.search_results.find(
+        query,
+        {"_id": 1, "userId": 1, "title": 1, "url": 1, "snippet": 1, "displayLink": 1, 
+         "classification": 1, "categories": 1, "query": 1, "createdAt": 1}
+    ).sort("createdAt", -1).limit(100).to_list(100)
     for result in results:
         result["id"] = str(result["_id"])
         result.pop("_id")
