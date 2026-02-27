@@ -294,7 +294,10 @@ async def create_category(category: Category, current_user: User = Depends(get_c
 
 @api_router.get("/categories")
 async def get_categories(current_user: User = Depends(get_current_user)):
-    categories = await db.categories.find({"userId": current_user.id}).to_list(1000)
+    categories = await db.categories.find(
+        {"userId": current_user.id},
+        {"_id": 1, "name": 1, "level": 1, "parentId": 1, "isPublic": 1, "protocolId": 1, "createdAt": 1}
+    ).limit(100).to_list(100)
     for cat in categories:
         cat["id"] = str(cat["_id"])
         cat.pop("_id")
