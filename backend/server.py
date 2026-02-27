@@ -182,8 +182,12 @@ def build_google_query(protocol: str) -> str:
 async def classify_content(content: str, url: str) -> str:
     """Classify web content using AI"""
     try:
-        # Get Emergent LLM key
-        llm_key = os.environ.get('EMERGENT_LLM_KEY', 'sk-emergent-0FbE304C72f9bBd969')
+        # Get Emergent LLM key - MUST be set in environment
+        llm_key = os.environ.get('EMERGENT_LLM_KEY')
+        
+        if not llm_key:
+            logger.error("EMERGENT_LLM_KEY not set in environment")
+            return "News Article"  # Default classification
         
         openai.api_key = llm_key
         openai.base_url = "https://llm.proxy.emergentagent.com/v1"
