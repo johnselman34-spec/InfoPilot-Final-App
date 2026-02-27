@@ -316,7 +316,7 @@ async def get_public_categories(skip: int = 0, limit: int = 100):
 
 @api_router.delete("/categories/{category_id}")
 async def delete_category(category_id: str, current_user: User = Depends(get_current_user)):
-    result = await db.categories.delete_one({" _id": ObjectId(category_id), "userId": current_user.id})
+    result = await db.categories.delete_one({"_id": ObjectId(category_id), "userId": current_user.id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Category not found")
     return {"success": True, "message": "Category deleted"}
