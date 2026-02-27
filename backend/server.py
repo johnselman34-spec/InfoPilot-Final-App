@@ -562,11 +562,14 @@ async def get_all_users(current_user: User = Depends(get_current_user)):
     if not current_user.isAdmin:
         raise HTTPException(status_code=403, detail="Admin access required")
     
-    users = await db.users.find({}).to_list(1000)
+    users = await db.users.find(
+        {},
+        {"_id": 1, "username": 1, "email": 1, "isPaid": 1, "isAdmin": 1, 
+         "subscriptionStatus": 1, "subscriptionPrice": 1, "createdAt": 1, "isBanned": 1}
+    ).limit(100).to_list(100)
     for user in users:
         user["id"] = str(user["_id"])
         user.pop("_id")
-        user.pop("password", None)
     
     return {"success": True, "users": users}
 
