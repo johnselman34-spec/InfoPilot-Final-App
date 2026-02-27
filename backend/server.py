@@ -305,7 +305,10 @@ async def get_categories(current_user: User = Depends(get_current_user)):
 
 @api_router.get("/categories/public")
 async def get_public_categories(skip: int = 0, limit: int = 100):
-    categories = await db.categories.find({"isPublic": True}).skip(skip).limit(limit).to_list(1000)
+    categories = await db.categories.find(
+        {"isPublic": True},
+        {"_id": 1, "name": 1, "level": 1, "parentId": 1, "isPublic": 1, "protocolId": 1, "createdAt": 1}
+    ).skip(skip).limit(limit).to_list(limit)
     for cat in categories:
         cat["id"] = str(cat["_id"])
         cat.pop("_id")
@@ -313,7 +316,7 @@ async def get_public_categories(skip: int = 0, limit: int = 100):
 
 @api_router.delete("/categories/{category_id}")
 async def delete_category(category_id: str, current_user: User = Depends(get_current_user)):
-    result = await db.categories.delete_one({"_id": ObjectId(category_id), "userId": current_user.id})
+    result = await db.categories.delete_one({" _id": ObjectId(category_id), "userId": current_user.id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Category not found")
     return {"success": True, "message": "Category deleted"}
@@ -339,7 +342,10 @@ async def create_protocol(protocol: Protocol, current_user: User = Depends(get_c
 
 @api_router.get("/protocols")
 async def get_protocols(current_user: User = Depends(get_current_user)):
-    protocols = await db.protocols.find({"userId": current_user.id}).to_list(1000)
+    protocols = await db.protocols.find(
+        {"userId": current_user.id},
+        {"_id": 1, "name": 1, "booleanExpression": 1, "categoryId": 1, "userId": 1, "isPublic": 1, "createdAt": 1}
+    ).limit(100).to_list(100)
     for proto in protocols:
         proto["id"] = str(proto["_id"])
         proto.pop("_id")
