@@ -410,9 +410,15 @@ async def search_google(search_req: SearchRequest, current_user: User = Depends(
 async def collate_results(collate_req: CollateRequest, current_user: User = Depends(get_current_user)):
     """Collate search results AUTOMATICALLY into ALL matching categories based on protocols"""
     try:
-        # Get ALL user's protocols and categories
-        protocols = await db.protocols.find({"userId": current_user.id}).to_list(1000)
-        categories = await db.categories.find({"userId": current_user.id}).to_list(1000)
+        # Get ALL user's protocols and categories with projections
+        protocols = await db.protocols.find(
+            {"userId": current_user.id},
+            {"_id": 1, "booleanExpression": 1, "categoryId": 1}
+        ).limit(100).to_list(100)
+        categories = await db.categories.find(
+            {"userId": current_user.id},
+            {"_id": 1, "name": 1}
+        ).limit(100).to_list(100)
         
         if not protocols:
             return {"success": True, "message": "No protocols found. Please create protocols first.", "categorized": 0}
